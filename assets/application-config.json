@@ -1,0 +1,12 @@
+{
+  "application": {
+    "windowTitle":  "rfx"
+  },
+  "graphics": {
+    "renderer": "d3d12",
+    "resolution": {
+      "x": 800,
+      "y": 500
+    }
+  }
+}
