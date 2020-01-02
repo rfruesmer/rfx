@@ -8,17 +8,17 @@ namespace rfx
 class Win32Application : public Application
 {
 public:
-	explicit Win32Application(HINSTANCE instanceHandle);
+    explicit Win32Application(HINSTANCE instanceHandle);
 
 protected:
-	void createWindow() override;
-	void initGraphics() override;
-	void runMessageLoop() override;
+    void createWindow() override;
+    void initGraphics() override;
+    void runMessageLoop() override;
 
 private:
-	void updateFrameStats() const;
+    void updateFrameStats() const;
 
-	HINSTANCE instanceHandle = nullptr;
+    HINSTANCE instanceHandle = nullptr;
 };
 
 } // namespace rfx

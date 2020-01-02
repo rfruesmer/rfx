@@ -9,16 +9,14 @@
 
 namespace rfx
 {
-
 class D3D12Exception : public std::exception
 {
 public:
-	D3D12Exception(HRESULT hr, const char* function, const char* file, int line);
+    D3D12Exception(HRESULT hr, const char* function, const char* file, int line);
 
-	char const* what() const override;
-	
+    char const* what() const override;
+
 private:
-	std::string message;
+    std::string message;
 };
-
 }

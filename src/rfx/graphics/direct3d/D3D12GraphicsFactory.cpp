@@ -11,65 +11,65 @@ using namespace Microsoft::WRL;
 // ---------------------------------------------------------------------------------------------------------------------
 
 D3D12GraphicsFactory::D3D12GraphicsFactory(const shared_ptr<Window>& window)
-	: GraphicsFactory(window) {}
+    : GraphicsFactory(window) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void D3D12GraphicsFactory::initialize()
 {
 #ifdef _DEBUG
-	enableDebugging();
+    enableDebugging();
 #endif
 
-	createFactory();
-	logAdapters();
+    createFactory();
+    logAdapters();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void D3D12GraphicsFactory::enableDebugging()
 {
-	ComPtr<ID3D12Debug> debugController;
-	ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)));
-	debugController->EnableDebugLayer();
+    ComPtr<ID3D12Debug> debugController;
+    ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)));
+    debugController->EnableDebugLayer();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void D3D12GraphicsFactory::createFactory()
 {
-	ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(&dxgiFactory)));
+    ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(&dxgiFactory)));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void D3D12GraphicsFactory::logAdapters() const
 {
-	UINT i = 0;
-	IDXGIAdapter* adapter = nullptr;
-	vector<IDXGIAdapter*> adapterList;
+    UINT i = 0;
+    IDXGIAdapter* adapter = nullptr;
+    vector<IDXGIAdapter*> adapterList;
 
-	while (dxgiFactory->EnumAdapters(i, &adapter) != DXGI_ERROR_NOT_FOUND)
-	{
-		DXGI_ADAPTER_DESC desc;
-		adapter->GetDesc(&desc);
+    while (dxgiFactory->EnumAdapters(i, &adapter) != DXGI_ERROR_NOT_FOUND)
+    {
+        DXGI_ADAPTER_DESC desc;
+        adapter->GetDesc(&desc);
 
-		RFX_LOG_DEBUG << "Adapter: " << StringUtil::convertWideToAnsiString(desc.Description);
+        RFX_LOG_DEBUG << "Adapter: " << StringUtil::convertWideToAnsiString(desc.Description);
 
-		ReleaseCom(adapter);
+        ReleaseCom(adapter);
 
-		++i;
-	}
+        ++i;
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 unique_ptr<GraphicsDevice> D3D12GraphicsFactory::createDevice()
 {
-	unique_ptr<GraphicsDevice> graphicsDevice = make_unique<D3D12GraphicsDevice>(dxgiFactory, window);
-	graphicsDevice->initialize();
-	
-	return graphicsDevice;
+    unique_ptr<GraphicsDevice> graphicsDevice = make_unique<D3D12GraphicsDevice>(dxgiFactory, window);
+    graphicsDevice->initialize();
+    
+    return graphicsDevice;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

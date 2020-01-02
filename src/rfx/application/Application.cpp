@@ -9,34 +9,34 @@ using namespace std;
 
 void Application::run()
 {
-	loadConfiguration();
-	createWindow();
-	initGraphics();
-	runMessageLoop();
+    loadConfiguration();
+    createWindow();
+    initGraphics();
+    runMessageLoop();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void Application::loadConfiguration()
 {
-	filesystem::path configFilePath = filesystem::current_path() / 
-		filesystem::path("assets/application-config.json");
-	ifstream configFile(configFilePath.string(), ifstream::binary);
+    filesystem::path configFilePath = filesystem::current_path() / 
+        filesystem::path("assets/application-config.json");
+    ifstream configFile(configFilePath.string(), ifstream::binary);
 
-	configFile >> configuration;
+    configFile >> configuration;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void Application::initGraphics()
 {
-	if (graphicsFactory == nullptr)
-	{
-		throw exception("Illegal state: graphics factory not initialized");
-	}
-	
-	graphicsDevice = graphicsFactory->createDevice();
-	graphicsDevice->initialize();
+    if (graphicsFactory == nullptr)
+    {
+        throw exception("Illegal state: graphics factory not initialized");
+    }
+    
+    graphicsDevice = graphicsFactory->createDevice();
+    graphicsDevice->initialize();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

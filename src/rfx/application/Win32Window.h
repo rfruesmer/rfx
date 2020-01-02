@@ -9,17 +9,17 @@ namespace rfx
 class Win32Window : public Window
 {
 public:
-	explicit Win32Window(HINSTANCE instanceHandle);
+    explicit Win32Window(HINSTANCE instanceHandle);
 
-	void create(const std::string& title, int clientWidth, int clientHeight) override;
+    void create(const std::string& title, int clientWidth, int clientHeight) override;
 
-	LRESULT WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	
+    LRESULT WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+    
 private:
-	void registerWindowClass();
-	void createWindow(const std::string& title, int clientWidth, int clientHeight);
+    void registerWindowClass();
+    void createWindow(const std::string& title, int clientWidth, int clientHeight);
 
-	HINSTANCE instanceHandle = nullptr;
+    HINSTANCE instanceHandle = nullptr;
 };
 
 } // namespace rfx

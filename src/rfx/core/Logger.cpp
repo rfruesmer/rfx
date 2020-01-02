@@ -10,20 +10,20 @@ using namespace std;
 #ifdef _WINDOWS
 string nowTime()
 {
-	FILETIME fileTime;
-	GetSystemTimeAsFileTime(&fileTime);
+    FILETIME fileTime;
+    GetSystemTimeAsFileTime(&fileTime);
 
-	SYSTEMTIME systemTime;
-	FileTimeToSystemTime(&fileTime, &systemTime);
+    SYSTEMTIME systemTime;
+    FileTimeToSystemTime(&fileTime, &systemTime);
 
-	ostringstream oss;
-	oss << setfill('0') 
-		<< setw(2) << systemTime.wHour + 1 << ":"
-		<< setw(2) << systemTime.wMinute << ":"
-		<< setw(2) << systemTime.wSecond << ":"
-		<< setw(3) << systemTime.wMilliseconds;
+    ostringstream oss;
+    oss << setfill('0') 
+        << setw(2) << systemTime.wHour + 1 << ":"
+        << setw(2) << systemTime.wMinute << ":"
+        << setw(2) << systemTime.wSecond << ":"
+        << setw(3) << systemTime.wMilliseconds;
 
-	return oss.str();
+    return oss.str();
 }
 #else
 static_assert(false, "not implemented");
@@ -33,23 +33,23 @@ static_assert(false, "not implemented");
 
 string toString(LogLevel logLevel)
 {
-	switch (logLevel)
-	{
-	case LogLevel::FATAL:
-		return "FATAL";
-	case LogLevel::ERROR:
-		return "ERROR";
-	case LogLevel::WARNING:
-		return "WARNING";
-	case LogLevel::INFO:
-		return "INFO";
-	case LogLevel::DEBUG:
-		return "DEBUG";
-	case LogLevel::TRACE:
-		return "TRACE";
-	default:
-		return "UNKNOWN";
-	}
+    switch (logLevel)
+    {
+    case LogLevel::FATAL:
+        return "FATAL";
+    case LogLevel::ERROR:
+        return "ERROR";
+    case LogLevel::WARNING:
+        return "WARNING";
+    case LogLevel::INFO:
+        return "INFO";
+    case LogLevel::DEBUG:
+        return "DEBUG";
+    case LogLevel::TRACE:
+        return "TRACE";
+    default:
+        return "UNKNOWN";
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -60,24 +60,24 @@ LogLevel Logger::logLevel = LogLevel::INFO;
 
 void Logger::setLogLevel(LogLevel logLevel)
 {
-	Logger::logLevel = logLevel;
+    Logger::logLevel = logLevel;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 bool Logger::isFiltered(LogLevel logLevel)
 {
-	return logLevel > Logger::logLevel;
+    return logLevel > Logger::logLevel;
 }
 
 Logger::~Logger()
 {
-	os << endl << "\t" << messageFile << "(" << messageLine << ")" << endl;
+    os << endl << "\t" << messageFile << "(" << messageLine << ")" << endl;
 
 #ifdef _WINDOWS
-	OutputDebugStringA(os.str().c_str());
+    OutputDebugStringA(os.str().c_str());
 #else
-	cout << os.str();
+    cout << os.str();
 #endif // _WINDOWS
 }
 
@@ -85,13 +85,13 @@ Logger::~Logger()
 
 ostringstream& Logger::get(LogLevel logLevel, const char* file, int line)
 {
-	messageLogLevel = logLevel;
-	messageFile = file;
-	messageLine = line;
-	
-	os << nowTime() << " " << toString(logLevel) << ": ";
+    messageLogLevel = logLevel;
+    messageFile = file;
+    messageLine = line;
+    
+    os << nowTime() << " " << toString(logLevel) << ": ";
 
-	return os;
+    return os;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
