@@ -47,3 +47,11 @@ float Timer::getElapsedTime() const
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+
+float Timer::getTotalTime() const
+{
+    const duration<double> diff = stopTime - startTime;
+    return static_cast<float>(diff.count());
+}
+
+// ---------------------------------------------------------------------------------------------------------------------

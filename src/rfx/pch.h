@@ -6,29 +6,41 @@
 
 #pragma once
 
-// add headers that you want to pre-compile here
 #include "res/targetver.h"
 
+// Windows Header Files
 #ifdef _WINDOWS
-#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
+#define NOMINMAX            // Don't let Windows define min() or max()
+#define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
 #include <windows.h>
-#include <comdef.h>
-#include <wrl.h>
-#include <dxgi1_4.h>
-#include <d3d12.h>
-#include <D3Dcompiler.h>
-#include <DirectXMath.h>
 #endif // _WINDOWS
 
 // STL Header Files
 #include <string>
 #include <vector>
+#include <unordered_map>
+#include <unordered_set>
 #include <sstream>
 #include <fstream>
 #include <filesystem>
+#include <functional>
 
-// Other Header Files
+// Vulkan Header Files
+#ifdef _WINDOWS
+#define VK_USE_PLATFORM_WIN32_KHR
+#endif // _WINDOWS
+#define VK_NO_PROTOTYPES
+#include <vulkan/vulkan.h>
+#include "SPIRV/GlslangToSpv.h"
+
+// JsonCpp Header Files
 #include <json/json.h>
+
+// glm Header Files
+#define GLM_FORCE_SSE2
+#define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 // RFX Header Files
 #include "rfx/rfx.h"

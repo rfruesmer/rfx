@@ -1,7 +1,6 @@
 #include "rfx/pch.h"
 #include "rfx/application/Win32Application.h"
 #include "rfx/application/Win32Window.h"
-#include "rfx/graphics/direct3d/D3D12GraphicsFactory.h"
 
 using namespace rfx;
 using namespace std;
@@ -26,36 +25,17 @@ void Win32Application::createWindow()
         throw exception("Illegal state: window already created");
     }
 
-    string windowTitle = configuration["application"]["windowTitle"].asString();
+    string windowTitle = configuration["application"]["name"].asString();
     Json::Value resolution = configuration["graphics"]["resolution"];
 
     window = make_unique<Win32Window>(instanceHandle);
     window->create(windowTitle, resolution["x"].asInt(), resolution["y"].asInt());
+    window->addListener(this);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Win32Application::initGraphics()
-{
-    const string renderer = configuration["graphics"]["renderer"].asString();
-    if (renderer == "d3d12")
-    {
-        graphicsFactory = make_unique<D3D12GraphicsFactory>(window);
-    }
-    else
-    {
-        const string message = "Renderer not implemented: " + renderer;
-        throw exception(message.c_str());
-    }
-
-    graphicsFactory->initialize();
-
-    Application::initGraphics();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void Win32Application::runMessageLoop()
+void Win32Application::run()
 {
     timer.start();
     
@@ -75,6 +55,8 @@ void Win32Application::runMessageLoop()
             if (!paused)
             {
                 updateFrameStats();
+                update();
+                draw();
             }
             else
             {
@@ -82,6 +64,8 @@ void Win32Application::runMessageLoop()
             }
         }
     }
+
+    shutdown();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

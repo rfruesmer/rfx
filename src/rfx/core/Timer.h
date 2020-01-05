@@ -12,6 +12,7 @@ public:
 
     float getStartTime() const;
     float getElapsedTime() const;
+    float getTotalTime() const;
 
 private:
     bool stopped = true;

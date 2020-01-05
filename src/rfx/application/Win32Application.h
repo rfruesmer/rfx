@@ -10,10 +10,11 @@ class Win32Application : public Application
 public:
     explicit Win32Application(HINSTANCE instanceHandle);
 
+    void run() override;
+
 protected:
     void createWindow() override;
-    void initGraphics() override;
-    void runMessageLoop() override;
+    virtual void shutdown() {}
 
 private:
     void updateFrameStats() const;

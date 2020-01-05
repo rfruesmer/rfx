@@ -1,12 +1,11 @@
 {
   "application": {
-    "windowTitle":  "rfx"
+    "name": "rfx"
   },
   "graphics": {
-    "renderer": "d3d12",
     "resolution": {
-      "x": 800,
-      "y": 500
+      "x": 1600,
+      "y": 1000
     }
   }
 }

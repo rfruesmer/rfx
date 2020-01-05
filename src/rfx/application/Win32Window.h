@@ -18,6 +18,7 @@ public:
 private:
     void registerWindowClass();
     void createWindow(const std::string& title, int clientWidth, int clientHeight);
+    static WindowState toState(WPARAM wParam);
 
     HINSTANCE instanceHandle = nullptr;
 };

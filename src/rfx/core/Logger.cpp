@@ -18,7 +18,7 @@ string nowTime()
 
     ostringstream oss;
     oss << setfill('0') 
-        << setw(2) << systemTime.wHour + 1 << ":"
+        << setw(2) << systemTime.wHour << ":"
         << setw(2) << systemTime.wMinute << ":"
         << setw(2) << systemTime.wSecond << ":"
         << setw(3) << systemTime.wMilliseconds;
@@ -69,6 +69,8 @@ bool Logger::isFiltered(LogLevel logLevel)
 {
     return logLevel > Logger::logLevel;
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
 
 Logger::~Logger()
 {

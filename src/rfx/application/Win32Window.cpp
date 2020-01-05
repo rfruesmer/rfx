@@ -17,7 +17,8 @@ LRESULT WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     if (msg == WM_CREATE)
     {
-        mainWindow = reinterpret_cast<Win32Window*>(lParam);
+        const auto createStruct = reinterpret_cast<CREATESTRUCT*>(lParam);
+        mainWindow = reinterpret_cast<Win32Window*>(createStruct->lpCreateParams);
     }
 
     if (mainWindow)
@@ -40,7 +41,32 @@ LRESULT Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             PostQuitMessage(0);
         }
         break;
-        
+
+    case WM_ENTERSIZEMOVE:
+        onResizing();
+        break;
+
+    case WM_EXITSIZEMOVE:
+        onResized();
+        break;
+
+    case WM_SIZE:
+        clientWidth = LOWORD(lParam);
+        clientHeight = HIWORD(lParam);
+        if (wParam == SIZE_MINIMIZED)
+        {
+            onMinimized();
+        }
+        else if (wParam == SIZE_MAXIMIZED)
+        {
+            onMaximized();
+        }
+        else if (!resizing)
+        {
+            onResized();
+        }
+        break;
+
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
@@ -86,7 +112,7 @@ void Win32Window::registerWindowClass()
     wcex.hInstance = hInstance;
     wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_RFX));
     wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground = reinterpret_cast<HBRUSH>(GetStockObject(NULL_BRUSH));
+    wcex.hbrBackground = nullptr;
     wcex.lpszMenuName = nullptr;
     wcex.lpszClassName = WINDOW_CLASS.c_str();
     wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
@@ -125,11 +151,26 @@ void Win32Window::createWindow(const std::string& title, int clientWidth, int cl
 
     RECT clientRect = { 0 };
     GetClientRect(hwnd, &clientRect);
-    width = clientRect.right - clientRect.left;
-    height = clientRect.bottom - clientRect.top;
+    clientWidth = clientRect.right - clientRect.left;
+    clientHeight = clientRect.bottom - clientRect.top;
 
     handle = static_cast<handle_t>(hwnd);
     this->title = title;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+WindowState Win32Window::toState(WPARAM wParam)
+{
+    switch (wParam)
+    {
+    case SIZE_MINIMIZED:
+        return WindowState::MINIMIZED;
+    case SIZE_MAXIMIZED:
+        return WindowState::MAXIMIZED;
+    default:
+        return WindowState::RESTORED;
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

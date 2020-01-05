@@ -99,16 +99,25 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>rfx/pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)src/;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)src/;$(VULKAN_SDK)/include</AdditionalIncludeDirectories>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3dcompiler.lib;D3D12.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>User32.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>robocopy $(SolutionDir)assets $(TargetDir)assets /MIR || exit /b 0</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -119,16 +128,25 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>rfx/pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)src/;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)src/;$(VULKAN_SDK)/include</AdditionalIncludeDirectories>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3dcompiler.lib;D3D12.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>User32.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>robocopy $(SolutionDir)assets $(TargetDir)assets /MIR || exit /b 0</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -141,18 +159,27 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>rfx/pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)src/;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)src/;$(VULKAN_SDK)/include</AdditionalIncludeDirectories>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3dcompiler.lib;D3D12.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>User32.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>robocopy $(SolutionDir)assets $(TargetDir)assets /MIR || exit /b 0</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -165,25 +192,41 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>rfx/pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)src/;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)src/;$(VULKAN_SDK)/include</AdditionalIncludeDirectories>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3dcompiler.lib;D3D12.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>User32.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>robocopy $(SolutionDir)assets $(TargetDir)assets /MIR || exit /b 0</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\rfx\graphics\direct3d\D3D12Exception.h" />
-    <ClInclude Include="src\rfx\graphics\direct3d\D3D12GraphicsDevice.h" />
-    <ClInclude Include="src\rfx\graphics\direct3d\D3D12GraphicsFactory.h" />
+    <ClInclude Include="src\rfx\core\FileUtil.h" />
+    <ClInclude Include="src\rfx\graphics\Buffer.h" />
+    <ClInclude Include="src\rfx\graphics\CommandPool.h" />
+    <ClInclude Include="src\rfx\graphics\CommandBuffer.h" />
+    <ClInclude Include="src\rfx\graphics\Queue.h" />
+    <ClInclude Include="src\rfx\core\Algorithm.h" />
+    <ClInclude Include="src\rfx\graphics\GraphicsContext.h" />
+    <ClInclude Include="src\rfx\graphics\GraphicsDeviceInfo.h" />
+    <ClInclude Include="src\rfx\graphics\QueueFamilyInfo.h" />
+    <ClInclude Include="src\rfx\graphics\SPIR.h" />
+    <ClInclude Include="test\CubeTest.h" />
     <ClInclude Include="src\rfx\graphics\GraphicsDevice.h" />
-    <ClInclude Include="src\rfx\graphics\GraphicsFactory.h" />
     <ClInclude Include="src\rfx\core\Logger.h" />
     <ClInclude Include="src\rfx\application\Application.h" />
     <ClInclude Include="src\rfx\pch.h" />
@@ -197,11 +240,15 @@
     <ClInclude Include="src\rfx\core\Timer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\rfx\graphics\direct3d\D3D12Exception.cpp" />
-    <ClCompile Include="src\rfx\graphics\direct3d\D3D12GraphicsDevice.cpp" />
-    <ClCompile Include="src\rfx\graphics\direct3d\D3D12GraphicsFactory.cpp" />
+    <ClCompile Include="src\rfx\core\FileUtil.cpp" />
+    <ClCompile Include="src\rfx\graphics\Buffer.cpp" />
+    <ClCompile Include="src\rfx\graphics\CommandPool.cpp" />
+    <ClCompile Include="src\rfx\graphics\CommandBuffer.cpp" />
+    <ClCompile Include="src\rfx\graphics\Queue.cpp" />
+    <ClCompile Include="src\rfx\graphics\GraphicsContext.cpp" />
+    <ClCompile Include="src\rfx\graphics\SPIR.cpp" />
+    <ClCompile Include="test\CubeTest.cpp" />
     <ClCompile Include="src\rfx\graphics\GraphicsDevice.cpp" />
-    <ClCompile Include="src\rfx\graphics\GraphicsFactory.cpp" />
     <ClCompile Include="src\rfx\core\Logger.cpp" />
     <ClCompile Include="src\rfx\application\Application.cpp" />
     <ClCompile Include="src\rfx\pch.cpp">
@@ -210,7 +257,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\rfx\rfx.cpp" />
+    <ClCompile Include="src\rfx\main.cpp" />
     <ClCompile Include="src\rfx\application\Window.cpp" />
     <ClCompile Include="src\rfx\application\Win32Application.cpp" />
     <ClCompile Include="src\rfx\application\Win32Window.cpp" />
@@ -226,6 +273,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\application-config.json" />
+    <None Include="assets\shaders\color.frag" />
+    <None Include="assets\shaders\color.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
