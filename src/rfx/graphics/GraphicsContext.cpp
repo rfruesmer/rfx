@@ -8,6 +8,12 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+static const uint16_t REQUIRED_VERSION_MAJOR = 1;
+static const uint16_t REQUIRED_VERSION_MINOR = 1;
+static const uint32_t REQUIRED_VERSION = VK_MAKE_VERSION(REQUIRED_VERSION_MAJOR, REQUIRED_VERSION_MINOR, 0);
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 #ifdef _DEBUG
 
 VkBool32 GraphicsContext::DebugReportCallback(VkDebugReportFlagsEXT flags,
@@ -84,7 +90,7 @@ void GraphicsContext::initialize(const string& applicationName,
     loadVulkanLibrary();
     loadVulkanLoaderFunctions();
     loadGlobalFunctions();
-    queryAvailableInstanceExtensions();
+    queryInstanceExtensions();
     checkThatRequestedInstanceExtensionsAreAvailable(instanceExtensions);
     createVulkanInstance(applicationName, instanceExtensions);
     loadInstanceFunctions();
@@ -134,6 +140,7 @@ void GraphicsContext::loadGlobalFunctions()
     name = (PFN_##name)vkGetInstanceProcAddr(nullptr, #name);                            \
     RFX_CHECK_STATE(name != nullptr, string("Failed to load function: ") + (#name));
 
+    LOAD_GLOBAL_VULKAN_FUNCTION(vkEnumerateInstanceVersion);
     LOAD_GLOBAL_VULKAN_FUNCTION(vkEnumerateInstanceExtensionProperties);
     LOAD_GLOBAL_VULKAN_FUNCTION(vkEnumerateInstanceLayerProperties);
     LOAD_GLOBAL_VULKAN_FUNCTION(vkCreateInstance);
@@ -141,7 +148,7 @@ void GraphicsContext::loadGlobalFunctions()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void GraphicsContext::queryAvailableInstanceExtensions()
+void GraphicsContext::queryInstanceExtensions()
 {
     uint32_t extensionCount = 0;
 
@@ -194,6 +201,18 @@ void GraphicsContext::checkThatRequestedInstanceExtensionsAreAvailable(const vec
 void GraphicsContext::createVulkanInstance(const string& applicationName,
     const vector<string>& requestedExtensions)
 {
+    uint32_t apiVersion;
+    VkResult result = vkEnumerateInstanceVersion(&apiVersion);
+    RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to enumerate instance version");
+    const uint32_t loaderMajorVersion = VK_VERSION_MAJOR(apiVersion);
+    const uint32_t loaderMinorVersion = VK_VERSION_MINOR(apiVersion);
+    RFX_LOG_INFO << "Loader/Runtime support detected for Vulkan "
+        << loaderMajorVersion << "." << loaderMinorVersion;
+
+    RFX_CHECK_STATE (loaderMajorVersion > REQUIRED_VERSION_MAJOR ||
+        (loaderMajorVersion == REQUIRED_VERSION_MAJOR && loaderMinorVersion >= REQUIRED_VERSION_MINOR),
+        "Required Vulkan version not supported");
+
     vector<const char*> layers;
 
 #ifdef _DEBUG
@@ -226,7 +245,7 @@ void GraphicsContext::createVulkanInstance(const string& applicationName,
         VK_MAKE_VERSION(1, 0, 0),
         "rfx",
         VK_MAKE_VERSION(1, 0, 0),
-        VK_MAKE_VERSION(1, 1, 0)
+        REQUIRED_VERSION
     };
 
     VkInstanceCreateInfo instanceCreateInfo = {
@@ -240,7 +259,7 @@ void GraphicsContext::createVulkanInstance(const string& applicationName,
         copyOfExtensions.data()
     };
 
-    VkResult result = vkCreateInstance(&instanceCreateInfo, nullptr, &vkInstance);
+    result = vkCreateInstance(&instanceCreateInfo, nullptr, &vkInstance);
     RFX_CHECK_STATE(result == VK_SUCCESS && vkInstance != nullptr,
         "Failed to create Vulkan instance");
 }
@@ -356,30 +375,16 @@ void GraphicsContext::queryPhysicalDevices(const shared_ptr<Window>& window)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void GraphicsContext::queryDeviceGroups()
-{
-    uint32_t deviceGroupCount = 0;
-    const VkResult result = vkEnumeratePhysicalDeviceGroups(vkInstance, &deviceGroupCount, nullptr);
-    RFX_CHECK_STATE(result == VK_SUCCESS,
-        "Failed to query physical device groups");
-
-    deviceGroups.resize(deviceGroupCount);
-    for (uint32_t i = 0; i < deviceGroupCount; ++i) {
-        deviceGroups[i].sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES;
-        deviceGroups[i].pNext = nullptr;
-    }
-    vkEnumeratePhysicalDeviceGroups(vkInstance, &deviceGroupCount, &deviceGroups[0]);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void GraphicsContext::queryExtensions(VkPhysicalDevice device, GraphicsDeviceInfo& outDeviceInfo) const
 {
     uint32_t extensionCount = 0;
 
     VkResult result = vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
-    RFX_CHECK_STATE(result == VK_SUCCESS && extensionCount > 0,
-        "Failed to query device extension count");
+    RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to query device extension count");
+
+    if (extensionCount == 0) {
+        return;
+    }
 
     outDeviceInfo.extensions.resize(extensionCount);
 
@@ -400,7 +405,8 @@ void GraphicsContext::queryFeatures(VkPhysicalDevice device, GraphicsDeviceInfo&
 void GraphicsContext::queryProperties(VkPhysicalDevice device, GraphicsDeviceInfo& outDeviceInfo) const
 {
     vkGetPhysicalDeviceProperties(device, &outDeviceInfo.properties);
-    vkGetPhysicalDeviceFormatProperties(device, GraphicsDevice::DEPTHBUFFER_FORMAT, &outDeviceInfo.depthBufferFormatProperties);
+    vkGetPhysicalDeviceFormatProperties(device, GraphicsDevice::DEPTHBUFFER_FORMAT, 
+        &outDeviceInfo.depthBufferFormatProperties);
     vkGetPhysicalDeviceMemoryProperties(device, &outDeviceInfo.memoryProperties);
 }
 
@@ -411,8 +417,9 @@ void GraphicsContext::queryQueueFamilies(VkPhysicalDevice device, GraphicsDevice
     uint32_t queueFamiliesCount = 0;
 
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamiliesCount, nullptr);
-    RFX_CHECK_STATE(queueFamiliesCount > 0,
-        "Failed to query queue family count");
+    if (queueFamiliesCount == 0) {
+        return;
+    }
 
     std::vector<VkQueueFamilyProperties> queueFamilies;
     queueFamilies.resize(queueFamiliesCount);
@@ -490,8 +497,11 @@ void GraphicsContext::queryPresentModes(VkPhysicalDevice device,
 
     VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(device, 
         presentationSurface, &presentModesCount, nullptr);
-    RFX_CHECK_STATE(result == VK_SUCCESS && presentModesCount > 0,
-        "Failed to get number of supported present modes");
+    RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to get number of supported present modes");
+
+    if (presentModesCount == 0) {
+        return;
+    }
 
     outDeviceInfo.presentModes.resize(presentModesCount);
 
@@ -525,8 +535,12 @@ void GraphicsContext::queryPresentationSurfaceFormats(VkPhysicalDevice device,
 {
     uint32_t formatsCount = 0;
     VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(device, presentationSurface, &formatsCount, nullptr);
-    RFX_CHECK_STATE(result == VK_SUCCESS && formatsCount > 0,
+    RFX_CHECK_STATE(result == VK_SUCCESS,
         "Failed to get number of supported presentation surface formats");
+
+    if (formatsCount == 0) {
+        return;
+    }
 
     outDeviceInfo.presentSurfaceFormats.resize(formatsCount);
 
@@ -571,6 +585,23 @@ void GraphicsContext::querySwapChainImageSize(VkPhysicalDevice device,
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void GraphicsContext::queryDeviceGroups()
+{
+    uint32_t deviceGroupCount = 0;
+    const VkResult result = vkEnumeratePhysicalDeviceGroups(vkInstance, &deviceGroupCount, nullptr);
+    RFX_CHECK_STATE(result == VK_SUCCESS,
+        "Failed to query physical device groups");
+
+    deviceGroups.resize(deviceGroupCount);
+    for (uint32_t i = 0; i < deviceGroupCount; ++i) {
+        deviceGroups[i].sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES;
+        deviceGroups[i].pNext = nullptr;
+    }
+    vkEnumeratePhysicalDeviceGroups(vkInstance, &deviceGroupCount, &deviceGroups[0]);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 shared_ptr<GraphicsDevice> GraphicsContext::createGraphicsDevice(
     const VkPhysicalDeviceFeatures& features,
     const vector<string>& extensions, 
@@ -579,7 +610,8 @@ shared_ptr<GraphicsDevice> GraphicsContext::createGraphicsDevice(
     vector<string> copyOfExtensions = extensions;
     copyOfExtensions.emplace_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
-    VkPhysicalDevice physicalDevice = findFirstMatchingPhysicalDevice(features, copyOfExtensions, queueCapabilities);
+    const VkPhysicalDevice physicalDevice = 
+        findFirstMatchingPhysicalDevice(features, copyOfExtensions, queueCapabilities);
     RFX_CHECK_STATE(physicalDevice != nullptr,
         "No suitable device available");
 
@@ -635,9 +667,17 @@ bool GraphicsContext::isMatching(const GraphicsDeviceInfo& deviceInfo,
     const vector<string>& extensions, 
     const vector<VkQueueFlagBits>& queueCapabilities) const
 {
-    return hasFeatures(deviceInfo, features)
+    return hasRequiredAPIVersion(deviceInfo)
+        && hasFeatures(deviceInfo, features)
         && hasExtensions(deviceInfo, extensions)
         && hasQueueCapabilities(deviceInfo, queueCapabilities);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+bool GraphicsContext::hasRequiredAPIVersion(const GraphicsDeviceInfo& deviceInfo) const
+{
+    return deviceInfo.properties.apiVersion >= REQUIRED_VERSION;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -40,7 +40,7 @@ private:
     void loadVulkanLibrary();
     void loadVulkanLoaderFunctions();
     void loadGlobalFunctions();
-    void queryAvailableInstanceExtensions();
+    void queryInstanceExtensions();
     void checkThatRequestedInstanceExtensionsAreAvailable(const std::vector<std::string>& requestedExtensions);
     void createVulkanInstance(const std::string& applicationName,
         const std::vector<std::string>& requestedExtensions);
@@ -70,9 +70,10 @@ private:
         const std::vector<std::string>& extensions,
         const std::vector<VkQueueFlagBits>& queueCapabilities);
     bool isMatching(const GraphicsDeviceInfo& deviceInfo, 
-        const VkPhysicalDeviceFeatures& features, 
-        const std::vector<std::string>& extensions,
-        const std::vector<VkQueueFlagBits>& queueCapabilities) const;
+                    const VkPhysicalDeviceFeatures& features, 
+                    const std::vector<std::string>& extensions,
+                    const std::vector<VkQueueFlagBits>& queueCapabilities) const;
+    bool hasRequiredAPIVersion(const GraphicsDeviceInfo& deviceInfo) const;
     bool hasFeatures(const GraphicsDeviceInfo& deviceInfo,
         const VkPhysicalDeviceFeatures& expectedFeatures) const;
     bool hasExtensions(const GraphicsDeviceInfo& deviceInfo,
@@ -98,6 +99,7 @@ private:
 
     DECLARE_VULKAN_FUNCTION(vkGetInstanceProcAddr);
 
+    DECLARE_VULKAN_FUNCTION(vkEnumerateInstanceVersion);
     DECLARE_VULKAN_FUNCTION(vkEnumerateInstanceExtensionProperties);
     DECLARE_VULKAN_FUNCTION(vkEnumerateInstanceLayerProperties);
     DECLARE_VULKAN_FUNCTION(vkCreateInstance);
