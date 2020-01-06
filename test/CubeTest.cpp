@@ -98,17 +98,29 @@ void CubeTest::initialize()
 void CubeTest::initCamera()
 {
     modelMatrix = mat4(1.0f);
-    viewMatrix = lookAt(vec3(3.0f, 3.0f, 10.0f), vec3(0.0f), vec3(0.0f, 1.0f, 0.0f));
+    cameraPosition = vec3(3.0f, 3.0f, 10.0f);
+    cameraLookAt = vec3(0.0f);
+    cameraUp = vec3(0.0f, 1.0f, 0.0f);
     projectionMatrix = perspective(radians(45.0f), 1.0f, 0.1f, 100.0f);
     clipMatrix = mat4(1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, -1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 0.5f, 0.0f,
         0.0f, 0.0f, 0.5f, 1.0f);
 
-    modelViewProjMatrix = clipMatrix * projectionMatrix * viewMatrix * modelMatrix;
-
     uniformBuffer = graphicsDevice->createUniformBuffer(sizeof(modelViewProjMatrix));
-    uniformBuffer->load(sizeof(modelViewProjMatrix), reinterpret_cast<byte*>(&modelViewProjMatrix));
+
+    updateModelViewProjection();
+
+    uniformBuffer->bind();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CubeTest::updateModelViewProjection()
+{
+    viewMatrix = lookAt(cameraPosition, cameraLookAt, cameraUp);
+    modelViewProjMatrix = clipMatrix * projectionMatrix * viewMatrix * modelMatrix;
+    uniformBuffer->load(sizeof(modelViewProjMatrix), reinterpret_cast<std::byte*>(&modelViewProjMatrix));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -356,7 +368,8 @@ void CubeTest::initFrameBuffers()
 void CubeTest::initVertexBuffer()
 {
     vertexBuffer = graphicsDevice->createVertexBuffer(sizeof(cubeVertices));
-    vertexBuffer->load(sizeof(cubeVertices), reinterpret_cast<const byte*>(cubeVertices));
+    vertexBuffer->load(sizeof(cubeVertices), reinterpret_cast<const std::byte*>(cubeVertices));
+    vertexBuffer->bind();
 
     vertexInputBinding.binding = 0;
     vertexInputBinding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
@@ -516,6 +529,48 @@ void CubeTest::onResized(Window* window, int clientWidth, int clientHeight)
 
 void CubeTest::update()
 {
+    static const float MOVE_DELTA = 0.005f;
+
+    Win32Application::update();
+
+    bool cameraNeedsUpdate = false;
+
+    if (keyboard->isKeyDown(Keyboard::KEY_W)) {
+        cameraPosition.z -= MOVE_DELTA;
+        cameraLookAt.z -= MOVE_DELTA;
+        cameraNeedsUpdate = true;
+    }
+    if (keyboard->isKeyDown(Keyboard::KEY_S)) {
+        cameraPosition.z += MOVE_DELTA;
+        cameraLookAt.z += MOVE_DELTA;
+        cameraNeedsUpdate = true;
+    }
+    
+    if (keyboard->isKeyDown(Keyboard::KEY_A)) {
+        cameraPosition.x -= MOVE_DELTA;
+        cameraLookAt.x -= MOVE_DELTA;
+        cameraNeedsUpdate = true;
+    }
+    else if (keyboard->isKeyDown(Keyboard::KEY_D)) {
+        cameraPosition.x += MOVE_DELTA;
+        cameraLookAt.x += MOVE_DELTA;
+        cameraNeedsUpdate = true;
+    }
+
+    if (keyboard->isKeyDown(Keyboard::KEY_UP)) {
+        cameraPosition.y += MOVE_DELTA;
+        cameraLookAt.y += MOVE_DELTA;
+        cameraNeedsUpdate = true;
+    }
+    else if (keyboard->isKeyDown(Keyboard::KEY_DOWN)) {
+        cameraPosition.y -= MOVE_DELTA;
+        cameraLookAt.y -= MOVE_DELTA;
+        cameraNeedsUpdate = true;
+    }
+
+    if (cameraNeedsUpdate) {
+        updateModelViewProjection();
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

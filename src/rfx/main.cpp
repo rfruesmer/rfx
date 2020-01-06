@@ -1,4 +1,4 @@
-// rfx.cpp : Defines the entry point for the application.
+// main.cpp : Defines the entry point for the application.
 //
 
 #include "rfx/pch.h"
@@ -31,8 +31,6 @@ int main()
     try
     {
         RFX_LOG_INFO << "Starting rfx application ...";
-
-        Logger::setLogLevel(LogLevel::TRACE);
 
         CubeTest theApp(instanceHandle);
         theApp.initialize();

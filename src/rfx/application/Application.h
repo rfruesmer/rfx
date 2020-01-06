@@ -3,6 +3,7 @@
 #include "rfx/application/Window.h"
 #include "rfx/graphics/GraphicsContext.h"
 #include "rfx/graphics/GraphicsDevice.h"
+#include "rfx/input/InputDeviceFactory.h"
 #include "rfx/core/Timer.h"
 
 namespace rfx
@@ -15,6 +16,8 @@ public:
 
     virtual void initialize();
 
+    void onActivated(Window* window) override;
+    void onDeactivated(Window* window) override;
     void onMinimized(Window* window) override;
     void onMaximized(Window* window) override;
     void onResizing(Window* window) override;
@@ -24,10 +27,13 @@ public:
 
 protected:
     virtual void loadConfiguration();
+    void initLogger();
     virtual void createWindow() = 0;
     virtual void initGraphics();
+    virtual std::unique_ptr<InputDeviceFactory> initInputDeviceFactory() = 0;
+    virtual void initInput();
 
-    virtual void update() {}
+    virtual void update();
     virtual void draw() {}
 
     std::string name;
@@ -37,6 +43,8 @@ protected:
     std::shared_ptr<Window> window;
     std::unique_ptr<GraphicsContext> graphicsContext;
     std::shared_ptr<GraphicsDevice> graphicsDevice;
+    std::unique_ptr<InputDeviceFactory> inputDeviceFactory;
+    std::unique_ptr<Keyboard> keyboard;
 };
 
 } // namespace rfx

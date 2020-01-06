@@ -1,6 +1,7 @@
 {
   "application": {
-    "name": "rfx"
+    "name": "rfx",
+    "logLevel": "TRACE"
   },
   "graphics": {
     "resolution": {

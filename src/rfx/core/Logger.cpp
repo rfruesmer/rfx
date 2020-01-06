@@ -72,6 +72,23 @@ bool Logger::isFiltered(LogLevel logLevel)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+LogLevel Logger::toLogLevel(const std::string& logLevelAsString)
+{
+    static unordered_map<string, LogLevel> logLevelMapping = {
+        {"FATAL", LogLevel::FATAL},
+        {"ERROR", LogLevel::ERROR},
+        {"WARNING", LogLevel::WARNING},
+        {"INFO", LogLevel::INFO},
+        {"DEBUG", LogLevel::DEBUG},
+        {"TRACE", LogLevel::TRACE}
+    };
+
+    const auto& it = logLevelMapping.find(logLevelAsString);
+    return it != logLevelMapping.end() ? it->second : LogLevel::INFO;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 Logger::~Logger()
 {
     os << endl << "\t" << messageFile << "(" << messageLine << ")" << endl;

@@ -35,9 +35,17 @@ LRESULT Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg)
     {
+    case WM_ACTIVATE:
+        if (LOWORD(wParam) == WA_ACTIVE) {
+            onActivated();
+        }
+        else if (LOWORD(wParam) == WA_INACTIVE) {
+            onDeactivated();
+        }
+        break;
+
     case WM_KEYUP:
-        if (wParam == VK_ESCAPE)
-        {
+        if (wParam == VK_ESCAPE) {
             PostQuitMessage(0);
         }
         break;
@@ -53,16 +61,13 @@ LRESULT Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_SIZE:
         clientWidth = LOWORD(lParam);
         clientHeight = HIWORD(lParam);
-        if (wParam == SIZE_MINIMIZED)
-        {
+        if (wParam == SIZE_MINIMIZED) {
             onMinimized();
         }
-        else if (wParam == SIZE_MAXIMIZED)
-        {
+        else if (wParam == SIZE_MAXIMIZED) {
             onMaximized();
         }
-        else if (!resizing)
-        {
+        else if (!resizing) {
             onResized();
         }
         break;

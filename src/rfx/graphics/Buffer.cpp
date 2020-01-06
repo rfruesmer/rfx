@@ -44,8 +44,13 @@ void Buffer::load(size_t size, const std::byte* data) const
     memcpy(memory, data, size);
 
     vkUnmapMemory(vkDevice, vkDeviceMemory);
+}
 
-    result = vkBindBufferMemory(vkDevice, vkBuffer, vkDeviceMemory, 0);
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Buffer::bind() const
+{
+    const VkResult result = vkBindBufferMemory(vkDevice, vkBuffer, vkDeviceMemory, 0);
     RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to bind buffer memory");
 }
 

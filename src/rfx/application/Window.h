@@ -18,6 +18,9 @@ class WindowListener
 public:
     virtual ~WindowListener() = default;
 
+    virtual void onActivated(Window* window) = 0;
+    virtual void onDeactivated(Window* window) = 0;
+
     virtual void onMinimized(Window* window) = 0;
     virtual void onMaximized(Window* window) = 0;
     virtual void onResizing(Window* window) = 0;
@@ -40,6 +43,8 @@ public:
     virtual void create(const std::string& title, int clientWidth, int clientHeight) = 0;
 
 protected:
+    void onActivated();
+    void onDeactivated();
     void onMinimized();
     void onMaximized();
     void onResizing();

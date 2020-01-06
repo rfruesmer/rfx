@@ -18,6 +18,7 @@ public:
     VkBuffer getHandle() const;
 
     void load(size_t size, const std::byte* data) const;
+    void bind() const;
 
     VkDescriptorBufferInfo& getBufferInfo();
 

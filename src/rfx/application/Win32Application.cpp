@@ -1,6 +1,7 @@
 #include "rfx/pch.h"
 #include "rfx/application/Win32Application.h"
 #include "rfx/application/Win32Window.h"
+#include "rfx/input/directx/DXInputDeviceFactory.h"
 
 using namespace rfx;
 using namespace std;
@@ -31,6 +32,13 @@ void Win32Application::createWindow()
     window = make_unique<Win32Window>(instanceHandle);
     window->create(windowTitle, resolution["x"].asInt(), resolution["y"].asInt());
     window->addListener(this);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+unique_ptr<InputDeviceFactory> Win32Application::initInputDeviceFactory()
+{
+    return make_unique<DXInputDeviceFactory>(instanceHandle);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

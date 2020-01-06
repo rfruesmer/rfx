@@ -35,6 +35,7 @@ class Logger
 public:
     static void setLogLevel(LogLevel logLevel);
     static bool isFiltered(LogLevel logLevel);
+    static LogLevel toLogLevel(const std::string& logLevelAsString);
     
     ~Logger();
     

@@ -105,7 +105,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>User32.lib</AdditionalDependencies>
+      <AdditionalDependencies>User32.lib;dinput8.lib;dxguid.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>robocopy $(SolutionDir)assets $(TargetDir)assets /MIR || exit /b 0</Command>
@@ -134,7 +134,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>User32.lib</AdditionalDependencies>
+      <AdditionalDependencies>User32.lib;dinput8.lib;dxguid.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>robocopy $(SolutionDir)assets $(TargetDir)assets /MIR || exit /b 0</Command>
@@ -167,7 +167,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>User32.lib</AdditionalDependencies>
+      <AdditionalDependencies>User32.lib;dinput8.lib;dxguid.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>robocopy $(SolutionDir)assets $(TargetDir)assets /MIR || exit /b 0</Command>
@@ -200,7 +200,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>User32.lib</AdditionalDependencies>
+      <AdditionalDependencies>User32.lib;dinput8.lib;dxguid.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>robocopy $(SolutionDir)assets $(TargetDir)assets /MIR || exit /b 0</Command>
@@ -225,6 +225,11 @@
     <ClInclude Include="src\rfx\graphics\GraphicsDeviceInfo.h" />
     <ClInclude Include="src\rfx\graphics\QueueFamilyInfo.h" />
     <ClInclude Include="src\rfx\graphics\SPIR.h" />
+    <ClInclude Include="src\rfx\input\directx\DXKeyboard.h" />
+    <ClInclude Include="src\rfx\input\InputDevice.h" />
+    <ClInclude Include="src\rfx\input\InputDeviceFactory.h" />
+    <ClInclude Include="src\rfx\input\directx\DXInputDeviceFactory.h" />
+    <ClInclude Include="src\rfx\input\Keyboard.h" />
     <ClInclude Include="test\CubeTest.h" />
     <ClInclude Include="src\rfx\graphics\GraphicsDevice.h" />
     <ClInclude Include="src\rfx\core\Logger.h" />
@@ -247,6 +252,10 @@
     <ClCompile Include="src\rfx\graphics\Queue.cpp" />
     <ClCompile Include="src\rfx\graphics\GraphicsContext.cpp" />
     <ClCompile Include="src\rfx\graphics\SPIR.cpp" />
+    <ClCompile Include="src\rfx\input\directx\DXKeyboard.cpp" />
+    <ClCompile Include="src\rfx\input\InputDevice.cpp" />
+    <ClCompile Include="src\rfx\input\InputDeviceFactory.cpp" />
+    <ClCompile Include="src\rfx\input\directx\DXInputDeviceFactory.cpp" />
     <ClCompile Include="test\CubeTest.cpp" />
     <ClCompile Include="src\rfx\graphics\GraphicsDevice.cpp" />
     <ClCompile Include="src\rfx\core\Logger.cpp" />

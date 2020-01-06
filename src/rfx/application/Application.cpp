@@ -10,8 +10,11 @@ using namespace std;
 void Application::initialize()
 {
     loadConfiguration();
+    initLogger();
     createWindow();
     initGraphics();
+    inputDeviceFactory = initInputDeviceFactory();
+    initInput();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -29,6 +32,14 @@ void Application::loadConfiguration()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void Application::initLogger()
+{
+    const LogLevel configuredLogLevel = Logger::toLogLevel(configuration["application"]["logLevel"].asString());
+    Logger::setLogLevel(configuredLogLevel);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void Application::initGraphics()
 {
     graphicsContext = make_unique<GraphicsContext>();
@@ -41,6 +52,34 @@ void Application::initGraphics()
         { VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT });
 
     onResized(window.get(), window->getWidth(), window->getHeight());
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Application::initInput()
+{
+    keyboard = inputDeviceFactory->createKeyboard(window->getHandle());
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Application::update()
+{
+    keyboard->update();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Application::onActivated(Window* window)
+{
+    keyboard->acquire();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Application::onDeactivated(Window* window)
+{
+    keyboard->unacquire();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

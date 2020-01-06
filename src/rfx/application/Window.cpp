@@ -53,14 +53,31 @@ void Window::addListener(WindowListener* listener)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void Window::onActivated()
+{
+    for (WindowListener* listener : listeners) {
+        listener->onActivated(this);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Window::onDeactivated()
+{
+    for (WindowListener* listener : listeners) {
+        listener->onDeactivated(this);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void Window::onMinimized()
 {
     resizing = false;
     maximized = false;
     minimized = true;
 
-    for (WindowListener* listener : listeners)
-    {
+    for (WindowListener* listener : listeners) {
         listener->onMinimized(this);
     }
 }
@@ -73,8 +90,7 @@ void Window::onMaximized()
     maximized = true;
     minimized = false;
 
-    for (WindowListener* listener : listeners)
-    {
+    for (WindowListener* listener : listeners) {
         listener->onMaximized(this);
     }
 }
@@ -85,8 +101,7 @@ void Window::onResizing()
 {
     resizing = true;
 
-    for (WindowListener* listener : listeners)
-    {
+    for (WindowListener* listener : listeners) {
         listener->onResizing(this);
     }
 }
@@ -97,8 +112,7 @@ void Window::onResized()
 {
     resizing = false;
 
-    for (WindowListener* listener : listeners)
-    {
+    for (WindowListener* listener : listeners) {
         listener->onResized(this, clientWidth, clientHeight);
     }
 }

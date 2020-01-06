@@ -16,6 +16,7 @@ public:
     explicit CubeTest(HINSTANCE instanceHandle);
 
     void initialize() override;
+    void updateModelViewProjection();
     void update() override;
     void draw() override;
 
@@ -37,6 +38,9 @@ private:
     void initVertexBuffer();
     void initPipeline();
 
+    glm::vec3 cameraPosition;
+    glm::vec3 cameraLookAt;
+    glm::vec3 cameraUp;
     glm::mat4 modelMatrix;
     glm::mat4 viewMatrix;
     glm::mat4 projectionMatrix;
