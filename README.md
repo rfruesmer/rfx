@@ -6,7 +6,7 @@ Vulkan Playground
 ### System requirements
 
 - Windows 10
-- Visual Studio 2019 (preferred) or 2017 Community Edition
+- Visual Studio 2019 Community Edition
 - Windows 10 SDK
 
 ### External Libraries
