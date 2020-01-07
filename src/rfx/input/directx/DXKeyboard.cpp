@@ -74,7 +74,8 @@ bool DXKeyboard::isKeyDown(Key key)
         {KEY_LEFT, DIK_LEFT},
         {KEY_RIGHT, DIK_RIGHT},
         {KEY_UP, DIK_UP},
-        {KEY_DOWN, DIK_DOWN}
+        {KEY_DOWN, DIK_DOWN},
+        {KEY_ESCAPE, DIK_ESCAPE}
     };
 
     const auto it = keyMapping.find(key);

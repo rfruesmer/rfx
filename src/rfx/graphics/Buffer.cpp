@@ -56,7 +56,7 @@ void Buffer::bind() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Buffer::dispose()
+void Buffer::destroy()
 {
     if (vkBuffer) {
         vkDestroyBuffer(vkDevice, vkBuffer, nullptr);

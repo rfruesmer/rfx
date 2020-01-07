@@ -13,7 +13,7 @@ public:
         size_t size,
         size_t range);
 
-    void dispose();
+    void destroy();
 
     VkBuffer getHandle() const;
 

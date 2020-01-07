@@ -83,14 +83,14 @@ void CubeTest::initialize()
     initCamera();
     initPipelineLayout();
     initDescriptorSet();
-    initCommandPool();
-    initCommandBuffer();
     initRenderPass();
     initVertexShaderModule();
     initFragmentShaderModule();
     initFrameBuffers();
     initVertexBuffer();
     initPipeline();
+    initCommandPool();
+    initCommandBuffers();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -202,24 +202,64 @@ void CubeTest::initCommandPool()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void CubeTest::initCommandBuffer()
+void CubeTest::initCommandBuffers()
 {
-    commandBuffer = commandPool->createCommandBuffer();
+    commandBuffers = commandPool->allocateCommandBuffers(graphicsDevice->getSwapChainBuffers().size());
+
+    const VkExtent2D presentImageSize = graphicsDevice->getSwapChainProperties().imageSize;
+
+    VkClearValue clearValues[2];
+    clearValues[0].color.float32[0] = 0.2f;
+    clearValues[0].color.float32[1] = 0.2f;
+    clearValues[0].color.float32[2] = 0.2f;
+    clearValues[0].color.float32[3] = 0.2f;
+    clearValues[1].depthStencil.depth = 1.0f;
+    clearValues[1].depthStencil.stencil = 0;
+
+    VkViewport viewport;
+    viewport.x = 0;
+    viewport.y = 0;
+    viewport.width = static_cast<float>(presentImageSize.width);
+    viewport.height = static_cast<float>(presentImageSize.height);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    VkRect2D scissor;
+    scissor.extent.width = presentImageSize.width;
+    scissor.extent.height = presentImageSize.height;
+    scissor.offset.x = 0;
+    scissor.offset.y = 0;
+
+    for (size_t i = 0, count = commandBuffers.size(); i < count; ++i) {
+        VkRenderPassBeginInfo renderPassBeginInfo = {};
+        renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassBeginInfo.pNext = nullptr;
+        renderPassBeginInfo.renderPass = renderPass;
+        renderPassBeginInfo.framebuffer = frameBuffers[i];
+        renderPassBeginInfo.renderArea.offset.x = 0;
+        renderPassBeginInfo.renderArea.offset.y = 0;
+        renderPassBeginInfo.renderArea.extent = presentImageSize;
+        renderPassBeginInfo.clearValueCount = 2;
+        renderPassBeginInfo.pClearValues = clearValues;
+
+        auto& commandBuffer = commandBuffers[i];
+        commandBuffer->begin();
+        commandBuffer->beginRenderPass(renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+        commandBuffer->bindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, descriptorSets);
+        commandBuffer->bindVertexBuffers({ vertexBuffer });
+        commandBuffer->setViewport(viewport);
+        commandBuffer->setScissor(scissor);
+        commandBuffer->draw(36);
+        commandBuffer->endRenderPass();
+        commandBuffer->end();
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void CubeTest::initRenderPass()
 {
-    //VkSemaphoreCreateInfo imageAcquiredSemaphoreCreateInfo;
-    //imageAcquiredSemaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    //imageAcquiredSemaphoreCreateInfo.pNext = nullptr;
-    //imageAcquiredSemaphoreCreateInfo.flags = 0;
-
-    //const VkSemaphore imageAcquiredSemaphore = graphicsDevice->createSemaphore(imageAcquiredSemaphoreCreateInfo);
-
-    //uint32_t nextImageIndex = graphicsDevice->acquireNextSwapChainImage(UINT64_MAX, imageAcquiredSemaphore, nullptr);
-
     VkAttachmentDescription attachments[2];
     attachments[0].format = graphicsDevice->getSwapChainFormat();
     attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
@@ -324,7 +364,7 @@ void CubeTest::initFragmentShaderModule()
     shaderStageCreateInfos[1].flags = 0;
     shaderStageCreateInfos[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
     shaderStageCreateInfos[1].pName = "main";
-
+    
     VkShaderModuleCreateInfo shaderModuleCreateInfo;
     shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     shaderModuleCreateInfo.pNext = nullptr;
@@ -533,6 +573,7 @@ void CubeTest::update()
         cameraLookAt.z -= MOVE_DELTA;
         cameraNeedsUpdate = true;
     }
+
     if (keyboard->isKeyDown(Keyboard::KEY_S)) {
         cameraPosition.z += MOVE_DELTA;
         cameraLookAt.z += MOVE_DELTA;
@@ -544,7 +585,8 @@ void CubeTest::update()
         cameraLookAt.x -= MOVE_DELTA;
         cameraNeedsUpdate = true;
     }
-    else if (keyboard->isKeyDown(Keyboard::KEY_D)) {
+
+    if (keyboard->isKeyDown(Keyboard::KEY_D)) {
         cameraPosition.x += MOVE_DELTA;
         cameraLookAt.x += MOVE_DELTA;
         cameraNeedsUpdate = true;
@@ -555,10 +597,15 @@ void CubeTest::update()
         cameraLookAt.y += MOVE_DELTA;
         cameraNeedsUpdate = true;
     }
-    else if (keyboard->isKeyDown(Keyboard::KEY_DOWN)) {
+
+    if (keyboard->isKeyDown(Keyboard::KEY_DOWN)) {
         cameraPosition.y -= MOVE_DELTA;
         cameraLookAt.y -= MOVE_DELTA;
         cameraNeedsUpdate = true;
+    }
+
+    if (keyboard->isKeyDown(Keyboard::KEY_ESCAPE)) {
+        PostQuitMessage(0);
     }
 
     if (cameraNeedsUpdate) {
@@ -570,8 +617,6 @@ void CubeTest::update()
 
 void CubeTest::draw()
 {
-    const GraphicsDeviceInfo& deviceInfo = graphicsDevice->getDeviceInfo();
-
     VkSemaphoreCreateInfo imageAcquiredSemaphoreCreateInfo;
     imageAcquiredSemaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
     imageAcquiredSemaphoreCreateInfo.pNext = nullptr;
@@ -592,53 +637,6 @@ void CubeTest::draw()
         RFX_CHECK_STATE(false, "Failed to acquire next swap chain image");
     }    
 
-    const VkExtent2D presentImageSize = graphicsDevice->getSwapChainProperties().imageSize;
-
-    VkClearValue clearValues[2];
-    clearValues[0].color.float32[0] = 0.2f;
-    clearValues[0].color.float32[1] = 0.2f;
-    clearValues[0].color.float32[2] = 0.2f;
-    clearValues[0].color.float32[3] = 0.2f;
-    clearValues[1].depthStencil.depth = 1.0f;
-    clearValues[1].depthStencil.stencil = 0;
-
-    VkRenderPassBeginInfo renderPassBeginInfo = {};
-    renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassBeginInfo.pNext = nullptr;
-    renderPassBeginInfo.renderPass = renderPass;
-    renderPassBeginInfo.framebuffer = frameBuffers[nextImageIndex];
-    renderPassBeginInfo.renderArea.offset.x = 0;
-    renderPassBeginInfo.renderArea.offset.y = 0;
-    renderPassBeginInfo.renderArea.extent.width = presentImageSize.width;
-    renderPassBeginInfo.renderArea.extent.height = presentImageSize.height;
-    renderPassBeginInfo.clearValueCount = 2;
-    renderPassBeginInfo.pClearValues = clearValues;
-
-    VkViewport viewport;
-    viewport.x = 0;
-    viewport.y = 0;
-    viewport.width = static_cast<float>(presentImageSize.width);
-    viewport.height = static_cast<float>(presentImageSize.height);
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-
-    VkRect2D scissor;
-    scissor.extent.width = presentImageSize.width;
-    scissor.extent.height = presentImageSize.height;
-    scissor.offset.x = 0;
-    scissor.offset.y = 0;
-
-    commandBuffer->begin();
-    commandBuffer->beginRenderPass(renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-    commandBuffer->bindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, descriptorSets);
-    commandBuffer->bindVertexBuffers({ vertexBuffer });
-    commandBuffer->setViewport(viewport);
-    commandBuffer->setScissor(scissor);
-    commandBuffer->draw(36);
-    commandBuffer->endRenderPass();
-    commandBuffer->end();
-
     VkFenceCreateInfo fenceCreateInfo;
     fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fenceCreateInfo.pNext = nullptr;
@@ -646,7 +644,7 @@ void CubeTest::draw()
     VkFence drawFence = graphicsDevice->createFence(fenceCreateInfo);
 
     VkPipelineStageFlags pipelineStageFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    VkCommandBuffer commandBuffers[] = { commandBuffer->getHandle() };
+    VkCommandBuffer vkCommandBuffers[] = { commandBuffers[nextImageIndex]->getHandle() };
 
     VkSubmitInfo submitInfo = {};
     submitInfo.pNext = nullptr;
@@ -655,7 +653,7 @@ void CubeTest::draw()
     submitInfo.pWaitSemaphores = &imageAcquiredSemaphore;
     submitInfo.pWaitDstStageMask = &pipelineStageFlags;
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = commandBuffers;
+    submitInfo.pCommandBuffers = vkCommandBuffers;
     submitInfo.signalSemaphoreCount = 0;
     submitInfo.pSignalSemaphores = nullptr;
 
@@ -691,14 +689,9 @@ void CubeTest::shutdown()
     destroyPipeline();
     destroyPipelineLayout();
     destroyRenderPass();
-
-    graphicsDevice->destroyShaderModule(shaderStageCreateInfos[0].module);
-    graphicsDevice->destroyShaderModule(shaderStageCreateInfos[1].module);
-    graphicsDevice->destroyDescriptorPool(descriptorPool);
-    graphicsDevice->destroyDescriptorSetLayout(descriptorSetLayout);
-
-    vertexBuffer->dispose();
-    uniformBuffer->dispose();
+    destroyShaderModules();
+    destroyDescriptors();
+    destroyBuffers();
 
     glslang::FinalizeProcess();
 }
@@ -742,6 +735,30 @@ void CubeTest::destroyRenderPass()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void CubeTest::destroyShaderModules()
+{
+    graphicsDevice->destroyShaderModule(shaderStageCreateInfos[0].module);
+    graphicsDevice->destroyShaderModule(shaderStageCreateInfos[1].module);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CubeTest::destroyDescriptors()
+{
+    graphicsDevice->destroyDescriptorPool(descriptorPool);
+    graphicsDevice->destroyDescriptorSetLayout(descriptorSetLayout);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CubeTest::destroyBuffers() const
+{
+    vertexBuffer->destroy();
+    uniformBuffer->destroy();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void CubeTest::recreateSwapChain()
 {
     graphicsDevice->waitIdle();
@@ -750,16 +767,29 @@ void CubeTest::recreateSwapChain()
     freeCommandBuffers();
     destroyPipeline();
     destroyRenderPass();
-    
-    graphicsDevice->destroyDepthBuffer();
-    graphicsDevice->destroySwapChain();
-    graphicsDevice->createSwapChain();
-    graphicsDevice->createDepthBuffer();
+    destroySwapChainAndDepthBuffer();
 
+    createSwapChainAndDepthBuffer();
     initRenderPass();
     initPipeline();
     initFrameBuffers();
-    initCommandBuffer();
+    initCommandBuffers();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CubeTest::destroySwapChainAndDepthBuffer() const
+{
+    graphicsDevice->destroyDepthBuffer();
+    graphicsDevice->destroySwapChain();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CubeTest::createSwapChainAndDepthBuffer() const
+{
+    graphicsDevice->createSwapChain();
+    graphicsDevice->createDepthBuffer();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

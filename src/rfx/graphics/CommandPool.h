@@ -21,7 +21,8 @@ public:
 
     void clear();
 
-    std::shared_ptr<CommandBuffer> createCommandBuffer();
+    std::shared_ptr<CommandBuffer> allocateCommandBuffer();
+    std::vector<std::shared_ptr<CommandBuffer>> allocateCommandBuffers(size_t count);
     void freeCommandBuffer(const std::shared_ptr<CommandBuffer>& commandBuffer);
     void freeCommandBuffers(const std::vector<std::shared_ptr<CommandBuffer>>& commandBuffers);
     void freeAllCommandBuffers();

@@ -18,7 +18,8 @@ public:
         KEY_LEFT,
         KEY_RIGHT,
         KEY_UP,
-        KEY_DOWN
+        KEY_DOWN,
+        KEY_ESCAPE
     };
 
     virtual bool isKeyDown(Key key) = 0;

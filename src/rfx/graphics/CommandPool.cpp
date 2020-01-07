@@ -59,25 +59,37 @@ void CommandPool::clear()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-shared_ptr<CommandBuffer> CommandPool::createCommandBuffer()
+shared_ptr<CommandBuffer> CommandPool::allocateCommandBuffer()
+{
+    vector<shared_ptr<CommandBuffer>> commandBuffers = allocateCommandBuffers(1);
+
+    return commandBuffers[0];
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+vector<shared_ptr<CommandBuffer>> CommandPool::allocateCommandBuffers(size_t count)
 {
     VkCommandBufferAllocateInfo allocateInfo = {};
     allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocateInfo.pNext = nullptr;
     allocateInfo.commandPool = vkCommandPool;
     allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocateInfo.commandBufferCount = 1;
+    allocateInfo.commandBufferCount = static_cast<uint32_t>(count);
 
-    VkCommandBuffer vkCommandBuffer = nullptr;
+    vector<VkCommandBuffer> vkCommandBuffers(count);
 
-    const VkResult result = vkAllocateCommandBuffers(vkDevice, &allocateInfo, &vkCommandBuffer);
-    RFX_CHECK_STATE(result == VK_SUCCESS && vkCommandBuffer != nullptr,
-        "Failed to allocate command buffers");
+    const VkResult result = vkAllocateCommandBuffers(vkDevice, &allocateInfo, vkCommandBuffers.data());
+    RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to allocate command buffers");
 
-    shared_ptr<CommandBuffer> commandBuffer = make_shared<CommandBuffer>(vkCommandBuffer, vk);
-    commandBuffers.insert(commandBuffer);
+    vector<shared_ptr<CommandBuffer>> commandBuffers(count);
+    for (size_t i = 0; i < count; ++i) {
+        const shared_ptr<CommandBuffer> commandBuffer = make_shared<CommandBuffer>(vkCommandBuffers[i], vk);
+        commandBuffers[i] = commandBuffer;
+        this->commandBuffers.insert(commandBuffer);
+    }
 
-    return commandBuffer;
+    return commandBuffers;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

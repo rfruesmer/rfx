@@ -44,12 +44,6 @@ LRESULT Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         break;
 
-    case WM_KEYUP:
-        if (wParam == VK_ESCAPE) {
-            PostQuitMessage(0);
-        }
-        break;
-
     case WM_ENTERSIZEMOVE:
         onResizing();
         break;

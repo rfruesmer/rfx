@@ -19,6 +19,11 @@ public:
     void updateModelViewProjection();
     void update() override;
     void draw() override;
+    void destroyShaderModules();
+    void destroyDescriptors();
+    void destroyBuffers() const;
+    void destroySwapChainAndDepthBuffer() const;
+    void createSwapChainAndDepthBuffer() const;
     void destroyRenderPass();
     void destroyPipelineLayout();
     void destroyPipeline();
@@ -31,7 +36,7 @@ private:
     void initPipelineLayout();
     void initDescriptorSet();
     void initCommandPool();
-    void initCommandBuffer();
+    void initCommandBuffers();
     void initRenderPass();
     void initVertexShaderModule();
     void initFragmentShaderModule();
@@ -59,7 +64,7 @@ private:
     VkRenderPass renderPass = nullptr;
     std::vector<VkFramebuffer> frameBuffers;
     std::shared_ptr<CommandPool> commandPool;
-    std::shared_ptr<CommandBuffer> commandBuffer;
+    std::vector<std::shared_ptr<CommandBuffer>> commandBuffers;
     VkPipelineShaderStageCreateInfo shaderStageCreateInfos[2] = {};
     std::shared_ptr<Buffer> uniformBuffer;
     std::shared_ptr<Buffer> vertexBuffer;
