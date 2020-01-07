@@ -342,7 +342,7 @@ void CubeTest::initFrameBuffers()
     const GraphicsDeviceInfo& deviceInfo = graphicsDevice->getDeviceInfo();
 
     VkImageView attachments[2];
-    attachments[1] = graphicsDevice->getDepthBuffer().view;
+    attachments[1] = graphicsDevice->getDepthBuffer().imageView;
 
     VkFramebufferCreateInfo frameBufferCreateInfo = {};
     frameBufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -350,15 +350,15 @@ void CubeTest::initFrameBuffers()
     frameBufferCreateInfo.renderPass = renderPass;
     frameBufferCreateInfo.attachmentCount = 2;
     frameBufferCreateInfo.pAttachments = attachments;
-    frameBufferCreateInfo.width = deviceInfo.presentImageSize.width;
-    frameBufferCreateInfo.height = deviceInfo.presentImageSize.height;
+    frameBufferCreateInfo.width = graphicsDevice->getSwapChainProperties().imageSize.width;
+    frameBufferCreateInfo.height = graphicsDevice->getSwapChainProperties().imageSize.height;
     frameBufferCreateInfo.layers = 1;
 
     const vector<SwapChainBuffer>& swapChainBuffers = graphicsDevice->getSwapChainBuffers();
     frameBuffers.resize(swapChainBuffers.size());
 
     for (size_t i = 0, count = swapChainBuffers.size(); i < count; ++i) {
-        attachments[0] = swapChainBuffers[i].view;
+        attachments[0] = swapChainBuffers[i].imageView;
         frameBuffers[i] = graphicsDevice->createFrameBuffer(frameBufferCreateInfo);
     }
 }
@@ -520,13 +520,6 @@ void CubeTest::initPipeline()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void CubeTest::onResized(Window* window, int clientWidth, int clientHeight)
-{
-    Win32Application::onResized(window, clientWidth, clientHeight);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void CubeTest::update()
 {
     static const float MOVE_DELTA = 0.005f;
@@ -585,7 +578,21 @@ void CubeTest::draw()
     imageAcquiredSemaphoreCreateInfo.flags = 0;
 
     VkSemaphore imageAcquiredSemaphore = graphicsDevice->createSemaphore(imageAcquiredSemaphoreCreateInfo);
-    const uint32_t nextImageIndex = graphicsDevice->acquireNextSwapChainImage(UINT64_MAX, imageAcquiredSemaphore, nullptr);
+    uint32_t nextImageIndex = UINT32_MAX;
+    VkResult result = graphicsDevice->acquireNextSwapChainImage(
+        UINT64_MAX, imageAcquiredSemaphore, nullptr, nextImageIndex);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || windowResized) {
+        windowResized = false;
+        recreateSwapChain();
+        graphicsDevice->destroySemaphore(imageAcquiredSemaphore);
+        return;
+    }
+    else if (result != VK_SUCCESS) {
+        RFX_CHECK_STATE(false, "Failed to acquire next swap chain image");
+    }    
+
+    const VkExtent2D presentImageSize = graphicsDevice->getSwapChainProperties().imageSize;
 
     VkClearValue clearValues[2];
     clearValues[0].color.float32[0] = 0.2f;
@@ -602,22 +609,22 @@ void CubeTest::draw()
     renderPassBeginInfo.framebuffer = frameBuffers[nextImageIndex];
     renderPassBeginInfo.renderArea.offset.x = 0;
     renderPassBeginInfo.renderArea.offset.y = 0;
-    renderPassBeginInfo.renderArea.extent.width = deviceInfo.presentImageSize.width;
-    renderPassBeginInfo.renderArea.extent.height = deviceInfo.presentImageSize.height;
+    renderPassBeginInfo.renderArea.extent.width = presentImageSize.width;
+    renderPassBeginInfo.renderArea.extent.height = presentImageSize.height;
     renderPassBeginInfo.clearValueCount = 2;
     renderPassBeginInfo.pClearValues = clearValues;
 
     VkViewport viewport;
     viewport.x = 0;
     viewport.y = 0;
-    viewport.width = static_cast<float>(deviceInfo.presentImageSize.width);
-    viewport.height = static_cast<float>(deviceInfo.presentImageSize.height);
+    viewport.width = static_cast<float>(presentImageSize.width);
+    viewport.height = static_cast<float>(presentImageSize.height);
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
     VkRect2D scissor;
-    scissor.extent.width = deviceInfo.presentImageSize.width;
-    scissor.extent.height = deviceInfo.presentImageSize.height;
+    scissor.extent.width = presentImageSize.width;
+    scissor.extent.height = presentImageSize.height;
     scissor.offset.x = 0;
     scissor.offset.y = 0;
 
@@ -664,7 +671,6 @@ void CubeTest::draw()
     presentInfo.waitSemaphoreCount = 0;
     presentInfo.pResults = nullptr;
 
-    VkResult result;
     do {
         result = graphicsDevice->waitForFences(1, &drawFence, true, FENCE_TIMEOUT);
     } while (result == VK_TIMEOUT);
@@ -680,21 +686,80 @@ void CubeTest::draw()
 
 void CubeTest::shutdown()
 {
-    graphicsDevice->destroyPipeline(pipeline);
-    for (auto& frameBuffer : frameBuffers) {
-        graphicsDevice->destroyFrameBuffer(frameBuffer);
-    }
+    destroyFrameBuffers();
+    freeCommandBuffers();
+    destroyPipeline();
+    destroyPipelineLayout();
+    destroyRenderPass();
+
     graphicsDevice->destroyShaderModule(shaderStageCreateInfos[0].module);
     graphicsDevice->destroyShaderModule(shaderStageCreateInfos[1].module);
-    graphicsDevice->destroyRenderPass(renderPass);
     graphicsDevice->destroyDescriptorPool(descriptorPool);
     graphicsDevice->destroyDescriptorSetLayout(descriptorSetLayout);
-    graphicsDevice->destroyPipelineLayout(pipelineLayout);
 
     vertexBuffer->dispose();
     uniformBuffer->dispose();
 
     glslang::FinalizeProcess();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CubeTest::destroyFrameBuffers()
+{
+    for (auto& frameBuffer : frameBuffers) {
+        graphicsDevice->destroyFrameBuffer(frameBuffer);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CubeTest::freeCommandBuffers() const
+{
+    commandPool->freeAllCommandBuffers();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CubeTest::destroyPipeline()
+{
+    graphicsDevice->destroyPipeline(pipeline);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CubeTest::destroyPipelineLayout()
+{
+    graphicsDevice->destroyPipelineLayout(pipelineLayout);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CubeTest::destroyRenderPass()
+{
+    graphicsDevice->destroyRenderPass(renderPass);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CubeTest::recreateSwapChain()
+{
+    graphicsDevice->waitIdle();
+
+    destroyFrameBuffers();
+    freeCommandBuffers();
+    destroyPipeline();
+    destroyRenderPass();
+    
+    graphicsDevice->destroyDepthBuffer();
+    graphicsDevice->destroySwapChain();
+    graphicsDevice->createSwapChain();
+    graphicsDevice->createDepthBuffer();
+
+    initRenderPass();
+    initPipeline();
+    initFrameBuffers();
+    initCommandBuffer();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -41,6 +41,7 @@ protected:
     bool paused = false;
     Json::Value configuration;
     std::shared_ptr<Window> window;
+    bool windowResized = false;
     std::unique_ptr<GraphicsContext> graphicsContext;
     std::shared_ptr<GraphicsDevice> graphicsDevice;
     std::unique_ptr<InputDeviceFactory> inputDeviceFactory;

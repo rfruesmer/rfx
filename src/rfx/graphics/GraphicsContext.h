@@ -21,7 +21,8 @@ public:
     std::shared_ptr<GraphicsDevice> createGraphicsDevice(
         const VkPhysicalDeviceFeatures& features,
         const std::vector<std::string>& extensions,
-        const std::vector<VkQueueFlagBits>& queueCapabilities);
+        const std::vector<VkQueueFlagBits>& queueCapabilities,
+        const std::shared_ptr<Window>& window);
     
 private:
 
@@ -57,12 +58,6 @@ private:
     void queryPresentModes(VkPhysicalDevice device, 
         const std::shared_ptr<Window>& window, 
         GraphicsDeviceInfo& outDeviceInfo) const;
-    void queryPresentationSurfaceCapabilities(VkPhysicalDevice device, 
-        GraphicsDeviceInfo& outDeviceInfo) const;
-    void queryPresentationSurfaceFormats(VkPhysicalDevice device, GraphicsDeviceInfo& outDeviceInfo) const;
-    void querySwapChainImageSize(VkPhysicalDevice device,
-        const std::shared_ptr<Window>& window,
-        GraphicsDeviceInfo& outDeviceInfo) const;
     void queryDeviceGroups();
 
     VkPhysicalDevice findFirstMatchingPhysicalDevice(
@@ -85,7 +80,8 @@ private:
     std::shared_ptr<GraphicsDevice> createLogicalDevice(VkPhysicalDevice physicalDevice,
                                                         const VkPhysicalDeviceFeatures& features,
                                                         const std::vector<std::string>& extensions, 
-                                                        const std::vector<VkQueueFlagBits>& queueCapabilities);
+                                                        const std::vector<VkQueueFlagBits>& queueCapabilities,
+                                                        const std::shared_ptr<Window>& window);
     std::vector<QueueFamilyInfo> pickQueueFamilies(VkPhysicalDevice dDevice,
         const std::vector<VkQueueFlagBits>& queueCapabilities);
     int getDeviceGroupIndex(VkPhysicalDevice physicalDevice);

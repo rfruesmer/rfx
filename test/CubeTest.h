@@ -19,8 +19,9 @@ public:
     void updateModelViewProjection();
     void update() override;
     void draw() override;
-
-    void onResized(Window* window, int clientWidth, int clientHeight) override;
+    void destroyRenderPass();
+    void destroyPipelineLayout();
+    void destroyPipeline();
 
 protected:
     void shutdown() override;
@@ -37,6 +38,10 @@ private:
     void initFrameBuffers();
     void initVertexBuffer();
     void initPipeline();
+
+    void recreateSwapChain();
+    void destroyFrameBuffers();
+    void freeCommandBuffers() const;
 
     glm::vec3 cameraPosition;
     glm::vec3 cameraLookAt;

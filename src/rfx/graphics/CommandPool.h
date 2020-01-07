@@ -24,6 +24,7 @@ public:
     std::shared_ptr<CommandBuffer> createCommandBuffer();
     void freeCommandBuffer(const std::shared_ptr<CommandBuffer>& commandBuffer);
     void freeCommandBuffers(const std::vector<std::shared_ptr<CommandBuffer>>& commandBuffers);
+    void freeAllCommandBuffers();
 
 private:
     void invalidate();

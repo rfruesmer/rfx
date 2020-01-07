@@ -1,5 +1,6 @@
 #include "rfx/pch.h"
 #include "rfx/graphics/GraphicsDevice.h"
+#include "GraphicsContext.h"
 
 
 using namespace rfx;
@@ -30,14 +31,22 @@ bool memoryTypeFromProperties(GraphicsDeviceInfo& deviceInfo,
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-GraphicsDevice::GraphicsDevice(VkDevice vkDevice,
+GraphicsDevice::GraphicsDevice(VkDevice vkLogicalDevice,
     VkPhysicalDevice vkPhysicalDevice,
+    VkSurfaceKHR presentationSurface,
     GraphicsDeviceInfo deviceInfo,
-    PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr)
-        : vkDevice(vkDevice),
+    const shared_ptr<Window>& window,
+    PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr,
+    PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR vkGetPhysicalDeviceSurfaceCapabilitiesKHR,
+    PFN_vkGetPhysicalDeviceSurfaceFormatsKHR vkGetPhysicalDeviceSurfaceFormatsKHR)
+        : vkDevice(vkLogicalDevice),
           vkPhysicalDevice(vkPhysicalDevice),
+          presentationSurface(presentationSurface),
           deviceInfo(move(deviceInfo)),
-          vkGetDeviceProcAddr(vkGetDeviceProcAddr) {}
+          window(window),
+          vkGetDeviceProcAddr(vkGetDeviceProcAddr),
+          vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vkGetPhysicalDeviceSurfaceCapabilitiesKHR),
+          vkGetPhysicalDeviceSurfaceFormatsKHR(vkGetPhysicalDeviceSurfaceFormatsKHR) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -50,15 +59,15 @@ GraphicsDevice::~GraphicsDevice()
 
 void GraphicsDevice::dispose()
 {
-    disposeCommandPools();
-    disposeDepthBuffer();
-    disposeSwapChain();
-    disposeDevice();
+    destroyCommandPools();
+    destroyDepthBuffer();
+    destroySwapChain();
+    destroyDevice();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void GraphicsDevice::disposeCommandPools()
+void GraphicsDevice::destroyCommandPools()
 {
     unordered_set<shared_ptr<CommandPool>> copyOfCommandPools(commandPools);
 
@@ -69,7 +78,7 @@ void GraphicsDevice::disposeCommandPools()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void GraphicsDevice::disposeDevice()
+void GraphicsDevice::destroyDevice()
 {
     if (vkDevice)
     {
@@ -80,10 +89,10 @@ void GraphicsDevice::disposeDevice()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void GraphicsDevice::disposeSwapChain()
+void GraphicsDevice::destroySwapChain()
 {
     for (auto& swapChainBuffer : swapChainBuffers) {
-        vkDestroyImageView(vkDevice, swapChainBuffer.view, nullptr);
+        vkDestroyImageView(vkDevice, swapChainBuffer.imageView, nullptr);
     }
     swapChainBuffers.clear();
 
@@ -95,11 +104,11 @@ void GraphicsDevice::disposeSwapChain()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void GraphicsDevice::disposeDepthBuffer()
+void GraphicsDevice::destroyDepthBuffer()
 {
-    if (depthBuffer.view) {
-        vkDestroyImageView(vkDevice, depthBuffer.view, nullptr);
-        depthBuffer.view = nullptr;
+    if (depthBuffer.imageView) {
+        vkDestroyImageView(vkDevice, depthBuffer.imageView, nullptr);
+        depthBuffer.imageView = nullptr;
     }
 
     if (depthBuffer.image) {
@@ -231,160 +240,79 @@ shared_ptr<Queue> GraphicsDevice::createQueue(uint32_t queueFamilyIndex) const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void GraphicsDevice::createSwapChain()
+void GraphicsDevice::querySwapChainProperties()
 {
-    swapChainFormat = VK_FORMAT_B8G8R8A8_SRGB;
-    VkColorSpaceKHR colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-
-    getSwapChainSurfaceFormat(swapChainFormat, colorSpace);
-    const VkSurfaceTransformFlagBitsKHR preTransform = getSwapChainTransform();
-    const VkCompositeAlphaFlagBitsKHR compositeAlpha = getSwapChainCompositeAlpha();
-
-    VkSwapchainCreateInfoKHR swapChainCreateInfo = {};
-    swapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    swapChainCreateInfo.flags = 0;
-    swapChainCreateInfo.surface = deviceInfo.presentSurface;
-    swapChainCreateInfo.minImageCount = deviceInfo.presentImageCount;
-    swapChainCreateInfo.imageFormat = swapChainFormat;
-    swapChainCreateInfo.imageColorSpace = colorSpace;
-    swapChainCreateInfo.imageExtent = deviceInfo.presentImageSize;
-    swapChainCreateInfo.imageArrayLayers = 1;
-    swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    swapChainCreateInfo.queueFamilyIndexCount = 0;
-    swapChainCreateInfo.pQueueFamilyIndices = nullptr;
-    swapChainCreateInfo.preTransform = preTransform;
-    swapChainCreateInfo.compositeAlpha = compositeAlpha;
-    swapChainCreateInfo.presentMode = VK_PRESENT_MODE_MAILBOX_KHR;
-    swapChainCreateInfo.clipped = VK_TRUE;
-    swapChainCreateInfo.oldSwapchain = swapChain;
-
-    uint32_t queueFamilyIndices[2] = { deviceInfo.graphicsQueueFamilyIndex, deviceInfo.presentQueueFamilyIndex };
-    if (deviceInfo.graphicsQueueFamilyIndex != deviceInfo.presentQueueFamilyIndex) {
-        swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-        swapChainCreateInfo.queueFamilyIndexCount = 2;
-        swapChainCreateInfo.pQueueFamilyIndices = queueFamilyIndices;
-    }
-
-    VkResult result = vkCreateSwapchainKHR(vkDevice, &swapChainCreateInfo, nullptr, &swapChain);
-    RFX_CHECK_STATE(result == VK_SUCCESS && swapChain != nullptr,
-        "Failed to crate swapchain");
-
-    if (swapChainCreateInfo.oldSwapchain != nullptr) {
-        vkDestroySwapchainKHR(vkDevice, swapChainCreateInfo.oldSwapchain, nullptr);
-    }
-
-    uint32_t imageCount = 0;
-    result = vkGetSwapchainImagesKHR(vkDevice, swapChain, &imageCount, nullptr);
-    RFX_CHECK_STATE(result == VK_SUCCESS && imageCount > 0,
-        "Failed to get number of swapchain images");
-
-    VkImage* swapChainImages = static_cast<VkImage*>(malloc(imageCount * sizeof(VkImage)));
-
-    result = vkGetSwapchainImagesKHR(vkDevice, swapChain, &imageCount, &swapChainImages[0]);
-    RFX_CHECK_STATE(result == VK_SUCCESS && imageCount > 0,
-        "Failed to get number of swapchain images");
-
-    swapChainBuffers.resize(imageCount);
-    for (uint32_t i = 0; i < imageCount; ++i) {
-        swapChainBuffers[i].image = swapChainImages[i];
-    }
-
-    free(swapChainImages);
-
-    for (uint32_t i = 0; i < imageCount; ++i) {
-        VkImageViewCreateInfo viewCreateInfo = {};
-        viewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        viewCreateInfo.pNext = nullptr;
-        viewCreateInfo.flags = 0;
-        viewCreateInfo.image = swapChainBuffers[i].image;
-        viewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        viewCreateInfo.format = swapChainFormat;
-        viewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_R;
-        viewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_G;
-        viewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_B;
-        viewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_A;
-        viewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        viewCreateInfo.subresourceRange.baseMipLevel = 0;
-        viewCreateInfo.subresourceRange.levelCount = 1;
-        viewCreateInfo.subresourceRange.baseArrayLayer = 0;
-        viewCreateInfo.subresourceRange.layerCount = 1;
-
-        result = vkCreateImageView(vkDevice, &viewCreateInfo, nullptr, &swapChainBuffers[i].view);
-        RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to create image view for swapchain");
-    }
-
+    querySwapChainSurfaceCapabilities();
+    querySwapChainSurfaceFormats();
+    querySwapChainImageSize();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void GraphicsDevice::getSwapChainSurfaceFormat(VkFormat& inOutFormat, VkColorSpaceKHR& inOutColorSpace) const
+void GraphicsDevice::querySwapChainSurfaceCapabilities()
 {
-    const auto& presentationSurfaceFormats = deviceInfo.presentSurfaceFormats;
+    const VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
+        vkPhysicalDevice, presentationSurface, &swapChainProperties.surfaceCapabilities);
+    RFX_CHECK_STATE(result == VK_SUCCESS,
+        "Failed to get presentation capabilities");
 
-    if (presentationSurfaceFormats.size() == 1
-            && presentationSurfaceFormats[0].format == VK_FORMAT_UNDEFINED) {
+    const VkSurfaceCapabilitiesKHR& surfaceCaps = swapChainProperties.surfaceCapabilities;
+    swapChainProperties.imageCount = surfaceCaps.minImageCount + 1;
+    if (surfaceCaps.maxImageCount > 0 && swapChainProperties.imageCount > surfaceCaps.maxImageCount) {
+        swapChainProperties.imageCount = surfaceCaps.maxImageCount;
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void GraphicsDevice::querySwapChainSurfaceFormats()
+{
+    uint32_t formatsCount = 0;
+    VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(vkPhysicalDevice, presentationSurface, &formatsCount, nullptr);
+    RFX_CHECK_STATE(result == VK_SUCCESS,
+        "Failed to get number of supported presentation surface formats");
+
+    if (formatsCount == 0) {
         return;
     }
 
-    for (const auto& currentFormat : presentationSurfaceFormats) {
-        if (inOutFormat == currentFormat.format 
-                && inOutColorSpace == currentFormat.colorSpace) {
-            return;
-        }
-    }
+    swapChainProperties.surfaceFormats.resize(formatsCount);
 
-    for (const auto& currentFormat : presentationSurfaceFormats) {
-        if (inOutFormat == currentFormat.format) {
-            inOutColorSpace = currentFormat.colorSpace;
-            RFX_LOG_WARNING << "Requested surface format isn't supported - different color space selected";
-            return;
-        }
-    }
-
-    RFX_LOG_WARNING << "Requested surface format isn't supported - using first available format";
-
-    inOutFormat = presentationSurfaceFormats[0].format;
-    inOutColorSpace = presentationSurfaceFormats[0].colorSpace;
+    result = vkGetPhysicalDeviceSurfaceFormatsKHR(vkPhysicalDevice, presentationSurface, &formatsCount,
+        &swapChainProperties.surfaceFormats[0]);
+    RFX_CHECK_STATE(result == VK_SUCCESS && formatsCount > 0,
+        "Failed to get supported presentation surface formats");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VkSurfaceTransformFlagBitsKHR GraphicsDevice::getSwapChainTransform() const
+void GraphicsDevice::querySwapChainImageSize()
 {
-    VkSurfaceTransformFlagBitsKHR preTransform;
-    if (deviceInfo.presentSurfaceCapabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR) {
-        preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+    const VkSurfaceCapabilitiesKHR& surfaceCaps = swapChainProperties.surfaceCapabilities;
+
+    if (surfaceCaps.currentExtent.width != 0xFFFFFFFF) {
+        swapChainProperties.imageSize = surfaceCaps.currentExtent;
     }
     else {
-        preTransform = deviceInfo.presentSurfaceCapabilities.currentTransform;
-    }
+        swapChainProperties.imageSize = {
+            static_cast<uint32_t>(window->getWidth()),
+            static_cast<uint32_t>(window->getHeight())
+        };
 
-    return preTransform;
-}
+        if (swapChainProperties.imageSize.width < surfaceCaps.minImageExtent.width) {
+            swapChainProperties.imageSize.width = surfaceCaps.minImageExtent.width;
+        }
+        else if (swapChainProperties.imageSize.width > surfaceCaps.maxImageExtent.width) {
+            swapChainProperties.imageSize.width = surfaceCaps.maxImageExtent.width;
+        }
 
-// ---------------------------------------------------------------------------------------------------------------------
-
-VkCompositeAlphaFlagBitsKHR GraphicsDevice::getSwapChainCompositeAlpha() const
-{
-    VkCompositeAlphaFlagBitsKHR compositeAlphaFlags[4] = {
-        VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-        VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
-        VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
-        VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
-    };
-
-    VkCompositeAlphaFlagBitsKHR compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-
-    for (auto& compositeAlphaFlag : compositeAlphaFlags)
-    {
-        if (deviceInfo.presentSurfaceCapabilities.supportedCompositeAlpha & compositeAlphaFlag) {
-            compositeAlpha = compositeAlphaFlag;
-            break;
+        if (swapChainProperties.imageSize.height < surfaceCaps.minImageExtent.height) {
+            swapChainProperties.imageSize.height = surfaceCaps.minImageExtent.height;
+        }
+        else if (swapChainProperties.imageSize.height > surfaceCaps.maxImageExtent.height) {
+            swapChainProperties.imageSize.height = surfaceCaps.maxImageExtent.height;
         }
     }
-
-    return compositeAlpha;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -409,8 +337,8 @@ void GraphicsDevice::createDepthBuffer()
     imageCreateInfo.pNext = nullptr;
     imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
     imageCreateInfo.format = DEPTHBUFFER_FORMAT;
-    imageCreateInfo.extent.width = deviceInfo.presentImageSize.width;
-    imageCreateInfo.extent.height = deviceInfo.presentImageSize.height;
+    imageCreateInfo.extent.width = swapChainProperties.imageSize.width;
+    imageCreateInfo.extent.height = swapChainProperties.imageSize.height;
     imageCreateInfo.extent.depth = 1;
     imageCreateInfo.mipLevels = 1;
     imageCreateInfo.arrayLayers = 1;
@@ -460,57 +388,188 @@ void GraphicsDevice::createDepthBuffer()
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &allocateInfo.memoryTypeIndex);
     RFX_CHECK_STATE(succeeded, "Failed to determine memory type ");
 
-    result = vkAllocateMemory(vkDevice, &allocateInfo, nullptr, &depthBuffer.memory);
+    result = vkAllocateMemory(vkDevice, &allocateInfo, nullptr, &depthBuffer.deviceMemory);
     RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to allocate depth buffer memory");
 
-    result = vkBindImageMemory(vkDevice, depthBuffer.image, depthBuffer.memory, 0);
+    result = vkBindImageMemory(vkDevice, depthBuffer.image, depthBuffer.deviceMemory, 0);
     RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to bind depth buffer memory");
 
     viewCreateInfo.image = depthBuffer.image;
-    result = vkCreateImageView(vkDevice, &viewCreateInfo, nullptr, &depthBuffer.view);
+    result = vkCreateImageView(vkDevice, &viewCreateInfo, nullptr, &depthBuffer.imageView);
     RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to create image view for depth buffer");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const GraphicsDeviceInfo& GraphicsDevice::getDeviceInfo() const
+void GraphicsDevice::waitIdle() const
 {
-    return deviceInfo;
+    const VkResult result = vkDeviceWaitIdle(vkDevice);
+    RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to wait for device idle state");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const VkSwapchainKHR& GraphicsDevice::getSwapChain() const
+void GraphicsDevice::createSwapChain()
 {
-    return swapChain;
+    createSwapChain(DEFAULT_SWAPCHAIN_FORMAT, DEFAULT_COLORSPACE);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const vector<SwapChainBuffer>& GraphicsDevice::getSwapChainBuffers() const
+void GraphicsDevice::createSwapChain(VkFormat desiredFormat, VkColorSpaceKHR desiredColorSpace)
 {
-    return swapChainBuffers;
+    swapChainFormat = desiredFormat;
+    VkColorSpaceKHR colorSpace = desiredColorSpace;
+
+    querySwapChainProperties();
+    getSwapChainSurfaceFormat(swapChainFormat, colorSpace);
+    const VkSurfaceTransformFlagBitsKHR preTransform = getSwapChainTransform();
+    const VkCompositeAlphaFlagBitsKHR compositeAlpha = getSwapChainCompositeAlpha();
+
+    VkSwapchainCreateInfoKHR swapChainCreateInfo = {};
+    swapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    swapChainCreateInfo.flags = 0;
+    swapChainCreateInfo.surface = deviceInfo.presentSurface;
+    swapChainCreateInfo.minImageCount = swapChainProperties.imageCount;
+    swapChainCreateInfo.imageFormat = swapChainFormat;
+    swapChainCreateInfo.imageColorSpace = colorSpace;
+    swapChainCreateInfo.imageExtent = swapChainProperties.imageSize;
+    swapChainCreateInfo.imageArrayLayers = 1;
+    swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    swapChainCreateInfo.queueFamilyIndexCount = 0;
+    swapChainCreateInfo.pQueueFamilyIndices = nullptr;
+    swapChainCreateInfo.preTransform = preTransform;
+    swapChainCreateInfo.compositeAlpha = compositeAlpha;
+    swapChainCreateInfo.presentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+    swapChainCreateInfo.clipped = VK_TRUE;
+    swapChainCreateInfo.oldSwapchain = swapChain;
+
+    uint32_t queueFamilyIndices[2] = { deviceInfo.graphicsQueueFamilyIndex, deviceInfo.presentQueueFamilyIndex };
+    if (deviceInfo.graphicsQueueFamilyIndex != deviceInfo.presentQueueFamilyIndex) {
+        swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+        swapChainCreateInfo.queueFamilyIndexCount = 2;
+        swapChainCreateInfo.pQueueFamilyIndices = queueFamilyIndices;
+    }
+
+    VkResult result = vkCreateSwapchainKHR(vkDevice, &swapChainCreateInfo, nullptr, &swapChain);
+    RFX_CHECK_STATE(result == VK_SUCCESS && swapChain != nullptr,
+        "Failed to crate swapchain");
+
+    if (swapChainCreateInfo.oldSwapchain != nullptr) {
+        vkDestroySwapchainKHR(vkDevice, swapChainCreateInfo.oldSwapchain, nullptr);
+    }
+
+    uint32_t imageCount = 0;
+    result = vkGetSwapchainImagesKHR(vkDevice, swapChain, &imageCount, nullptr);
+    RFX_CHECK_STATE(result == VK_SUCCESS && imageCount > 0,
+        "Failed to get number of swapchain images");
+
+    const auto swapChainImages = static_cast<VkImage*>(malloc(imageCount * sizeof(VkImage)));
+
+    result = vkGetSwapchainImagesKHR(vkDevice, swapChain, &imageCount, &swapChainImages[0]);
+    RFX_CHECK_STATE(result == VK_SUCCESS && imageCount > 0,
+        "Failed to get number of swapchain images");
+
+    swapChainBuffers.resize(imageCount);
+    for (uint32_t i = 0; i < imageCount; ++i) {
+        swapChainBuffers[i].image = swapChainImages[i];
+    }
+
+    free(swapChainImages);
+
+    for (uint32_t i = 0; i < imageCount; ++i) {
+        VkImageViewCreateInfo viewCreateInfo = {};
+        viewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        viewCreateInfo.pNext = nullptr;
+        viewCreateInfo.flags = 0;
+        viewCreateInfo.image = swapChainBuffers[i].image;
+        viewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        viewCreateInfo.format = swapChainFormat;
+        viewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_R;
+        viewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_G;
+        viewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_B;
+        viewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_A;
+        viewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        viewCreateInfo.subresourceRange.baseMipLevel = 0;
+        viewCreateInfo.subresourceRange.levelCount = 1;
+        viewCreateInfo.subresourceRange.baseArrayLayer = 0;
+        viewCreateInfo.subresourceRange.layerCount = 1;
+
+        result = vkCreateImageView(vkDevice, &viewCreateInfo, nullptr, &swapChainBuffers[i].imageView);
+        RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to create image view for swapchain");
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const DepthBuffer& GraphicsDevice::getDepthBuffer() const
+void GraphicsDevice::getSwapChainSurfaceFormat(VkFormat& inOutFormat, VkColorSpaceKHR& inOutColorSpace) const
 {
-    return depthBuffer;
+    const auto& presentationSurfaceFormats = swapChainProperties.surfaceFormats;
+
+    if (presentationSurfaceFormats.size() == 1
+        && presentationSurfaceFormats[0].format == VK_FORMAT_UNDEFINED) {
+        return;
+    }
+
+    for (const auto& currentFormat : presentationSurfaceFormats) {
+        if (inOutFormat == currentFormat.format
+            && inOutColorSpace == currentFormat.colorSpace) {
+            return;
+        }
+    }
+
+    for (const auto& currentFormat : presentationSurfaceFormats) {
+        if (inOutFormat == currentFormat.format) {
+            inOutColorSpace = currentFormat.colorSpace;
+            RFX_LOG_WARNING << "Requested surface format isn't supported - different color space selected";
+            return;
+        }
+    }
+
+    RFX_LOG_WARNING << "Requested surface format isn't supported - using first available format";
+
+    inOutFormat = presentationSurfaceFormats[0].format;
+    inOutColorSpace = presentationSurfaceFormats[0].colorSpace;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const shared_ptr<Queue>& GraphicsDevice::getGraphicsQueue() const
+VkSurfaceTransformFlagBitsKHR GraphicsDevice::getSwapChainTransform() const
 {
-    return graphicsQueue;
+    VkSurfaceTransformFlagBitsKHR preTransform;
+    if (swapChainProperties.surfaceCapabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR) {
+        preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+    }
+    else {
+        preTransform = swapChainProperties.surfaceCapabilities.currentTransform;
+    }
+
+    return preTransform;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const shared_ptr<Queue>& GraphicsDevice::getPresentQueue() const
+VkCompositeAlphaFlagBitsKHR GraphicsDevice::getSwapChainCompositeAlpha() const
 {
-    return presentQueue;
+    VkCompositeAlphaFlagBitsKHR compositeAlphaFlags[4] = {
+        VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+        VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
+        VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
+        VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
+    };
+
+    VkCompositeAlphaFlagBitsKHR compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+
+    for (auto& compositeAlphaFlag : compositeAlphaFlags)
+    {
+        if (swapChainProperties.surfaceCapabilities.supportedCompositeAlpha & compositeAlphaFlag) {
+            compositeAlpha = compositeAlphaFlag;
+            break;
+        }
+    }
+
+    return compositeAlpha;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -539,12 +598,13 @@ shared_ptr<CommandPool> GraphicsDevice::createCommandPool(uint32_t queueFamilyIn
 void GraphicsDevice::destroyCommandPool(const shared_ptr<CommandPool>& commandPool)
 {
     if (commandPool->isValid()) {
-        vkDeviceWaitIdle(vkDevice);
+        waitIdle();
 
         const VkCommandPool vkCommandPool = commandPool->getHandle();
         commandPool->clear();
         commandPool->invalidate();
         commandPools.erase(commandPool);
+
         vkDestroyCommandPool(vkDevice, vkCommandPool, nullptr);
     }
 }
@@ -709,15 +769,34 @@ void GraphicsDevice::destroySemaphore(VkSemaphore& inOutSemaphore) const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-uint32_t GraphicsDevice::acquireNextSwapChainImage(uint64_t timeout, VkSemaphore semaphore, VkFence fence)
+VkResult GraphicsDevice::acquireNextSwapChainImage(uint64_t timeout, 
+    VkSemaphore semaphore, 
+    VkFence fence, 
+    uint32_t& outImageIndex) const
 {
-    uint32_t imageIndex = UINT32_MAX;
+    outImageIndex = UINT32_MAX;
 
-    const VkResult result = vkAcquireNextImageKHR(vkDevice, swapChain, timeout, semaphore, fence, &imageIndex);
-    RFX_CHECK_STATE(result == VK_SUCCESS && imageIndex != UINT32_MAX,
-        "Failed to acquire next swap chain image");
+    const VkResult result = vkAcquireNextImageKHR(vkDevice, swapChain, timeout, semaphore, fence, &outImageIndex);
+    if (result != VK_SUCCESS) {
+        if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+            RFX_LOG_WARNING << "Failed to acquire next swap chain image due to: VK_ERROR_OUT_OF_DATE_KHR";
+        }
+        else if (result == VK_SUBOPTIMAL_KHR) {
+            RFX_LOG_WARNING << "Failed to acquire next swap chain image due to: VK_SUBOPTIMAL_KHR";
+        }
+        else {
+            RFX_LOG_WARNING << "Failed to acquire next swap chain image due to: " << result;
+        }
+    }
 
-    return imageIndex;
+    return result;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const SwapChainProperties& GraphicsDevice::getSwapChainProperties() const
+{
+    return swapChainProperties;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -836,6 +915,48 @@ void GraphicsDevice::destroyPipeline(VkPipeline& inOutPipeline) const
 {
     vkDestroyPipeline(vkDevice, inOutPipeline, nullptr);
     inOutPipeline = nullptr;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const GraphicsDeviceInfo& GraphicsDevice::getDeviceInfo() const
+{
+    return deviceInfo;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const VkSwapchainKHR& GraphicsDevice::getSwapChain() const
+{
+    return swapChain;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const vector<SwapChainBuffer>& GraphicsDevice::getSwapChainBuffers() const
+{
+    return swapChainBuffers;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const DepthBuffer& GraphicsDevice::getDepthBuffer() const
+{
+    return depthBuffer;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const shared_ptr<Queue>& GraphicsDevice::getGraphicsQueue() const
+{
+    return graphicsQueue;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const shared_ptr<Queue>& GraphicsDevice::getPresentQueue() const
+{
+    return presentQueue;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

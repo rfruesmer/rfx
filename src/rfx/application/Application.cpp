@@ -49,7 +49,7 @@ void Application::initGraphics()
     features.geometryShader = VK_TRUE;
 
     graphicsDevice = graphicsContext->createGraphicsDevice(features, {},
-        { VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT });
+        { VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT }, window);
 
     onResized(window.get(), window->getWidth(), window->getHeight());
 }
@@ -72,14 +72,18 @@ void Application::update()
 
 void Application::onActivated(Window* window)
 {
-    keyboard->acquire();
+    if (keyboard) {
+        keyboard->acquire();
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void Application::onDeactivated(Window* window)
 {
-    keyboard->unacquire();
+    if (keyboard) {
+        keyboard->unacquire();
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -108,8 +112,7 @@ void Application::onResizing(Window* window)
 void Application::onResized(Window* window, int clientWidth, int clientHeight)
 {
     paused = false;
-
-    graphicsDevice->resize(clientWidth, clientHeight);
+    windowResized = true;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

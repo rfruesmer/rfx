@@ -107,3 +107,12 @@ void CommandPool::freeCommandBuffers(const vector<shared_ptr<CommandBuffer>>& co
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void CommandPool::freeAllCommandBuffers()
+{
+    const vector<shared_ptr<CommandBuffer>> allCommandBuffers(
+        this->commandBuffers.begin(), this->commandBuffers.end());
+    freeCommandBuffers(allCommandBuffers);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+

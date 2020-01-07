@@ -365,9 +365,9 @@ void GraphicsContext::queryPhysicalDevices(const shared_ptr<Window>& window)
         queryProperties(device, deviceInfo);
         queryQueueFamilies(device, deviceInfo);
         queryPresentModes(device, window, deviceInfo);
-        queryPresentationSurfaceCapabilities(device, deviceInfo);
-        queryPresentationSurfaceFormats(device, deviceInfo);
-        querySwapChainImageSize(device, window, deviceInfo);
+        //queryPresentationSurfaceCapabilities(device, deviceInfo);
+        //queryPresentationSurfaceFormats(device, deviceInfo);
+        //querySwapChainImageSize(device, window, deviceInfo);
 
         deviceInfos[device] = deviceInfo;
     }
@@ -513,78 +513,6 @@ void GraphicsContext::queryPresentModes(VkPhysicalDevice device,
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void GraphicsContext::queryPresentationSurfaceCapabilities(VkPhysicalDevice device, 
-    GraphicsDeviceInfo& outDeviceInfo) const
-{
-    const VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, presentationSurface,
-        &outDeviceInfo.presentSurfaceCapabilities);
-    RFX_CHECK_STATE(result == VK_SUCCESS,
-        "Failed to get presentation capabilities");
-
-    const VkSurfaceCapabilitiesKHR& surfaceCaps = outDeviceInfo.presentSurfaceCapabilities;
-    outDeviceInfo.presentImageCount = surfaceCaps.minImageCount + 1;
-    if (surfaceCaps.maxImageCount > 0 && outDeviceInfo.presentImageCount > surfaceCaps.maxImageCount) {
-        outDeviceInfo.presentImageCount = surfaceCaps.maxImageCount;
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void GraphicsContext::queryPresentationSurfaceFormats(VkPhysicalDevice device,
-    GraphicsDeviceInfo& outDeviceInfo) const
-{
-    uint32_t formatsCount = 0;
-    VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(device, presentationSurface, &formatsCount, nullptr);
-    RFX_CHECK_STATE(result == VK_SUCCESS,
-        "Failed to get number of supported presentation surface formats");
-
-    if (formatsCount == 0) {
-        return;
-    }
-
-    outDeviceInfo.presentSurfaceFormats.resize(formatsCount);
-
-    result = vkGetPhysicalDeviceSurfaceFormatsKHR(device, presentationSurface, &formatsCount, 
-        &outDeviceInfo.presentSurfaceFormats[0]);
-    RFX_CHECK_STATE(result == VK_SUCCESS && formatsCount > 0,
-        "Failed to get supported presentation surface formats");
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void GraphicsContext::querySwapChainImageSize(VkPhysicalDevice device,
-    const shared_ptr<Window>& window,
-    GraphicsDeviceInfo& outDeviceInfo) const
-{
-    const VkSurfaceCapabilitiesKHR& surfaceCaps = outDeviceInfo.presentSurfaceCapabilities;
-
-    if (surfaceCaps.currentExtent.width != 0xFFFFFFFF) {
-        outDeviceInfo.presentImageSize = surfaceCaps.currentExtent;
-    }
-    else {
-        outDeviceInfo.presentImageSize = {
-            static_cast<uint32_t>(window->getWidth()),
-            static_cast<uint32_t>(window->getHeight())
-        };
-
-        if (outDeviceInfo.presentImageSize.width < surfaceCaps.minImageExtent.width) {
-            outDeviceInfo.presentImageSize.width = surfaceCaps.minImageExtent.width;
-        }
-        else if (outDeviceInfo.presentImageSize.width > surfaceCaps.maxImageExtent.width) {
-            outDeviceInfo.presentImageSize.width = surfaceCaps.maxImageExtent.width;
-        }
-
-        if (outDeviceInfo.presentImageSize.height < surfaceCaps.minImageExtent.height) {
-            outDeviceInfo.presentImageSize.height = surfaceCaps.minImageExtent.height;
-        }
-        else if (outDeviceInfo.presentImageSize.height > surfaceCaps.maxImageExtent.height) {
-            outDeviceInfo.presentImageSize.height = surfaceCaps.maxImageExtent.height;
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void GraphicsContext::queryDeviceGroups()
 {
     uint32_t deviceGroupCount = 0;
@@ -605,7 +533,8 @@ void GraphicsContext::queryDeviceGroups()
 shared_ptr<GraphicsDevice> GraphicsContext::createGraphicsDevice(
     const VkPhysicalDeviceFeatures& features,
     const vector<string>& extensions, 
-    const vector<VkQueueFlagBits>& queueCapabilities)
+    const vector<VkQueueFlagBits>& queueCapabilities,
+    const std::shared_ptr<Window>& window)
 {
     vector<string> copyOfExtensions = extensions;
     copyOfExtensions.emplace_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
@@ -615,7 +544,7 @@ shared_ptr<GraphicsDevice> GraphicsContext::createGraphicsDevice(
     RFX_CHECK_STATE(physicalDevice != nullptr,
         "No suitable device available");
 
-    return createLogicalDevice(physicalDevice, features, copyOfExtensions, queueCapabilities);
+    return createLogicalDevice(physicalDevice, features, copyOfExtensions, queueCapabilities, window);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -767,7 +696,8 @@ shared_ptr<GraphicsDevice> GraphicsContext::createLogicalDevice(
     VkPhysicalDevice physicalDevice,
     const VkPhysicalDeviceFeatures& features,
     const vector<string>& extensions, 
-    const vector<VkQueueFlagBits>& queueCapabilities)
+    const vector<VkQueueFlagBits>& queueCapabilities,
+    const shared_ptr<Window>& window)
 {
     const vector<QueueFamilyInfo> selectedQueueFamilies = 
         pickQueueFamilies(physicalDevice, queueCapabilities);
@@ -823,7 +753,14 @@ shared_ptr<GraphicsDevice> GraphicsContext::createLogicalDevice(
         "Failed to create logical device");
 
     shared_ptr<GraphicsDevice> graphicsDevice =
-         make_shared<GraphicsDevice>(logicalDevice, physicalDevice, deviceInfos[physicalDevice], vkGetDeviceProcAddr);
+         make_shared<GraphicsDevice>(logicalDevice, 
+            physicalDevice,
+            presentationSurface,
+            deviceInfos[physicalDevice],
+            window,
+            vkGetDeviceProcAddr,
+            vkGetPhysicalDeviceSurfaceCapabilitiesKHR,
+            vkGetPhysicalDeviceSurfaceFormatsKHR);
 
     graphicsDevice->initialize();
 

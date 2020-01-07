@@ -4,6 +4,7 @@
 #include "rfx/graphics/Queue.h"
 #include "rfx/graphics/CommandPool.h"
 #include "rfx/graphics/Buffer.h"
+#include "rfx/application/Window.h"
 
 
 namespace rfx
@@ -11,39 +12,53 @@ namespace rfx
 
 struct SwapChainBuffer {
     VkImage image;
-    VkImageView view;
+    VkImageView imageView;
+};
+
+struct SwapChainProperties
+{
+    VkSurfaceCapabilitiesKHR surfaceCapabilities;
+    std::vector<VkSurfaceFormatKHR> surfaceFormats;
+    std::vector<VkPresentModeKHR> presentModes;
+    uint32_t imageCount = 0;
+    VkExtent2D imageSize = {};
 };
 
 struct DepthBuffer {
     VkFormat format;
     VkImage image;
-    VkImageView view;
-    VkDeviceMemory memory;
+    VkImageView imageView;
+    VkDeviceMemory deviceMemory;
 };
 
 class GraphicsDevice
 {
 public:
     static const VkFormat DEPTHBUFFER_FORMAT = VK_FORMAT_D16_UNORM;
+    static const VkFormat DEFAULT_SWAPCHAIN_FORMAT = VK_FORMAT_B8G8R8A8_SRGB;
+    static const VkColorSpaceKHR DEFAULT_COLORSPACE = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 
-    explicit GraphicsDevice(VkDevice logicalDevice,
+    explicit GraphicsDevice(VkDevice vkLogicalDevice,
         VkPhysicalDevice vkPhysicalDevice,
+        VkSurfaceKHR presentationSurface,
         GraphicsDeviceInfo deviceInfo,
-        PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr);
+        const std::shared_ptr<Window>& window,
+        PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr,
+        PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR vkGetPhysicalDeviceSurfaceCapabilitiesKHR,
+        PFN_vkGetPhysicalDeviceSurfaceFormatsKHR vkGetPhysicalDeviceSurfaceFormatsKHR);
 
     ~GraphicsDevice();
 
-
     void initialize();
     void dispose();
-    void resize(int width, int height) {}
+    void waitIdle() const;
 
-    const GraphicsDeviceInfo& getDeviceInfo() const;
-    const VkSwapchainKHR& getSwapChain() const;
-    const std::vector<SwapChainBuffer>& getSwapChainBuffers() const;
-    const DepthBuffer& getDepthBuffer() const;
-    const std::shared_ptr<Queue>& getGraphicsQueue() const;
-    const std::shared_ptr<Queue>& getPresentQueue() const;
+    void createDepthBuffer();
+    void destroyDepthBuffer();
+
+    void createSwapChain();
+    void createSwapChain(VkFormat desiredFormat, VkColorSpaceKHR desiredColorSpace);
+    void destroySwapChain();
 
     std::shared_ptr<CommandPool> createCommandPool(uint32_t queueFamilyIndex);
     void destroyCommandPool(const std::shared_ptr<CommandPool>& commandPool);
@@ -68,7 +83,9 @@ public:
     VkSemaphore createSemaphore(const VkSemaphoreCreateInfo& createInfo) const;
     void destroySemaphore(VkSemaphore& inOutSemaphore) const;
 
-    uint32_t acquireNextSwapChainImage(uint64_t timeout, VkSemaphore semaphore, VkFence fence);
+    VkResult acquireNextSwapChainImage(uint64_t timeout, VkSemaphore semaphore, 
+        VkFence fence, uint32_t& outImageIndex) const;
+    const SwapChainProperties& getSwapChainProperties() const;
     VkFormat getSwapChainFormat() const;
 
     VkRenderPass createRenderPass(const VkRenderPassCreateInfo& createInfo) const;
@@ -87,30 +104,39 @@ public:
     VkPipeline createGraphicsPipeline(const VkGraphicsPipelineCreateInfo& createInfo) const;
     void destroyPipeline(VkPipeline& inOutPipeline) const;
 
+    const GraphicsDeviceInfo& getDeviceInfo() const;
+    const VkSwapchainKHR& getSwapChain() const;
+    const std::vector<SwapChainBuffer>& getSwapChainBuffers() const;
+    const DepthBuffer& getDepthBuffer() const;
+    const std::shared_ptr<Queue>& getGraphicsQueue() const;
+    const std::shared_ptr<Queue>& getPresentQueue() const;
+
 private:
-    void disposeDevice();
-    void disposeSwapChain();
-    void disposeDepthBuffer();
-    void disposeCommandPools();
+    void destroyDevice();
+    void destroyCommandPools();
 
     void loadDeviceFunctions();
 
     void createDefaultQueues();
     std::shared_ptr<Queue> createQueue(uint32_t queueFamilyIndex) const;
 
-    void createSwapChain();
+    void querySwapChainProperties();
+    void querySwapChainSurfaceCapabilities();
+    void querySwapChainSurfaceFormats();
+    void querySwapChainImageSize();
     void getSwapChainSurfaceFormat(VkFormat& inOutFormat, VkColorSpaceKHR& inOutColorSpace) const;
     VkSurfaceTransformFlagBitsKHR getSwapChainTransform() const;
     VkCompositeAlphaFlagBitsKHR getSwapChainCompositeAlpha() const;
 
-    void createDepthBuffer();
-
     VulkanDeviceFunctionPtrs vk = {};
     VkDevice vkDevice = nullptr;
     VkPhysicalDevice vkPhysicalDevice = nullptr;
-    GraphicsDeviceInfo deviceInfo;
- 
+    VkSurfaceKHR presentationSurface = nullptr;
+    GraphicsDeviceInfo deviceInfo = {};
+    std::shared_ptr<Window> window;
+
     VkSwapchainKHR swapChain = nullptr;
+    SwapChainProperties swapChainProperties = {};
     VkFormat swapChainFormat = VK_FORMAT_UNDEFINED;
     std::vector<SwapChainBuffer> swapChainBuffers;
 
@@ -122,6 +148,9 @@ private:
     std::unordered_set<std::shared_ptr<CommandPool>> commandPools;
 
     DECLARE_VULKAN_FUNCTION(vkGetDeviceProcAddr);
+    DECLARE_VULKAN_FUNCTION(vkGetPhysicalDeviceSurfaceCapabilitiesKHR);
+    DECLARE_VULKAN_FUNCTION(vkGetPhysicalDeviceSurfaceFormatsKHR);
+
     DECLARE_VULKAN_FUNCTION(vkGetDeviceQueue);
     DECLARE_VULKAN_FUNCTION(vkDeviceWaitIdle);
     DECLARE_VULKAN_FUNCTION(vkDestroyDevice);

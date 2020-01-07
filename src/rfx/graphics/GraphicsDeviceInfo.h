@@ -18,10 +18,10 @@ struct GraphicsDeviceInfo
     bool supportsPresentation = false;
     VkSurfaceKHR presentSurface = nullptr;
     std::vector<VkPresentModeKHR> presentModes;
-    VkSurfaceCapabilitiesKHR presentSurfaceCapabilities = {};
-    std::vector<VkSurfaceFormatKHR> presentSurfaceFormats;
-    uint32_t presentImageCount = 0;
-    VkExtent2D presentImageSize = {};
+    //VkSurfaceCapabilitiesKHR presentSurfaceCapabilities = {};
+    //std::vector<VkSurfaceFormatKHR> presentSurfaceFormats;
+    //uint32_t presentImageCount = 0;
+    //VkExtent2D presentImageSize = {};
     VkFormatProperties depthBufferFormatProperties = {};
 };
 
