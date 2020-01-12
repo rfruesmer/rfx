@@ -43,16 +43,16 @@ void GLSLtoSPV(const VkShaderStageFlagBits shaderType, const char* shaderString,
     TShader shader(stage);
     TProgram program;
     const char* shaderStrings[1];
-    TBuiltInResource Resources = {};
+    TBuiltInResource resources = {};
 
-    initResources(Resources);
+    initResources(resources);
 
     auto messages = static_cast<EShMessages>(EShMsgSpvRules | EShMsgVulkanRules);
 
     shaderStrings[0] = shaderString;
     shader.setStrings(shaderStrings, 1);
 
-    if (!shader.parse(&Resources, 400, false, messages)) {
+    if (!shader.parse(&resources, 400, false, messages)) {
         RFX_THROW(StringUtil::trimRight(string(shader.getInfoLog())) 
             + "\nInfo Log: " + string(shader.getInfoDebugLog()));
     }

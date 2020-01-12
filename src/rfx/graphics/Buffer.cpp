@@ -21,6 +21,7 @@ Buffer::Buffer(VkDevice vkDevice,
     vkMapMemory = vk.vkMapMemory;
     vkUnmapMemory = vk.vkUnmapMemory;
     vkBindBufferMemory = vk.vkBindBufferMemory;
+    vkInvalidateMappedMemoryRanges = vk.vkInvalidateMappedMemoryRanges;
 
     vkDestroyBuffer = vk.vkDestroyBuffer;
     vkFreeMemory = vk.vkFreeMemory;
@@ -37,7 +38,7 @@ void Buffer::load(size_t size, const std::byte* data) const
     RFX_CHECK_ARGUMENT(size <= this->size, "invalid size");
 
     uint8_t* memory = nullptr;
-    VkResult result = vkMapMemory(vkDevice, vkDeviceMemory, 0, this->size, 0, reinterpret_cast<void**>(&memory));
+    const VkResult result = vkMapMemory(vkDevice, vkDeviceMemory, 0, this->size, 0, reinterpret_cast<void**>(&memory));
     RFX_CHECK_STATE(result == VK_SUCCESS && memory != nullptr,
         "Failed to map buffer memory");
 
@@ -52,6 +53,19 @@ void Buffer::bind() const
 {
     const VkResult result = vkBindBufferMemory(vkDevice, vkBuffer, vkDeviceMemory, 0);
     RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to bind buffer memory");
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Buffer::invalidateMappedMemoryRanges() const
+{
+    VkMappedMemoryRange mappedRange = {};
+    mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+    mappedRange.memory = vkDeviceMemory;
+    mappedRange.offset = 0;
+    mappedRange.size = vkBufferInfo.range;
+
+    vkInvalidateMappedMemoryRanges(vkDevice, 1, &mappedRange);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -77,9 +91,16 @@ VkBuffer Buffer::getHandle() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VkDescriptorBufferInfo& Buffer::getBufferInfo()
+const VkDescriptorBufferInfo& Buffer::getBufferInfo() const
 {
     return vkBufferInfo;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkDeviceMemory Buffer::getDeviceMemory() const
+{
+    return vkDeviceMemory;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

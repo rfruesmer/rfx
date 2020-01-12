@@ -30,7 +30,7 @@ protected:
     void initLogger();
     virtual void createWindow() = 0;
     virtual void initGraphics();
-    virtual std::unique_ptr<InputDeviceFactory> initInputDeviceFactory() = 0;
+    virtual void initInputDeviceFactory() = 0;
     virtual void initInput();
 
     virtual void update();

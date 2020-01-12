@@ -4,6 +4,7 @@
 #include "rfx/graphics/Queue.h"
 #include "rfx/graphics/CommandPool.h"
 #include "rfx/graphics/Buffer.h"
+#include "rfx/graphics/Texture2D.h"
 #include "rfx/application/Window.h"
 
 
@@ -45,7 +46,8 @@ public:
         const std::shared_ptr<Window>& window,
         PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr,
         PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR vkGetPhysicalDeviceSurfaceCapabilitiesKHR,
-        PFN_vkGetPhysicalDeviceSurfaceFormatsKHR vkGetPhysicalDeviceSurfaceFormatsKHR);
+        PFN_vkGetPhysicalDeviceSurfaceFormatsKHR vkGetPhysicalDeviceSurfaceFormatsKHR,
+        PFN_vkGetPhysicalDeviceFormatProperties vkGetPhysicalDeviceFormatProperties);
 
     ~GraphicsDevice();
 
@@ -75,7 +77,7 @@ public:
 
     void allocateDescriptorSets(const VkDescriptorSetAllocateInfo& allocateInfo,
         std::vector<VkDescriptorSet>& outDescriptorSets) const;
-    void updateDescriptorSets(size_t count, const VkWriteDescriptorSet* writes) const;
+    void updateDescriptorSets(uint32_t count, const VkWriteDescriptorSet* writes) const;
 
     VkPipelineLayout createPipelineLayout(const VkPipelineLayoutCreateInfo& createInfo) const;
     void destroyPipelineLayout(VkPipelineLayout& inOutPipelineLayout) const;
@@ -104,6 +106,10 @@ public:
     VkPipeline createGraphicsPipeline(const VkGraphicsPipelineCreateInfo& createInfo) const;
     void destroyPipeline(VkPipeline& inOutPipeline) const;
 
+    std::unique_ptr<Texture2D> createTexture2D(int width, int height, int bytesPerPixel,
+                                               VkFormat format, const std::vector<std::byte>& data);
+
+    void getLogicalDevice();
     const GraphicsDeviceInfo& getDeviceInfo() const;
     const VkSwapchainKHR& getSwapChain() const;
     const std::vector<SwapChainBuffer>& getSwapChainBuffers() const;
@@ -116,9 +122,38 @@ private:
     void destroyCommandPools();
 
     void loadDeviceFunctions();
+    void createSingleTimeCommandPool();
+    uint32_t findMemoryType(uint32_t typeBits, VkFlags requirementsMask) const;
 
     void createDefaultQueues();
     std::shared_ptr<Queue> createQueue(uint32_t queueFamilyIndex) const;
+
+    void createImage(uint32_t width, uint32_t height, VkFormat format, 
+        VkImageUsageFlags usage, VkMemoryPropertyFlags properties, 
+        VkImage& outImage, VkDeviceMemory& outImageMemory) const;
+    void setImageMemoryBarrier(VkImage image,
+        VkAccessFlags sourceAccess,
+        VkAccessFlags destAccess,
+        VkImageLayout oldLayout,
+        VkImageLayout newLayout,
+        VkCommandBuffer commandBuffer,
+        VkPipelineStageFlags sourceStage,
+        VkPipelineStageFlags destinationStage) const;
+    void updateImage(VkImage image, int width, int height, int bytesPerPixel, const std::vector<std::byte>& imageData);
+    void copyBufferToImage(VkBuffer buffer, 
+        VkImage image, 
+        uint32_t width, 
+        uint32_t height, 
+        VkCommandBuffer commandBuffer) const;
+    VkImageView createImageView(VkImage image, VkFormat format) const;
+
+    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
+                      VkBuffer& outBuffer, VkDeviceMemory& outBufferMemory) const;
+
+    VkCommandBuffer beginSingleTimeCommands() const;
+    void endSingleTimeCommands(VkCommandBuffer commandBuffer) const;
+
+    VkSampler createTextureSampler();
 
     void querySwapChainProperties();
     void querySwapChainSurfaceCapabilities();
@@ -146,12 +181,13 @@ private:
     std::shared_ptr<Queue> graphicsQueue = nullptr;
     std::shared_ptr<Queue> presentQueue = nullptr;
     std::unordered_set<std::shared_ptr<CommandPool>> commandPools;
+    std::shared_ptr<CommandPool> singleTimeCommandPool;
 
     DECLARE_VULKAN_FUNCTION(vkGetDeviceProcAddr);
     DECLARE_VULKAN_FUNCTION(vkGetPhysicalDeviceSurfaceCapabilitiesKHR);
     DECLARE_VULKAN_FUNCTION(vkGetPhysicalDeviceSurfaceFormatsKHR);
+    DECLARE_VULKAN_FUNCTION(vkGetPhysicalDeviceFormatProperties);
 
-    DECLARE_VULKAN_FUNCTION(vkGetDeviceQueue);
     DECLARE_VULKAN_FUNCTION(vkDeviceWaitIdle);
     DECLARE_VULKAN_FUNCTION(vkDestroyDevice);
 
@@ -162,7 +198,9 @@ private:
     DECLARE_VULKAN_FUNCTION(vkWaitForFences);
     DECLARE_VULKAN_FUNCTION(vkDestroyFence);
 
+    DECLARE_VULKAN_FUNCTION(vkGetDeviceQueue);
     DECLARE_VULKAN_FUNCTION(vkQueueSubmit);
+    DECLARE_VULKAN_FUNCTION(vkQueueWaitIdle);
     DECLARE_VULKAN_FUNCTION(vkQueuePresentKHR);
 
     DECLARE_VULKAN_FUNCTION(vkCreateRenderPass);
@@ -183,13 +221,19 @@ private:
     DECLARE_VULKAN_FUNCTION(vkCmdSetViewport);
     DECLARE_VULKAN_FUNCTION(vkCmdSetScissor);
     DECLARE_VULKAN_FUNCTION(vkCmdDraw);
+    DECLARE_VULKAN_FUNCTION(vkCmdPipelineBarrier);
+    DECLARE_VULKAN_FUNCTION(vkCmdCopyBufferToImage);
 
     DECLARE_VULKAN_FUNCTION(vkGetImageMemoryRequirements);
     DECLARE_VULKAN_FUNCTION(vkBindImageMemory);
     DECLARE_VULKAN_FUNCTION(vkCreateImage);
     DECLARE_VULKAN_FUNCTION(vkDestroyImage);
+    DECLARE_VULKAN_FUNCTION(vkGetImageSubresourceLayout);
     DECLARE_VULKAN_FUNCTION(vkCreateImageView);
     DECLARE_VULKAN_FUNCTION(vkDestroyImageView);
+
+    DECLARE_VULKAN_FUNCTION(vkCreateSampler);
+    DECLARE_VULKAN_FUNCTION(vkDestroySampler);
 
     DECLARE_VULKAN_FUNCTION(vkAllocateMemory);
     DECLARE_VULKAN_FUNCTION(vkFreeMemory);
@@ -199,6 +243,7 @@ private:
     DECLARE_VULKAN_FUNCTION(vkMapMemory);
     DECLARE_VULKAN_FUNCTION(vkUnmapMemory);
     DECLARE_VULKAN_FUNCTION(vkBindBufferMemory);
+    DECLARE_VULKAN_FUNCTION(vkInvalidateMappedMemoryRanges);
 
     DECLARE_VULKAN_FUNCTION(vkCreateDescriptorSetLayout);
     DECLARE_VULKAN_FUNCTION(vkDestroyDescriptorSetLayout);

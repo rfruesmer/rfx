@@ -5,10 +5,10 @@
 namespace rfx
 {
 
-class CubeTest : public TestApplication
+class TexturedCubeTest : public TestApplication
 {
 public:
-    explicit CubeTest(HINSTANCE instanceHandle);
+    explicit TexturedCubeTest(HINSTANCE instanceHandle);
 
     uint32_t getVertexSize() const override;
     uint32_t getVertexCount() const override;
@@ -21,7 +21,11 @@ protected:
     void initPipelineLayout() override;
     void initDescriptorPool() override;
     void initDescriptorSet() override;
+    void loadTexture();
     void initVertexBuffer() override;
+
+private:
+    std::unique_ptr<Texture2D> texture;
 };
 
 } // namespace rfx

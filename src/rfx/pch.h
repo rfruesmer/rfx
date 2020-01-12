@@ -22,6 +22,25 @@
 #include <dinput.h>
 #endif // _WINDOWS
 
+// Vulkan Header Files
+#ifdef _WINDOWS
+#define VK_USE_PLATFORM_WIN32_KHR
+#endif // _WINDOWS
+#define VK_NO_PROTOTYPES
+#include <vulkan/vulkan.h>
+
+// GLM Header Files
+#define GLM_FORCE_SSE2
+#define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+// glslang Header Files
+#include "SPIRV/GlslangToSpv.h"
+
+// JsonCpp Header Files
+#include <json/json.h>
+
 // STL Header Files
 #include <string>
 #include <vector>
@@ -31,25 +50,6 @@
 #include <fstream>
 #include <filesystem>
 #include <functional>
-
-// Vulkan Header Files
-#ifdef _WINDOWS
-#define VK_USE_PLATFORM_WIN32_KHR
-#endif // _WINDOWS
-#define VK_NO_PROTOTYPES
-#include <vulkan/vulkan.h>
-
-// JsonCpp Header Files
-#include <json/json.h>
-
-// glm Header Files
-#define GLM_FORCE_SSE2
-#define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-// glslang Header Files
-#include "SPIRV/GlslangToSpv.h"
 
 // RFX Header Files
 #include "rfx/rfx.h"

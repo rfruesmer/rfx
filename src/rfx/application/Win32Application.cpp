@@ -36,9 +36,9 @@ void Win32Application::createWindow()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-unique_ptr<InputDeviceFactory> Win32Application::initInputDeviceFactory()
+void Win32Application::initInputDeviceFactory()
 {
-    return make_unique<DXInputDeviceFactory>(instanceHandle);
+    inputDeviceFactory = make_unique<DXInputDeviceFactory>(instanceHandle);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

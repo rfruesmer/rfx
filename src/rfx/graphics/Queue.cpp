@@ -13,6 +13,7 @@ Queue::Queue(VkQueue vkQueue,
         : vkQueue(vkQueue)
 {
     vkQueueSubmit = vk.vkQueueSubmit;
+    vkQueueWaitIdle = vk.vkQueueWaitIdle;
     vkQueuePresentKHR = vk.vkQueuePresentKHR;
 }
 
@@ -30,6 +31,21 @@ void Queue::present(const VkPresentInfoKHR& presentInfo) const
 {
     const VkResult result = vkQueuePresentKHR(vkQueue, &presentInfo);
     RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to present queue");
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Queue::waitIdle() const
+{
+    const VkResult result = vkQueueWaitIdle(vkQueue);
+    RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to wait until idle");
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkQueue Queue::getHandle() const
+{
+    return vkQueue;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

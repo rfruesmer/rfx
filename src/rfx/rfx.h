@@ -24,7 +24,6 @@ using handle_t = void*;
 struct VulkanDeviceFunctionPtrs
 {
     DECLARE_VULKAN_FUNCTION(vkGetDeviceProcAddr);
-    DECLARE_VULKAN_FUNCTION(vkGetDeviceQueue);
     DECLARE_VULKAN_FUNCTION(vkDeviceWaitIdle);
     DECLARE_VULKAN_FUNCTION(vkDestroyDevice);
 
@@ -35,7 +34,9 @@ struct VulkanDeviceFunctionPtrs
     DECLARE_VULKAN_FUNCTION(vkWaitForFences);
     DECLARE_VULKAN_FUNCTION(vkDestroyFence);
 
+    DECLARE_VULKAN_FUNCTION(vkGetDeviceQueue);
     DECLARE_VULKAN_FUNCTION(vkQueueSubmit);
+    DECLARE_VULKAN_FUNCTION(vkQueueWaitIdle);
     DECLARE_VULKAN_FUNCTION(vkQueuePresentKHR);
 
     DECLARE_VULKAN_FUNCTION(vkCreateRenderPass);
@@ -56,13 +57,19 @@ struct VulkanDeviceFunctionPtrs
     DECLARE_VULKAN_FUNCTION(vkCmdSetViewport);
     DECLARE_VULKAN_FUNCTION(vkCmdSetScissor);
     DECLARE_VULKAN_FUNCTION(vkCmdDraw);
+    DECLARE_VULKAN_FUNCTION(vkCmdPipelineBarrier);
+    DECLARE_VULKAN_FUNCTION(vkCmdCopyBufferToImage);
 
     DECLARE_VULKAN_FUNCTION(vkGetImageMemoryRequirements);
     DECLARE_VULKAN_FUNCTION(vkBindImageMemory);
     DECLARE_VULKAN_FUNCTION(vkCreateImage);
     DECLARE_VULKAN_FUNCTION(vkDestroyImage);
+    DECLARE_VULKAN_FUNCTION(vkGetImageSubresourceLayout);
     DECLARE_VULKAN_FUNCTION(vkCreateImageView);
     DECLARE_VULKAN_FUNCTION(vkDestroyImageView);
+
+    DECLARE_VULKAN_FUNCTION(vkCreateSampler);
+    DECLARE_VULKAN_FUNCTION(vkDestroySampler);
 
     DECLARE_VULKAN_FUNCTION(vkAllocateMemory);
     DECLARE_VULKAN_FUNCTION(vkFreeMemory);
@@ -72,6 +79,7 @@ struct VulkanDeviceFunctionPtrs
     DECLARE_VULKAN_FUNCTION(vkMapMemory);
     DECLARE_VULKAN_FUNCTION(vkUnmapMemory);
     DECLARE_VULKAN_FUNCTION(vkBindBufferMemory);
+    DECLARE_VULKAN_FUNCTION(vkInvalidateMappedMemoryRanges);
 
     DECLARE_VULKAN_FUNCTION(vkCreateDescriptorSetLayout);
     DECLARE_VULKAN_FUNCTION(vkDestroyDescriptorSetLayout);

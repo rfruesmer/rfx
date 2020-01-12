@@ -20,5 +20,4 @@ Please use [vcpkg](https://github.com/microsoft/vcpkg/releases) for installation
 - [glm](https://github.com/g-truc/glm)
 - [glslang](https://github.com/KhronosGroup/glslang)
 - [JsonCpp](https://github.com/open-source-parsers/jsoncpp)
-
-
+- [stb](https://github.com/nothings/stb)

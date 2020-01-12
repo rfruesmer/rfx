@@ -13,7 +13,7 @@ void Application::initialize()
     initLogger();
     createWindow();
     initGraphics();
-    inputDeviceFactory = initInputDeviceFactory();
+    initInputDeviceFactory();
     initInput();
 }
 
@@ -47,6 +47,7 @@ void Application::initGraphics()
 
     VkPhysicalDeviceFeatures features = {};
     features.geometryShader = VK_TRUE;
+    features.samplerAnisotropy = VK_TRUE;
 
     graphicsDevice = graphicsContext->createGraphicsDevice(features, {},
         { VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT }, window);

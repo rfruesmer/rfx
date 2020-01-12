@@ -14,7 +14,7 @@ public:
 
 protected:
     void createWindow() override;
-    std::unique_ptr<InputDeviceFactory> initInputDeviceFactory() override;
+    void initInputDeviceFactory() override;
     virtual void shutdown() {}
 
 private:

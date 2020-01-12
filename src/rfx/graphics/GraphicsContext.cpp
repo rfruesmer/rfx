@@ -760,7 +760,8 @@ shared_ptr<GraphicsDevice> GraphicsContext::createLogicalDevice(
             window,
             vkGetDeviceProcAddr,
             vkGetPhysicalDeviceSurfaceCapabilitiesKHR,
-            vkGetPhysicalDeviceSurfaceFormatsKHR);
+            vkGetPhysicalDeviceSurfaceFormatsKHR,
+            vkGetPhysicalDeviceFormatProperties);
 
     graphicsDevice->initialize();
 

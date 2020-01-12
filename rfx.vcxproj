@@ -101,6 +101,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)src/;$(VULKAN_SDK)/include</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <StructMemberAlignment>Default</StructMemberAlignment>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -130,6 +131,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)src/;$(VULKAN_SDK)/include</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <StructMemberAlignment>Default</StructMemberAlignment>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -161,6 +163,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)src/;$(VULKAN_SDK)/include</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <StructMemberAlignment>Default</StructMemberAlignment>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -194,6 +197,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)src/;$(VULKAN_SDK)/include</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <StructMemberAlignment>Default</StructMemberAlignment>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -243,6 +247,10 @@
     <ClInclude Include="src\rfx\application\Win32Window.h" />
     <ClInclude Include="src\rfx\core\StringUtil.h" />
     <ClInclude Include="src\rfx\core\Timer.h" />
+    <ClInclude Include="test\TexturedCubeTest.h" />
+    <ClInclude Include="test\TestApplication.h" />
+    <ClInclude Include="src\rfx\graphics\Texture2DLoader.h" />
+    <ClInclude Include="src\rfx\graphics\Texture2D.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\rfx\core\FileUtil.cpp" />
@@ -272,11 +280,21 @@
     <ClCompile Include="src\rfx\application\Win32Window.cpp" />
     <ClCompile Include="src\rfx\core\StringUtil.cpp" />
     <ClCompile Include="src\rfx\core\Timer.cpp" />
+    <ClCompile Include="test\TexturedCubeTest.cpp" />
+    <ClCompile Include="test\TestApplication.cpp" />
+    <ClCompile Include="src\rfx\graphics\Texture2DLoader.cpp">
+      <StructMemberAlignment Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Default</StructMemberAlignment>
+      <StructMemberAlignment Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Default</StructMemberAlignment>
+      <StructMemberAlignment Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Default</StructMemberAlignment>
+      <StructMemberAlignment Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Default</StructMemberAlignment>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\Texture2D.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="res\rfx.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="assets\textures\lunarg_logo-256x256.png" />
     <Image Include="res\rfx.ico" />
     <Image Include="res\small.ico" />
   </ItemGroup>
@@ -284,6 +302,8 @@
     <None Include="assets\application-config.json" />
     <None Include="assets\shaders\color.frag" />
     <None Include="assets\shaders\color.vert" />
+    <None Include="assets\shaders\texture.frag" />
+    <None Include="assets\shaders\texture.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -9,28 +9,6 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-bool memoryTypeFromProperties(GraphicsDeviceInfo& deviceInfo, 
-    uint32_t typeBits,
-    VkFlags requirementsMask,
-    uint32_t* typeIndex)
-{
-    // Search memtypes to find first index with those properties
-    for (uint32_t i = 0; i < deviceInfo.memoryProperties.memoryTypeCount; i++) {
-        if ((typeBits & 1) == 1) {
-            // Type is available, does it match user properties?
-            if ((deviceInfo.memoryProperties.memoryTypes[i].propertyFlags & requirementsMask) == requirementsMask) {
-                *typeIndex = i;
-                return true;
-            }
-        }
-        typeBits >>= 1;
-    }
-    // No memory types matched, return failure
-    return false;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 GraphicsDevice::GraphicsDevice(VkDevice vkLogicalDevice,
     VkPhysicalDevice vkPhysicalDevice,
     VkSurfaceKHR presentationSurface,
@@ -38,7 +16,8 @@ GraphicsDevice::GraphicsDevice(VkDevice vkLogicalDevice,
     const shared_ptr<Window>& window,
     PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr,
     PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR vkGetPhysicalDeviceSurfaceCapabilitiesKHR,
-    PFN_vkGetPhysicalDeviceSurfaceFormatsKHR vkGetPhysicalDeviceSurfaceFormatsKHR)
+    PFN_vkGetPhysicalDeviceSurfaceFormatsKHR vkGetPhysicalDeviceSurfaceFormatsKHR,
+    PFN_vkGetPhysicalDeviceFormatProperties vkGetPhysicalDeviceFormatProperties)
         : vkDevice(vkLogicalDevice),
           vkPhysicalDevice(vkPhysicalDevice),
           presentationSurface(presentationSurface),
@@ -46,7 +25,11 @@ GraphicsDevice::GraphicsDevice(VkDevice vkLogicalDevice,
           window(window),
           vkGetDeviceProcAddr(vkGetDeviceProcAddr),
           vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vkGetPhysicalDeviceSurfaceCapabilitiesKHR),
-          vkGetPhysicalDeviceSurfaceFormatsKHR(vkGetPhysicalDeviceSurfaceFormatsKHR) {}
+          vkGetPhysicalDeviceSurfaceFormatsKHR(vkGetPhysicalDeviceSurfaceFormatsKHR),
+          vkGetPhysicalDeviceFormatProperties(vkGetPhysicalDeviceFormatProperties)
+{
+    depthBuffer.format = DEPTHBUFFER_FORMAT;
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -125,6 +108,7 @@ void GraphicsDevice::initialize()
     createDefaultQueues();
     createSwapChain();
     createDepthBuffer();
+    createSingleTimeCommandPool();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -138,7 +122,6 @@ void GraphicsDevice::loadDeviceFunctions()
 
     memset(&vk, 0, sizeof(vk));
 
-    LOAD_DEVICE_FUNCTION(vkGetDeviceQueue);
     LOAD_DEVICE_FUNCTION(vkDeviceWaitIdle);
     LOAD_DEVICE_FUNCTION(vkDestroyDevice);
 
@@ -149,7 +132,9 @@ void GraphicsDevice::loadDeviceFunctions()
     LOAD_DEVICE_FUNCTION(vkWaitForFences);
     LOAD_DEVICE_FUNCTION(vkDestroyFence);
 
+    LOAD_DEVICE_FUNCTION(vkGetDeviceQueue);
     LOAD_DEVICE_FUNCTION(vkQueueSubmit);
+    LOAD_DEVICE_FUNCTION(vkQueueWaitIdle);
     LOAD_DEVICE_FUNCTION(vkQueuePresentKHR);
 
     LOAD_DEVICE_FUNCTION(vkCreateRenderPass);
@@ -170,6 +155,11 @@ void GraphicsDevice::loadDeviceFunctions()
     LOAD_DEVICE_FUNCTION(vkCmdSetViewport);
     LOAD_DEVICE_FUNCTION(vkCmdSetScissor);
     LOAD_DEVICE_FUNCTION(vkCmdDraw);
+    LOAD_DEVICE_FUNCTION(vkCmdPipelineBarrier);
+    LOAD_DEVICE_FUNCTION(vkCmdCopyBufferToImage);
+
+    LOAD_DEVICE_FUNCTION(vkCreateSampler);
+    LOAD_DEVICE_FUNCTION(vkDestroySampler);
 
     LOAD_DEVICE_FUNCTION(vkGetImageMemoryRequirements);
     LOAD_DEVICE_FUNCTION(vkBindImageMemory);
@@ -186,6 +176,7 @@ void GraphicsDevice::loadDeviceFunctions()
     LOAD_DEVICE_FUNCTION(vkMapMemory);
     LOAD_DEVICE_FUNCTION(vkUnmapMemory);
     LOAD_DEVICE_FUNCTION(vkBindBufferMemory);
+    LOAD_DEVICE_FUNCTION(vkInvalidateMappedMemoryRanges);
 
     LOAD_DEVICE_FUNCTION(vkCreateDescriptorSetLayout);
     LOAD_DEVICE_FUNCTION(vkDestroyDescriptorSetLayout);
@@ -350,11 +341,27 @@ void GraphicsDevice::createDepthBuffer()
     imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     imageCreateInfo.flags = 0;
 
-    VkMemoryAllocateInfo allocateInfo = {};
-    allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocateInfo.pNext = nullptr;
-    allocateInfo.allocationSize = 0;
-    allocateInfo.memoryTypeIndex = 0;
+    VkResult result = vkCreateImage(vkDevice, &imageCreateInfo, nullptr, &depthBuffer.image);
+    RFX_CHECK_STATE(result == VK_SUCCESS && depthBuffer.image != nullptr, 
+        "Failed to create depth buffer image");
+
+    VkMemoryRequirements memoryRequirements = {};
+    vkGetImageMemoryRequirements(vkDevice, depthBuffer.image, &memoryRequirements);
+
+    VkMemoryAllocateInfo memoryAllocInfo = {};
+    memoryAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    memoryAllocInfo.pNext = nullptr;
+    memoryAllocInfo.allocationSize = 0;
+    memoryAllocInfo.memoryTypeIndex = 0;
+    memoryAllocInfo.allocationSize = memoryRequirements.size;
+    memoryAllocInfo.memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, 
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+    result = vkAllocateMemory(vkDevice, &memoryAllocInfo, nullptr, &depthBuffer.deviceMemory);
+    RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to allocate depth buffer memory");
+
+    result = vkBindImageMemory(vkDevice, depthBuffer.image, depthBuffer.deviceMemory, 0);
+    RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to bind depth buffer memory");
 
     VkImageViewCreateInfo viewCreateInfo = {};
     viewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -372,31 +379,35 @@ void GraphicsDevice::createDepthBuffer()
     viewCreateInfo.subresourceRange.layerCount = 1;
     viewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
     viewCreateInfo.flags = 0;
-
-    depthBuffer.format = DEPTHBUFFER_FORMAT;
-
-    VkResult result = vkCreateImage(vkDevice, &imageCreateInfo, nullptr, &depthBuffer.image);
-    RFX_CHECK_STATE(result == VK_SUCCESS && depthBuffer.image != nullptr, 
-        "Failed to create depth buffer image");
-
-    VkMemoryRequirements memoryRequirements = {};
-    vkGetImageMemoryRequirements(vkDevice, depthBuffer.image, &memoryRequirements);
-
-    allocateInfo.allocationSize = memoryRequirements.size;
-
-    const bool succeeded = memoryTypeFromProperties(deviceInfo, memoryRequirements.memoryTypeBits, 
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &allocateInfo.memoryTypeIndex);
-    RFX_CHECK_STATE(succeeded, "Failed to determine memory type ");
-
-    result = vkAllocateMemory(vkDevice, &allocateInfo, nullptr, &depthBuffer.deviceMemory);
-    RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to allocate depth buffer memory");
-
-    result = vkBindImageMemory(vkDevice, depthBuffer.image, depthBuffer.deviceMemory, 0);
-    RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to bind depth buffer memory");
-
     viewCreateInfo.image = depthBuffer.image;
+
     result = vkCreateImageView(vkDevice, &viewCreateInfo, nullptr, &depthBuffer.imageView);
     RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to create image view for depth buffer");
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+uint32_t GraphicsDevice::findMemoryType(uint32_t typeBits, VkFlags requirementsMask) const
+{
+    // Search memtypes to find first index with those properties
+    for (uint32_t i = 0; i < deviceInfo.memoryProperties.memoryTypeCount; i++) {
+        if ((typeBits & 1) == 1) {
+            // Type is available, does it match user properties?
+            if ((deviceInfo.memoryProperties.memoryTypes[i].propertyFlags & requirementsMask) == requirementsMask) {
+                return i;
+            }
+        }
+        typeBits >>= 1;
+    }
+
+    RFX_CHECK_STATE(false, "Failed to find matching memory type");
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void GraphicsDevice::createSingleTimeCommandPool()
+{
+    singleTimeCommandPool = createCommandPool(deviceInfo.graphicsQueueFamilyIndex);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -646,19 +657,16 @@ shared_ptr<Buffer> GraphicsDevice::createBuffer(size_t size, VkBufferUsageFlags 
     VkMemoryRequirements memoryRequirements = {};
     vkGetBufferMemoryRequirements(vkDevice, vkBuffer, &memoryRequirements);
 
-    VkMemoryAllocateInfo allocateInfo = {};
-    allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocateInfo.pNext = nullptr;
-    allocateInfo.memoryTypeIndex = 0;
-    allocateInfo.allocationSize = memoryRequirements.size;
-
-    const bool success = memoryTypeFromProperties(deviceInfo, memoryRequirements.memoryTypeBits,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        &allocateInfo.memoryTypeIndex);
-    RFX_CHECK_STATE(success, "No mappable, coherent memory");
+    VkMemoryAllocateInfo memoryAllocInfo = {};
+    memoryAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    memoryAllocInfo.pNext = nullptr;
+    memoryAllocInfo.memoryTypeIndex = 0;
+    memoryAllocInfo.allocationSize = memoryRequirements.size;
+    memoryAllocInfo.memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
     VkDeviceMemory vkDeviceMemory = nullptr;
-    result = vkAllocateMemory(vkDevice, &allocateInfo, nullptr, &vkDeviceMemory);
+    result = vkAllocateMemory(vkDevice, &memoryAllocInfo, nullptr, &vkDeviceMemory);
     RFX_CHECK_STATE(result == VK_SUCCESS && vkDeviceMemory != nullptr,
         "Failed to allocated memory for uniform buffer");
 
@@ -699,9 +707,9 @@ void GraphicsDevice::allocateDescriptorSets(const VkDescriptorSetAllocateInfo& a
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void GraphicsDevice::updateDescriptorSets(size_t count, const VkWriteDescriptorSet* writes) const
+void GraphicsDevice::updateDescriptorSets(uint32_t count, const VkWriteDescriptorSet* writes) const
 {
-    vkUpdateDescriptorSets(vkDevice, static_cast<uint32_t>(count), writes, 0, nullptr);
+    vkUpdateDescriptorSets(vkDevice, count, writes, 0, nullptr);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -915,6 +923,349 @@ void GraphicsDevice::destroyPipeline(VkPipeline& inOutPipeline) const
 {
     vkDestroyPipeline(vkDevice, inOutPipeline, nullptr);
     inOutPipeline = nullptr;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+unique_ptr<Texture2D> GraphicsDevice::createTexture2D(
+    int width, 
+    int height,
+    int bytesPerPixel,
+    VkFormat format,
+    const vector<std::byte>& data)
+{
+    VkImage textureImage = nullptr;
+    VkDeviceMemory textureImageMemory = nullptr;
+    createImage(width, 
+        height, 
+        format, 
+        VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
+        textureImage, 
+        textureImageMemory);
+
+    VkSampler textureSampler = createTextureSampler();
+
+    VkImageView textureImageView = createImageView(textureImage, format);
+
+    updateImage(textureImage, width, height, bytesPerPixel, data);
+
+    return make_unique<Texture2D>(vkDevice, textureImage, textureImageMemory, 
+        textureImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, textureSampler, vk);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkSampler GraphicsDevice::createTextureSampler()
+{
+    VkSamplerCreateInfo samplerInfo = {};
+    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    samplerInfo.magFilter = VK_FILTER_LINEAR;
+    samplerInfo.minFilter = VK_FILTER_LINEAR;
+    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.anisotropyEnable = VK_TRUE;
+    samplerInfo.maxAnisotropy = 16;
+    samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    samplerInfo.unnormalizedCoordinates = VK_FALSE;
+    samplerInfo.compareEnable = VK_FALSE;
+    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+
+    VkSampler textureSampler = nullptr;
+    const VkResult result = vkCreateSampler(vkDevice, &samplerInfo, nullptr, &textureSampler);
+    RFX_CHECK_STATE(result == VK_SUCCESS && textureSampler != nullptr,
+        "Failed to create texture sampler");
+
+    return textureSampler;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void GraphicsDevice::createImage(
+    uint32_t width,
+    uint32_t height,
+    VkFormat format,
+    VkImageUsageFlags usage,
+    VkMemoryPropertyFlags properties,
+    VkImage& outImage,
+    VkDeviceMemory& outImageMemory) const
+{
+    outImage = nullptr;
+    outImageMemory = nullptr;
+
+    VkImageCreateInfo imageCreateInfo = {};
+    imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageCreateInfo.pNext = nullptr;
+    imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageCreateInfo.format = format;
+    imageCreateInfo.mipLevels = 1;
+    imageCreateInfo.arrayLayers = 1;
+    imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    imageCreateInfo.extent = { width, height, 1 };
+    imageCreateInfo.usage = usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    imageCreateInfo.queueFamilyIndexCount = deviceInfo.graphicsQueueFamilyIndex;
+    imageCreateInfo.pQueueFamilyIndices = nullptr;
+    imageCreateInfo.flags = 0;
+
+    VkResult result = vkCreateImage(vkDevice, &imageCreateInfo, nullptr, &outImage);
+    RFX_CHECK_STATE(result == VK_SUCCESS && outImage != nullptr,
+        "Failed to create image");
+
+    VkMemoryRequirements memoryRequirements = {};
+    vkGetImageMemoryRequirements(vkDevice, outImage, &memoryRequirements);
+
+    VkMemoryAllocateInfo memoryAllocInfo = {};
+    memoryAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    memoryAllocInfo.pNext = nullptr;
+    memoryAllocInfo.allocationSize = memoryRequirements.size;
+    memoryAllocInfo.memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, 0);
+
+    result = vkAllocateMemory(vkDevice, &memoryAllocInfo, nullptr, &outImageMemory);
+    RFX_CHECK_STATE(result == VK_SUCCESS && outImageMemory != nullptr,
+        "Failed to allocate image memory");
+
+    vkBindImageMemory(vkDevice, outImage, outImageMemory, 0);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkImageView GraphicsDevice::createImageView(VkImage image, VkFormat format) const
+{
+    VkImageViewCreateInfo viewInfo = {};
+    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    viewInfo.image = image;
+    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    viewInfo.format = format;
+    viewInfo.components = {
+        VK_COMPONENT_SWIZZLE_IDENTITY,
+        VK_COMPONENT_SWIZZLE_IDENTITY,
+        VK_COMPONENT_SWIZZLE_IDENTITY,
+        VK_COMPONENT_SWIZZLE_IDENTITY
+    };
+    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    viewInfo.subresourceRange.baseMipLevel = 0;
+    viewInfo.subresourceRange.levelCount = VK_REMAINING_MIP_LEVELS; // 1;
+    viewInfo.subresourceRange.baseArrayLayer = 0;
+    viewInfo.subresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS; // 1;
+
+    VkImageView imageView = nullptr;
+    const VkResult result = vkCreateImageView(vkDevice, &viewInfo, nullptr, &imageView);
+    RFX_CHECK_STATE(result == VK_SUCCESS && imageView != nullptr,
+        "Failed to create image view");
+
+    return imageView;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void GraphicsDevice::updateImage(
+    VkImage image,
+    int width,
+    int height,
+    int bytesPerPixel,
+    const vector<std::byte>& imageData)
+{
+    const VkDeviceSize imageSize = width * height * bytesPerPixel;
+    VkBuffer stagingBuffer = nullptr;
+    VkDeviceMemory stagingBufferMemory = nullptr;
+
+    createBuffer(imageSize,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        stagingBuffer,
+        stagingBufferMemory);
+
+    void* bufferMemory = nullptr;
+    const VkResult result = vkMapMemory(vkDevice, stagingBufferMemory, 0, imageSize, 0, &bufferMemory);
+    RFX_CHECK_STATE(result == VK_SUCCESS && bufferMemory != nullptr, "Failed to map memory");
+    memcpy(bufferMemory, imageData.data(), static_cast<size_t>(imageSize));
+    vkUnmapMemory(vkDevice, stagingBufferMemory);
+
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
+    setImageMemoryBarrier(
+        image,
+        0,
+        VK_ACCESS_TRANSFER_WRITE_BIT,
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        commandBuffer,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_TRANSFER_BIT);
+
+    copyBufferToImage(stagingBuffer, image, width, height, commandBuffer);
+
+    setImageMemoryBarrier(
+        image,
+        VK_ACCESS_TRANSFER_WRITE_BIT,
+        VK_ACCESS_SHADER_READ_BIT,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
+    endSingleTimeCommands(commandBuffer);
+
+
+    vkDestroyBuffer(vkDevice, stagingBuffer, nullptr);
+    vkFreeMemory(vkDevice, stagingBufferMemory, nullptr);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void GraphicsDevice::createBuffer(
+    VkDeviceSize size,
+    VkBufferUsageFlags usage,
+    VkMemoryPropertyFlags properties,
+    VkBuffer& outBuffer,
+    VkDeviceMemory& outBufferMemory) const
+{
+    outBuffer = nullptr;
+    outBufferMemory = nullptr;
+
+    VkBufferCreateInfo createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    createInfo.size = size;
+    createInfo.usage = usage;
+    createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VkResult result = vkCreateBuffer(vkDevice, &createInfo, nullptr, &outBuffer);
+    RFX_CHECK_STATE(result == VK_SUCCESS && outBuffer != nullptr,
+        "Failed to create buffer");
+
+    VkMemoryRequirements memoryRequirements = {};
+    vkGetBufferMemoryRequirements(vkDevice, outBuffer, &memoryRequirements);
+
+    VkMemoryAllocateInfo memoryAllocInfo = {};
+    memoryAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    memoryAllocInfo.pNext = nullptr;
+    memoryAllocInfo.allocationSize = memoryRequirements.size;
+    memoryAllocInfo.memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, properties);
+
+    result = vkAllocateMemory(vkDevice, &memoryAllocInfo, nullptr, &outBufferMemory);
+    RFX_CHECK_STATE(result == VK_SUCCESS && outBufferMemory != nullptr,
+        "Failed to allocated buffer memory");
+
+    vkBindBufferMemory(vkDevice, outBuffer, outBufferMemory, 0);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkCommandBuffer GraphicsDevice::beginSingleTimeCommands() const
+{
+    VkCommandBufferAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandPool = singleTimeCommandPool->getHandle();
+    allocInfo.commandBufferCount = 1;
+
+    VkCommandBuffer commandBuffer = nullptr;
+    VkResult result = vkAllocateCommandBuffers(vkDevice, &allocInfo, &commandBuffer);
+    RFX_CHECK_STATE(result == VK_SUCCESS && commandBuffer != nullptr,
+        "Failed to allocate command buffer");
+
+    VkCommandBufferBeginInfo beginInfo = {};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    result = vkBeginCommandBuffer(commandBuffer, &beginInfo);
+    RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to begin command buffer");
+
+    return commandBuffer;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void GraphicsDevice::setImageMemoryBarrier(
+    VkImage image,
+    VkAccessFlags sourceAccess,
+    VkAccessFlags destAccess,
+    VkImageLayout oldLayout,
+    VkImageLayout newLayout,
+    VkCommandBuffer commandBuffer,
+    VkPipelineStageFlags sourceStage,
+    VkPipelineStageFlags destinationStage) const
+{
+    VkImageMemoryBarrier barrier = {};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.pNext = nullptr;
+    barrier.srcAccessMask = sourceAccess;
+    barrier.dstAccessMask = destAccess;
+    barrier.oldLayout = oldLayout;
+    barrier.newLayout = newLayout;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = image;
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.levelCount = VK_REMAINING_MIP_LEVELS;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS;
+
+    vkCmdPipelineBarrier(
+        commandBuffer,
+        sourceStage, destinationStage,
+        0,
+        0, nullptr,
+        0, nullptr,
+        1, &barrier
+    );
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void GraphicsDevice::copyBufferToImage(VkBuffer buffer, 
+    VkImage image, 
+    uint32_t width, 
+    uint32_t height, 
+    VkCommandBuffer commandBuffer) const
+{
+    VkBufferImageCopy region = {};
+    region.bufferOffset = 0;
+    region.bufferRowLength = 0;
+    region.bufferImageHeight = 0;
+    region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    region.imageSubresource.mipLevel = 0;
+    region.imageSubresource.baseArrayLayer = 0;
+    region.imageSubresource.layerCount = 1;
+    region.imageOffset = { 0, 0, 0 };
+    region.imageExtent = { width, height, 1 };
+
+    vkCmdCopyBufferToImage(commandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void GraphicsDevice::endSingleTimeCommands(VkCommandBuffer commandBuffer) const
+{
+    VkResult result = vkEndCommandBuffer(commandBuffer);
+    RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to end command buffer");
+
+    VkFenceCreateInfo fenceCreateInfo = {};
+    fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fenceCreateInfo.pNext = nullptr;
+    fenceCreateInfo.flags = 0;
+
+    VkFence fence = nullptr;
+    result = vkCreateFence(vkDevice, &fenceCreateInfo, nullptr, &fence);
+    RFX_CHECK_STATE(result == VK_SUCCESS && fence != nullptr, "Failed to create fence");
+
+    VkSubmitInfo submitInfo = {};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+
+    graphicsQueue->submit(1, &submitInfo, fence);
+    result = waitForFences(1, &fence, false, 500000000);
+    RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to wait for fence");
+
+    vkFreeCommandBuffers(vkDevice, singleTimeCommandPool->getHandle(), 1, &commandBuffer);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

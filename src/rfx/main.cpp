@@ -10,6 +10,7 @@ static_assert(false, "Not implemented");
 #endif // _WINDOWS
 
 #include "test/CubeTest.h"
+#include "test/TexturedCubeTest.h"
 
 using namespace rfx;
 using namespace std;
@@ -32,7 +33,8 @@ int main()
     {
         RFX_LOG_INFO << "Starting rfx application ...";
 
-        CubeTest theApp(instanceHandle);
+        //CubeTest theApp(instanceHandle);
+        TexturedCubeTest theApp(instanceHandle);
         theApp.initialize();
         theApp.run();
 
