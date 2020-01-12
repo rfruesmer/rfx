@@ -7,6 +7,11 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+Application::Application(filesystem::path configurationPath)
+    : configurationPath(move(configurationPath)) {}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void Application::initialize()
 {
     loadConfiguration();
@@ -21,9 +26,9 @@ void Application::initialize()
 
 void Application::loadConfiguration()
 {
-    const filesystem::path configFilePath = filesystem::current_path() / 
-        filesystem::path("assets/application-config.json");
-    ifstream configFile(configFilePath.string(), ifstream::binary);
+    const filesystem::path absoluteConfigurationPath = 
+        filesystem::current_path() / configurationPath;
+    ifstream configFile(absoluteConfigurationPath.string(), ifstream::binary);
 
     configFile >> configuration;
 

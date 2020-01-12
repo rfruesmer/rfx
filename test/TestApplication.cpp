@@ -1,7 +1,5 @@
 #include "rfx/pch.h"
 #include "test/TestApplication.h"
-#include "rfx/graphics/SPIR.h"
-#include "rfx/core/FileUtil.h"
 
 using namespace rfx;
 using namespace glm;
@@ -9,8 +7,12 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-TestApplication::TestApplication(HINSTANCE instanceHandle)
-    : Win32Application(instanceHandle)
+TestApplication::TestApplication(filesystem::path configurationPath, handle_t instanceHandle)
+#ifdef _WINDOWS
+    : Win32Application(configurationPath, instanceHandle)
+#else
+static_assert(false, "not implemented yet");
+#endif // _WINDOWS
 {
     glslang::InitializeProcess();
 }
@@ -19,20 +21,22 @@ TestApplication::TestApplication(HINSTANCE instanceHandle)
 
 void TestApplication::initialize()
 {
+#ifdef _WINDOWS
     Win32Application::initialize();
+#else
+    static_assert(false, "not implemented yet");
+#endif
 
-    initCamera();
-    initPipelineLayout();
-    initDescriptorPool();
-    initDescriptorSet();
-    initRenderPass();
-    initVertexShaderModule();
-    initFragmentShaderModule();
-    initFrameBuffers();
-    initVertexBuffer();
-    initPipeline();
     initCommandPool();
     initCommandBuffers();
+    initRenderPass();
+    initFrameBuffers();
+
+    initScene();
+    initCamera();
+    initPipelineLayout();
+    initDescriptorSet();
+    initPipeline();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -44,10 +48,6 @@ void TestApplication::initCamera()
     cameraLookAt = vec3(0.0f);
     cameraUp = vec3(0.0f, 1.0f, 0.0f);
     projectionMatrix = perspective(radians(45.0f), 1.0f, 0.1f, 100.0f);
-    clipMatrix = mat4(1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, -1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 0.5f, 0.5f,
-        0.0f, 0.0f, 0.0f, 1.0f);
 
     uniformBuffer = graphicsDevice->createUniformBuffer(sizeof(modelViewProjMatrix));
 
@@ -67,66 +67,61 @@ void TestApplication::updateModelViewProjection()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestApplication::initCommandPool()
+void TestApplication::initDescriptorSetLayout()
 {
-    commandPool = graphicsDevice->createCommandPool(
-        graphicsDevice->getDeviceInfo().graphicsQueueFamilyIndex);
+    VkDescriptorSetLayoutBinding layoutBinding = {};
+    layoutBinding.binding = 0;
+    layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    layoutBinding.descriptorCount = 1;
+    layoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    layoutBinding.pImmutableSamplers = nullptr;
+
+    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
+    descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    descriptorSetLayoutCreateInfo.pNext = nullptr;
+    descriptorSetLayoutCreateInfo.bindingCount = 1;
+    descriptorSetLayoutCreateInfo.pBindings = &layoutBinding;
+
+    descriptorSetLayout = graphicsDevice->createDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestApplication::initCommandBuffers()
+void TestApplication::initPipelineLayout()
 {
-    commandBuffers = commandPool->allocateCommandBuffers(graphicsDevice->getSwapChainBuffers().size());
+    RFX_CHECK_STATE(descriptorSetLayout != nullptr, "descriptorSetLayout must be created before");
 
-    const VkExtent2D presentImageSize = graphicsDevice->getSwapChainProperties().imageSize;
+    VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
+    pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutCreateInfo.pNext = nullptr;
+    pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+    pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
+    pipelineLayoutCreateInfo.setLayoutCount = NUM_DESCRIPTOR_SETS;
+    pipelineLayoutCreateInfo.pSetLayouts = &descriptorSetLayout;
 
-    VkClearValue clearValues[2];
-    clearValues[0].color.float32[0] = 0.2f;
-    clearValues[0].color.float32[1] = 0.2f;
-    clearValues[0].color.float32[2] = 0.2f;
-    clearValues[0].color.float32[3] = 0.2f;
-    clearValues[1].depthStencil.depth = 1.0f;
-    clearValues[1].depthStencil.stencil = 0;
+    pipelineLayout = graphicsDevice->createPipelineLayout(pipelineLayoutCreateInfo);
+}
 
-    VkViewport viewport;
-    viewport.x = 0;
-    viewport.y = 0;
-    viewport.width = static_cast<float>(presentImageSize.width);
-    viewport.height = static_cast<float>(presentImageSize.height);
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
+// ---------------------------------------------------------------------------------------------------------------------
 
-    VkRect2D scissor;
-    scissor.extent.width = presentImageSize.width;
-    scissor.extent.height = presentImageSize.height;
-    scissor.offset.x = 0;
-    scissor.offset.y = 0;
+void TestApplication::initDescriptorPool(const vector<VkDescriptorPoolSize>& poolSizes)
+{
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {};
+    descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    descriptorPoolCreateInfo.pNext = nullptr;
+    descriptorPoolCreateInfo.maxSets = 1;
+    descriptorPoolCreateInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+    descriptorPoolCreateInfo.pPoolSizes = poolSizes.data();
 
-    for (size_t i = 0, count = commandBuffers.size(); i < count; ++i) {
-        VkRenderPassBeginInfo renderPassBeginInfo = {};
-        renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassBeginInfo.pNext = nullptr;
-        renderPassBeginInfo.renderPass = renderPass;
-        renderPassBeginInfo.framebuffer = frameBuffers[i];
-        renderPassBeginInfo.renderArea.offset.x = 0;
-        renderPassBeginInfo.renderArea.offset.y = 0;
-        renderPassBeginInfo.renderArea.extent = presentImageSize;
-        renderPassBeginInfo.clearValueCount = 2;
-        renderPassBeginInfo.pClearValues = clearValues;
+    descriptorPool = graphicsDevice->createDescriptorPool(descriptorPoolCreateInfo);
+}
 
-        auto& commandBuffer = commandBuffers[i];
-        commandBuffer->begin();
-        commandBuffer->beginRenderPass(renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-        commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-        commandBuffer->bindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, descriptorSets);
-        commandBuffer->bindVertexBuffers({ vertexBuffer });
-        commandBuffer->setViewport(viewport);
-        commandBuffer->setScissor(scissor);
-        commandBuffer->draw(getVertexCount());
-        commandBuffer->endRenderPass();
-        commandBuffer->end();
-    }
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::initCommandPool()
+{
+    commandPool = graphicsDevice->createCommandPool(
+        graphicsDevice->getDeviceInfo().graphicsQueueFamilyIndex);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -198,58 +193,6 @@ void TestApplication::initRenderPass()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestApplication::initVertexShaderModule()
-{
-    string vertexShaderString;
-    FileUtil::readTextFile(getVertexShaderPath(), vertexShaderString);
-    vector<unsigned int> vertexShaderSPV;
-    GLSLtoSPV(VK_SHADER_STAGE_VERTEX_BIT, vertexShaderString.c_str(), vertexShaderSPV);
-
-    shaderStageCreateInfos[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    shaderStageCreateInfos[0].pNext = nullptr;
-    shaderStageCreateInfos[0].pSpecializationInfo = nullptr;
-    shaderStageCreateInfos[0].flags = 0;
-    shaderStageCreateInfos[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-    shaderStageCreateInfos[0].pName = "main";
-
-    VkShaderModuleCreateInfo shaderModuleCreateInfo;
-    shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    shaderModuleCreateInfo.pNext = nullptr;
-    shaderModuleCreateInfo.flags = 0;
-    shaderModuleCreateInfo.codeSize = vertexShaderSPV.size() * sizeof(unsigned int);
-    shaderModuleCreateInfo.pCode = vertexShaderSPV.data();
-
-    shaderStageCreateInfos[0].module = graphicsDevice->createShaderModule(shaderModuleCreateInfo);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TestApplication::initFragmentShaderModule()
-{
-    string fragmentShaderString;
-    FileUtil::readTextFile(getFragmentShaderPath(), fragmentShaderString);
-    vector<unsigned int> fragmentShaderSPV;
-    GLSLtoSPV(VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShaderString.c_str(), fragmentShaderSPV);
-
-    shaderStageCreateInfos[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    shaderStageCreateInfos[1].pNext = nullptr;
-    shaderStageCreateInfos[1].pSpecializationInfo = nullptr;
-    shaderStageCreateInfos[1].flags = 0;
-    shaderStageCreateInfos[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    shaderStageCreateInfos[1].pName = "main";
-
-    VkShaderModuleCreateInfo shaderModuleCreateInfo;
-    shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    shaderModuleCreateInfo.pNext = nullptr;
-    shaderModuleCreateInfo.flags = 0;
-    shaderModuleCreateInfo.codeSize = fragmentShaderSPV.size() * sizeof(unsigned int);
-    shaderModuleCreateInfo.pCode = fragmentShaderSPV.data();
-
-    shaderStageCreateInfos[1].module = graphicsDevice->createShaderModule(shaderModuleCreateInfo);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void TestApplication::initFrameBuffers()
 {
     const GraphicsDeviceInfo& deviceInfo = graphicsDevice->getDeviceInfo();
@@ -278,67 +221,57 @@ void TestApplication::initFrameBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestApplication::initVertexBuffer()
+VkPipelineDynamicStateCreateInfo TestApplication::createDynamicState(uint32_t dynamicStateCount, VkDynamicState dynamicStates[])
 {
-    const std::byte* vertexData = getVertexData();
-    const size_t vertexSize = getVertexSize();
-    const size_t vertexCount = getVertexCount();
-    const size_t vertexDataSize = vertexCount * vertexSize;
+    VkPipelineDynamicStateCreateInfo dynamicState = {};
+    dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamicState.pNext = nullptr;
+    dynamicState.dynamicStateCount = dynamicStateCount;
+    dynamicState.pDynamicStates = dynamicStates;
 
-    vertexBuffer = graphicsDevice->createVertexBuffer(vertexDataSize);
-    vertexBuffer->load(vertexDataSize, vertexData);
-    vertexBuffer->bind();
-
-    vertexInputBinding.binding = 0;
-    vertexInputBinding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-    vertexInputBinding.stride = getVertexSize();
+    return dynamicState;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestApplication::initPipeline()
+VkPipelineInputAssemblyStateCreateInfo TestApplication::createInputAssemblyState()
 {
-    VkDynamicState dynamicStateEnables[VK_DYNAMIC_STATE_RANGE_SIZE] = {};
-    dynamicStateEnables[0] = VK_DYNAMIC_STATE_VIEWPORT;
-    dynamicStateEnables[1] = VK_DYNAMIC_STATE_SCISSOR;
+    VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = {};
+    inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    inputAssemblyState.pNext = nullptr;
+    inputAssemblyState.flags = 0;
+    inputAssemblyState.primitiveRestartEnable = VK_FALSE;
+    inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
-    VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo = {};
-    dynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    dynamicStateCreateInfo.pNext = nullptr;
-    dynamicStateCreateInfo.pDynamicStates = dynamicStateEnables;
-    dynamicStateCreateInfo.dynamicStateCount = 2;
+    return inputAssemblyState;
+}
 
-    VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {};
-    vertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputStateCreateInfo.pNext = nullptr;
-    vertexInputStateCreateInfo.flags = 0;
-    vertexInputStateCreateInfo.vertexBindingDescriptionCount = 1;
-    vertexInputStateCreateInfo.pVertexBindingDescriptions = &vertexInputBinding;
-    vertexInputStateCreateInfo.vertexAttributeDescriptionCount = 2;
-    vertexInputStateCreateInfo.pVertexAttributeDescriptions = vertexInputAttributes;
+// ---------------------------------------------------------------------------------------------------------------------
 
-    VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = {};
-    inputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    inputAssemblyStateCreateInfo.pNext = nullptr;
-    inputAssemblyStateCreateInfo.flags = 0;
-    inputAssemblyStateCreateInfo.primitiveRestartEnable = VK_FALSE;
-    inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+VkPipelineRasterizationStateCreateInfo TestApplication::createRasterizationState()
+{
+    VkPipelineRasterizationStateCreateInfo rasterizationState = {};
+    rasterizationState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    rasterizationState.pNext = nullptr;
+    rasterizationState.flags = 0;
+    rasterizationState.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterizationState.cullMode = VK_CULL_MODE_BACK_BIT;
+    rasterizationState.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    rasterizationState.depthClampEnable = VK_FALSE;
+    rasterizationState.rasterizerDiscardEnable = VK_FALSE;
+    rasterizationState.depthBiasEnable = VK_FALSE;
+    rasterizationState.depthBiasConstantFactor = 0;
+    rasterizationState.depthBiasClamp = 0;
+    rasterizationState.depthBiasSlopeFactor = 0;
+    rasterizationState.lineWidth = 1.0f;
 
-    VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo = {};
-    rasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    rasterizationStateCreateInfo.pNext = nullptr;
-    rasterizationStateCreateInfo.flags = 0;
-    rasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
-    rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-    rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
-    rasterizationStateCreateInfo.depthClampEnable = VK_FALSE;
-    rasterizationStateCreateInfo.rasterizerDiscardEnable = VK_FALSE;
-    rasterizationStateCreateInfo.depthBiasEnable = VK_FALSE;
-    rasterizationStateCreateInfo.depthBiasConstantFactor = 0;
-    rasterizationStateCreateInfo.depthBiasClamp = 0;
-    rasterizationStateCreateInfo.depthBiasSlopeFactor = 0;
-    rasterizationStateCreateInfo.lineWidth = 1.0f;
+    return rasterizationState;
+}
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkPipelineColorBlendAttachmentState TestApplication::createColorBlendAttachmentState()
+{
     VkPipelineColorBlendAttachmentState colorBlendAttachmentState = {};
     colorBlendAttachmentState.colorWriteMask = 0xf;
     colorBlendAttachmentState.blendEnable = VK_FALSE;
@@ -349,48 +282,77 @@ void TestApplication::initPipeline()
     colorBlendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
     colorBlendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
 
-    VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo = {};
-    colorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    colorBlendStateCreateInfo.pNext = nullptr;
-    colorBlendStateCreateInfo.flags = 0;
-    colorBlendStateCreateInfo.attachmentCount = 1;
-    colorBlendStateCreateInfo.pAttachments = &colorBlendAttachmentState;
-    colorBlendStateCreateInfo.logicOpEnable = VK_FALSE;
-    colorBlendStateCreateInfo.logicOp = VK_LOGIC_OP_NO_OP;
-    colorBlendStateCreateInfo.blendConstants[0] = 1.0f;
-    colorBlendStateCreateInfo.blendConstants[1] = 1.0f;
-    colorBlendStateCreateInfo.blendConstants[2] = 1.0f;
-    colorBlendStateCreateInfo.blendConstants[3] = 1.0f;
+    return colorBlendAttachmentState;
+}
 
-    VkPipelineViewportStateCreateInfo viewportStateCreateInfo = {};
-    viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewportStateCreateInfo.pNext = nullptr;
-    viewportStateCreateInfo.flags = 0;
-    viewportStateCreateInfo.viewportCount = NUM_VIEWPORTS;
-    viewportStateCreateInfo.scissorCount = NUM_SCISSORS;
-    viewportStateCreateInfo.pScissors = nullptr;
-    viewportStateCreateInfo.pViewports = nullptr;
+// ---------------------------------------------------------------------------------------------------------------------
 
-    VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo = {};
-    depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depthStencilStateCreateInfo.pNext = nullptr;
-    depthStencilStateCreateInfo.flags = 0;
-    depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
-    depthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
-    depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-    depthStencilStateCreateInfo.depthBoundsTestEnable = VK_FALSE;
-    depthStencilStateCreateInfo.minDepthBounds = 0;
-    depthStencilStateCreateInfo.maxDepthBounds = 0;
-    depthStencilStateCreateInfo.stencilTestEnable = VK_FALSE;
-    depthStencilStateCreateInfo.back.failOp = VK_STENCIL_OP_KEEP;
-    depthStencilStateCreateInfo.back.passOp = VK_STENCIL_OP_KEEP;
-    depthStencilStateCreateInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
-    depthStencilStateCreateInfo.back.compareMask = 0;
-    depthStencilStateCreateInfo.back.reference = 0;
-    depthStencilStateCreateInfo.back.depthFailOp = VK_STENCIL_OP_KEEP;
-    depthStencilStateCreateInfo.back.writeMask = 0;
-    depthStencilStateCreateInfo.front = depthStencilStateCreateInfo.back;
+VkPipelineColorBlendStateCreateInfo TestApplication::createColorBlendState(
+    const VkPipelineColorBlendAttachmentState& colorBlendAttachmentState)
+{
+    VkPipelineColorBlendStateCreateInfo colorBlendState = {};
+    colorBlendState.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    colorBlendState.pNext = nullptr;
+    colorBlendState.flags = 0;
+    colorBlendState.attachmentCount = 1;
+    colorBlendState.pAttachments = &colorBlendAttachmentState;
+    colorBlendState.logicOpEnable = VK_FALSE;
+    colorBlendState.logicOp = VK_LOGIC_OP_NO_OP;
+    colorBlendState.blendConstants[0] = 1.0f;
+    colorBlendState.blendConstants[1] = 1.0f;
+    colorBlendState.blendConstants[2] = 1.0f;
+    colorBlendState.blendConstants[3] = 1.0f;
 
+    return colorBlendState;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkPipelineViewportStateCreateInfo TestApplication::createViewportState()
+{
+    VkPipelineViewportStateCreateInfo viewportState = {};
+    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    viewportState.pNext = nullptr;
+    viewportState.flags = 0;
+    viewportState.viewportCount = NUM_VIEWPORTS;
+    viewportState.scissorCount = NUM_SCISSORS;
+    viewportState.pScissors = nullptr;
+    viewportState.pViewports = nullptr;
+
+    return viewportState;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkPipelineDepthStencilStateCreateInfo TestApplication::createDepthStencilState()
+{
+    VkPipelineDepthStencilStateCreateInfo depthStencilState = {};
+    depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depthStencilState.pNext = nullptr;
+    depthStencilState.flags = 0;
+    depthStencilState.depthTestEnable = VK_TRUE;
+    depthStencilState.depthWriteEnable = VK_TRUE;
+    depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+    depthStencilState.depthBoundsTestEnable = VK_FALSE;
+    depthStencilState.minDepthBounds = 0;
+    depthStencilState.maxDepthBounds = 0;
+    depthStencilState.stencilTestEnable = VK_FALSE;
+    depthStencilState.back.failOp = VK_STENCIL_OP_KEEP;
+    depthStencilState.back.passOp = VK_STENCIL_OP_KEEP;
+    depthStencilState.back.compareOp = VK_COMPARE_OP_ALWAYS;
+    depthStencilState.back.compareMask = 0;
+    depthStencilState.back.reference = 0;
+    depthStencilState.back.depthFailOp = VK_STENCIL_OP_KEEP;
+    depthStencilState.back.writeMask = 0;
+    depthStencilState.front = depthStencilState.back;
+
+    return depthStencilState;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkPipelineMultisampleStateCreateInfo TestApplication::createMultiSampleState()
+{
     VkPipelineMultisampleStateCreateInfo multiSampleStateCreateInfo = {};
     multiSampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     multiSampleStateCreateInfo.pNext = nullptr;
@@ -402,28 +364,7 @@ void TestApplication::initPipeline()
     multiSampleStateCreateInfo.alphaToOneEnable = VK_FALSE;
     multiSampleStateCreateInfo.minSampleShading = 0.0;
 
-    VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
-    pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineCreateInfo.pNext = nullptr;
-    pipelineCreateInfo.layout = pipelineLayout;
-    pipelineCreateInfo.basePipelineHandle = nullptr;
-    pipelineCreateInfo.basePipelineIndex = 0;
-    pipelineCreateInfo.flags = 0;
-    pipelineCreateInfo.pVertexInputState = &vertexInputStateCreateInfo;
-    pipelineCreateInfo.pInputAssemblyState = &inputAssemblyStateCreateInfo;
-    pipelineCreateInfo.pRasterizationState = &rasterizationStateCreateInfo;
-    pipelineCreateInfo.pColorBlendState = &colorBlendStateCreateInfo;
-    pipelineCreateInfo.pTessellationState = nullptr;
-    pipelineCreateInfo.pMultisampleState = &multiSampleStateCreateInfo;
-    pipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
-    pipelineCreateInfo.pViewportState = &viewportStateCreateInfo;
-    pipelineCreateInfo.pDepthStencilState = &depthStencilStateCreateInfo;
-    pipelineCreateInfo.pStages = shaderStageCreateInfos;
-    pipelineCreateInfo.stageCount = 2;
-    pipelineCreateInfo.renderPass = renderPass;
-    pipelineCreateInfo.subpass = 0;
-
-    pipeline = graphicsDevice->createGraphicsPipeline(pipelineCreateInfo);
+    return multiSampleStateCreateInfo;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -512,7 +453,7 @@ void TestApplication::draw()
     VkFence drawFence = graphicsDevice->createFence(fenceCreateInfo);
 
     VkPipelineStageFlags pipelineStageFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    VkCommandBuffer vkCommandBuffers[] = { commandBuffers[nextImageIndex]->getHandle() };
+    VkCommandBuffer vkCommandBuffers[] = { renderCommandBuffers[nextImageIndex]->getHandle() };
 
     VkSubmitInfo submitInfo = {};
     submitInfo.pNext = nullptr;
@@ -538,7 +479,7 @@ void TestApplication::draw()
     presentInfo.pResults = nullptr;
 
     do {
-        result = graphicsDevice->waitForFences(1, &drawFence, true, FENCE_TIMEOUT);
+        result = graphicsDevice->waitForFences(1, &drawFence, true, DEFAULT_FENCE_TIMEOUT);
     } while (result == VK_TIMEOUT);
     RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to execute command buffer");
 
@@ -557,7 +498,6 @@ void TestApplication::shutdown()
     destroyPipeline();
     destroyPipelineLayout();
     destroyRenderPass();
-    destroyShaderModules();
     destroyDescriptors();
     destroyBuffers();
 
@@ -603,14 +543,6 @@ void TestApplication::destroyRenderPass()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestApplication::destroyShaderModules()
-{
-    graphicsDevice->destroyShaderModule(shaderStageCreateInfos[0].module);
-    graphicsDevice->destroyShaderModule(shaderStageCreateInfos[1].module);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void TestApplication::destroyDescriptors()
 {
     graphicsDevice->destroyDescriptorPool(descriptorPool);
@@ -621,8 +553,7 @@ void TestApplication::destroyDescriptors()
 
 void TestApplication::destroyBuffers() const
 {
-    vertexBuffer->destroy();
-    uniformBuffer->destroy();
+    uniformBuffer->dispose();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

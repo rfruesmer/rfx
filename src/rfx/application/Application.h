@@ -12,6 +12,7 @@ namespace rfx
 class Application : public WindowListener
 {
 public:
+    explicit Application(std::filesystem::path configurationPath);
     virtual ~Application() = default;
 
     virtual void initialize();
@@ -36,6 +37,7 @@ protected:
     virtual void update();
     virtual void draw() {}
 
+    std::filesystem::path configurationPath;
     std::string name;
     Timer timer;
     bool paused = false;

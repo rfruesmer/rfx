@@ -1,6 +1,7 @@
 #pragma once
 
 #include "test/TestApplication.h"
+#include "rfx/scene/Mesh.h"
 
 namespace rfx
 {
@@ -8,20 +9,22 @@ namespace rfx
 class CubeTest : public TestApplication
 {
 public:
-    explicit CubeTest(HINSTANCE instanceHandle);
+    explicit CubeTest(handle_t instanceHandle);
 
-    uint32_t getVertexSize() const override;
-    uint32_t getVertexCount() const override;
-    const std::byte* getVertexData() const override;
-
-    std::string getVertexShaderPath() const override;
-    std::string getFragmentShaderPath() const override;
+    void initialize() override;
 
 protected:
+    void initScene() override;
+    void loadModel();
+    void loadShaders();
+    void initDescriptorPool();
     void initPipelineLayout() override;
-    void initDescriptorPool() override;
+    void initPipeline() override;
     void initDescriptorSet() override;
-    void initVertexBuffer() override;
+    void initCommandBuffers() override;
+
+private:
+    std::shared_ptr<Mesh> cube;
 };
 
 } // namespace rfx

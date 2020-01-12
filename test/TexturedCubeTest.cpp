@@ -62,43 +62,8 @@ static const Vertex vertices[] = {
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-TexturedCubeTest::TexturedCubeTest(HINSTANCE instanceHandle)
-    : TestApplication(instanceHandle) {}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-uint32_t TexturedCubeTest::getVertexSize() const
-{
-    return sizeof(Vertex);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-uint32_t TexturedCubeTest::getVertexCount() const
-{
-    return 18;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-const std::byte* TexturedCubeTest::getVertexData() const
-{
-    return reinterpret_cast<const std::byte*>(vertices);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-string TexturedCubeTest::getVertexShaderPath() const
-{
-    return "assets/shaders/texture.vert";
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-string TexturedCubeTest::getFragmentShaderPath() const
-{
-    return "assets/shaders/texture.frag";
-}
+TexturedCubeTest::TexturedCubeTest(handle_t instanceHandle)
+    : TestApplication("assets/tests/textured-cube/application-config.json", instanceHandle) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -140,19 +105,10 @@ void TexturedCubeTest::initPipelineLayout()
 
 void TexturedCubeTest::initDescriptorPool()
 {
-    vector<VkDescriptorPoolSize> descriptorPoolSizes;
-    descriptorPoolSizes.push_back({VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
-    descriptorPoolSizes.push_back({VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1});
-
-    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {};
-    descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    descriptorPoolCreateInfo.pNext = nullptr;
-    descriptorPoolCreateInfo.maxSets = 1;
-    descriptorPoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-    descriptorPoolCreateInfo.poolSizeCount = static_cast<uint32_t>(descriptorPoolSizes.size());
-    descriptorPoolCreateInfo.pPoolSizes = descriptorPoolSizes.data();
-
-    descriptorPool = graphicsDevice->createDescriptorPool(descriptorPoolCreateInfo);
+    TestApplication::initDescriptorPool({
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1}
+    });
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -202,19 +158,3 @@ void TexturedCubeTest::loadTexture()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedCubeTest::initVertexBuffer()
-{
-    TestApplication::initVertexBuffer();
-
-    vertexInputAttributes[0].binding = 0;
-    vertexInputAttributes[0].location = 0;
-    vertexInputAttributes[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-    vertexInputAttributes[0].offset = 0;
-
-    vertexInputAttributes[1].binding = 0;
-    vertexInputAttributes[1].location = 1;
-    vertexInputAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
-    vertexInputAttributes[1].offset = 16;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------

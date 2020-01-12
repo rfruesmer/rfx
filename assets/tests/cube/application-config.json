@@ -1,0 +1,21 @@
+{
+  "application": {
+    "name": "rfx Cube Demo",
+    "logLevel": "TRACE"
+  },
+  "graphics": {
+    "resolution": {
+      "x": 1600,
+      "y": 1000
+    }
+  },
+  "scene": {
+    "models": [
+      {
+        "path": "assets/common/models/cube.dae",
+        "vertexShader": "assets/common/shaders/color.vert",
+        "fragmentShader": "assets/common/shaders/color.frag"
+      }
+    ]
+  }
+}

@@ -17,11 +17,14 @@ CommandBuffer::CommandBuffer(
     vkCmdBeginRenderPass = vk.vkCmdBeginRenderPass;
     vkCmdEndRenderPass = vk.vkCmdEndRenderPass;
     vkCmdBindVertexBuffers = vk.vkCmdBindVertexBuffers;
+    vkCmdBindIndexBuffer = vk.vkCmdBindIndexBuffer;
     vkCmdBindPipeline = vk.vkCmdBindPipeline;
     vkCmdBindDescriptorSets = vk.vkCmdBindDescriptorSets;
     vkCmdSetViewport = vk.vkCmdSetViewport;
     vkCmdSetScissor = vk.vkCmdSetScissor;
     vkCmdDraw = vk.vkCmdDraw;
+    vkCmdDrawIndexed = vk.vkCmdDrawIndexed;
+    vkCmdCopyBuffer = vk.vkCmdCopyBuffer;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -82,6 +85,13 @@ void CommandBuffer::bindVertexBuffers(const vector<shared_ptr<Buffer>>& buffers)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void CommandBuffer::bindIndexBuffer(const shared_ptr<Buffer>& buffer)
+{
+    vkCmdBindIndexBuffer(vkCommandBuffer, buffer->getHandle(), 0, VK_INDEX_TYPE_UINT32);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void CommandBuffer::bindDescriptorSets(VkPipelineBindPoint bindPoint, 
     VkPipelineLayout pipelineLayout,
     const vector<VkDescriptorSet>& descriptorSets) const
@@ -113,6 +123,25 @@ void CommandBuffer::draw(uint32_t vertexCount) const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void CommandBuffer::drawIndexed(uint32_t indexCount) const
+{
+    vkCmdDrawIndexed(vkCommandBuffer, indexCount, 1, 0, 0, 0);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CommandBuffer::copyBuffer(
+    const std::shared_ptr<Buffer>& sourceBuffer, 
+    const std::shared_ptr<Buffer>& destBuffer)
+{
+    VkBufferCopy copyRegion = {};
+    copyRegion.size = sourceBuffer->getBufferInfo().range;
+
+    vkCmdCopyBuffer(vkCommandBuffer, sourceBuffer->getHandle(), destBuffer->getHandle(), 1, &copyRegion);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 VkCommandBuffer CommandBuffer::getHandle() const
 {
     return vkCommandBuffer;
@@ -120,7 +149,7 @@ VkCommandBuffer CommandBuffer::getHandle() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void CommandBuffer::begin() const
+void CommandBuffer::begin(VkCommandBufferUsageFlags usage) const
 {
     RFX_CHECK_STATE(vkCommandBuffer != nullptr,
         "Invalid command buffer");
@@ -128,7 +157,7 @@ void CommandBuffer::begin() const
     VkCommandBufferBeginInfo beginInfo = {};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.pNext = nullptr;
-    beginInfo.flags = 0;
+    beginInfo.flags = usage;
     beginInfo.pInheritanceInfo = nullptr;
 
     const VkResult result = vkBeginCommandBuffer(vkCommandBuffer, &beginInfo);

@@ -219,6 +219,10 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\rfx\graphics\IndexBuffer.h" />
+    <ClInclude Include="src\rfx\graphics\ShaderLoader.h" />
+    <ClInclude Include="src\rfx\scene\Mesh.h" />
+    <ClInclude Include="src\rfx\scene\ModelLoader.h" />
     <ClInclude Include="src\rfx\core\FileUtil.h" />
     <ClInclude Include="src\rfx\graphics\Buffer.h" />
     <ClInclude Include="src\rfx\graphics\CommandPool.h" />
@@ -251,8 +255,15 @@
     <ClInclude Include="test\TestApplication.h" />
     <ClInclude Include="src\rfx\graphics\Texture2DLoader.h" />
     <ClInclude Include="src\rfx\graphics\Texture2D.h" />
+    <ClInclude Include="src\rfx\graphics\VertexFormat.h" />
+    <ClInclude Include="src\rfx\graphics\VertexBuffer.h" />
+    <ClInclude Include="test\TriangleTest.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\rfx\graphics\IndexBuffer.cpp" />
+    <ClCompile Include="src\rfx\graphics\ShaderLoader.cpp" />
+    <ClCompile Include="src\rfx\scene\Mesh.cpp" />
+    <ClCompile Include="src\rfx\scene\ModelLoader.cpp" />
     <ClCompile Include="src\rfx\core\FileUtil.cpp" />
     <ClCompile Include="src\rfx\graphics\Buffer.cpp" />
     <ClCompile Include="src\rfx\graphics\CommandPool.cpp" />
@@ -289,21 +300,32 @@
       <StructMemberAlignment Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Default</StructMemberAlignment>
     </ClCompile>
     <ClCompile Include="src\rfx\graphics\Texture2D.cpp" />
+    <ClCompile Include="src\rfx\graphics\VertexFormat.cpp" />
+    <ClCompile Include="src\rfx\graphics\VertexBuffer.cpp" />
+    <ClCompile Include="test\TriangleTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="res\rfx.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="assets\common\textures\lunarg_logo-256x256.png" />
     <Image Include="assets\textures\lunarg_logo-256x256.png" />
     <Image Include="res\rfx.ico" />
     <Image Include="res\small.ico" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\application-config.json" />
+    <None Include="assets\common\shaders\color.frag" />
+    <None Include="assets\common\shaders\color.vert" />
+    <None Include="assets\common\shaders\texture.frag" />
+    <None Include="assets\common\shaders\texture.vert" />
+    <None Include="assets\tests\cube\application-config.json" />
+    <None Include="assets\common\models\cube.dae" />
     <None Include="assets\shaders\color.frag" />
     <None Include="assets\shaders\color.vert" />
     <None Include="assets\shaders\texture.frag" />
     <None Include="assets\shaders\texture.vert" />
+    <None Include="assets\tests\triangle\application-config.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

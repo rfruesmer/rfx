@@ -33,9 +33,30 @@ Buffer::Buffer(VkDevice vkDevice,
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+Buffer::~Buffer()
+{
+    dispose();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Buffer::dispose()
+{
+    if (vkBuffer) {
+        vkDestroyBuffer(vkDevice, vkBuffer, nullptr);
+        vkFreeMemory(vkDevice, vkDeviceMemory, nullptr);
+
+        vkDevice = nullptr;
+        vkBuffer = nullptr;
+        vkDeviceMemory = nullptr;
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void Buffer::load(size_t size, const std::byte* data) const
 {
-    RFX_CHECK_ARGUMENT(size <= this->size, "invalid size");
+    RFX_CHECK_ARGUMENT(size <= this->size, "invalid vertexSize");
 
     uint8_t* memory = nullptr;
     const VkResult result = vkMapMemory(vkDevice, vkDeviceMemory, 0, this->size, 0, reinterpret_cast<void**>(&memory));
@@ -66,20 +87,6 @@ void Buffer::invalidateMappedMemoryRanges() const
     mappedRange.size = vkBufferInfo.range;
 
     vkInvalidateMappedMemoryRanges(vkDevice, 1, &mappedRange);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void Buffer::destroy()
-{
-    if (vkBuffer) {
-        vkDestroyBuffer(vkDevice, vkBuffer, nullptr);
-        vkFreeMemory(vkDevice, vkDeviceMemory, nullptr);
-
-        vkDevice = nullptr;
-        vkBuffer = nullptr;
-        vkDeviceMemory = nullptr;
-    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

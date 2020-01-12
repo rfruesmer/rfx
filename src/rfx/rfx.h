@@ -52,12 +52,15 @@ struct VulkanDeviceFunctionPtrs
     DECLARE_VULKAN_FUNCTION(vkCmdBeginRenderPass);
     DECLARE_VULKAN_FUNCTION(vkCmdEndRenderPass);
     DECLARE_VULKAN_FUNCTION(vkCmdBindVertexBuffers);
+    DECLARE_VULKAN_FUNCTION(vkCmdBindIndexBuffer);
     DECLARE_VULKAN_FUNCTION(vkCmdBindPipeline);
     DECLARE_VULKAN_FUNCTION(vkCmdBindDescriptorSets);
     DECLARE_VULKAN_FUNCTION(vkCmdSetViewport);
     DECLARE_VULKAN_FUNCTION(vkCmdSetScissor);
     DECLARE_VULKAN_FUNCTION(vkCmdDraw);
+    DECLARE_VULKAN_FUNCTION(vkCmdDrawIndexed);
     DECLARE_VULKAN_FUNCTION(vkCmdPipelineBarrier);
+    DECLARE_VULKAN_FUNCTION(vkCmdCopyBuffer);
     DECLARE_VULKAN_FUNCTION(vkCmdCopyBufferToImage);
 
     DECLARE_VULKAN_FUNCTION(vkGetImageMemoryRequirements);
@@ -118,7 +121,9 @@ const float RFX_PI = 3.1415926535f;
 // MACROS
 // #####################################################################################################################
 
-#define RFX_THROW(message) {throw std::runtime_error(message + std::string("\n\t") + std::string(__FILE__) + std::string("(") + std::to_string(__LINE__) + std::string(")"));}
+#define RFX_THROW(message) RFX_THROW_TYPED(message, std::runtime_error)
+#define RFX_THROW_TYPED(message, type) \
+    {throw type(message + std::string("\n\t") + std::string(__FILE__) + std::string("(") + std::to_string(__LINE__) + std::string(")"));}
 
-#define RFX_CHECK_ARGUMENT(expr, message) {if (!(expr)) {RFX_THROW(std::string("Illegal argument: ") + message);}}
+#define RFX_CHECK_ARGUMENT(expr, message) {if (!(expr)) {RFX_THROW_TYPED(std::string("Illegal argument: ") + message, std::invalid_argument);}}
 #define RFX_CHECK_STATE(expr, message) {if (!(expr)) {RFX_THROW(std::string("Illegal state: ") + message);}}

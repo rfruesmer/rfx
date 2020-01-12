@@ -8,7 +8,9 @@ namespace rfx
 class Win32Application : public Application
 {
 public:
-    explicit Win32Application(HINSTANCE instanceHandle);
+    explicit Win32Application(
+        std::filesystem::path configurationPath, 
+        handle_t instanceHandle);
 
     void run() override;
 

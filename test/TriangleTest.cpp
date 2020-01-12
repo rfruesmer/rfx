@@ -1,115 +1,108 @@
 #include "rfx/pch.h"
-#include "test/CubeTest.h"
-#include "rfx/scene/ModelLoader.h"
-#include "rfx/graphics/VertexFormat.h"
+#include "test/TriangleTest.h"
 #include "rfx/graphics/ShaderLoader.h"
 
 using namespace rfx;
-using namespace glm;
 using namespace std;
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+TriangleTest::TriangleTest(handle_t instanceHandle)
+    : TestApplication("assets/tests/triangle/application-config.json", instanceHandle) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-CubeTest::CubeTest(handle_t instanceHandle)
-    : TestApplication("assets/tests/cube/application-config.json", instanceHandle) {}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void CubeTest::initialize()
+void TriangleTest::initialize()
 {
     Application::initialize();
 
+    initCommandPool();
+    initRenderPass();
+    initFrameBuffers();
+
     initScene();
     initCamera();
-    initRenderPass();
+
+    initDescriptorSetLayout();
     initPipelineLayout();
     initPipeline();
-    initDescriptorPool();
+
+    const vector<VkDescriptorPoolSize> poolSizes = {
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}
+    };
+    initDescriptorPool(poolSizes);
     initDescriptorSet();
-    initFrameBuffers();
-    initCommandPool();
     initCommandBuffers();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void CubeTest::initScene()
+void TriangleTest::initScene()
 {
-    loadModel();
-    loadShaders();
-}
+    const uint32_t vertexCount = 3;
+    const VertexFormat vertexFormat(VertexFormat::COORDINATES | VertexFormat::COLORS);
+    const uint32_t vertexBufferSize = vertexCount * vertexFormat.getVertexSize();
+    vector<float> vertexData = {
+         1.0f,  1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+        -1.0f,  1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+         0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f
+    };
 
-// ---------------------------------------------------------------------------------------------------------------------
+    const shared_ptr<Buffer> stagingVertexBuffer = graphicsDevice->createBuffer(
+        vertexBufferSize,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    stagingVertexBuffer->load(vertexBufferSize, 
+        reinterpret_cast<const std::byte*>(vertexData.data()));
+    stagingVertexBuffer->bind();
 
-void CubeTest::loadModel()
-{
-    Json::Value jsonModel = configuration["scene"]["models"][0];
+    vertexBuffer = graphicsDevice->createVertexBuffer(vertexCount, vertexFormat);
+    vertexBuffer->bind();
 
-    const filesystem::path modelPath =
-        filesystem::current_path() / jsonModel["path"].asString();
 
-    const VertexFormat vertexFormat(
-        VertexFormat::COORDINATES | VertexFormat::COLORS);
+    const uint32_t indexCount = 3;
+    const uint32_t indexBufferSize = indexCount * sizeof(uint32_t);
+    const vector<uint32_t> indexData = { 0, 1, 2 };
 
-    ModelLoader modelLoader(graphicsDevice);
-    cube = modelLoader.load(modelPath, vertexFormat);
-}
+    const shared_ptr<Buffer> stagingIndexBuffer = graphicsDevice->createBuffer(
+        indexBufferSize,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    stagingIndexBuffer->load(indexBufferSize, 
+        reinterpret_cast<const std::byte*>(indexData.data()));
+    stagingIndexBuffer->bind();
 
-// ---------------------------------------------------------------------------------------------------------------------
+    indexBuffer = graphicsDevice->createIndexBuffer(indexCount, VK_INDEX_TYPE_UINT32);
+    indexBuffer->bind();
 
-void CubeTest::loadShaders()
-{
-    Json::Value jsonModel = configuration["scene"]["models"][0];
+    const shared_ptr<CommandPool>& commandPool = graphicsDevice->getTempCommandPool();
+    shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer();
+    commandBuffer->begin();
+    commandBuffer->copyBuffer(stagingVertexBuffer, vertexBuffer);
+    commandBuffer->copyBuffer(stagingIndexBuffer, indexBuffer);
+    commandBuffer->end();
+
+    VkFenceCreateInfo fenceCreateInfo = {};
+    fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fenceCreateInfo.flags = 0;
+    VkFence fence = graphicsDevice->createFence(fenceCreateInfo);
+
+    const shared_ptr<Queue>& queue = graphicsDevice->getGraphicsQueue();
+    queue->submit(commandBuffer, fence);
+
+    VkResult result = graphicsDevice->waitForFences(1, &fence, true, DEFAULT_FENCE_TIMEOUT);
+    RFX_CHECK_STATE(result == VK_SUCCESS, "failed to submit copy commands");
+
+    graphicsDevice->destroyFence(fence);
 
     ShaderLoader shaderLoader(graphicsDevice);
-
-    const filesystem::path vertexShaderPath =
-        filesystem::current_path() / jsonModel["vertexShader"].asString();
-    const VkPipelineShaderStageCreateInfo vertexShaderStage =
-        shaderLoader.load(vertexShaderPath, VK_SHADER_STAGE_VERTEX_BIT, "main");
-    cube->setVertexShader(vertexShaderStage);
-
-    const filesystem::path fragmentShaderPath =
-        filesystem::current_path() / jsonModel["fragmentShader"].asString();
-    const VkPipelineShaderStageCreateInfo fragmentShaderStage =
-        shaderLoader.load(fragmentShaderPath, VK_SHADER_STAGE_FRAGMENT_BIT, "main");
-    cube->setFragmentShader(fragmentShaderStage);
+    shaderStages[0] = shaderLoader.load("assets/common/shaders/color.vert", VK_SHADER_STAGE_VERTEX_BIT, "main");
+    shaderStages[1] = shaderLoader.load("assets/common/shaders/color.frag", VK_SHADER_STAGE_FRAGMENT_BIT, "main");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void CubeTest::initPipelineLayout()
-{
-    VkDescriptorSetLayoutBinding layoutBinding = {};
-    layoutBinding.binding = 0;
-    layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    layoutBinding.descriptorCount = 1;
-    layoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    layoutBinding.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
-    descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    descriptorSetLayoutCreateInfo.pNext = nullptr;
-    descriptorSetLayoutCreateInfo.bindingCount = 1;
-    descriptorSetLayoutCreateInfo.pBindings = &layoutBinding;
-
-    descriptorSetLayout = graphicsDevice->createDescriptorSetLayout(descriptorSetLayoutCreateInfo);
-
-    VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
-    pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutCreateInfo.pNext = nullptr;
-    pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
-    pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
-    pipelineLayoutCreateInfo.setLayoutCount = NUM_DESCRIPTOR_SETS;
-    pipelineLayoutCreateInfo.pSetLayouts = &descriptorSetLayout;
-
-    pipelineLayout = graphicsDevice->createPipelineLayout(pipelineLayoutCreateInfo);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void CubeTest::initPipeline()
+void TriangleTest::initPipeline()
 {
     RFX_CHECK_STATE(renderPass != nullptr, "Render pass must be setup before");
 
@@ -130,7 +123,7 @@ void CubeTest::initPipeline()
     pipelineCreateInfo.basePipelineHandle = nullptr;
     pipelineCreateInfo.basePipelineIndex = 0;
     pipelineCreateInfo.flags = 0;
-    pipelineCreateInfo.pVertexInputState = &cube->getVertexBuffer()->getInputState();
+    pipelineCreateInfo.pVertexInputState = &vertexBuffer->getInputState();
     pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
     pipelineCreateInfo.pRasterizationState = &rasterizationState;
     pipelineCreateInfo.pColorBlendState = &colorBlendStateCreateInfo;
@@ -139,8 +132,8 @@ void CubeTest::initPipeline()
     pipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
     pipelineCreateInfo.pViewportState = &viewportStateCreateInfo;
     pipelineCreateInfo.pDepthStencilState = &depthStencilStateCreateInfo;
-    pipelineCreateInfo.stageCount = static_cast<uint32_t>(cube->getShaderStages().size());
-    pipelineCreateInfo.pStages = cube->getShaderStages().data();
+    pipelineCreateInfo.stageCount = 2;
+    pipelineCreateInfo.pStages = shaderStages;
     pipelineCreateInfo.renderPass = renderPass;
     pipelineCreateInfo.subpass = 0;
 
@@ -149,16 +142,7 @@ void CubeTest::initPipeline()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void CubeTest::initDescriptorPool()
-{
-    TestApplication::initDescriptorPool({
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}
-    });
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void CubeTest::initDescriptorSet()
+void TriangleTest::initDescriptorSet()
 {
     VkDescriptorSetAllocateInfo descriptorSetAllocateInfo;
     descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -184,17 +168,14 @@ void CubeTest::initDescriptorSet()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void CubeTest::initCommandBuffers()
+void TriangleTest::initCommandBuffers()
 {
     renderCommandBuffers = commandPool->allocateCommandBuffers(graphicsDevice->getSwapChainBuffers().size());
 
     const VkExtent2D presentImageSize = graphicsDevice->getSwapChainProperties().imageSize;
 
     VkClearValue clearValues[2];
-    clearValues[0].color.float32[0] = 0.2f;
-    clearValues[0].color.float32[1] = 0.2f;
-    clearValues[0].color.float32[2] = 0.2f;
-    clearValues[0].color.float32[3] = 0.2f;
+    clearValues[0].color = { 0.05f, 0.05f, 0.05f, 1.0f };
     clearValues[1].depthStencil.depth = 1.0f;
     clearValues[1].depthStencil.stencil = 0;
 
@@ -231,12 +212,13 @@ void CubeTest::initCommandBuffers()
         commandBuffer->setScissor(scissor);
         commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
         commandBuffer->bindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, descriptorSets);
-        commandBuffer->bindVertexBuffers({ cube->getVertexBuffer()  });
-        commandBuffer->bindIndexBuffer(cube->getIndexBuffer());
-        commandBuffer->drawIndexed(cube->getIndexBuffer()->getIndexCount());
+        commandBuffer->bindVertexBuffers({ vertexBuffer });
+        commandBuffer->bindIndexBuffer(indexBuffer);
+        commandBuffer->drawIndexed(indexBuffer->getIndexCount());
         commandBuffer->endRenderPass();
         commandBuffer->end();
     }
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

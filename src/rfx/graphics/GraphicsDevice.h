@@ -4,8 +4,10 @@
 #include "rfx/graphics/Queue.h"
 #include "rfx/graphics/CommandPool.h"
 #include "rfx/graphics/Buffer.h"
+#include "rfx/graphics/VertexBuffer.h"
 #include "rfx/graphics/Texture2D.h"
 #include "rfx/application/Window.h"
+#include "IndexBuffer.h"
 
 
 namespace rfx
@@ -66,8 +68,11 @@ public:
     void destroyCommandPool(const std::shared_ptr<CommandPool>& commandPool);
 
     std::shared_ptr<Buffer> createUniformBuffer(size_t size);
-    std::shared_ptr<Buffer> createVertexBuffer(size_t size);
-    std::shared_ptr<Buffer> createBuffer(size_t size, VkBufferUsageFlags usage);
+    std::shared_ptr<VertexBuffer> createVertexBuffer(uint32_t vertexCount, const VertexFormat& vertexFormat);
+    std::shared_ptr<IndexBuffer> createIndexBuffer(uint32_t indexCount, VkIndexType indexFormat);
+    std::shared_ptr<Buffer> createBuffer(size_t size, 
+        VkBufferUsageFlags usage, 
+        VkMemoryPropertyFlags properties);
 
     VkDescriptorPool createDescriptorPool(const VkDescriptorPoolCreateInfo& createInfo) const;
     void destroyDescriptorPool(VkDescriptorPool& inOutDescriptorPool) const;
@@ -116,6 +121,7 @@ public:
     const DepthBuffer& getDepthBuffer() const;
     const std::shared_ptr<Queue>& getGraphicsQueue() const;
     const std::shared_ptr<Queue>& getPresentQueue() const;
+    const std::shared_ptr<CommandPool>& getTempCommandPool() const;
 
 private:
     void destroyDevice();
@@ -146,6 +152,13 @@ private:
         uint32_t height, 
         VkCommandBuffer commandBuffer) const;
     VkImageView createImageView(VkImage image, VkFormat format) const;
+
+    void createBufferInternal(size_t size,
+        VkBufferUsageFlags usage,
+        VkMemoryPropertyFlags properties,
+        VkBuffer& outBuffer,
+        VkDeviceMemory& outDeviceMemory,
+        VkDeviceSize& outDeviceSize) const;
 
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
                       VkBuffer& outBuffer, VkDeviceMemory& outBufferMemory) const;
@@ -181,7 +194,7 @@ private:
     std::shared_ptr<Queue> graphicsQueue = nullptr;
     std::shared_ptr<Queue> presentQueue = nullptr;
     std::unordered_set<std::shared_ptr<CommandPool>> commandPools;
-    std::shared_ptr<CommandPool> singleTimeCommandPool;
+    std::shared_ptr<CommandPool> tempCommandPool;
 
     DECLARE_VULKAN_FUNCTION(vkGetDeviceProcAddr);
     DECLARE_VULKAN_FUNCTION(vkGetPhysicalDeviceSurfaceCapabilitiesKHR);
@@ -216,12 +229,15 @@ private:
     DECLARE_VULKAN_FUNCTION(vkCmdBeginRenderPass);
     DECLARE_VULKAN_FUNCTION(vkCmdEndRenderPass);
     DECLARE_VULKAN_FUNCTION(vkCmdBindVertexBuffers);
+    DECLARE_VULKAN_FUNCTION(vkCmdBindIndexBuffer);
     DECLARE_VULKAN_FUNCTION(vkCmdBindPipeline);
     DECLARE_VULKAN_FUNCTION(vkCmdBindDescriptorSets);
     DECLARE_VULKAN_FUNCTION(vkCmdSetViewport);
     DECLARE_VULKAN_FUNCTION(vkCmdSetScissor);
     DECLARE_VULKAN_FUNCTION(vkCmdDraw);
+    DECLARE_VULKAN_FUNCTION(vkCmdDrawIndexed);
     DECLARE_VULKAN_FUNCTION(vkCmdPipelineBarrier);
+    DECLARE_VULKAN_FUNCTION(vkCmdCopyBuffer);
     DECLARE_VULKAN_FUNCTION(vkCmdCopyBufferToImage);
 
     DECLARE_VULKAN_FUNCTION(vkGetImageMemoryRequirements);

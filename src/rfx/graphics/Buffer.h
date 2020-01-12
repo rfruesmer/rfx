@@ -13,7 +13,9 @@ public:
         size_t size,
         size_t range);
 
-    void destroy();
+    ~Buffer();
+
+    void dispose();
 
     VkBuffer getHandle() const;
 

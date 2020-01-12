@@ -9,6 +9,7 @@
 static_assert(false, "Not implemented");
 #endif // _WINDOWS
 
+#include "test/TriangleTest.h"
 #include "test/CubeTest.h"
 #include "test/TexturedCubeTest.h"
 
@@ -33,8 +34,9 @@ int main()
     {
         RFX_LOG_INFO << "Starting rfx application ...";
 
+        TriangleTest theApp(instanceHandle);
         //CubeTest theApp(instanceHandle);
-        TexturedCubeTest theApp(instanceHandle);
+        //TexturedCubeTest theApp(instanceHandle);
         theApp.initialize();
         theApp.run();
 

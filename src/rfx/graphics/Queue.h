@@ -1,5 +1,7 @@
 #pragma once
 
+#include "rfx/graphics/CommandBuffer.h"
+
 namespace rfx
 {
 
@@ -8,6 +10,7 @@ class Queue
 public:
     explicit Queue(VkQueue vkQueue, const VulkanDeviceFunctionPtrs& vk);
 
+    void submit(const std::shared_ptr<CommandBuffer>& commandBuffer, VkFence fence) const;
     void submit(uint32_t submitCount, const VkSubmitInfo* submits, VkFence fence) const;
     void present(const VkPresentInfoKHR& presentInfo) const;
     void waitIdle() const;

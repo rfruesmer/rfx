@@ -1,6 +1,5 @@
 #include "rfx/pch.h"
 #include "rfx/graphics/GraphicsDevice.h"
-#include "GraphicsContext.h"
 
 
 using namespace rfx;
@@ -150,12 +149,15 @@ void GraphicsDevice::loadDeviceFunctions()
     LOAD_DEVICE_FUNCTION(vkCmdBeginRenderPass);
     LOAD_DEVICE_FUNCTION(vkCmdEndRenderPass);
     LOAD_DEVICE_FUNCTION(vkCmdBindVertexBuffers);
+    LOAD_DEVICE_FUNCTION(vkCmdBindIndexBuffer);
     LOAD_DEVICE_FUNCTION(vkCmdBindPipeline);
     LOAD_DEVICE_FUNCTION(vkCmdBindDescriptorSets);
     LOAD_DEVICE_FUNCTION(vkCmdSetViewport);
     LOAD_DEVICE_FUNCTION(vkCmdSetScissor);
     LOAD_DEVICE_FUNCTION(vkCmdDraw);
+    LOAD_DEVICE_FUNCTION(vkCmdDrawIndexed);
     LOAD_DEVICE_FUNCTION(vkCmdPipelineBarrier);
+    LOAD_DEVICE_FUNCTION(vkCmdCopyBuffer);
     LOAD_DEVICE_FUNCTION(vkCmdCopyBufferToImage);
 
     LOAD_DEVICE_FUNCTION(vkCreateSampler);
@@ -407,7 +409,7 @@ uint32_t GraphicsDevice::findMemoryType(uint32_t typeBits, VkFlags requirementsM
 
 void GraphicsDevice::createSingleTimeCommandPool()
 {
-    singleTimeCommandPool = createCommandPool(deviceInfo.graphicsQueueFamilyIndex);
+    tempCommandPool = createCommandPool(deviceInfo.graphicsQueueFamilyIndex);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -624,19 +626,89 @@ void GraphicsDevice::destroyCommandPool(const shared_ptr<CommandPool>& commandPo
 
 shared_ptr<Buffer> GraphicsDevice::createUniformBuffer(size_t size)
 {
-    return createBuffer(size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+    return createBuffer(size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-shared_ptr<Buffer> GraphicsDevice::createVertexBuffer(size_t size)
+shared_ptr<VertexBuffer> GraphicsDevice::createVertexBuffer(uint32_t vertexCount, const VertexFormat& vertexFormat)
 {
-    return createBuffer(size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+    uint32_t size = vertexCount * vertexFormat.getVertexSize();
+    VkBuffer vkBuffer = nullptr;
+    VkDeviceMemory vkDeviceMemory = nullptr;
+    VkDeviceSize deviceSize = 0;
+
+    createBufferInternal(size, 
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
+        vkBuffer, 
+        vkDeviceMemory, 
+        deviceSize);
+
+    return make_shared<VertexBuffer>(vertexCount, vertexFormat, 
+        vkDevice, vkBuffer, vkDeviceMemory, vk, deviceSize, size);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-shared_ptr<Buffer> GraphicsDevice::createBuffer(size_t size, VkBufferUsageFlags usage)
+shared_ptr<IndexBuffer> GraphicsDevice::createIndexBuffer(uint32_t indexCount, VkIndexType indexFormat)
+{
+    size_t bufferSize = 0;
+
+    switch (indexFormat) {
+    case VK_INDEX_TYPE_UINT16:
+        bufferSize = indexCount * 2;
+        break;
+    case VK_INDEX_TYPE_UINT32:
+        bufferSize = indexCount * 4;
+        break;
+    case VK_INDEX_TYPE_UINT8_EXT:
+        bufferSize = indexCount;
+        break;
+    default:
+        RFX_CHECK_ARGUMENT(false, "unknown index format");
+    }
+
+    VkBuffer vkBuffer = nullptr;
+    VkDeviceMemory vkDeviceMemory = nullptr;
+    VkDeviceSize deviceSize = 0;
+
+    createBufferInternal(bufferSize,
+        VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        vkBuffer,
+        vkDeviceMemory,
+        deviceSize);
+
+    return make_shared<IndexBuffer>(indexCount, indexFormat,
+        vkDevice, vkBuffer, vkDeviceMemory, vk, deviceSize, bufferSize);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+shared_ptr<Buffer> GraphicsDevice::createBuffer(
+    size_t size,
+    VkBufferUsageFlags usage,
+    VkMemoryPropertyFlags properties)
+{
+    VkBuffer vkBuffer = nullptr;
+    VkDeviceMemory vkDeviceMemory = nullptr;
+    VkDeviceSize deviceSize = 0;
+    
+    createBufferInternal(size, usage, properties, vkBuffer, vkDeviceMemory, deviceSize);
+
+    return make_shared<Buffer>(vkDevice, vkBuffer, vkDeviceMemory, vk, deviceSize, size);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void GraphicsDevice::createBufferInternal(size_t size, 
+    VkBufferUsageFlags usage,
+    VkMemoryPropertyFlags properties,
+    VkBuffer& outBuffer,
+    VkDeviceMemory& outDeviceMemory,
+    VkDeviceSize& outDeviceSize) const
 {
     VkBufferCreateInfo bufferCreateInfo = {};
     bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -648,29 +720,28 @@ shared_ptr<Buffer> GraphicsDevice::createBuffer(size_t size, VkBufferUsageFlags 
     bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     bufferCreateInfo.flags = 0;
 
-    VkBuffer vkBuffer = nullptr;
-
-    VkResult result = vkCreateBuffer(vkDevice, &bufferCreateInfo, nullptr, &vkBuffer);
-    RFX_CHECK_STATE(result == VK_SUCCESS && vkBuffer != nullptr,
+    outBuffer = nullptr;
+    VkResult result = vkCreateBuffer(vkDevice, &bufferCreateInfo, nullptr, &outBuffer);
+    RFX_CHECK_STATE(result == VK_SUCCESS && outBuffer != nullptr,
         "Failed to create uniform buffer");
 
     VkMemoryRequirements memoryRequirements = {};
-    vkGetBufferMemoryRequirements(vkDevice, vkBuffer, &memoryRequirements);
+    vkGetBufferMemoryRequirements(vkDevice, outBuffer, &memoryRequirements);
+    outDeviceSize = memoryRequirements.size;
 
     VkMemoryAllocateInfo memoryAllocInfo = {};
     memoryAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     memoryAllocInfo.pNext = nullptr;
-    memoryAllocInfo.memoryTypeIndex = 0;
     memoryAllocInfo.allocationSize = memoryRequirements.size;
-    memoryAllocInfo.memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    memoryAllocInfo.memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, properties);
 
-    VkDeviceMemory vkDeviceMemory = nullptr;
-    result = vkAllocateMemory(vkDevice, &memoryAllocInfo, nullptr, &vkDeviceMemory);
-    RFX_CHECK_STATE(result == VK_SUCCESS && vkDeviceMemory != nullptr,
+    outDeviceMemory = nullptr;
+    result = vkAllocateMemory(vkDevice, &memoryAllocInfo, nullptr, &outDeviceMemory);
+    RFX_CHECK_STATE(result == VK_SUCCESS && outDeviceMemory != nullptr,
         "Failed to allocated memory for uniform buffer");
 
-    return make_shared<Buffer>(vkDevice, vkBuffer, vkDeviceMemory, vk, memoryRequirements.size, size);
+    //result = vkBindBufferMemory(vkDevice, outBuffer, outDeviceMemory, 0);
+    //RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to bind buffer memory");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1162,7 +1233,7 @@ VkCommandBuffer GraphicsDevice::beginSingleTimeCommands() const
     VkCommandBufferAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandPool = singleTimeCommandPool->getHandle();
+    allocInfo.commandPool = tempCommandPool->getHandle();
     allocInfo.commandBufferCount = 1;
 
     VkCommandBuffer commandBuffer = nullptr;
@@ -1265,7 +1336,7 @@ void GraphicsDevice::endSingleTimeCommands(VkCommandBuffer commandBuffer) const
     result = waitForFences(1, &fence, false, 500000000);
     RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to wait for fence");
 
-    vkFreeCommandBuffers(vkDevice, singleTimeCommandPool->getHandle(), 1, &commandBuffer);
+    vkFreeCommandBuffers(vkDevice, tempCommandPool->getHandle(), 1, &commandBuffer);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1308,6 +1379,13 @@ const shared_ptr<Queue>& GraphicsDevice::getGraphicsQueue() const
 const shared_ptr<Queue>& GraphicsDevice::getPresentQueue() const
 {
     return presentQueue;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const shared_ptr<CommandPool>& GraphicsDevice::getTempCommandPool() const
+{
+    return tempCommandPool;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

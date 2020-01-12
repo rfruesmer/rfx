@@ -15,24 +15,16 @@ class TestApplication :
 {
 public:
     static const int NUM_DESCRIPTOR_SETS = 1;
-    static const uint64_t FENCE_TIMEOUT = 100000000;
+    static const uint64_t DEFAULT_FENCE_TIMEOUT = 100000000000;
     static const uint32_t NUM_VIEWPORTS = 1;
     static const uint32_t NUM_SCISSORS = NUM_VIEWPORTS;
 
-    virtual uint32_t getVertexSize() const = 0;
-    virtual uint32_t getVertexCount() const = 0;
-    virtual const std::byte* getVertexData() const = 0;
-
-    virtual std::string getVertexShaderPath() const = 0;
-    virtual std::string getFragmentShaderPath() const = 0;
-
-    explicit TestApplication(HINSTANCE instanceHandle);
+    explicit TestApplication(std::filesystem::path configurationPath, handle_t instanceHandle);
 
     void initialize() override;
     void updateModelViewProjection();
     void update() override;
     void draw() override;
-    void destroyShaderModules();
     void destroyDescriptors();
     void destroyBuffers() const;
     void destroySwapChainAndDepthBuffer() const;
@@ -42,18 +34,30 @@ public:
     void destroyPipeline();
 
 protected:
+    virtual void initScene() {}
     void initCamera();
-    virtual void initPipelineLayout() = 0;
-    virtual void initDescriptorPool() = 0;
-    virtual void initDescriptorSet() = 0;
+    virtual void initDescriptorSetLayout();
+    virtual void initPipelineLayout();
+
+    void initDescriptorPool(const std::vector<VkDescriptorPoolSize>& poolSizes);
+    virtual void initDescriptorSet()  {}
     void initCommandPool();
-    void initCommandBuffers();
+    virtual void initCommandBuffers()  {}
     void initRenderPass();
-    void initVertexShaderModule();
-    void initFragmentShaderModule();
     void initFrameBuffers();
-    virtual void initVertexBuffer();
-    void initPipeline();
+
+
+    virtual void initPipeline() {}
+    VkPipelineDynamicStateCreateInfo createDynamicState(uint32_t dynamicStateCount, VkDynamicState dynamicStates[]);
+    VkPipelineInputAssemblyStateCreateInfo createInputAssemblyState();
+    VkPipelineRasterizationStateCreateInfo createRasterizationState();
+    VkPipelineColorBlendAttachmentState createColorBlendAttachmentState();
+    VkPipelineColorBlendStateCreateInfo createColorBlendState(
+        const VkPipelineColorBlendAttachmentState& colorBlendAttachmentState);
+    VkPipelineViewportStateCreateInfo createViewportState();
+    VkPipelineDepthStencilStateCreateInfo createDepthStencilState();
+    VkPipelineMultisampleStateCreateInfo createMultiSampleState();
+
 
     void recreateSwapChain();
     void destroyFrameBuffers();
@@ -68,7 +72,6 @@ protected:
     glm::mat4 viewMatrix;
     glm::mat4 projectionMatrix;
     glm::mat4 modelViewProjMatrix;
-    glm::mat4 clipMatrix;
 
     VkPipelineLayout pipelineLayout = nullptr;
     VkDescriptorPool descriptorPool = nullptr;
@@ -77,12 +80,8 @@ protected:
     VkRenderPass renderPass = nullptr;
     std::vector<VkFramebuffer> frameBuffers;
     std::shared_ptr<CommandPool> commandPool;
-    std::vector<std::shared_ptr<CommandBuffer>> commandBuffers;
-    VkPipelineShaderStageCreateInfo shaderStageCreateInfos[2] = {};
+    std::vector<std::shared_ptr<CommandBuffer>> renderCommandBuffers;
     std::shared_ptr<Buffer> uniformBuffer;
-    std::shared_ptr<Buffer> vertexBuffer;
-    VkVertexInputBindingDescription vertexInputBinding = {};
-    VkVertexInputAttributeDescription vertexInputAttributes[2] = {};
     VkPipeline pipeline = nullptr;
 };
 

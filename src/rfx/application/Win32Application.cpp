@@ -8,23 +8,20 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-Win32Application::Win32Application(HINSTANCE instanceHandle)
-    : instanceHandle(instanceHandle)
+Win32Application::Win32Application(
+    std::filesystem::path configurationPath,
+    handle_t instanceHandle)
+        : Application(configurationPath),
+          instanceHandle(static_cast<HINSTANCE>(instanceHandle))
 {
-    if (instanceHandle == nullptr)
-    {
-        throw invalid_argument("Invalid instance handle");
-    }
+    RFX_CHECK_ARGUMENT(instanceHandle != nullptr, "Invalid instance handle");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void Win32Application::createWindow()
 {
-    if (window != nullptr)
-    {
-        throw exception("Illegal state: window already created");
-    }
+    RFX_CHECK_STATE(window == nullptr, "window already created");
 
     string windowTitle = configuration["application"]["name"].asString();
     Json::Value resolution = configuration["graphics"]["resolution"];

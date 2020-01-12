@@ -32,6 +32,7 @@
 // GLM Header Files
 #define GLM_FORCE_SSE2
 #define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -50,6 +51,12 @@
 #include <fstream>
 #include <filesystem>
 #include <functional>
+
+// Assimp Header Files
+#include <assimp/Importer.hpp> 
+#include <assimp/scene.h>     
+#include <assimp/postprocess.h>
+#include <assimp/cimport.h>
 
 // RFX Header Files
 #include "rfx/rfx.h"

@@ -111,6 +111,27 @@
     <ClInclude Include="test\TestApplication.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\rfx\scene\ModelLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\VertexFormat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\scene\Mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\VertexBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\ShaderLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\IndexBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\TriangleTest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\rfx\pch.cpp">
@@ -191,6 +212,27 @@
     <ClCompile Include="test\TestApplication.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\rfx\scene\ModelLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\VertexFormat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\scene\Mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\VertexBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\ShaderLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\IndexBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\TriangleTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\rfx.ico">
@@ -200,6 +242,9 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="assets\textures\lunarg_logo-256x256.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\common\textures\lunarg_logo-256x256.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
@@ -214,5 +259,12 @@
     <None Include="assets\shaders\color.frag" />
     <None Include="assets\shaders\texture.frag" />
     <None Include="assets\shaders\texture.vert" />
+    <None Include="assets\common\models\cube.dae" />
+    <None Include="assets\tests\cube\application-config.json" />
+    <None Include="assets\common\shaders\color.frag" />
+    <None Include="assets\common\shaders\color.vert" />
+    <None Include="assets\common\shaders\texture.frag" />
+    <None Include="assets\common\shaders\texture.vert" />
+    <None Include="assets\tests\triangle\application-config.json" />
   </ItemGroup>
 </Project>

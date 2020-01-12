@@ -19,6 +19,20 @@ Queue::Queue(VkQueue vkQueue,
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void Queue::submit(const shared_ptr<CommandBuffer>& commandBuffer, VkFence fence) const
+{
+    const VkCommandBuffer vkCommandBuffer = commandBuffer->getHandle();
+
+    VkSubmitInfo submitInfo = {};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &vkCommandBuffer;
+
+    submit(1, &submitInfo, fence);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void Queue::submit(uint32_t submitCount, const VkSubmitInfo* submits, VkFence fence) const
 {
     const VkResult result = vkQueueSubmit(vkQueue, submitCount, submits, fence);
