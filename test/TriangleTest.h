@@ -15,6 +15,7 @@ public:
 protected:
     void initScene() override;
     void initPipeline() override;
+    void initDescriptorPool();
     void initDescriptorSet() override;
     void initCommandBuffers() override;
 

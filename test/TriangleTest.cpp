@@ -26,11 +26,7 @@ void TriangleTest::initialize()
     initDescriptorSetLayout();
     initPipelineLayout();
     initPipeline();
-
-    const vector<VkDescriptorPoolSize> poolSizes = {
-        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}
-    };
-    initDescriptorPool(poolSizes);
+    initDescriptorPool();
     initDescriptorSet();
     initCommandBuffers();
 }
@@ -90,10 +86,12 @@ void TriangleTest::initScene()
     const shared_ptr<Queue>& queue = graphicsDevice->getGraphicsQueue();
     queue->submit(commandBuffer, fence);
 
-    VkResult result = graphicsDevice->waitForFences(1, &fence, true, DEFAULT_FENCE_TIMEOUT);
+    const VkResult result = graphicsDevice->waitForFences(1, &fence, true, DEFAULT_FENCE_TIMEOUT);
     RFX_CHECK_STATE(result == VK_SUCCESS, "failed to submit copy commands");
 
     graphicsDevice->destroyFence(fence);
+
+    commandPool->freeCommandBuffer(commandBuffer);
 
     ShaderLoader shaderLoader(graphicsDevice);
     shaderStages[0] = shaderLoader.load("assets/common/shaders/color.vert", VK_SHADER_STAGE_VERTEX_BIT, "main");
@@ -138,6 +136,15 @@ void TriangleTest::initPipeline()
     pipelineCreateInfo.subpass = 0;
 
     pipeline = graphicsDevice->createGraphicsPipeline(pipelineCreateInfo);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TriangleTest::initDescriptorPool()
+{
+    TestApplication::initDescriptorPool({
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}
+    });
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

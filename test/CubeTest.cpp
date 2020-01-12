@@ -20,15 +20,18 @@ void CubeTest::initialize()
 {
     Application::initialize();
 
+    initCommandPool();
+    initRenderPass();
+    initFrameBuffers();
+
     initScene();
     initCamera();
-    initRenderPass();
+
+    initDescriptorSetLayout();
     initPipelineLayout();
     initPipeline();
     initDescriptorPool();
     initDescriptorSet();
-    initFrameBuffers();
-    initCommandPool();
     initCommandBuffers();
 }
 
@@ -191,10 +194,7 @@ void CubeTest::initCommandBuffers()
     const VkExtent2D presentImageSize = graphicsDevice->getSwapChainProperties().imageSize;
 
     VkClearValue clearValues[2];
-    clearValues[0].color.float32[0] = 0.2f;
-    clearValues[0].color.float32[1] = 0.2f;
-    clearValues[0].color.float32[2] = 0.2f;
-    clearValues[0].color.float32[3] = 0.2f;
+    clearValues[0].color = { 0.05f, 0.05f, 0.05f, 1.0f };
     clearValues[1].depthStencil.depth = 1.0f;
     clearValues[1].depthStencil.stencil = 0;
 
