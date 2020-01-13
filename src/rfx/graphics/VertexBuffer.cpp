@@ -47,10 +47,10 @@ void VertexBuffer::createVertexDescriptions()
     if (vertexFormat.containsColors()) {
         attributeDescription.binding = VERTEX_BUFFER_BIND_ID;
         attributeDescription.location = location++;
-        attributeDescription.format = VK_FORMAT_R32G32B32_SFLOAT;
+        attributeDescription.format = VK_FORMAT_R32G32B32A32_SFLOAT;
         attributeDescription.offset = offset;
         attributeDescriptions.push_back(attributeDescription);
-        offset += 12;
+        offset += 16;
     }
 
     if (vertexFormat.containsNormals()) {

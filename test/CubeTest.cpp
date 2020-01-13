@@ -16,9 +16,14 @@ CubeTest::CubeTest(handle_t instanceHandle)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+CubeTest::CubeTest(std::filesystem::path configurationPath, handle_t instanceHandle)
+    : TestApplication(configurationPath, instanceHandle) {}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void CubeTest::initialize()
 {
-    Application::initialize();
+    TestApplication::initialize();
 
     initCommandPool();
     initRenderPass();
@@ -48,10 +53,8 @@ void CubeTest::initScene()
 void CubeTest::loadModel()
 {
     Json::Value jsonModel = configuration["scene"]["models"][0];
-
     const filesystem::path modelPath =
         filesystem::current_path() / jsonModel["path"].asString();
-
     const VertexFormat vertexFormat(
         VertexFormat::COORDINATES | VertexFormat::COLORS);
 
@@ -78,36 +81,6 @@ void CubeTest::loadShaders()
     const VkPipelineShaderStageCreateInfo fragmentShaderStage =
         shaderLoader.load(fragmentShaderPath, VK_SHADER_STAGE_FRAGMENT_BIT, "main");
     cube->setFragmentShader(fragmentShaderStage);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void CubeTest::initPipelineLayout()
-{
-    VkDescriptorSetLayoutBinding layoutBinding = {};
-    layoutBinding.binding = 0;
-    layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    layoutBinding.descriptorCount = 1;
-    layoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    layoutBinding.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
-    descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    descriptorSetLayoutCreateInfo.pNext = nullptr;
-    descriptorSetLayoutCreateInfo.bindingCount = 1;
-    descriptorSetLayoutCreateInfo.pBindings = &layoutBinding;
-
-    descriptorSetLayout = graphicsDevice->createDescriptorSetLayout(descriptorSetLayoutCreateInfo);
-
-    VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
-    pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutCreateInfo.pNext = nullptr;
-    pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
-    pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
-    pipelineLayoutCreateInfo.setLayoutCount = NUM_DESCRIPTOR_SETS;
-    pipelineLayoutCreateInfo.pSetLayouts = &descriptorSetLayout;
-
-    pipelineLayout = graphicsDevice->createPipelineLayout(pipelineLayoutCreateInfo);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -132,6 +132,9 @@
     <ClInclude Include="test\TriangleTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="test\TexturedQuadTest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\rfx\pch.cpp">
@@ -233,6 +236,9 @@
     <ClCompile Include="test\TriangleTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\TexturedQuadTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\rfx.ico">
@@ -266,5 +272,6 @@
     <None Include="assets\common\shaders\texture.frag" />
     <None Include="assets\common\shaders\texture.vert" />
     <None Include="assets\tests\triangle\application-config.json" />
+    <None Include="assets\tests\textured-cube\application-config.json" />
   </ItemGroup>
 </Project>

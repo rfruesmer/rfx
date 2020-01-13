@@ -1,6 +1,9 @@
 #include "rfx/pch.h"
-#include "TexturedCubeTest.h"
+#include "test/TexturedCubeTest.h"
+#include "rfx/scene/ModelLoader.h"
+#include "rfx/graphics/ShaderLoader.h"
 #include "rfx/graphics/Texture2DLoader.h"
+
 
 using namespace rfx;
 using namespace glm;
@@ -8,66 +11,89 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-struct Vertex
-{
-    float x, y, z, w;   // Vertex Position
-    float u, v;         // Texture format U,V
-};
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-static const Vertex vertices[] = {
-    { -1.0f,-1.0f,-1.0f, 1.0f, 0.0f, 0.0f },  // -X side
-    { -1.0f,-1.0f, 1.0f, 1.0f, 1.0f, 0.0f },
-    { -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f },
-    { -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f },
-    { -1.0f, 1.0f,-1.0f, 1.0f, 0.0f, 1.0f },
-    { -1.0f,-1.0f,-1.0f, 1.0f, 0.0f, 0.0f },
-
-    //{ -1.0f,-1.0f,-1.0f, 1.0f, 0.0f, 1.0f },  // -Z side
-    //{  1.0f, 1.0f,-1.0f, 1.0f, 1.0f, 0.0f },
-    //{  1.0f,-1.0f,-1.0f, 1.0f, 1.0f, 1.0f },
-    //{ -1.0f,-1.0f,-1.0f, 1.0f, 0.0f, 1.0f },
-    //{ -1.0f, 1.0f,-1.0f, 1.0f, 0.0f, 0.0f },
-    //{  1.0f, 1.0f,-1.0f, 1.0f, 1.0f, 0.0f },
-
-    //{ -1.0f,-1.0f,-1.0f, 1.0f, 0.0f, 1.0f }, // -Y
-    //{  1.0f,-1.0f,-1.0f, 1.0f, 0.0f, 0.0f },
-    //{  1.0f,-1.0f, 1.0f, 1.0f, 1.0f, 0.0f },
-    //{ -1.0f,-1.0f,-1.0f, 1.0f, 0.0f, 1.0f },
-    //{  1.0f,-1.0f, 1.0f, 1.0f, 1.0f, 0.0f },
-    //{ -1.0f,-1.0f, 1.0f, 1.0f, 1.0f, 1.0f },
-
-    //{ -1.0f, 1.0f,-1.0f, 1.0f, 0.0f, 1.0f },  // +Y side
-    //{ -1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f },
-    //{  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f },
-    //{ -1.0f, 1.0f,-1.0f, 1.0f, 0.0f, 1.0f },
-    //{  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f },
-    //{  1.0f, 1.0f,-1.0f, 1.0f, 1.0f, 1.0f },
-
-    { 1.0f, 1.0f,-1.0f, 1.0f, 1.0f, 1.0f },  // +X side
-    { 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f },
-    { 1.0f,-1.0f, 1.0f, 1.0f, 0.0f, 0.0f },
-    { 1.0f,-1.0f, 1.0f, 1.0f, 0.0f, 0.0f },
-    { 1.0f,-1.0f,-1.0f, 1.0f, 1.0f, 0.0f },
-    { 1.0f, 1.0f,-1.0f, 1.0f, 1.0f, 1.0f },
-
-    { -1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f },  // +Z side
-    { -1.0f,-1.0f, 1.0f, 1.0f, 0.0f, 0.0f },
-    {  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f },
-    { -1.0f,-1.0f, 1.0f, 1.0f, 0.0f, 0.0f },
-    {  1.0f,-1.0f, 1.0f, 1.0f, 1.0f, 0.0f },
-    {  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f },
-};
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 TexturedCubeTest::TexturedCubeTest(handle_t instanceHandle)
-    : TestApplication("assets/tests/textured-cube/application-config.json", instanceHandle) {}
+    : CubeTest("assets/tests/textured-cube/application-config.json", instanceHandle) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedCubeTest::initPipelineLayout()
+void TexturedCubeTest::initialize()
+{
+    TestApplication::initialize();
+
+    initCommandPool();
+    initRenderPass();
+    initFrameBuffers();
+
+    initScene();
+    initCamera();
+
+    initDescriptorSetLayout();
+    initPipelineLayout();
+    initPipeline();
+    initDescriptorPool();
+    initDescriptorSet();
+    initCommandBuffers();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedCubeTest::initScene()
+{
+    loadModel();
+    loadShaders();
+    loadTexture();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedCubeTest::loadModel()
+{
+    Json::Value jsonModel = configuration["scene"]["models"][0];
+    const filesystem::path modelPath =
+        filesystem::current_path() / jsonModel["path"].asString();
+    const VertexFormat vertexFormat(
+        VertexFormat::COORDINATES | VertexFormat::TEXCOORDS);
+
+    ModelLoader modelLoader(graphicsDevice);
+    cube = modelLoader.load(modelPath, vertexFormat);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedCubeTest::loadShaders()
+{
+    Json::Value jsonModel = configuration["scene"]["models"][0];
+
+    ShaderLoader shaderLoader(graphicsDevice);
+
+    const filesystem::path vertexShaderPath =
+        filesystem::current_path() / jsonModel["vertexShader"].asString();
+    const VkPipelineShaderStageCreateInfo vertexShaderStage =
+        shaderLoader.load(vertexShaderPath, VK_SHADER_STAGE_VERTEX_BIT, "main");
+    cube->setVertexShader(vertexShaderStage);
+
+    const filesystem::path fragmentShaderPath =
+        filesystem::current_path() / jsonModel["fragmentShader"].asString();
+    const VkPipelineShaderStageCreateInfo fragmentShaderStage =
+        shaderLoader.load(fragmentShaderPath, VK_SHADER_STAGE_FRAGMENT_BIT, "main");
+    cube->setFragmentShader(fragmentShaderStage);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedCubeTest::loadTexture()
+{
+    Json::Value jsonModel = configuration["scene"]["models"][0];
+    const filesystem::path texturePath =
+        filesystem::current_path() / jsonModel["texture"].asString();
+    
+    Texture2DLoader textureLoader(graphicsDevice);
+    texture = textureLoader.load(texturePath);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedCubeTest::initDescriptorSetLayout()
 {
     VkDescriptorSetLayoutBinding layoutBindings[2] = {};
     layoutBindings[0].binding = 0;
@@ -89,16 +115,6 @@ void TexturedCubeTest::initPipelineLayout()
     descriptorSetLayoutCreateInfo.pBindings = layoutBindings;
 
     descriptorSetLayout = graphicsDevice->createDescriptorSetLayout(descriptorSetLayoutCreateInfo);
-
-    VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
-    pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutCreateInfo.pNext = nullptr;
-    pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
-    pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
-    pipelineLayoutCreateInfo.setLayoutCount = NUM_DESCRIPTOR_SETS;
-    pipelineLayoutCreateInfo.pSetLayouts = &descriptorSetLayout;
-
-    pipelineLayout = graphicsDevice->createPipelineLayout(pipelineLayoutCreateInfo);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -115,8 +131,6 @@ void TexturedCubeTest::initDescriptorPool()
 
 void TexturedCubeTest::initDescriptorSet()
 {
-    loadTexture();
-
     VkDescriptorSetAllocateInfo descriptorSetAllocateInfo;
     descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     descriptorSetAllocateInfo.pNext = nullptr;
@@ -146,14 +160,6 @@ void TexturedCubeTest::initDescriptorSet()
     writes[1].pImageInfo = &texture->getDescriptorImageInfo();
 
     graphicsDevice->updateDescriptorSets(2, writes);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TexturedCubeTest::loadTexture()
-{
-    Texture2DLoader textureLoader(graphicsDevice);
-    texture = textureLoader.load("assets/textures/lunarg_logo-256x256.png");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

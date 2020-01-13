@@ -1,18 +1,19 @@
 #include "rfx/pch.h"
-#include "test/TriangleTest.h"
+#include "test/TexturedQuadTest.h"
 #include "rfx/graphics/ShaderLoader.h"
+#include "rfx/graphics/Texture2DLoader.h"
 
 using namespace rfx;
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-TriangleTest::TriangleTest(handle_t instanceHandle)
+TexturedQuadTest::TexturedQuadTest(handle_t instanceHandle)
     : TestApplication("assets/tests/triangle/application-config.json", instanceHandle) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TriangleTest::initialize()
+void TexturedQuadTest::initialize()
 {
     Application::initialize();
 
@@ -33,15 +34,16 @@ void TriangleTest::initialize()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TriangleTest::initScene()
+void TexturedQuadTest::initScene()
 {
-    const uint32_t vertexCount = 3;
-    const VertexFormat vertexFormat(VertexFormat::COORDINATES | VertexFormat::COLORS);
+    const uint32_t vertexCount = 4;
+    const VertexFormat vertexFormat(VertexFormat::COORDINATES | VertexFormat::TEXCOORDS);
     const uint32_t vertexBufferSize = vertexCount * vertexFormat.getVertexSize();
     vector<float> vertexData = {
-         1.0f,  1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-        -1.0f,  1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-         0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f
+          1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+         -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+         -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+          1.0f, -1.0f, 0.0f, 1.0f, 0.0f
     };
 
     const shared_ptr<Buffer> stagingVertexBuffer = graphicsDevice->createBuffer(
@@ -56,9 +58,9 @@ void TriangleTest::initScene()
     vertexBuffer->bind();
 
 
-    const uint32_t indexCount = 3;
+    const uint32_t indexCount = 6;
     const uint32_t indexBufferSize = indexCount * sizeof(uint32_t);
-    const vector<uint32_t> indexData = { 0, 1, 2 };
+    const vector<uint32_t> indexData = { 0, 1, 2, 2, 3, 0 };
 
     const shared_ptr<Buffer> stagingIndexBuffer = graphicsDevice->createBuffer(
         indexBufferSize,
@@ -94,13 +96,42 @@ void TriangleTest::initScene()
     commandPool->freeCommandBuffer(commandBuffer);
 
     ShaderLoader shaderLoader(graphicsDevice);
-    shaderStages[0] = shaderLoader.load("assets/common/shaders/color.vert", VK_SHADER_STAGE_VERTEX_BIT, "main");
-    shaderStages[1] = shaderLoader.load("assets/common/shaders/color.frag", VK_SHADER_STAGE_FRAGMENT_BIT, "main");
+    shaderStages[0] = shaderLoader.load("assets/common/shaders/texture.vert", VK_SHADER_STAGE_VERTEX_BIT, "main");
+    shaderStages[1] = shaderLoader.load("assets/common/shaders/texture.frag", VK_SHADER_STAGE_FRAGMENT_BIT, "main");
+
+    Texture2DLoader textureLoader(graphicsDevice);
+    texture = textureLoader.load("assets/common/textures/lunarg_logo-256x256.png");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TriangleTest::initPipeline()
+void TexturedQuadTest::initDescriptorSetLayout()
+{
+    VkDescriptorSetLayoutBinding layoutBindings[2] = {};
+    layoutBindings[0].binding = 0;
+    layoutBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    layoutBindings[0].descriptorCount = 1;
+    layoutBindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    layoutBindings[0].pImmutableSamplers = nullptr;
+
+    layoutBindings[1].binding = 1;
+    layoutBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    layoutBindings[1].descriptorCount = 1;
+    layoutBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    layoutBindings[1].pImmutableSamplers = nullptr;
+
+    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
+    descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    descriptorSetLayoutCreateInfo.pNext = nullptr;
+    descriptorSetLayoutCreateInfo.bindingCount = 2;
+    descriptorSetLayoutCreateInfo.pBindings = layoutBindings;
+
+    descriptorSetLayout = graphicsDevice->createDescriptorSetLayout(descriptorSetLayoutCreateInfo);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedQuadTest::initPipeline()
 {
     RFX_CHECK_STATE(renderPass != nullptr, "Render pass must be setup before");
 
@@ -140,16 +171,17 @@ void TriangleTest::initPipeline()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TriangleTest::initDescriptorPool()
+void TexturedQuadTest::initDescriptorPool()
 {
     TestApplication::initDescriptorPool({
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1}
     });
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TriangleTest::initDescriptorSet()
+void TexturedQuadTest::initDescriptorSet()
 {
     VkDescriptorSetAllocateInfo descriptorSetAllocateInfo;
     descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -160,22 +192,31 @@ void TriangleTest::initDescriptorSet()
 
     graphicsDevice->allocateDescriptorSets(descriptorSetAllocateInfo, descriptorSets);
 
-    VkWriteDescriptorSet writes = {};
-    writes.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writes.pNext = nullptr;
-    writes.dstSet = descriptorSets[0];
-    writes.descriptorCount = 1;
-    writes.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    writes.pBufferInfo = &uniformBuffer->getBufferInfo();
-    writes.dstArrayElement = 0;
-    writes.dstBinding = 0;
+    VkWriteDescriptorSet writes[2] = {};
+    writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writes[0].pNext = nullptr;
+    writes[0].dstSet = descriptorSets[0];
+    writes[0].dstBinding = 0;
+    writes[0].dstArrayElement = 0;
+    writes[0].descriptorCount = 1;
+    writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    writes[0].pBufferInfo = &uniformBuffer->getBufferInfo();
 
-    graphicsDevice->updateDescriptorSets(1, &writes);
+    writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writes[1].pNext = nullptr;
+    writes[1].dstSet = descriptorSets[0];
+    writes[1].dstBinding = 1;
+    writes[1].dstArrayElement = 0;
+    writes[1].descriptorCount = 1;
+    writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    writes[1].pImageInfo = &texture->getDescriptorImageInfo();
+
+    graphicsDevice->updateDescriptorSets(2, writes);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TriangleTest::initCommandBuffers()
+void TexturedQuadTest::initCommandBuffers()
 {
     renderCommandBuffers = commandPool->allocateCommandBuffers(graphicsDevice->getSwapChainBuffers().size());
 

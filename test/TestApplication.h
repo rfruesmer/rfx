@@ -21,7 +21,6 @@ public:
 
     explicit TestApplication(std::filesystem::path configurationPath, handle_t instanceHandle);
 
-    void initialize() override;
     void updateModelViewProjection();
     void update() override;
     void draw() override;
@@ -34,20 +33,21 @@ public:
     void destroyPipeline();
 
 protected:
-    virtual void initScene() {}
-    void initCamera();
-    virtual void initDescriptorSetLayout();
-    virtual void initPipelineLayout();
-
-    void initDescriptorPool(const std::vector<VkDescriptorPoolSize>& poolSizes);
-    virtual void initDescriptorSet()  {}
     void initCommandPool();
-    virtual void initCommandBuffers()  {}
     void initRenderPass();
     void initFrameBuffers();
 
+    virtual void initScene() = 0;
+    void initCamera();
 
-    virtual void initPipeline() {}
+    virtual void initDescriptorSetLayout();
+    void initPipelineLayout();
+    virtual void initPipeline() = 0;
+    void initDescriptorPool(const std::vector<VkDescriptorPoolSize>& poolSizes);
+    virtual void initDescriptorSet() = 0;
+    virtual void initCommandBuffers() = 0;
+
+
     VkPipelineDynamicStateCreateInfo createDynamicState(uint32_t dynamicStateCount, VkDynamicState dynamicStates[]);
     VkPipelineInputAssemblyStateCreateInfo createInputAssemblyState();
     VkPipelineRasterizationStateCreateInfo createRasterizationState();

@@ -1,20 +1,26 @@
 #pragma once
 
-#include "test/TestApplication.h"
+#include "test/CubeTest.h"
+#include "rfx/scene/Mesh.h"
 
 namespace rfx
 {
 
-class TexturedCubeTest : public TestApplication
+class TexturedCubeTest : public CubeTest
 {
 public:
     explicit TexturedCubeTest(handle_t instanceHandle);
 
+    void initialize() override;
+
 protected:
-    void initPipelineLayout() override;
+    void initScene() override;
+    void loadModel();
+    void loadShaders();
+    void loadTexture();
+    void initDescriptorSetLayout() override;
     void initDescriptorPool();
     void initDescriptorSet() override;
-    void loadTexture();
 
 private:
     std::unique_ptr<Texture2D> texture;

@@ -1,0 +1,22 @@
+{
+  "application": {
+    "name": "rfx Cube Demo",
+    "logLevel": "TRACE"
+  },
+  "graphics": {
+    "resolution": {
+      "x": 1600,
+      "y": 1000
+    }
+  },
+  "scene": {
+    "models": [
+      {
+        "path": "assets/common/models/cube.dae",
+        "vertexShader": "assets/common/shaders/texture.vert",
+        "fragmentShader": "assets/common/shaders/texture.frag",
+        "texture": "assets/common/textures/lunarg_logo-256x256.png"
+      }
+    ]
+  }
+}

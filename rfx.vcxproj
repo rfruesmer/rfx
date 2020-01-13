@@ -257,6 +257,7 @@
     <ClInclude Include="src\rfx\graphics\Texture2D.h" />
     <ClInclude Include="src\rfx\graphics\VertexFormat.h" />
     <ClInclude Include="src\rfx\graphics\VertexBuffer.h" />
+    <ClInclude Include="test\TexturedQuadTest.h" />
     <ClInclude Include="test\TriangleTest.h" />
   </ItemGroup>
   <ItemGroup>
@@ -302,6 +303,7 @@
     <ClCompile Include="src\rfx\graphics\Texture2D.cpp" />
     <ClCompile Include="src\rfx\graphics\VertexFormat.cpp" />
     <ClCompile Include="src\rfx\graphics\VertexBuffer.cpp" />
+    <ClCompile Include="test\TexturedQuadTest.cpp" />
     <ClCompile Include="test\TriangleTest.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -325,6 +327,7 @@
     <None Include="assets\shaders\color.vert" />
     <None Include="assets\shaders\texture.frag" />
     <None Include="assets\shaders\texture.vert" />
+    <None Include="assets\tests\textured-cube\application-config.json" />
     <None Include="assets\tests\triangle\application-config.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -16,17 +16,17 @@ VertexFormat::VertexFormat(int formatMask)
         vertexSize += 12;
     }
 
+    if (formatMask & COLORS) {
+        colors = true;
+        vertexSize += 16;
+    }
+
     if (formatMask & NORMALS) {
         normals = true;
         vertexSize += 12;
     }
 
-    if (formatMask & COLORS) {
-        colors = true;
-        vertexSize += 12;
-    }
-
-    if (formatMask & TEXTURE_COORDINATES_2) {
+    if (formatMask & TEXCOORDS) {
         texCoords = true;
         vertexSize += 8;
     }

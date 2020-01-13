@@ -54,7 +54,7 @@ void ModelLoader::loadInternal(const std::filesystem::path& modelPath, const Ver
 
         for (uint32_t j = 0; j < assimpScene->mMeshes[i]->mNumVertices; j++) {
             vertexData[vertexDataIndex++] = assimpMesh->mVertices[j].x;
-            vertexData[vertexDataIndex++] = -1.0f * assimpMesh->mVertices[j].y;
+            vertexData[vertexDataIndex++] = assimpMesh->mVertices[j].y * -1.0f;
             vertexData[vertexDataIndex++] = assimpMesh->mVertices[j].z;
 
             if (vertexFormat.containsColors()) {
@@ -62,8 +62,10 @@ void ModelLoader::loadInternal(const std::filesystem::path& modelPath, const Ver
                     vertexData[vertexDataIndex++] = assimpMesh->mColors[0][j].r;
                     vertexData[vertexDataIndex++] = assimpMesh->mColors[0][j].g;
                     vertexData[vertexDataIndex++] = assimpMesh->mColors[0][j].b;
+                    vertexData[vertexDataIndex++] = assimpMesh->mColors[0][j].a;
                 }
                 else {
+                    vertexData[vertexDataIndex++] = 1.0f;
                     vertexData[vertexDataIndex++] = 1.0f;
                     vertexData[vertexDataIndex++] = 1.0f;
                     vertexData[vertexDataIndex++] = 1.0f;
@@ -78,7 +80,7 @@ void ModelLoader::loadInternal(const std::filesystem::path& modelPath, const Ver
 
             if (vertexFormat.containsTexCoords()) {
                 vertexData[vertexDataIndex++] = assimpMesh->mTextureCoords[0][j].x;
-                vertexData[vertexDataIndex++] = assimpMesh->mTextureCoords[0][j].y;
+                vertexData[vertexDataIndex++] = assimpMesh->mTextureCoords[0][j].y * - 1.0f;
             }
         }
 

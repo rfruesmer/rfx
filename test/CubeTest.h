@@ -9,21 +9,21 @@ namespace rfx
 class CubeTest : public TestApplication
 {
 public:
-    explicit CubeTest(handle_t instanceHandle);
+    CubeTest(handle_t instanceHandle);
 
     void initialize() override;
 
 protected:
-    void initScene() override;
+    CubeTest(std::filesystem::path configurationPath, handle_t instanceHandle);
+
+    void initScene();
     void loadModel();
     void loadShaders();
     void initDescriptorPool();
-    void initPipelineLayout() override;
     void initPipeline() override;
     void initDescriptorSet() override;
     void initCommandBuffers() override;
 
-private:
     std::shared_ptr<Mesh> cube;
 };
 

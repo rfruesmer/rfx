@@ -8,8 +8,7 @@ public:
     static const int COORDINATES = 1;
     static const int COLORS = 2;
     static const int NORMALS = 4;
-    static const int TEXTURE_COORDINATES_2 = 8;
-    static const int TEXTURE_COORDINATES_3 = 16;
+    static const int TEXCOORDS = 8;
 
     explicit VertexFormat(int formatMask);
     VertexFormat(const VertexFormat& theOther);
@@ -17,8 +16,8 @@ public:
     uint32_t getVertexSize() const;
 
     bool containsCoordinates() const;
-    bool containsNormals() const;
     bool containsColors() const;
+    bool containsNormals() const;
     bool containsTexCoords() const;
 
 private:

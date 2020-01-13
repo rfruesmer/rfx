@@ -11,8 +11,7 @@ Buffer::Buffer(VkDevice vkDevice,
     VkDeviceMemory vkDeviceMemory,
     const VulkanDeviceFunctionPtrs& vk,
     size_t size,
-    size_t range
-    )
+    size_t range)
         : vkDevice(vkDevice),
           vkBuffer(vkBuffer),
           vkDeviceMemory(vkDeviceMemory),

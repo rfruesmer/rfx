@@ -19,28 +19,6 @@ static_assert(false, "not implemented yet");
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestApplication::initialize()
-{
-#ifdef _WINDOWS
-    Win32Application::initialize();
-#else
-    static_assert(false, "not implemented yet");
-#endif
-
-    initCommandPool();
-    initCommandBuffers();
-    initRenderPass();
-    initFrameBuffers();
-
-    initScene();
-    initCamera();
-    initPipelineLayout();
-    initDescriptorSet();
-    initPipeline();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void TestApplication::initCamera()
 {
     modelMatrix = mat4(1.0f);
