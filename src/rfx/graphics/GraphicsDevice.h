@@ -111,8 +111,8 @@ public:
     VkPipeline createGraphicsPipeline(const VkGraphicsPipelineCreateInfo& createInfo) const;
     void destroyPipeline(VkPipeline& inOutPipeline) const;
 
-    std::unique_ptr<Texture2D> createTexture2D(int width, int height, int bytesPerPixel,
-                                               VkFormat format, const std::vector<std::byte>& data);
+    std::unique_ptr<Texture2D> createTexture2D(int width, int height, 
+        VkFormat format, const std::vector<std::byte>& data);
 
     void getLogicalDevice();
     const GraphicsDeviceInfo& getDeviceInfo() const;
@@ -145,7 +145,7 @@ private:
         VkCommandBuffer commandBuffer,
         VkPipelineStageFlags sourceStage,
         VkPipelineStageFlags destinationStage) const;
-    void updateImage(VkImage image, int width, int height, int bytesPerPixel, const std::vector<std::byte>& imageData);
+    void updateImage(VkImage image, int width, int height, const std::vector<std::byte>& imageData) const;
     void copyBufferToImage(VkBuffer buffer, 
         VkImage image, 
         uint32_t width, 

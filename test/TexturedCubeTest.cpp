@@ -8,6 +8,7 @@
 using namespace rfx;
 using namespace glm;
 using namespace std;
+using namespace filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -49,8 +50,7 @@ void TexturedCubeTest::initScene()
 void TexturedCubeTest::loadModel()
 {
     Json::Value jsonModel = configuration["scene"]["models"][0];
-    const filesystem::path modelPath =
-        filesystem::current_path() / jsonModel["path"].asString();
+    const path modelPath = current_path() / jsonModel["path"].asString();
     const VertexFormat vertexFormat(
         VertexFormat::COORDINATES | VertexFormat::TEXCOORDS);
 
@@ -66,14 +66,14 @@ void TexturedCubeTest::loadShaders()
 
     ShaderLoader shaderLoader(graphicsDevice);
 
-    const filesystem::path vertexShaderPath =
-        filesystem::current_path() / jsonModel["vertexShader"].asString();
+    const path vertexShaderPath = 
+        current_path() / jsonModel["vertexShader"].asString();
     const VkPipelineShaderStageCreateInfo vertexShaderStage =
         shaderLoader.load(vertexShaderPath, VK_SHADER_STAGE_VERTEX_BIT, "main");
     cube->setVertexShader(vertexShaderStage);
 
-    const filesystem::path fragmentShaderPath =
-        filesystem::current_path() / jsonModel["fragmentShader"].asString();
+    const path fragmentShaderPath = 
+        current_path() / jsonModel["fragmentShader"].asString();
     const VkPipelineShaderStageCreateInfo fragmentShaderStage =
         shaderLoader.load(fragmentShaderPath, VK_SHADER_STAGE_FRAGMENT_BIT, "main");
     cube->setFragmentShader(fragmentShaderStage);
@@ -84,8 +84,8 @@ void TexturedCubeTest::loadShaders()
 void TexturedCubeTest::loadTexture()
 {
     Json::Value jsonModel = configuration["scene"]["models"][0];
-    const filesystem::path texturePath =
-        filesystem::current_path() / jsonModel["texture"].asString();
+    const path texturePath = 
+        current_path() / jsonModel["texture"].asString();
     
     Texture2DLoader textureLoader(graphicsDevice);
     texture = textureLoader.load(texturePath);

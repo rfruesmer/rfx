@@ -1001,7 +1001,6 @@ void GraphicsDevice::destroyPipeline(VkPipeline& inOutPipeline) const
 unique_ptr<Texture2D> GraphicsDevice::createTexture2D(
     int width, 
     int height,
-    int bytesPerPixel,
     VkFormat format,
     const vector<std::byte>& data)
 {
@@ -1019,7 +1018,7 @@ unique_ptr<Texture2D> GraphicsDevice::createTexture2D(
 
     VkImageView textureImageView = createImageView(textureImage, format);
 
-    updateImage(textureImage, width, height, bytesPerPixel, data);
+    updateImage(textureImage, width, height, data);
 
     return make_unique<Texture2D>(vkDevice, textureImage, textureImageMemory, 
         textureImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, textureSampler, vk);
@@ -1138,23 +1137,22 @@ void GraphicsDevice::updateImage(
     VkImage image,
     int width,
     int height,
-    int bytesPerPixel,
-    const vector<std::byte>& imageData)
+    const vector<std::byte>& imageData) const
 {
-    const VkDeviceSize imageSize = width * height * bytesPerPixel;
+    const size_t bufferSize = imageData.size() * sizeof(std::byte);
     VkBuffer stagingBuffer = nullptr;
     VkDeviceMemory stagingBufferMemory = nullptr;
 
-    createBuffer(imageSize,
+    createBuffer(bufferSize,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         stagingBuffer,
         stagingBufferMemory);
 
     void* bufferMemory = nullptr;
-    const VkResult result = vkMapMemory(vkDevice, stagingBufferMemory, 0, imageSize, 0, &bufferMemory);
+    const VkResult result = vkMapMemory(vkDevice, stagingBufferMemory, 0, bufferSize, 0, &bufferMemory);
     RFX_CHECK_STATE(result == VK_SUCCESS && bufferMemory != nullptr, "Failed to map memory");
-    memcpy(bufferMemory, imageData.data(), static_cast<size_t>(imageSize));
+    memcpy(bufferMemory, imageData.data(), static_cast<size_t>(bufferSize));
     vkUnmapMemory(vkDevice, stagingBufferMemory);
 
     VkCommandBuffer commandBuffer = beginSingleTimeCommands();

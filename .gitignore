@@ -352,5 +352,6 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
-assets/common/models
-assets/common/textures
+assets/common/models/
+assets/common/textures/
+lib/

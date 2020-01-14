@@ -29,6 +29,9 @@
 #define VK_NO_PROTOTYPES
 #include <vulkan/vulkan.h>
 
+// KTX Header Files
+#include <ktx.h>
+
 // GLM Header Files
 #define GLM_FORCE_SSE2
 #define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES

@@ -135,6 +135,12 @@
     <ClInclude Include="test\TexturedQuadTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="lib\ktx\include\ktx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\ktx\include\ktxvulkan.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\rfx\pch.cpp">
@@ -273,5 +279,7 @@
     <None Include="assets\common\shaders\texture.vert" />
     <None Include="assets\tests\triangle\application-config.json" />
     <None Include="assets\tests\textured-cube\application-config.json" />
+    <None Include="assets\common\textures\checkerboard_nomips_rgba.ktx" />
+    <None Include="assets\common\textures\vulkan_11_rgba.ktx" />
   </ItemGroup>
 </Project>

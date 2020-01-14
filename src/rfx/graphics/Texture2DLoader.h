@@ -17,13 +17,13 @@ private:
     {
         int width;
         int height;
-        int bytesPerPixel;
+        VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
         int mipMapLevels;
         std::vector<std::byte> data;
     };
 
-    void loadFromDDSFile(const std::filesystem::path& path);
-    void loadFromImageFile(const std::filesystem::path& path, ImageInfo& outImageInfo);
+    void loadFromKTXFile(const std::filesystem::path& path, ImageInfo& outImageInfo) const;
+    void loadFromImageFile(const std::filesystem::path& path, ImageInfo& outImageInfo) const;
 
     std::shared_ptr<GraphicsDevice> graphicsDevice;
 };

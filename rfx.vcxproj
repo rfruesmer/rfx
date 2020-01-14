@@ -99,7 +99,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>rfx/pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)src/;$(VULKAN_SDK)/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)src/;$(ProjectDir)lib/ktx/include;$(VULKAN_SDK)/include</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <StructMemberAlignment>Default</StructMemberAlignment>
     </ClCompile>
@@ -129,14 +129,14 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>rfx/pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)src/;$(VULKAN_SDK)/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)src/;$(ProjectDir)lib/ktx/include;$(VULKAN_SDK)/include</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <StructMemberAlignment>Default</StructMemberAlignment>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>User32.lib;dinput8.lib;dxguid.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)/lib/ktx/lib/x64/debug/libktx.gl.lib;dinput8.lib;dxguid.lib;User32.lib;</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>robocopy $(SolutionDir)assets $(TargetDir)assets /MIR || exit /b 0</Command>
@@ -161,7 +161,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>rfx/pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)src/;$(VULKAN_SDK)/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)src/;$(ProjectDir)lib/ktx/include;$(VULKAN_SDK)/include</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <StructMemberAlignment>Default</StructMemberAlignment>
     </ClCompile>
@@ -195,7 +195,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>rfx/pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)src/;$(VULKAN_SDK)/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)src/;$(ProjectDir)lib/ktx/include;$(VULKAN_SDK)/include</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <StructMemberAlignment>Default</StructMemberAlignment>
     </ClCompile>
@@ -204,7 +204,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>User32.lib;dinput8.lib;dxguid.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)/lib/ktx/lib/x64/release/libktx.gl.lib;dinput8.lib;dxguid.lib;User32.lib;</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>robocopy $(SolutionDir)assets $(TargetDir)assets /MIR || exit /b 0</Command>
@@ -219,6 +219,8 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="lib\ktx\include\ktx.h" />
+    <ClInclude Include="lib\ktx\include\ktxvulkan.h" />
     <ClInclude Include="src\rfx\graphics\IndexBuffer.h" />
     <ClInclude Include="src\rfx\graphics\ShaderLoader.h" />
     <ClInclude Include="src\rfx\scene\Mesh.h" />
@@ -321,6 +323,8 @@
     <None Include="assets\common\shaders\color.vert" />
     <None Include="assets\common\shaders\texture.frag" />
     <None Include="assets\common\shaders\texture.vert" />
+    <None Include="assets\common\textures\checkerboard_nomips_rgba.ktx" />
+    <None Include="assets\common\textures\vulkan_11_rgba.ktx" />
     <None Include="assets\tests\cube\application-config.json" />
     <None Include="assets\common\models\cube.dae" />
     <None Include="assets\shaders\color.frag" />
