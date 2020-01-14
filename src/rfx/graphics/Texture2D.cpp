@@ -7,15 +7,13 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 
 Texture2D::Texture2D(VkDevice device,
-    VkImage image, 
-    VkDeviceMemory imageMemory, 
+    const shared_ptr<Image>& image, 
     VkImageView imageView, 
     VkImageLayout imageLayout,
     VkSampler sampler,
     const VulkanDeviceFunctionPtrs& vk)
         : vkDevice(device),
           image(image),
-          imageMemory(imageMemory),
           imageView(imageView),
           sampler(sampler)
 {
@@ -52,15 +50,7 @@ void Texture2D::dispose()
         imageView = nullptr;
     }
 
-    if (image) {
-        vkDestroyImage(vkDevice, image, nullptr);
-        image = nullptr;
-    }
-
-    if (imageMemory) {
-        vkFreeMemory(vkDevice, imageMemory, nullptr);
-        imageMemory = nullptr;
-    }
+    image.reset();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

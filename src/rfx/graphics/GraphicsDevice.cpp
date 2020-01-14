@@ -5,7 +5,6 @@
 using namespace rfx;
 using namespace std;
 
-
 // ---------------------------------------------------------------------------------------------------------------------
 
 GraphicsDevice::GraphicsDevice(VkDevice vkLogicalDevice,
@@ -389,7 +388,7 @@ void GraphicsDevice::createDepthBuffer()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-uint32_t GraphicsDevice::findMemoryType(uint32_t typeBits, VkFlags requirementsMask) const
+uint32_t GraphicsDevice::findMemoryType(uint32_t typeBits, VkMemoryPropertyFlags requirementsMask) const
 {
     // Search memtypes to find first index with those properties
     for (uint32_t i = 0; i < deviceInfo.memoryProperties.memoryTypeCount; i++) {
@@ -1004,15 +1003,12 @@ unique_ptr<Texture2D> GraphicsDevice::createTexture2D(
     VkFormat format,
     const vector<std::byte>& data)
 {
-    VkImage textureImage = nullptr;
-    VkDeviceMemory textureImageMemory = nullptr;
-    createImage(width, 
+    shared_ptr<Image> textureImage = createImage(
+        width, 
         height, 
         format, 
         VK_IMAGE_USAGE_SAMPLED_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
-        textureImage, 
-        textureImageMemory);
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
     VkSampler textureSampler = createTextureSampler();
 
@@ -1020,13 +1016,63 @@ unique_ptr<Texture2D> GraphicsDevice::createTexture2D(
 
     updateImage(textureImage, width, height, data);
 
-    return make_unique<Texture2D>(vkDevice, textureImage, textureImageMemory, 
-        textureImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, textureSampler, vk);
+    return make_unique<Texture2D>(vkDevice, textureImage, textureImageView, 
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, textureSampler, vk);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VkSampler GraphicsDevice::createTextureSampler()
+shared_ptr<Image> GraphicsDevice::createImage(
+    uint32_t width,
+    uint32_t height,
+    VkFormat format,
+    VkImageUsageFlags usage,
+    VkMemoryPropertyFlags properties) const
+{
+    VkImageCreateInfo imageCreateInfo = {};
+    imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageCreateInfo.pNext = nullptr;
+    imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageCreateInfo.format = format;
+    imageCreateInfo.mipLevels = 1;
+    imageCreateInfo.arrayLayers = 1;
+    imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    imageCreateInfo.extent = { width, height, 1 };
+    imageCreateInfo.usage = usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    imageCreateInfo.queueFamilyIndexCount = deviceInfo.graphicsQueueFamilyIndex;
+    imageCreateInfo.pQueueFamilyIndices = nullptr;
+    imageCreateInfo.flags = 0;
+
+    VkImage image = nullptr;
+    VkResult result = vkCreateImage(vkDevice, &imageCreateInfo, nullptr, &image);
+    RFX_CHECK_STATE(result == VK_SUCCESS && image != nullptr,
+        "Failed to create image");
+
+    VkMemoryRequirements memoryRequirements = {};
+    vkGetImageMemoryRequirements(vkDevice, image, &memoryRequirements);
+
+    VkMemoryAllocateInfo memoryAllocInfo = {};
+    memoryAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    memoryAllocInfo.pNext = nullptr;
+    memoryAllocInfo.allocationSize = memoryRequirements.size;
+    memoryAllocInfo.memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, properties);
+
+    VkDeviceMemory imageMemory = nullptr;
+    result = vkAllocateMemory(vkDevice, &memoryAllocInfo, nullptr, &imageMemory);
+    RFX_CHECK_STATE(result == VK_SUCCESS && imageMemory != nullptr,
+        "Failed to allocate image memory");
+
+    vkBindImageMemory(vkDevice, image, imageMemory, 0);
+
+    return make_shared<Image>(vkDevice, image, imageMemory, vk);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkSampler GraphicsDevice::createTextureSampler() const
 {
     VkSamplerCreateInfo samplerInfo = {};
     samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -1053,62 +1099,11 @@ VkSampler GraphicsDevice::createTextureSampler()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void GraphicsDevice::createImage(
-    uint32_t width,
-    uint32_t height,
-    VkFormat format,
-    VkImageUsageFlags usage,
-    VkMemoryPropertyFlags properties,
-    VkImage& outImage,
-    VkDeviceMemory& outImageMemory) const
-{
-    outImage = nullptr;
-    outImageMemory = nullptr;
-
-    VkImageCreateInfo imageCreateInfo = {};
-    imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imageCreateInfo.pNext = nullptr;
-    imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageCreateInfo.format = format;
-    imageCreateInfo.mipLevels = 1;
-    imageCreateInfo.arrayLayers = 1;
-    imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    imageCreateInfo.extent = { width, height, 1 };
-    imageCreateInfo.usage = usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-    imageCreateInfo.queueFamilyIndexCount = deviceInfo.graphicsQueueFamilyIndex;
-    imageCreateInfo.pQueueFamilyIndices = nullptr;
-    imageCreateInfo.flags = 0;
-
-    VkResult result = vkCreateImage(vkDevice, &imageCreateInfo, nullptr, &outImage);
-    RFX_CHECK_STATE(result == VK_SUCCESS && outImage != nullptr,
-        "Failed to create image");
-
-    VkMemoryRequirements memoryRequirements = {};
-    vkGetImageMemoryRequirements(vkDevice, outImage, &memoryRequirements);
-
-    VkMemoryAllocateInfo memoryAllocInfo = {};
-    memoryAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    memoryAllocInfo.pNext = nullptr;
-    memoryAllocInfo.allocationSize = memoryRequirements.size;
-    memoryAllocInfo.memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, 0);
-
-    result = vkAllocateMemory(vkDevice, &memoryAllocInfo, nullptr, &outImageMemory);
-    RFX_CHECK_STATE(result == VK_SUCCESS && outImageMemory != nullptr,
-        "Failed to allocate image memory");
-
-    vkBindImageMemory(vkDevice, outImage, outImageMemory, 0);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-VkImageView GraphicsDevice::createImageView(VkImage image, VkFormat format) const
+VkImageView GraphicsDevice::createImageView(const shared_ptr<Image>& image, VkFormat format) const
 {
     VkImageViewCreateInfo viewInfo = {};
     viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    viewInfo.image = image;
+    viewInfo.image = image->getHandle();
     viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
     viewInfo.format = format;
     viewInfo.components = {
@@ -1134,7 +1129,7 @@ VkImageView GraphicsDevice::createImageView(VkImage image, VkFormat format) cons
 // ---------------------------------------------------------------------------------------------------------------------
 
 void GraphicsDevice::updateImage(
-    VkImage image,
+    shared_ptr<Image> image,
     int width,
     int height,
     const vector<std::byte>& imageData) const
@@ -1158,7 +1153,7 @@ void GraphicsDevice::updateImage(
     VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
     setImageMemoryBarrier(
-        image,
+        image->getHandle(),
         0,
         VK_ACCESS_TRANSFER_WRITE_BIT,
         VK_IMAGE_LAYOUT_UNDEFINED,
@@ -1167,10 +1162,10 @@ void GraphicsDevice::updateImage(
         VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
         VK_PIPELINE_STAGE_TRANSFER_BIT);
 
-    copyBufferToImage(stagingBuffer, image, width, height, commandBuffer);
+    copyBufferToImage(stagingBuffer, image->getHandle(), width, height, commandBuffer);
 
     setImageMemoryBarrier(
-        image,
+        image->getHandle(),
         VK_ACCESS_TRANSFER_WRITE_BIT,
         VK_ACCESS_SHADER_READ_BIT,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,

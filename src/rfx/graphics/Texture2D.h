@@ -1,5 +1,7 @@
 #pragma once
 
+#include "rfx/graphics/Image.h"
+
 namespace rfx
 {
 
@@ -7,8 +9,7 @@ class Texture2D
 {
 public:
     Texture2D(VkDevice device,
-        VkImage image, 
-        VkDeviceMemory imageMemory, 
+        const std::shared_ptr<Image>& image, 
         VkImageView imageView, 
         VkImageLayout imageLayout,
         VkSampler sampler,
@@ -27,8 +28,7 @@ private:
     DECLARE_VULKAN_FUNCTION(vkFreeMemory);
 
     VkDevice vkDevice = nullptr;
-    VkImage image = nullptr;
-    VkDeviceMemory imageMemory = nullptr;
+    std::shared_ptr<Image> image;
     VkImageView imageView = nullptr;
     VkDescriptorImageInfo descImageInfo = {};
     VkSampler sampler = nullptr;

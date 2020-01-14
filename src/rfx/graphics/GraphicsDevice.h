@@ -6,6 +6,7 @@
 #include "rfx/graphics/Buffer.h"
 #include "rfx/graphics/VertexBuffer.h"
 #include "rfx/graphics/Texture2D.h"
+#include "rfx/graphics/Image.h"
 #include "rfx/application/Window.h"
 #include "IndexBuffer.h"
 
@@ -129,14 +130,13 @@ private:
 
     void loadDeviceFunctions();
     void createSingleTimeCommandPool();
-    uint32_t findMemoryType(uint32_t typeBits, VkFlags requirementsMask) const;
+    uint32_t findMemoryType(uint32_t typeBits, VkMemoryPropertyFlags requirementsMask) const;
 
     void createDefaultQueues();
     std::shared_ptr<Queue> createQueue(uint32_t queueFamilyIndex) const;
 
-    void createImage(uint32_t width, uint32_t height, VkFormat format, 
-        VkImageUsageFlags usage, VkMemoryPropertyFlags properties, 
-        VkImage& outImage, VkDeviceMemory& outImageMemory) const;
+    std::shared_ptr<Image> createImage(uint32_t width, uint32_t height, VkFormat format, 
+        VkImageUsageFlags usage, VkMemoryPropertyFlags properties) const;
     void setImageMemoryBarrier(VkImage image,
         VkAccessFlags sourceAccess,
         VkAccessFlags destAccess,
@@ -145,13 +145,13 @@ private:
         VkCommandBuffer commandBuffer,
         VkPipelineStageFlags sourceStage,
         VkPipelineStageFlags destinationStage) const;
-    void updateImage(VkImage image, int width, int height, const std::vector<std::byte>& imageData) const;
+    void updateImage(std::shared_ptr<Image> image, int width, int height, const std::vector<std::byte>& imageData) const;
     void copyBufferToImage(VkBuffer buffer, 
         VkImage image, 
         uint32_t width, 
         uint32_t height, 
         VkCommandBuffer commandBuffer) const;
-    VkImageView createImageView(VkImage image, VkFormat format) const;
+    VkImageView createImageView(const std::shared_ptr<Image>&  image, VkFormat format) const;
 
     void createBufferInternal(size_t size,
         VkBufferUsageFlags usage,
@@ -166,7 +166,7 @@ private:
     VkCommandBuffer beginSingleTimeCommands() const;
     void endSingleTimeCommands(VkCommandBuffer commandBuffer) const;
 
-    VkSampler createTextureSampler();
+    VkSampler createTextureSampler() const;
 
     void querySwapChainProperties();
     void querySwapChainSurfaceCapabilities();
