@@ -287,5 +287,6 @@
     <None Include="assets\tests\textured-cube\application-config.json" />
     <None Include="assets\common\textures\checkerboard_nomips_rgba.ktx" />
     <None Include="assets\common\textures\vulkan_11_rgba.ktx" />
+    <None Include="assets\tests\textured-quad\application-config.json" />
   </ItemGroup>
 </Project>

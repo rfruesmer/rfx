@@ -43,12 +43,15 @@ void Buffer::dispose()
 {
     if (vkBuffer) {
         vkDestroyBuffer(vkDevice, vkBuffer, nullptr);
-        vkFreeMemory(vkDevice, vkDeviceMemory, nullptr);
-
-        vkDevice = nullptr;
         vkBuffer = nullptr;
+    }
+
+    if (vkDeviceMemory) {
+        vkFreeMemory(vkDevice, vkDeviceMemory, nullptr);
         vkDeviceMemory = nullptr;
     }
+
+    vkDevice = nullptr;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

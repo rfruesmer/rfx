@@ -689,7 +689,7 @@ shared_ptr<IndexBuffer> GraphicsDevice::createIndexBuffer(uint32_t indexCount, V
 shared_ptr<Buffer> GraphicsDevice::createBuffer(
     size_t size,
     VkBufferUsageFlags usage,
-    VkMemoryPropertyFlags properties)
+    VkMemoryPropertyFlags properties) const
 {
     VkBuffer vkBuffer = nullptr;
     VkDeviceMemory vkDeviceMemory = nullptr;
@@ -709,20 +709,20 @@ void GraphicsDevice::createBufferInternal(size_t size,
     VkDeviceMemory& outDeviceMemory,
     VkDeviceSize& outDeviceSize) const
 {
-    VkBufferCreateInfo bufferCreateInfo = {};
-    bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferCreateInfo.pNext = nullptr;
-    bufferCreateInfo.usage = usage;
-    bufferCreateInfo.size = size;
-    bufferCreateInfo.queueFamilyIndexCount = deviceInfo.graphicsQueueFamilyIndex;
-    bufferCreateInfo.pQueueFamilyIndices = nullptr;
-    bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    bufferCreateInfo.flags = 0;
+    VkBufferCreateInfo createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    createInfo.pNext = nullptr;
+    createInfo.usage = usage;
+    createInfo.size = size;
+    createInfo.queueFamilyIndexCount = deviceInfo.graphicsQueueFamilyIndex;
+    createInfo.pQueueFamilyIndices = nullptr;
+    createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    createInfo.flags = 0;
 
     outBuffer = nullptr;
-    VkResult result = vkCreateBuffer(vkDevice, &bufferCreateInfo, nullptr, &outBuffer);
+    VkResult result = vkCreateBuffer(vkDevice, &createInfo, nullptr, &outBuffer);
     RFX_CHECK_STATE(result == VK_SUCCESS && outBuffer != nullptr,
-        "Failed to create uniform buffer");
+        "Failed to create buffer");
 
     VkMemoryRequirements memoryRequirements = {};
     vkGetBufferMemoryRequirements(vkDevice, outBuffer, &memoryRequirements);
@@ -948,6 +948,18 @@ void GraphicsDevice::destroyFrameBuffer(VkFramebuffer& inOutFrameBuffer) const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+VkFence GraphicsDevice::createFence() const
+{
+    VkFenceCreateInfo createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    createInfo.pNext = nullptr;
+    createInfo.flags = 0;
+
+    return createFence(createInfo);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 VkFence GraphicsDevice::createFence(const VkFenceCreateInfo& createInfo) const
 {
     VkFence fence = nullptr;
@@ -965,6 +977,13 @@ void GraphicsDevice::destroyFence(VkFence& inOutFence) const
 {
     vkDestroyFence(vkDevice, inOutFence, nullptr);
     inOutFence = nullptr;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkResult GraphicsDevice::waitForFence(VkFence fence, uint64_t timeout) const
+{
+    return waitForFences(1, &fence, false, timeout);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1010,11 +1029,11 @@ unique_ptr<Texture2D> GraphicsDevice::createTexture2D(
         VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-    VkSampler textureSampler = createTextureSampler();
+    updateImage(textureImage, data);
 
     VkImageView textureImageView = createImageView(textureImage, format);
 
-    updateImage(textureImage, width, height, data);
+    VkSampler textureSampler = createTextureSampler();
 
     return make_unique<Texture2D>(vkDevice, textureImage, textureImageView, 
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, textureSampler, vk);
@@ -1067,7 +1086,7 @@ shared_ptr<Image> GraphicsDevice::createImage(
 
     vkBindImageMemory(vkDevice, image, imageMemory, 0);
 
-    return make_shared<Image>(vkDevice, image, imageMemory, vk);
+    return make_shared<Image>(vkDevice, image, imageMemory, width, height, vk);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1129,207 +1148,58 @@ VkImageView GraphicsDevice::createImageView(const shared_ptr<Image>& image, VkFo
 // ---------------------------------------------------------------------------------------------------------------------
 
 void GraphicsDevice::updateImage(
-    shared_ptr<Image> image,
-    int width,
-    int height,
+    const shared_ptr<Image>& image,
     const vector<std::byte>& imageData) const
 {
     const size_t bufferSize = imageData.size() * sizeof(std::byte);
-    VkBuffer stagingBuffer = nullptr;
-    VkDeviceMemory stagingBufferMemory = nullptr;
+    const shared_ptr<Buffer> stagingBuffer = createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    stagingBuffer->bind();
+    stagingBuffer->load(bufferSize, imageData.data());
 
-    createBuffer(bufferSize,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        stagingBuffer,
-        stagingBufferMemory);
-
-    void* bufferMemory = nullptr;
-    const VkResult result = vkMapMemory(vkDevice, stagingBufferMemory, 0, bufferSize, 0, &bufferMemory);
-    RFX_CHECK_STATE(result == VK_SUCCESS && bufferMemory != nullptr, "Failed to map memory");
-    memcpy(bufferMemory, imageData.data(), static_cast<size_t>(bufferSize));
-    vkUnmapMemory(vkDevice, stagingBufferMemory);
-
-    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
-
-    setImageMemoryBarrier(
-        image->getHandle(),
+    const shared_ptr<CommandBuffer> commandBuffer = beginSingleTimeCommands();
+    commandBuffer->setImageMemoryBarrier(
+        image,
         0,
         VK_ACCESS_TRANSFER_WRITE_BIT,
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        commandBuffer,
         VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
         VK_PIPELINE_STAGE_TRANSFER_BIT);
-
-    copyBufferToImage(stagingBuffer, image->getHandle(), width, height, commandBuffer);
-
-    setImageMemoryBarrier(
-        image->getHandle(),
+    commandBuffer->copyBufferToImage(stagingBuffer->getHandle(), image);
+    commandBuffer->setImageMemoryBarrier(
+        image,
         VK_ACCESS_TRANSFER_WRITE_BIT,
         VK_ACCESS_SHADER_READ_BIT,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-        commandBuffer,
         VK_PIPELINE_STAGE_TRANSFER_BIT,
         VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-
     endSingleTimeCommands(commandBuffer);
-
-
-    vkDestroyBuffer(vkDevice, stagingBuffer, nullptr);
-    vkFreeMemory(vkDevice, stagingBufferMemory, nullptr);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void GraphicsDevice::createBuffer(
-    VkDeviceSize size,
-    VkBufferUsageFlags usage,
-    VkMemoryPropertyFlags properties,
-    VkBuffer& outBuffer,
-    VkDeviceMemory& outBufferMemory) const
+shared_ptr<CommandBuffer> GraphicsDevice::beginSingleTimeCommands() const
 {
-    outBuffer = nullptr;
-    outBufferMemory = nullptr;
-
-    VkBufferCreateInfo createInfo = {};
-    createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    createInfo.size = size;
-    createInfo.usage = usage;
-    createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    VkResult result = vkCreateBuffer(vkDevice, &createInfo, nullptr, &outBuffer);
-    RFX_CHECK_STATE(result == VK_SUCCESS && outBuffer != nullptr,
-        "Failed to create buffer");
-
-    VkMemoryRequirements memoryRequirements = {};
-    vkGetBufferMemoryRequirements(vkDevice, outBuffer, &memoryRequirements);
-
-    VkMemoryAllocateInfo memoryAllocInfo = {};
-    memoryAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    memoryAllocInfo.pNext = nullptr;
-    memoryAllocInfo.allocationSize = memoryRequirements.size;
-    memoryAllocInfo.memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, properties);
-
-    result = vkAllocateMemory(vkDevice, &memoryAllocInfo, nullptr, &outBufferMemory);
-    RFX_CHECK_STATE(result == VK_SUCCESS && outBufferMemory != nullptr,
-        "Failed to allocated buffer memory");
-
-    vkBindBufferMemory(vkDevice, outBuffer, outBufferMemory, 0);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-VkCommandBuffer GraphicsDevice::beginSingleTimeCommands() const
-{
-    VkCommandBufferAllocateInfo allocInfo = {};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandPool = tempCommandPool->getHandle();
-    allocInfo.commandBufferCount = 1;
-
-    VkCommandBuffer commandBuffer = nullptr;
-    VkResult result = vkAllocateCommandBuffers(vkDevice, &allocInfo, &commandBuffer);
-    RFX_CHECK_STATE(result == VK_SUCCESS && commandBuffer != nullptr,
-        "Failed to allocate command buffer");
-
-    VkCommandBufferBeginInfo beginInfo = {};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-    result = vkBeginCommandBuffer(commandBuffer, &beginInfo);
-    RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to begin command buffer");
+    shared_ptr<CommandBuffer> commandBuffer = tempCommandPool->allocateCommandBuffer();
+    commandBuffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
     return commandBuffer;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void GraphicsDevice::setImageMemoryBarrier(
-    VkImage image,
-    VkAccessFlags sourceAccess,
-    VkAccessFlags destAccess,
-    VkImageLayout oldLayout,
-    VkImageLayout newLayout,
-    VkCommandBuffer commandBuffer,
-    VkPipelineStageFlags sourceStage,
-    VkPipelineStageFlags destinationStage) const
+void GraphicsDevice::endSingleTimeCommands(const shared_ptr<CommandBuffer>& commandBuffer) const
 {
-    VkImageMemoryBarrier barrier = {};
-    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    barrier.pNext = nullptr;
-    barrier.srcAccessMask = sourceAccess;
-    barrier.dstAccessMask = destAccess;
-    barrier.oldLayout = oldLayout;
-    barrier.newLayout = newLayout;
-    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.image = image;
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = VK_REMAINING_MIP_LEVELS;
-    barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS;
+    commandBuffer->end();
 
-    vkCmdPipelineBarrier(
-        commandBuffer,
-        sourceStage, destinationStage,
-        0,
-        0, nullptr,
-        0, nullptr,
-        1, &barrier
-    );
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void GraphicsDevice::copyBufferToImage(VkBuffer buffer, 
-    VkImage image, 
-    uint32_t width, 
-    uint32_t height, 
-    VkCommandBuffer commandBuffer) const
-{
-    VkBufferImageCopy region = {};
-    region.bufferOffset = 0;
-    region.bufferRowLength = 0;
-    region.bufferImageHeight = 0;
-    region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    region.imageSubresource.mipLevel = 0;
-    region.imageSubresource.baseArrayLayer = 0;
-    region.imageSubresource.layerCount = 1;
-    region.imageOffset = { 0, 0, 0 };
-    region.imageExtent = { width, height, 1 };
-
-    vkCmdCopyBufferToImage(commandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void GraphicsDevice::endSingleTimeCommands(VkCommandBuffer commandBuffer) const
-{
-    VkResult result = vkEndCommandBuffer(commandBuffer);
-    RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to end command buffer");
-
-    VkFenceCreateInfo fenceCreateInfo = {};
-    fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fenceCreateInfo.pNext = nullptr;
-    fenceCreateInfo.flags = 0;
-
-    VkFence fence = nullptr;
-    result = vkCreateFence(vkDevice, &fenceCreateInfo, nullptr, &fence);
-    RFX_CHECK_STATE(result == VK_SUCCESS && fence != nullptr, "Failed to create fence");
-
-    VkSubmitInfo submitInfo = {};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBuffer;
-
-    graphicsQueue->submit(1, &submitInfo, fence);
-    result = waitForFences(1, &fence, false, 500000000);
+    const VkFence fence = createFence();
+    graphicsQueue->submit(commandBuffer, fence);
+    const VkResult result = waitForFence(fence, 500000000);
     RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to wait for fence");
 
-    vkFreeCommandBuffers(vkDevice, tempCommandPool->getHandle(), 1, &commandBuffer);
+    tempCommandPool->freeCommandBuffer(commandBuffer);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

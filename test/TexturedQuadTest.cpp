@@ -9,7 +9,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 
 TexturedQuadTest::TexturedQuadTest(handle_t instanceHandle)
-    : TestApplication("assets/tests/triangle/application-config.json", instanceHandle) {}
+    : TestApplication("assets/tests/textured-quad/application-config.json", instanceHandle) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 

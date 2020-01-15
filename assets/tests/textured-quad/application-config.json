@@ -1,0 +1,15 @@
+{
+  "application": {
+    "name": "rfx Textured Quad Demo",
+    "logLevel": "TRACE"
+  },
+  "graphics": {
+    "resolution": {
+      "x": 1600,
+      "y": 1000
+    }
+  },
+  "scene": {
+    "models": []
+  }
+}

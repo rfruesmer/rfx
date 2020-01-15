@@ -25,6 +25,8 @@ CommandBuffer::CommandBuffer(
     vkCmdDraw = vk.vkCmdDraw;
     vkCmdDrawIndexed = vk.vkCmdDrawIndexed;
     vkCmdCopyBuffer = vk.vkCmdCopyBuffer;
+    vkCmdCopyBufferToImage = vk.vkCmdCopyBufferToImage;
+    vkCmdPipelineBarrier = vk.vkCmdPipelineBarrier;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -138,6 +140,61 @@ void CommandBuffer::copyBuffer(
     copyRegion.size = sourceBuffer->getBufferInfo().range;
 
     vkCmdCopyBuffer(vkCommandBuffer, sourceBuffer->getHandle(), destBuffer->getHandle(), 1, &copyRegion);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CommandBuffer::copyBufferToImage(VkBuffer buffer, const shared_ptr<Image>& image) const
+{
+    VkBufferImageCopy region = {};
+    region.bufferOffset = 0;
+    region.bufferRowLength = 0;
+    region.bufferImageHeight = 0;
+    region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    region.imageSubresource.mipLevel = 0;
+    region.imageSubresource.baseArrayLayer = 0;
+    region.imageSubresource.layerCount = 1;
+    region.imageOffset = { 0, 0, 0 };
+    region.imageExtent = { image->getWidth(), image->getHeight(), 1 };
+
+    vkCmdCopyBufferToImage(vkCommandBuffer, buffer, image->getHandle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CommandBuffer::setImageMemoryBarrier(
+    const shared_ptr<Image>& image, 
+    VkAccessFlags sourceAccess, 
+    VkAccessFlags destAccess,
+    VkImageLayout oldLayout, 
+    VkImageLayout newLayout, 
+    VkPipelineStageFlags sourceStage,
+    VkPipelineStageFlags destinationStage) const
+{
+    VkImageMemoryBarrier barrier = {};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.pNext = nullptr;
+    barrier.srcAccessMask = sourceAccess;
+    barrier.dstAccessMask = destAccess;
+    barrier.oldLayout = oldLayout;
+    barrier.newLayout = newLayout;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = image->getHandle();
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.levelCount = VK_REMAINING_MIP_LEVELS;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS;
+
+    vkCmdPipelineBarrier(
+        vkCommandBuffer,
+        sourceStage, destinationStage,
+        0,
+        0, nullptr,
+        0, nullptr,
+        1, &barrier
+    );
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "rfx/graphics/Buffer.h"
+#include "rfx/graphics/Image.h"
 
 namespace rfx
 {
@@ -30,10 +31,20 @@ public:
         const std::vector<VkDescriptorSet>& descriptorSets) const;
     void setViewport(const VkViewport& viewport) const;
     void setScissor(const VkRect2D& scissor) const;
-    void draw(uint32_t vertexCount) const;
-    void drawIndexed(uint32_t indexCount) const;
     void copyBuffer(const std::shared_ptr<Buffer>& sourceBuffer, 
         const std::shared_ptr<Buffer>& destBuffer);
+    void copyBufferToImage(VkBuffer buffer, const std::shared_ptr<Image>& image) const;
+
+    void setImageMemoryBarrier(const std::shared_ptr<Image>& image,
+        VkAccessFlags sourceAccess,
+        VkAccessFlags destAccess,
+        VkImageLayout oldLayout,
+        VkImageLayout newLayout,
+        VkPipelineStageFlags sourceStage,
+        VkPipelineStageFlags destinationStage) const;
+
+    void draw(uint32_t vertexCount) const;
+    void drawIndexed(uint32_t indexCount) const;
 
 private:
     VkCommandBuffer vkCommandBuffer = nullptr;
@@ -51,6 +62,8 @@ private:
     DECLARE_VULKAN_FUNCTION(vkCmdDraw);
     DECLARE_VULKAN_FUNCTION(vkCmdDrawIndexed);
     DECLARE_VULKAN_FUNCTION(vkCmdCopyBuffer);
+    DECLARE_VULKAN_FUNCTION(vkCmdCopyBufferToImage);
+    DECLARE_VULKAN_FUNCTION(vkCmdPipelineBarrier);
 };
 
 } // namespace rfx

@@ -334,6 +334,7 @@
     <None Include="assets\shaders\texture.frag" />
     <None Include="assets\shaders\texture.vert" />
     <None Include="assets\tests\textured-cube\application-config.json" />
+    <None Include="assets\tests\textured-quad\application-config.json" />
     <None Include="assets\tests\triangle\application-config.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

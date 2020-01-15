@@ -5,10 +5,10 @@
 #include "rfx/graphics/CommandPool.h"
 #include "rfx/graphics/Buffer.h"
 #include "rfx/graphics/VertexBuffer.h"
+#include "rfx/graphics/IndexBuffer.h"
 #include "rfx/graphics/Texture2D.h"
 #include "rfx/graphics/Image.h"
 #include "rfx/application/Window.h"
-#include "IndexBuffer.h"
 
 
 namespace rfx
@@ -73,7 +73,7 @@ public:
     std::shared_ptr<IndexBuffer> createIndexBuffer(uint32_t indexCount, VkIndexType indexFormat);
     std::shared_ptr<Buffer> createBuffer(size_t size, 
         VkBufferUsageFlags usage, 
-        VkMemoryPropertyFlags properties);
+        VkMemoryPropertyFlags properties) const;
 
     VkDescriptorPool createDescriptorPool(const VkDescriptorPoolCreateInfo& createInfo) const;
     void destroyDescriptorPool(VkDescriptorPool& inOutDescriptorPool) const;
@@ -105,8 +105,10 @@ public:
     VkFramebuffer createFrameBuffer(const VkFramebufferCreateInfo& createInfo) const;
     void destroyFrameBuffer(VkFramebuffer& inOutFrameBuffer) const;
 
+    VkFence createFence() const;
     VkFence createFence(const VkFenceCreateInfo& createInfo) const;
     void destroyFence(VkFence& inOutFence) const;
+    VkResult waitForFence(VkFence fence, uint64_t timeout) const;
     VkResult waitForFences(uint32_t count, const VkFence* fences, bool waitAll, uint64_t timeout) const;
 
     VkPipeline createGraphicsPipeline(const VkGraphicsPipelineCreateInfo& createInfo) const;
@@ -115,7 +117,6 @@ public:
     std::unique_ptr<Texture2D> createTexture2D(int width, int height, 
         VkFormat format, const std::vector<std::byte>& data);
 
-    void getLogicalDevice();
     const GraphicsDeviceInfo& getDeviceInfo() const;
     const VkSwapchainKHR& getSwapChain() const;
     const std::vector<SwapChainBuffer>& getSwapChainBuffers() const;
@@ -135,24 +136,6 @@ private:
     void createDefaultQueues();
     std::shared_ptr<Queue> createQueue(uint32_t queueFamilyIndex) const;
 
-    std::shared_ptr<Image> createImage(uint32_t width, uint32_t height, VkFormat format, 
-        VkImageUsageFlags usage, VkMemoryPropertyFlags properties) const;
-    void setImageMemoryBarrier(VkImage image,
-        VkAccessFlags sourceAccess,
-        VkAccessFlags destAccess,
-        VkImageLayout oldLayout,
-        VkImageLayout newLayout,
-        VkCommandBuffer commandBuffer,
-        VkPipelineStageFlags sourceStage,
-        VkPipelineStageFlags destinationStage) const;
-    void updateImage(std::shared_ptr<Image> image, int width, int height, const std::vector<std::byte>& imageData) const;
-    void copyBufferToImage(VkBuffer buffer, 
-        VkImage image, 
-        uint32_t width, 
-        uint32_t height, 
-        VkCommandBuffer commandBuffer) const;
-    VkImageView createImageView(const std::shared_ptr<Image>&  image, VkFormat format) const;
-
     void createBufferInternal(size_t size,
         VkBufferUsageFlags usage,
         VkMemoryPropertyFlags properties,
@@ -160,11 +143,14 @@ private:
         VkDeviceMemory& outDeviceMemory,
         VkDeviceSize& outDeviceSize) const;
 
-    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
-                      VkBuffer& outBuffer, VkDeviceMemory& outBufferMemory) const;
+    std::shared_ptr<Image> createImage(uint32_t width, uint32_t height, VkFormat format, 
+        VkImageUsageFlags usage, VkMemoryPropertyFlags properties) const;
+    void updateImage(const std::shared_ptr<Image>& image, 
+        const std::vector<std::byte>& imageData) const;
+    VkImageView createImageView(const std::shared_ptr<Image>&  image, VkFormat format) const;
 
-    VkCommandBuffer beginSingleTimeCommands() const;
-    void endSingleTimeCommands(VkCommandBuffer commandBuffer) const;
+    std::shared_ptr<CommandBuffer> beginSingleTimeCommands() const;
+    void endSingleTimeCommands(const std::shared_ptr<CommandBuffer>& commandBuffer) const;
 
     VkSampler createTextureSampler() const;
 
