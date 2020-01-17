@@ -4,10 +4,11 @@
 using namespace rfx;
 using namespace glm;
 using namespace std;
+using namespace std::filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-TestApplication::TestApplication(filesystem::path configurationPath, handle_t instanceHandle)
+TestApplication::TestApplication(path configurationPath, handle_t instanceHandle)
 #ifdef _WINDOWS
     : Win32Application(configurationPath, instanceHandle)
 #else

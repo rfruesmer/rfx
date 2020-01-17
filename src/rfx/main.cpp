@@ -17,6 +17,7 @@ static_assert(false, "Not implemented");
 using namespace rfx;
 using namespace std;
 
+// ---------------------------------------------------------------------------------------------------------------------
 
 #ifdef _WINDOWS
 
@@ -36,9 +37,9 @@ int main()
         RFX_LOG_INFO << "Starting rfx application ...";
 
         //TriangleTest theApp(instanceHandle);
-        //CubeTest theApp(instanceHandle);
+        CubeTest theApp(instanceHandle);
         //TexturedQuadTest theApp(instanceHandle);
-        TexturedCubesTest theApp(instanceHandle);
+        //TexturedCubesTest theApp(instanceHandle);
         theApp.initialize();
         theApp.run();
 
@@ -60,6 +61,4 @@ int main()
 static_assert(false, "Not implemented");
 #endif // _WINDOWS
 
-
-
-
+// ---------------------------------------------------------------------------------------------------------------------

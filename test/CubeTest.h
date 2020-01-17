@@ -1,6 +1,7 @@
 #pragma once
 
 #include "test/TestApplication.h"
+#include "rfx/scene/SceneNode.h"
 #include "rfx/scene/Mesh.h"
 
 namespace rfx
@@ -14,17 +15,20 @@ public:
     void initialize() override;
 
 protected:
-    CubeTest(std::filesystem::path configurationPath, handle_t instanceHandle);
+    CubeTest(const std::filesystem::path& configurationPath, handle_t instanceHandle);
 
     void initScene() override;
-    virtual void loadModel();
-    virtual void loadShaders();
-    void initDescriptorPool();
+    void createSceneGraphRootNode();
+    virtual void loadModels();
+    std::shared_ptr<Mesh> loadModel(const Json::Value& jsonModel) const;
+    virtual void loadShaders(const Json::Value& jsonModel, const std::shared_ptr<Mesh>& mesh) const;
+    void attachToSceneGraph(const std::shared_ptr<Mesh>& mesh) const;
+    virtual void initDescriptorPool();
     void initPipeline() override;
     void initDescriptorSet() override;
     void initCommandBuffers() override;
 
-    std::shared_ptr<Mesh> cube;
+    std::unique_ptr<SceneNode> sceneGraph;
 };
 
 } // namespace rfx

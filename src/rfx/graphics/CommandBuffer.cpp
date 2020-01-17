@@ -10,24 +10,22 @@ using namespace std;
 CommandBuffer::CommandBuffer(
     VkCommandBuffer vkCommandBuffer, 
     const VulkanDeviceFunctionPtrs& vk)
-        : vkCommandBuffer(vkCommandBuffer)
-{
-    vkBeginCommandBuffer = vk.vkBeginCommandBuffer;
-    vkEndCommandBuffer = vk.vkEndCommandBuffer;
-    vkCmdBeginRenderPass = vk.vkCmdBeginRenderPass;
-    vkCmdEndRenderPass = vk.vkCmdEndRenderPass;
-    vkCmdBindVertexBuffers = vk.vkCmdBindVertexBuffers;
-    vkCmdBindIndexBuffer = vk.vkCmdBindIndexBuffer;
-    vkCmdBindPipeline = vk.vkCmdBindPipeline;
-    vkCmdBindDescriptorSets = vk.vkCmdBindDescriptorSets;
-    vkCmdSetViewport = vk.vkCmdSetViewport;
-    vkCmdSetScissor = vk.vkCmdSetScissor;
-    vkCmdDraw = vk.vkCmdDraw;
-    vkCmdDrawIndexed = vk.vkCmdDrawIndexed;
-    vkCmdCopyBuffer = vk.vkCmdCopyBuffer;
-    vkCmdCopyBufferToImage = vk.vkCmdCopyBufferToImage;
-    vkCmdPipelineBarrier = vk.vkCmdPipelineBarrier;
-}
+        : vkCommandBuffer(vkCommandBuffer),
+          vkBeginCommandBuffer(vk.vkBeginCommandBuffer),
+          vkEndCommandBuffer(vk.vkEndCommandBuffer),
+          vkCmdBeginRenderPass(vk.vkCmdBeginRenderPass),
+          vkCmdEndRenderPass(vk.vkCmdEndRenderPass),
+          vkCmdBindVertexBuffers(vk.vkCmdBindVertexBuffers),
+          vkCmdBindIndexBuffer(vk.vkCmdBindIndexBuffer),
+          vkCmdBindPipeline(vk.vkCmdBindPipeline),
+          vkCmdBindDescriptorSets(vk.vkCmdBindDescriptorSets),
+          vkCmdSetViewport(vk.vkCmdSetViewport),
+          vkCmdSetScissor(vk.vkCmdSetScissor),
+          vkCmdDraw(vk.vkCmdDraw),
+          vkCmdDrawIndexed(vk.vkCmdDrawIndexed),
+          vkCmdCopyBuffer(vk.vkCmdCopyBuffer),
+          vkCmdCopyBufferToImage(vk.vkCmdCopyBufferToImage),
+          vkCmdPipelineBarrier(vk.vkCmdPipelineBarrier) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 

@@ -219,6 +219,7 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\rfx\scene\SceneNode.h" />
     <ClInclude Include="src\rfx\graphics\Image.h" />
     <ClInclude Include="lib\ktx\include\ktx.h" />
     <ClInclude Include="lib\ktx\include\ktxvulkan.h" />
@@ -264,6 +265,7 @@
     <ClInclude Include="test\TriangleTest.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\rfx\scene\SceneNode.cpp" />
     <ClCompile Include="src\rfx\graphics\Image.cpp" />
     <ClCompile Include="src\rfx\graphics\IndexBuffer.cpp" />
     <ClCompile Include="src\rfx\graphics\ShaderLoader.cpp" />
@@ -334,6 +336,8 @@
     <None Include="assets\shaders\texture.frag" />
     <None Include="assets\shaders\texture.vert" />
     <None Include="assets\tests\textured-cubes\application-config.json" />
+    <None Include="assets\tests\textured-cubes\crate01_color_height_rgba.ktx" />
+    <None Include="assets\tests\textured-cubes\crate02_color_height_rgba.ktx" />
     <None Include="assets\tests\textured-quad\application-config.json" />
     <None Include="assets\tests\triangle\application-config.json" />
   </ItemGroup>

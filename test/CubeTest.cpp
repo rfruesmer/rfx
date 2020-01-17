@@ -7,6 +7,7 @@
 using namespace rfx;
 using namespace glm;
 using namespace std;
+using namespace std::filesystem;
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -16,7 +17,7 @@ CubeTest::CubeTest(handle_t instanceHandle)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-CubeTest::CubeTest(std::filesystem::path configurationPath, handle_t instanceHandle)
+CubeTest::CubeTest(const path& configurationPath, handle_t instanceHandle)
     : TestApplication(configurationPath, instanceHandle) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -44,43 +45,68 @@ void CubeTest::initialize()
 
 void CubeTest::initScene()
 {
-    loadModel();
-    loadShaders();
+    createSceneGraphRootNode();
+    loadModels();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void CubeTest::loadModel()
+void CubeTest::createSceneGraphRootNode()
 {
-    Json::Value jsonModel = configuration["scene"]["models"][0];
-    const filesystem::path modelPath =
-        filesystem::current_path() / jsonModel["path"].asString();
+    sceneGraph = make_unique<SceneNode>();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CubeTest::loadModels()
+{
+    Json::Value jsonModels = configuration["scene"]["models"];
+
+    for (const auto& jsonModel : jsonModels) {
+        const shared_ptr<Mesh> mesh = loadModel(jsonModel);
+        loadShaders(jsonModel, mesh);
+        attachToSceneGraph(mesh);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+shared_ptr<Mesh> CubeTest::loadModel(const Json::Value& jsonModel) const
+{
+    const path path = current_path()
+        / jsonModel["path"].asString();
+
     const VertexFormat vertexFormat(
         VertexFormat::COORDINATES | VertexFormat::COLORS);
 
     ModelLoader modelLoader(graphicsDevice);
-    cube = modelLoader.load(modelPath, vertexFormat);
+    return modelLoader.load(path, vertexFormat);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void CubeTest::loadShaders()
+void CubeTest::loadShaders(const Json::Value& jsonModel, const shared_ptr<Mesh>& mesh) const
 {
-    Json::Value jsonModel = configuration["scene"]["models"][0];
-
     ShaderLoader shaderLoader(graphicsDevice);
 
-    const filesystem::path vertexShaderPath =
-        filesystem::current_path() / jsonModel["vertexShader"].asString();
+    const path vertexShaderPath =
+        current_path() / jsonModel["vertexShader"].asString();
     const VkPipelineShaderStageCreateInfo vertexShaderStage =
         shaderLoader.load(vertexShaderPath, VK_SHADER_STAGE_VERTEX_BIT, "main");
-    cube->setVertexShader(vertexShaderStage);
+    mesh->setVertexShader(vertexShaderStage);
 
-    const filesystem::path fragmentShaderPath =
-        filesystem::current_path() / jsonModel["fragmentShader"].asString();
+    const path fragmentShaderPath =
+        current_path() / jsonModel["fragmentShader"].asString();
     const VkPipelineShaderStageCreateInfo fragmentShaderStage =
         shaderLoader.load(fragmentShaderPath, VK_SHADER_STAGE_FRAGMENT_BIT, "main");
-    cube->setFragmentShader(fragmentShaderStage);
+    mesh->setFragmentShader(fragmentShaderStage);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CubeTest::attachToSceneGraph(const shared_ptr<Mesh>& mesh) const
+{
+    sceneGraph->attach(mesh);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -99,6 +125,8 @@ void CubeTest::initPipeline()
     VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo = createDepthStencilState();
     VkPipelineMultisampleStateCreateInfo multiSampleStateCreateInfo = createMultiSampleState();
 
+    const shared_ptr<Mesh>& mesh = sceneGraph->getMeshes().at(0);
+
     VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
     pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipelineCreateInfo.pNext = nullptr;
@@ -106,7 +134,7 @@ void CubeTest::initPipeline()
     pipelineCreateInfo.basePipelineHandle = nullptr;
     pipelineCreateInfo.basePipelineIndex = 0;
     pipelineCreateInfo.flags = 0;
-    pipelineCreateInfo.pVertexInputState = &cube->getVertexBuffer()->getInputState();
+    pipelineCreateInfo.pVertexInputState = &mesh->getVertexBuffer()->getInputState();
     pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
     pipelineCreateInfo.pRasterizationState = &rasterizationState;
     pipelineCreateInfo.pColorBlendState = &colorBlendStateCreateInfo;
@@ -115,8 +143,8 @@ void CubeTest::initPipeline()
     pipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
     pipelineCreateInfo.pViewportState = &viewportStateCreateInfo;
     pipelineCreateInfo.pDepthStencilState = &depthStencilStateCreateInfo;
-    pipelineCreateInfo.stageCount = static_cast<uint32_t>(cube->getShaderStages().size());
-    pipelineCreateInfo.pStages = cube->getShaderStages().data();
+    pipelineCreateInfo.stageCount = static_cast<uint32_t>(mesh->getShaderStages().size());
+    pipelineCreateInfo.pStages = mesh->getShaderStages().data();
     pipelineCreateInfo.renderPass = renderPass;
     pipelineCreateInfo.subpass = 0;
 
@@ -166,9 +194,9 @@ void CubeTest::initCommandBuffers()
 
     const VkExtent2D presentImageSize = graphicsDevice->getSwapChainProperties().imageSize;
 
-    VkClearValue clearValues[2];
-    clearValues[0].color = { 0.05f, 0.05f, 0.05f, 1.0f };
-    clearValues[1].depthStencil.depth = 1.0f;
+    VkClearValue clearValues[2] = {};
+    clearValues[0].color = { { 0.05F, 0.05F, 0.05F, 1.0F } };
+    clearValues[1].depthStencil.depth = 1.0F;
     clearValues[1].depthStencil.stencil = 0;
 
     VkViewport viewport;
@@ -176,14 +204,16 @@ void CubeTest::initCommandBuffers()
     viewport.y = 0;
     viewport.width = static_cast<float>(presentImageSize.width);
     viewport.height = static_cast<float>(presentImageSize.height);
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
+    viewport.minDepth = 0.0F;
+    viewport.maxDepth = 1.0F;
 
     VkRect2D scissor;
     scissor.extent.width = presentImageSize.width;
     scissor.extent.height = presentImageSize.height;
     scissor.offset.x = 0;
     scissor.offset.y = 0;
+
+    const shared_ptr<Mesh>& mesh = sceneGraph->getMeshes().at(0);
 
     for (size_t i = 0, count = drawCommandBuffers.size(); i < count; ++i) {
         VkRenderPassBeginInfo renderPassBeginInfo = {};
@@ -204,9 +234,9 @@ void CubeTest::initCommandBuffers()
         commandBuffer->setScissor(scissor);
         commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
         commandBuffer->bindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, descriptorSets);
-        commandBuffer->bindVertexBuffers({ cube->getVertexBuffer()  });
-        commandBuffer->bindIndexBuffer(cube->getIndexBuffer());
-        commandBuffer->drawIndexed(cube->getIndexBuffer()->getIndexCount());
+        commandBuffer->bindVertexBuffers({ mesh->getVertexBuffer()  });
+        commandBuffer->bindIndexBuffer(mesh->getIndexBuffer());
+        commandBuffer->drawIndexed(mesh->getIndexBuffer()->getIndexCount());
         commandBuffer->endRenderPass();
         commandBuffer->end();
     }

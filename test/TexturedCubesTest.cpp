@@ -47,15 +47,20 @@ void TexturedCubesTest::initScene()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedCubesTest::loadModel()
+void TexturedCubesTest::loadModels()
 {
-    Json::Value jsonModel = configuration["scene"]["models"][0];
-    const path modelPath = current_path() / jsonModel["path"].asString();
+    ModelLoader modelLoader(graphicsDevice);
+
     const VertexFormat vertexFormat(
         VertexFormat::COORDINATES | VertexFormat::TEXCOORDS);
 
-    ModelLoader modelLoader(graphicsDevice);
-    cube = modelLoader.load(modelPath, vertexFormat);
+    const Json::ArrayIndex modelCount = configuration["scene"]["models"].size();
+    for (Json::ArrayIndex i = 0; i < modelCount; ++i) {
+        Json::Value jsonModel = configuration["scene"]["models"][i];
+        const path modelPath = current_path() / jsonModel["path"].asString();
+        shared_ptr<Mesh> mesh = modelLoader.load(modelPath, vertexFormat);
+        sceneGraph->attach(mesh);
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -144,6 +144,9 @@
     <ClInclude Include="test\TexturedCubesTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\rfx\scene\SceneNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\rfx\pch.cpp">
@@ -251,6 +254,9 @@
     <ClCompile Include="test\TexturedCubesTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\rfx\scene\SceneNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\rfx.ico">
@@ -288,5 +294,7 @@
     <None Include="assets\common\textures\vulkan_11_rgba.ktx" />
     <None Include="assets\tests\textured-quad\application-config.json" />
     <None Include="assets\tests\textured-cubes\application-config.json" />
+    <None Include="assets\tests\textured-cubes\crate01_color_height_rgba.ktx" />
+    <None Include="assets\tests\textured-cubes\crate02_color_height_rgba.ktx" />
   </ItemGroup>
 </Project>

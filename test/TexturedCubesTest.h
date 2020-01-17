@@ -15,10 +15,10 @@ public:
 
 protected:
     void initScene() override;
-    void loadModel() override;
+    void loadModels() override;
     void loadTexture();
     void initDescriptorSetLayout() override;
-    void initDescriptorPool();
+    void initDescriptorPool() override;
     void initDescriptorSet() override;
 
 private:
