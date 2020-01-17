@@ -99,9 +99,6 @@
     <ClInclude Include="src\rfx\input\Keyboard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="test\TexturedCubeTest.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\rfx\graphics\Texture2DLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -142,6 +139,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\rfx\graphics\Image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\TexturedCubesTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -212,9 +212,6 @@
     <ClCompile Include="src\rfx\input\directx\DXKeyboard.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test\TexturedCubeTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\rfx\graphics\Texture2DLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -251,6 +248,9 @@
     <ClCompile Include="src\rfx\graphics\Image.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\TexturedCubesTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\rfx.ico">
@@ -284,9 +284,9 @@
     <None Include="assets\common\shaders\texture.frag" />
     <None Include="assets\common\shaders\texture.vert" />
     <None Include="assets\tests\triangle\application-config.json" />
-    <None Include="assets\tests\textured-cube\application-config.json" />
     <None Include="assets\common\textures\checkerboard_nomips_rgba.ktx" />
     <None Include="assets\common\textures\vulkan_11_rgba.ktx" />
     <None Include="assets\tests\textured-quad\application-config.json" />
+    <None Include="assets\tests\textured-cubes\application-config.json" />
   </ItemGroup>
 </Project>

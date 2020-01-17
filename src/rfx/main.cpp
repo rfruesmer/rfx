@@ -12,7 +12,7 @@ static_assert(false, "Not implemented");
 #include "test/TriangleTest.h"
 #include "test/TexturedQuadTest.h"
 #include "test/CubeTest.h"
-#include "test/TexturedCubeTest.h"
+#include "test/TexturedCubesTest.h"
 
 using namespace rfx;
 using namespace std;
@@ -37,8 +37,8 @@ int main()
 
         //TriangleTest theApp(instanceHandle);
         //CubeTest theApp(instanceHandle);
-        TexturedQuadTest theApp(instanceHandle);
-        //TexturedCubeTest theApp(instanceHandle);
+        //TexturedQuadTest theApp(instanceHandle);
+        TexturedCubesTest theApp(instanceHandle);
         theApp.initialize();
         theApp.run();
 

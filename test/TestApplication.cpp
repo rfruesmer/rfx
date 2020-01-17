@@ -431,7 +431,7 @@ void TestApplication::draw()
     VkFence drawFence = graphicsDevice->createFence(fenceCreateInfo);
 
     VkPipelineStageFlags pipelineStageFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    VkCommandBuffer vkCommandBuffers[] = { renderCommandBuffers[nextImageIndex]->getHandle() };
+    VkCommandBuffer vkCommandBuffers[] = { drawCommandBuffers[nextImageIndex]->getHandle() };
 
     VkSubmitInfo submitInfo = {};
     submitInfo.pNext = nullptr;

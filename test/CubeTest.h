@@ -16,9 +16,9 @@ public:
 protected:
     CubeTest(std::filesystem::path configurationPath, handle_t instanceHandle);
 
-    void initScene();
-    void loadModel();
-    void loadShaders();
+    void initScene() override;
+    virtual void loadModel();
+    virtual void loadShaders();
     void initDescriptorPool();
     void initPipeline() override;
     void initDescriptorSet() override;

@@ -218,7 +218,7 @@ void TexturedQuadTest::initDescriptorSet()
 
 void TexturedQuadTest::initCommandBuffers()
 {
-    renderCommandBuffers = commandPool->allocateCommandBuffers(graphicsDevice->getSwapChainBuffers().size());
+    drawCommandBuffers = commandPool->allocateCommandBuffers(graphicsDevice->getSwapChainBuffers().size());
 
     const VkExtent2D presentImageSize = graphicsDevice->getSwapChainProperties().imageSize;
 
@@ -241,7 +241,7 @@ void TexturedQuadTest::initCommandBuffers()
     scissor.offset.x = 0;
     scissor.offset.y = 0;
 
-    for (size_t i = 0, count = renderCommandBuffers.size(); i < count; ++i) {
+    for (size_t i = 0, count = drawCommandBuffers.size(); i < count; ++i) {
         VkRenderPassBeginInfo renderPassBeginInfo = {};
         renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         renderPassBeginInfo.pNext = nullptr;
@@ -253,7 +253,7 @@ void TexturedQuadTest::initCommandBuffers()
         renderPassBeginInfo.clearValueCount = 2;
         renderPassBeginInfo.pClearValues = clearValues;
 
-        auto& commandBuffer = renderCommandBuffers[i];
+        auto& commandBuffer = drawCommandBuffers[i];
         commandBuffer->begin();
         commandBuffer->beginRenderPass(renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
         commandBuffer->setViewport(viewport);

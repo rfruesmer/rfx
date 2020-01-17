@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "test/TexturedCubeTest.h"
+#include "test/TexturedCubesTest.h"
 #include "rfx/scene/ModelLoader.h"
 #include "rfx/graphics/ShaderLoader.h"
 #include "rfx/graphics/Texture2DLoader.h"
@@ -12,12 +12,12 @@ using namespace filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-TexturedCubeTest::TexturedCubeTest(handle_t instanceHandle)
-    : CubeTest("assets/tests/textured-cube/application-config.json", instanceHandle) {}
+TexturedCubesTest::TexturedCubesTest(handle_t instanceHandle)
+    : CubeTest("assets/tests/textured-cubes/application-config.json", instanceHandle) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedCubeTest::initialize()
+void TexturedCubesTest::initialize()
 {
     TestApplication::initialize();
 
@@ -38,16 +38,16 @@ void TexturedCubeTest::initialize()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedCubeTest::initScene()
+void TexturedCubesTest::initScene()
 {
-    loadModel();
-    loadShaders();
+    CubeTest::initScene();
+
     loadTexture();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedCubeTest::loadModel()
+void TexturedCubesTest::loadModel()
 {
     Json::Value jsonModel = configuration["scene"]["models"][0];
     const path modelPath = current_path() / jsonModel["path"].asString();
@@ -60,28 +60,7 @@ void TexturedCubeTest::loadModel()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedCubeTest::loadShaders()
-{
-    Json::Value jsonModel = configuration["scene"]["models"][0];
-
-    ShaderLoader shaderLoader(graphicsDevice);
-
-    const path vertexShaderPath = 
-        current_path() / jsonModel["vertexShader"].asString();
-    const VkPipelineShaderStageCreateInfo vertexShaderStage =
-        shaderLoader.load(vertexShaderPath, VK_SHADER_STAGE_VERTEX_BIT, "main");
-    cube->setVertexShader(vertexShaderStage);
-
-    const path fragmentShaderPath = 
-        current_path() / jsonModel["fragmentShader"].asString();
-    const VkPipelineShaderStageCreateInfo fragmentShaderStage =
-        shaderLoader.load(fragmentShaderPath, VK_SHADER_STAGE_FRAGMENT_BIT, "main");
-    cube->setFragmentShader(fragmentShaderStage);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TexturedCubeTest::loadTexture()
+void TexturedCubesTest::loadTexture()
 {
     Json::Value jsonModel = configuration["scene"]["models"][0];
     const path texturePath = 
@@ -93,7 +72,7 @@ void TexturedCubeTest::loadTexture()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedCubeTest::initDescriptorSetLayout()
+void TexturedCubesTest::initDescriptorSetLayout()
 {
     VkDescriptorSetLayoutBinding layoutBindings[2] = {};
     layoutBindings[0].binding = 0;
@@ -119,7 +98,7 @@ void TexturedCubeTest::initDescriptorSetLayout()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedCubeTest::initDescriptorPool()
+void TexturedCubesTest::initDescriptorPool()
 {
     TestApplication::initDescriptorPool({
         {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
@@ -129,7 +108,7 @@ void TexturedCubeTest::initDescriptorPool()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedCubeTest::initDescriptorSet()
+void TexturedCubesTest::initDescriptorSet()
 {
     VkDescriptorSetAllocateInfo descriptorSetAllocateInfo;
     descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;

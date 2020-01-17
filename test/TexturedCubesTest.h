@@ -6,17 +6,16 @@
 namespace rfx
 {
 
-class TexturedCubeTest : public CubeTest
+class TexturedCubesTest : public CubeTest
 {
 public:
-    explicit TexturedCubeTest(handle_t instanceHandle);
+    explicit TexturedCubesTest(handle_t instanceHandle);
 
     void initialize() override;
 
 protected:
     void initScene() override;
-    void loadModel();
-    void loadShaders();
+    void loadModel() override;
     void loadTexture();
     void initDescriptorSetLayout() override;
     void initDescriptorPool();

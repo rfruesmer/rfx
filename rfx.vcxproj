@@ -254,7 +254,7 @@
     <ClInclude Include="src\rfx\application\Win32Window.h" />
     <ClInclude Include="src\rfx\core\StringUtil.h" />
     <ClInclude Include="src\rfx\core\Timer.h" />
-    <ClInclude Include="test\TexturedCubeTest.h" />
+    <ClInclude Include="test\TexturedCubesTest.h" />
     <ClInclude Include="test\TestApplication.h" />
     <ClInclude Include="src\rfx\graphics\Texture2DLoader.h" />
     <ClInclude Include="src\rfx\graphics\Texture2D.h" />
@@ -296,7 +296,7 @@
     <ClCompile Include="src\rfx\application\Win32Window.cpp" />
     <ClCompile Include="src\rfx\core\StringUtil.cpp" />
     <ClCompile Include="src\rfx\core\Timer.cpp" />
-    <ClCompile Include="test\TexturedCubeTest.cpp" />
+    <ClCompile Include="test\TexturedCubesTest.cpp" />
     <ClCompile Include="test\TestApplication.cpp" />
     <ClCompile Include="src\rfx\graphics\Texture2DLoader.cpp">
       <StructMemberAlignment Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Default</StructMemberAlignment>
@@ -333,7 +333,7 @@
     <None Include="assets\shaders\color.vert" />
     <None Include="assets\shaders\texture.frag" />
     <None Include="assets\shaders\texture.vert" />
-    <None Include="assets\tests\textured-cube\application-config.json" />
+    <None Include="assets\tests\textured-cubes\application-config.json" />
     <None Include="assets\tests\textured-quad\application-config.json" />
     <None Include="assets\tests\triangle\application-config.json" />
   </ItemGroup>

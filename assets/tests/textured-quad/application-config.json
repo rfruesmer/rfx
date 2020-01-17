@@ -1,6 +1,6 @@
 {
   "application": {
-    "name": "rfx Textured Quad Demo",
+    "name": "rfx - Textured Quad Demo",
     "logLevel": "TRACE"
   },
   "graphics": {

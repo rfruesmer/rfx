@@ -80,7 +80,7 @@ protected:
     VkRenderPass renderPass = nullptr;
     std::vector<VkFramebuffer> frameBuffers;
     std::shared_ptr<CommandPool> commandPool;
-    std::vector<std::shared_ptr<CommandBuffer>> renderCommandBuffers;
+    std::vector<std::shared_ptr<CommandBuffer>> drawCommandBuffers;
     std::shared_ptr<Buffer> uniformBuffer;
     VkPipeline pipeline = nullptr;
 };
