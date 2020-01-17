@@ -1,5 +1,6 @@
 #include "rfx/pch.h"
 #include "test/CubeTest.h"
+#include "rfx/scene/ModelDefinitionDeserializer.h"
 #include "rfx/scene/ModelLoader.h"
 #include "rfx/graphics/VertexFormat.h"
 #include "rfx/graphics/ShaderLoader.h"
@@ -60,45 +61,37 @@ void CubeTest::createSceneGraphRootNode()
 
 void CubeTest::loadModels()
 {
-    Json::Value jsonModels = configuration["scene"]["models"];
+    Json::Value jsonModelDefinitions = configuration["scene"]["models"];
+    const ModelDefinitionDeserializer deserializer;
 
-    for (const auto& jsonModel : jsonModels) {
-        const shared_ptr<Mesh> mesh = loadModel(jsonModel);
-        loadShaders(jsonModel, mesh);
+    for (const auto& jsonModelDefinition : jsonModelDefinitions) {
+        ModelDefinition modelDefinition = deserializer.deserialize(jsonModelDefinition);
+        const shared_ptr<Mesh> mesh = loadModel(modelDefinition);
+        loadShaders(modelDefinition, mesh);
         attachToSceneGraph(mesh);
     }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-shared_ptr<Mesh> CubeTest::loadModel(const Json::Value& jsonModel) const
+shared_ptr<Mesh> CubeTest::loadModel(const ModelDefinition& modelDefinition) const
 {
-    const path path = current_path()
-        / jsonModel["path"].asString();
-
-    const VertexFormat vertexFormat(
-        VertexFormat::COORDINATES | VertexFormat::COLORS);
-
     ModelLoader modelLoader(graphicsDevice);
-    return modelLoader.load(path, vertexFormat);
+    return modelLoader.load(modelDefinition.getModelPath(), modelDefinition.getVertexFormat());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void CubeTest::loadShaders(const Json::Value& jsonModel, const shared_ptr<Mesh>& mesh) const
+void CubeTest::loadShaders(const ModelDefinition& modelDefinition, const shared_ptr<Mesh>& mesh) const
 {
     ShaderLoader shaderLoader(graphicsDevice);
 
-    const path vertexShaderPath =
-        current_path() / jsonModel["vertexShader"].asString();
     const VkPipelineShaderStageCreateInfo vertexShaderStage =
-        shaderLoader.load(vertexShaderPath, VK_SHADER_STAGE_VERTEX_BIT, "main");
+        shaderLoader.load(modelDefinition.getVertexShaderPath(), VK_SHADER_STAGE_VERTEX_BIT, "main");
     mesh->setVertexShader(vertexShaderStage);
 
-    const path fragmentShaderPath =
-        current_path() / jsonModel["fragmentShader"].asString();
     const VkPipelineShaderStageCreateInfo fragmentShaderStage =
-        shaderLoader.load(fragmentShaderPath, VK_SHADER_STAGE_FRAGMENT_BIT, "main");
+        shaderLoader.load(modelDefinition.getFragmentShaderPath(), VK_SHADER_STAGE_FRAGMENT_BIT, "main");
     mesh->setFragmentShader(fragmentShaderStage);
 }
 

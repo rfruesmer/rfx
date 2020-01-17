@@ -219,6 +219,8 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\rfx\scene\ModelDefinitionDeserializer.h" />
+    <ClInclude Include="src\rfx\scene\ModelDefinition.h" />
     <ClInclude Include="src\rfx\scene\SceneNode.h" />
     <ClInclude Include="src\rfx\graphics\Image.h" />
     <ClInclude Include="lib\ktx\include\ktx.h" />
@@ -265,6 +267,8 @@
     <ClInclude Include="test\TriangleTest.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\rfx\scene\ModelDefinitionDeserializer.cpp" />
+    <ClCompile Include="src\rfx\scene\ModelDefinition.cpp" />
     <ClCompile Include="src\rfx\scene\SceneNode.cpp" />
     <ClCompile Include="src\rfx\graphics\Image.cpp" />
     <ClCompile Include="src\rfx\graphics\IndexBuffer.cpp" />

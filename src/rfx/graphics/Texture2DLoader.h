@@ -10,7 +10,7 @@ class Texture2DLoader
 public:
     explicit Texture2DLoader(const std::shared_ptr<GraphicsDevice>& graphicsDevice);
 
-    std::unique_ptr<Texture2D> load(const std::filesystem::path& imagePath);
+    std::shared_ptr<Texture2D> load(const std::filesystem::path& imagePath) const;
 
 private:
     struct ImageInfo

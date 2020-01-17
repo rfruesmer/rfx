@@ -1016,7 +1016,7 @@ void GraphicsDevice::destroyPipeline(VkPipeline& inOutPipeline) const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-unique_ptr<Texture2D> GraphicsDevice::createTexture2D(
+shared_ptr<Texture2D> GraphicsDevice::createTexture2D(
     int width, 
     int height,
     VkFormat format,

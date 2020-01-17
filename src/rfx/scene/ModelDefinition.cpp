@@ -1,79 +1,76 @@
 #include "rfx/pch.h"
-#include "rfx/scene/Mesh.h"
+#include "rfx/scene/ModelDefinition.h"
 
 using namespace rfx;
 using namespace std;
+using namespace std::filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-Mesh::Mesh(const std::shared_ptr<GraphicsDevice>& graphicsDevice,
-           const shared_ptr<VertexBuffer>& vertexBuffer, 
-           const shared_ptr<IndexBuffer>& indexBuffer)
-    : graphicsDevice(graphicsDevice),
-      vertexBuffer(vertexBuffer),
-      indexBuffer(indexBuffer)
+ModelDefinition::ModelDefinition(
+    const path& modelPath,
+    const VertexFormat& vertexFormat,
+    const path& vertexShaderPath,
+    const path& fragmentShaderPath)
+        : modelPath(modelPath),
+          vertexFormat(vertexFormat),
+          vertexShaderPath(vertexShaderPath),
+          fragmentShaderPath(fragmentShaderPath) {}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void ModelDefinition::setModelPath(const path& path)
 {
-    shaderStages.push_back({});
-    shaderStages.push_back({});
+    this->modelPath = path;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-Mesh::~Mesh()
+const path& ModelDefinition::getModelPath() const
 {
-    for (auto& shaderStage : shaderStages) {
-        graphicsDevice->destroyShaderModule(shaderStage.module);
-    }
-    shaderStages.clear();
+    return modelPath;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const shared_ptr<VertexBuffer>& Mesh::getVertexBuffer() const
+void ModelDefinition::setVertexFormat(const VertexFormat& format)
 {
-    return vertexBuffer;
+    this->vertexFormat = format;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const shared_ptr<IndexBuffer>& Mesh::getIndexBuffer() const
+const VertexFormat& ModelDefinition::getVertexFormat() const
 {
-    return indexBuffer;
+    return vertexFormat;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Mesh::setVertexShader(const VkPipelineShaderStageCreateInfo& vertexShaderStage)
+void ModelDefinition::setVertexShaderPath(const path& path)
 {
-    shaderStages[0] = vertexShaderStage;
+    this->vertexShaderPath = path;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Mesh::setFragmentShader(const VkPipelineShaderStageCreateInfo& fragmentShaderStage)
+const path& ModelDefinition::getVertexShaderPath() const
 {
-    shaderStages[1] = fragmentShaderStage;
+    return vertexShaderPath;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const vector<VkPipelineShaderStageCreateInfo>& Mesh::getShaderStages() const
+void ModelDefinition::setFragmentShaderPath(const path& path)
 {
-    return shaderStages;
+    this->fragmentShaderPath = path;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Mesh::setTexture(const shared_ptr<Texture2D>& texture)
+const path& ModelDefinition::getFragmentShaderPath() const
 {
-    this->texture = texture;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-const shared_ptr<Texture2D>& Mesh::getTexture() const
-{
-    return texture;
+    return fragmentShaderPath;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

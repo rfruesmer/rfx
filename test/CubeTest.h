@@ -6,6 +6,7 @@
 
 namespace rfx
 {
+class ModelDefinition;
 
 class CubeTest : public TestApplication
 {
@@ -20,8 +21,8 @@ protected:
     void initScene() override;
     void createSceneGraphRootNode();
     virtual void loadModels();
-    std::shared_ptr<Mesh> loadModel(const Json::Value& jsonModel) const;
-    virtual void loadShaders(const Json::Value& jsonModel, const std::shared_ptr<Mesh>& mesh) const;
+    std::shared_ptr<Mesh> loadModel(const ModelDefinition& modelDefinition) const;
+    virtual void loadShaders(const ModelDefinition& modelDefinition, const std::shared_ptr<Mesh>& mesh) const;
     void attachToSceneGraph(const std::shared_ptr<Mesh>& mesh) const;
     virtual void initDescriptorPool();
     void initPipeline() override;

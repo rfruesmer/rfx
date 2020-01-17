@@ -1,7 +1,8 @@
 #include "rfx/pch.h"
 #include "test/TexturedCubesTest.h"
 #include "rfx/scene/ModelLoader.h"
-#include "rfx/graphics/ShaderLoader.h"
+#include "rfx/scene/ModelDefinition.h"
+#include "rfx/scene/ModelDefinitionDeserializer.h"
 #include "rfx/graphics/Texture2DLoader.h"
 
 
@@ -38,41 +39,30 @@ void TexturedCubesTest::initialize()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedCubesTest::initScene()
-{
-    CubeTest::initScene();
-
-    loadTexture();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void TexturedCubesTest::loadModels()
 {
-    ModelLoader modelLoader(graphicsDevice);
+    Json::Value jsonModelDefinitions = configuration["scene"]["models"];
+    ModelDefinitionDeserializer deserializer;
 
-    const VertexFormat vertexFormat(
-        VertexFormat::COORDINATES | VertexFormat::TEXCOORDS);
-
-    const Json::ArrayIndex modelCount = configuration["scene"]["models"].size();
-    for (Json::ArrayIndex i = 0; i < modelCount; ++i) {
-        Json::Value jsonModel = configuration["scene"]["models"][i];
-        const path modelPath = current_path() / jsonModel["path"].asString();
-        shared_ptr<Mesh> mesh = modelLoader.load(modelPath, vertexFormat);
-        sceneGraph->attach(mesh);
+    for (const auto& jsonModelDefinition : jsonModelDefinitions) {
+        ModelDefinition modelDefinition = deserializer.deserialize(jsonModelDefinition);
+        const shared_ptr<Mesh> mesh = loadModel(modelDefinition);
+        loadShaders(modelDefinition, mesh);
+        loadTexture(jsonModelDefinition, mesh);
+        attachToSceneGraph(mesh);
     }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedCubesTest::loadTexture()
+void TexturedCubesTest::loadTexture(const Json::Value& jsonModel, const shared_ptr<Mesh>& mesh) const
 {
-    Json::Value jsonModel = configuration["scene"]["models"][0];
     const path texturePath = 
         current_path() / jsonModel["texture"].asString();
-    
-    Texture2DLoader textureLoader(graphicsDevice);
-    texture = textureLoader.load(texturePath);
+
+    const Texture2DLoader textureLoader(graphicsDevice);
+    const shared_ptr<Texture2D> texture = textureLoader.load(texturePath);
+    mesh->setTexture(texture);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -124,6 +114,8 @@ void TexturedCubesTest::initDescriptorSet()
 
     graphicsDevice->allocateDescriptorSets(descriptorSetAllocateInfo, descriptorSets);
 
+    const shared_ptr<Mesh>& mesh = sceneGraph->getMeshes().at(0);
+
     VkWriteDescriptorSet writes[2] = {};
     writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writes[0].pNext = nullptr;
@@ -141,7 +133,7 @@ void TexturedCubesTest::initDescriptorSet()
     writes[1].dstArrayElement = 0;
     writes[1].descriptorCount = 1;
     writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    writes[1].pImageInfo = &texture->getDescriptorImageInfo();
+    writes[1].pImageInfo = &mesh->getTexture()->getDescriptorImageInfo();
 
     graphicsDevice->updateDescriptorSets(2, writes);
 }

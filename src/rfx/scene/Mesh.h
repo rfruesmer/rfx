@@ -20,11 +20,15 @@ public:
     void setFragmentShader(const VkPipelineShaderStageCreateInfo& fragmentShaderStage);
     const std::vector<VkPipelineShaderStageCreateInfo>& getShaderStages() const;
 
+    void setTexture(const std::shared_ptr<Texture2D>& texture);
+    const std::shared_ptr<Texture2D>& getTexture() const;
+
 private:
     std::shared_ptr<GraphicsDevice> graphicsDevice;
     std::shared_ptr<VertexBuffer> vertexBuffer;
     std::shared_ptr<IndexBuffer> indexBuffer;
     std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
+    std::shared_ptr<Texture2D> texture;
 };
     
 }

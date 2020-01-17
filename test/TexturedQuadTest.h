@@ -24,7 +24,7 @@ private:
     std::shared_ptr<VertexBuffer> vertexBuffer;
     std::shared_ptr<IndexBuffer> indexBuffer;
     VkPipelineShaderStageCreateInfo shaderStages[2] = {};
-    std::unique_ptr<Texture2D> texture;
+    std::shared_ptr<Texture2D> texture;
 };
 
 }

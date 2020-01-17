@@ -114,7 +114,7 @@ public:
     VkPipeline createGraphicsPipeline(const VkGraphicsPipelineCreateInfo& createInfo) const;
     void destroyPipeline(VkPipeline& inOutPipeline) const;
 
-    std::unique_ptr<Texture2D> createTexture2D(int width, int height, 
+    std::shared_ptr<Texture2D> createTexture2D(int width, int height, 
         VkFormat format, const std::vector<std::byte>& data);
 
     const GraphicsDeviceInfo& getDeviceInfo() const;

@@ -14,15 +14,11 @@ public:
     void initialize() override;
 
 protected:
-    void initScene() override;
     void loadModels() override;
-    void loadTexture();
+    void loadTexture(const Json::Value& jsonModel, const std::shared_ptr<Mesh>& mesh) const;
     void initDescriptorSetLayout() override;
     void initDescriptorPool() override;
     void initDescriptorSet() override;
-
-private:
-    std::unique_ptr<Texture2D> texture;
 };
 
 } // namespace rfx

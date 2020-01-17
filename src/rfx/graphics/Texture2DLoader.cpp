@@ -22,7 +22,7 @@ Texture2DLoader::Texture2DLoader(const shared_ptr<GraphicsDevice>& graphicsDevic
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-unique_ptr<Texture2D> Texture2DLoader::load(const path& imagePath)
+shared_ptr<Texture2D> Texture2DLoader::load(const path& imagePath) const
 {
     const path absoluteImagePath =
         imagePath.is_absolute() ? imagePath : current_path() / imagePath;

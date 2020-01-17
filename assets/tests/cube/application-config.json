@@ -13,8 +13,12 @@
     "models": [
       {
         "path": "assets/common/models/cube.dae",
-        "vertexShader": "assets/common/shaders/color.vert",
-        "fragmentShader": "assets/common/shaders/color.frag"
+        "vertexFormat": [
+          "COORDINATES",
+          "COLORS"
+        ],
+        "vertexShaderPath": "assets/common/shaders/color.vert",
+        "fragmentShaderPath": "assets/common/shaders/color.frag"
       }
     ]
   }

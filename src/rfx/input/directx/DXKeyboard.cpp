@@ -51,7 +51,7 @@ void DXKeyboard::unacquire()
 
 void DXKeyboard::update()
 {
-    HRESULT hr = dxInputDevice->GetDeviceState(sizeof(state), static_cast<void*>(&state));
+    const HRESULT hr = dxInputDevice->GetDeviceState(sizeof(state), static_cast<void*>(&state));
     if (FAILED(hr)) {
         if (hr == DIERR_INPUTLOST || hr == DIERR_NOTACQUIRED) {
             dxInputDevice->Acquire();
