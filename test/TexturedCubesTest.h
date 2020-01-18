@@ -15,7 +15,7 @@ public:
 
 protected:
     void loadModels() override;
-    void loadTexture(const Json::Value& jsonModel, const std::shared_ptr<Mesh>& mesh) const;
+    void loadTexture(const ModelDefinition& modelDefinition, const std::shared_ptr<Mesh>& mesh) const;
     void initDescriptorSetLayout() override;
     void initDescriptorPool() override;
     void initDescriptorSet() override;

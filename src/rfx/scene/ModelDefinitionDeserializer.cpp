@@ -19,6 +19,9 @@ ModelDefinition ModelDefinitionDeserializer::deserialize(const Json::Value& json
         else if (currentFormatComponent == "COLORS") {
             vertexFormatBits |= VertexFormat::COLORS;
         }
+        else if (currentFormatComponent == "NORMALS") {
+            vertexFormatBits |= VertexFormat::NORMALS;
+        }
         else if (currentFormatComponent == "TEXCOORDS") {
             vertexFormatBits |= VertexFormat::TEXCOORDS;
         }
@@ -31,7 +34,8 @@ ModelDefinition ModelDefinitionDeserializer::deserialize(const Json::Value& json
         current_path() / jsonModel["path"].asString(),
         VertexFormat(vertexFormatBits), 
         current_path() / jsonModel["vertexShaderPath"].asString(), 
-        current_path() / jsonModel["fragmentShaderPath"].asString());
+        current_path() / jsonModel["fragmentShaderPath"].asString(),
+        current_path() / jsonModel["texturePath"].asString());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -37,9 +37,9 @@ int main()
         RFX_LOG_INFO << "Starting rfx application ...";
 
         //TriangleTest theApp(instanceHandle);
-        CubeTest theApp(instanceHandle);
+        //CubeTest theApp(instanceHandle);
         //TexturedQuadTest theApp(instanceHandle);
-        //TexturedCubesTest theApp(instanceHandle);
+        TexturedCubesTest theApp(instanceHandle);
         theApp.initialize();
         theApp.run();
 

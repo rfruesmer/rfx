@@ -11,11 +11,13 @@ ModelDefinition::ModelDefinition(
     const path& modelPath,
     const VertexFormat& vertexFormat,
     const path& vertexShaderPath,
-    const path& fragmentShaderPath)
+    const path& fragmentShaderPath,
+    const path& texturePath)
         : modelPath(modelPath),
           vertexFormat(vertexFormat),
           vertexShaderPath(vertexShaderPath),
-          fragmentShaderPath(fragmentShaderPath) {}
+          fragmentShaderPath(fragmentShaderPath),
+          texturePath(texturePath) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -71,6 +73,20 @@ void ModelDefinition::setFragmentShaderPath(const path& path)
 const path& ModelDefinition::getFragmentShaderPath() const
 {
     return fragmentShaderPath;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void ModelDefinition::setTexturePath(const path& path)
+{
+    texturePath = path;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const path& ModelDefinition::getTexturePath() const
+{
+    return texturePath;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

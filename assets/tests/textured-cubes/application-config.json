@@ -13,15 +13,23 @@
     "models": [
       {
         "path": "assets/common/models/cube.dae",
-        "vertexShader": "assets/common/shaders/texture.vert",
-        "fragmentShader": "assets/common/shaders/texture.frag",
-        "texture": "assets/tests/textured-cubes/crate01_color_height_rgba.ktx"
+        "vertexFormat": [
+          "COORDINATES",
+          "TEXCOORDS"
+        ],
+        "vertexShaderPath": "assets/common/shaders/texture.vert",
+        "fragmentShaderPath": "assets/common/shaders/texture.frag",
+        "texturePath": "assets/tests/textured-cubes/crate01_color_height_rgba.ktx"
       },
       {
         "path": "assets/common/models/cube.dae",
-        "vertexShader": "assets/common/shaders/texture.vert",
-        "fragmentShader": "assets/common/shaders/texture.frag",
-        "texture": "assets/tests/textured-cubes/crate02_color_height_rgba.ktx"
+        "vertexFormat": [
+          "COORDINATES",
+          "TEXCOORDS"
+        ],
+        "vertexShaderPath": "assets/common/shaders/texture.vert",
+        "fragmentShaderPath": "assets/common/shaders/texture.frag",
+        "texturePath": "assets/tests/textured-cubes/crate02_color_height_rgba.ktx"
       }
     ]
   }

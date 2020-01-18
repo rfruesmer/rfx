@@ -42,26 +42,23 @@ void TexturedCubesTest::initialize()
 void TexturedCubesTest::loadModels()
 {
     Json::Value jsonModelDefinitions = configuration["scene"]["models"];
-    ModelDefinitionDeserializer deserializer;
+    const ModelDefinitionDeserializer deserializer;
 
     for (const auto& jsonModelDefinition : jsonModelDefinitions) {
         ModelDefinition modelDefinition = deserializer.deserialize(jsonModelDefinition);
         const shared_ptr<Mesh> mesh = loadModel(modelDefinition);
         loadShaders(modelDefinition, mesh);
-        loadTexture(jsonModelDefinition, mesh);
+        loadTexture(modelDefinition, mesh);
         attachToSceneGraph(mesh);
     }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedCubesTest::loadTexture(const Json::Value& jsonModel, const shared_ptr<Mesh>& mesh) const
+void TexturedCubesTest::loadTexture(const ModelDefinition& modelDefinition, const shared_ptr<Mesh>& mesh) const
 {
-    const path texturePath = 
-        current_path() / jsonModel["texture"].asString();
-
     const Texture2DLoader textureLoader(graphicsDevice);
-    const shared_ptr<Texture2D> texture = textureLoader.load(texturePath);
+    const shared_ptr<Texture2D> texture = textureLoader.load(modelDefinition.getTexturePath());
     mesh->setTexture(texture);
 }
 
