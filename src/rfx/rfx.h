@@ -125,9 +125,9 @@ const float RFX_PI = 3.1415926535f;
 #define RFX_THROW_TYPED(message, type) \
     {throw type(message + std::string("\n\t") + std::string(__FILE__) + std::string("(") + std::to_string(__LINE__) + std::string(")"));}
 
-#define RFX_CHECK_ARGUMENT(expr, message) \
+#define RFX_CHECK_ARGUMENT(expr) \
     {if (!(expr)) {RFX_THROW_TYPED(std::string("Illegal argument detected, failed condition is: ") \
-    + #expr + "\nFurther details:\n" + message, std::invalid_argument);}}
+    + #expr, std::invalid_argument);}}
 #define RFX_CHECK_STATE(expr, message) {if (!(expr)) {RFX_THROW(std::string("Illegal state: ") + message);}}
 
 #define RFX_NOT_IMPLEMENTED() \

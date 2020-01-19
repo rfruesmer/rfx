@@ -6,7 +6,10 @@
 using namespace rfx;
 using namespace std;
 
-/**
+// ---------------------------------------------------------------------------------------------------------------------
+
+static const VertexFormat VERTEX_FORMAT(VertexFormat::COORDINATES | VertexFormat::TEXCOORDS);
+
 // ---------------------------------------------------------------------------------------------------------------------
 
 TexturedQuadTest::TexturedQuadTest(handle_t instanceHandle)
@@ -25,10 +28,6 @@ void TexturedQuadTest::initialize()
     initEffects();
     initScene();
     
-    initDescriptorSetLayout();
-    initPipelineLayout();
-    initPipeline();
-    initDescriptorPool();
     initCommandBuffers();
 }
 
@@ -36,32 +35,54 @@ void TexturedQuadTest::initialize()
 
 void TexturedQuadTest::initEffects()
 {
-    textureEffect = make_shared<Texture2DEffect>(graphicsDevice, descriptorPool, descriptorSetLayout, texture);
+    ShaderLoader shaderLoader(graphicsDevice);
+    shared_ptr<VertexShader> vertexShader = 
+        shaderLoader.loadVertexShader("assets/common/shaders/texture.vert", "main", VERTEX_FORMAT);
+    shared_ptr<FragmentShader> fragmentShader = 
+        shaderLoader.loadFragmentShader("assets/common/shaders/texture.frag", "main");
+
+    const Texture2DLoader textureLoader(graphicsDevice);
+    shared_ptr<Texture2D> texture = textureLoader.load("assets/common/textures/lunarg_logo-256x256.png");
+
+    std::unique_ptr<ShaderProgram> shaderProgram =
+        make_unique<ShaderProgram>(vertexShader, fragmentShader);
+
+    textureEffect = make_shared<Texture2DEffect>(graphicsDevice, renderPass, shaderProgram, texture);
+
+    effects.push_back(textureEffect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void TexturedQuadTest::initScene()
 {
+    createQuadMesh();
+    initCamera();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedQuadTest::createQuadMesh()
+{
     const uint32_t vertexCount = 4;
     const VertexFormat vertexFormat(VertexFormat::COORDINATES | VertexFormat::TEXCOORDS);
     const uint32_t vertexBufferSize = vertexCount * vertexFormat.getVertexSize();
     vector<float> vertexData = {
-          1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-         -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-         -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-          1.0f, -1.0f, 0.0f, 1.0f, 0.0f
+        1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+        -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+        -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+        1.0f, -1.0f, 0.0f, 1.0f, 0.0f
     };
 
     const shared_ptr<Buffer> stagingVertexBuffer = graphicsDevice->createBuffer(
         vertexBufferSize,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    stagingVertexBuffer->load(vertexBufferSize, 
+    stagingVertexBuffer->load(vertexBufferSize,
         reinterpret_cast<const std::byte*>(vertexData.data()));
     stagingVertexBuffer->bind();
 
-    vertexBuffer = graphicsDevice->createVertexBuffer(vertexCount, vertexFormat);
+    shared_ptr<VertexBuffer> vertexBuffer = graphicsDevice->createVertexBuffer(vertexCount, vertexFormat);
     vertexBuffer->bind();
 
 
@@ -73,11 +94,11 @@ void TexturedQuadTest::initScene()
         indexBufferSize,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    stagingIndexBuffer->load(indexBufferSize, 
+    stagingIndexBuffer->load(indexBufferSize,
         reinterpret_cast<const std::byte*>(indexData.data()));
     stagingIndexBuffer->bind();
 
-    indexBuffer = graphicsDevice->createIndexBuffer(indexCount, VK_INDEX_TYPE_UINT32);
+    shared_ptr<IndexBuffer> indexBuffer = graphicsDevice->createIndexBuffer(indexCount, VK_INDEX_TYPE_UINT32);
     indexBuffer->bind();
 
     const shared_ptr<CommandPool>& commandPool = graphicsDevice->getTempCommandPool();
@@ -102,90 +123,7 @@ void TexturedQuadTest::initScene()
 
     commandPool->freeCommandBuffer(commandBuffer);
 
-    ShaderLoader shaderLoader(graphicsDevice);
-    shaderStages[0] = shaderLoader.load("assets/common/shaders/texture.vert", VK_SHADER_STAGE_VERTEX_BIT, "main");
-    shaderStages[1] = shaderLoader.load("assets/common/shaders/texture.frag", VK_SHADER_STAGE_FRAGMENT_BIT, "main");
-
-    const Texture2DLoader textureLoader(graphicsDevice);
-    texture = textureLoader.load("assets/common/textures/lunarg_logo-256x256.png");
-
-    initCamera();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TexturedQuadTest::initDescriptorSetLayout()
-{
-    VkDescriptorSetLayoutBinding layoutBindings[2] = {};
-    layoutBindings[0].binding = 0;
-    layoutBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    layoutBindings[0].descriptorCount = 1;
-    layoutBindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    layoutBindings[0].pImmutableSamplers = nullptr;
-
-    layoutBindings[1].binding = 1;
-    layoutBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    layoutBindings[1].descriptorCount = 1;
-    layoutBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    layoutBindings[1].pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
-    descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    descriptorSetLayoutCreateInfo.pNext = nullptr;
-    descriptorSetLayoutCreateInfo.bindingCount = 2;
-    descriptorSetLayoutCreateInfo.pBindings = layoutBindings;
-
-    descriptorSetLayout = graphicsDevice->createDescriptorSetLayout(descriptorSetLayoutCreateInfo);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TexturedQuadTest::initPipeline()
-{
-    RFX_CHECK_STATE(renderPass != nullptr, "Render pass must be setup before");
-
-    VkDynamicState dynamicStateEnables[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
-    VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo = createDynamicState(2, dynamicStateEnables);
-    VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = createInputAssemblyState();
-    VkPipelineRasterizationStateCreateInfo rasterizationState = createRasterizationState();
-    VkPipelineColorBlendAttachmentState colorBlendAttachmentState = createColorBlendAttachmentState();
-    VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo = createColorBlendState(colorBlendAttachmentState);
-    VkPipelineViewportStateCreateInfo viewportStateCreateInfo = createViewportState();
-    VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo = createDepthStencilState();
-    VkPipelineMultisampleStateCreateInfo multiSampleStateCreateInfo = createMultiSampleState();
-
-    VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
-    pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineCreateInfo.pNext = nullptr;
-    pipelineCreateInfo.layout = pipelineLayout;
-    pipelineCreateInfo.basePipelineHandle = nullptr;
-    pipelineCreateInfo.basePipelineIndex = 0;
-    pipelineCreateInfo.flags = 0;
-    pipelineCreateInfo.pVertexInputState = &vertexBuffer->getInputState();
-    pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
-    pipelineCreateInfo.pRasterizationState = &rasterizationState;
-    pipelineCreateInfo.pColorBlendState = &colorBlendStateCreateInfo;
-    pipelineCreateInfo.pTessellationState = nullptr;
-    pipelineCreateInfo.pMultisampleState = &multiSampleStateCreateInfo;
-    pipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
-    pipelineCreateInfo.pViewportState = &viewportStateCreateInfo;
-    pipelineCreateInfo.pDepthStencilState = &depthStencilStateCreateInfo;
-    pipelineCreateInfo.stageCount = 2;
-    pipelineCreateInfo.pStages = shaderStages;
-    pipelineCreateInfo.renderPass = renderPass;
-    pipelineCreateInfo.subpass = 0;
-
-    pipeline = graphicsDevice->createGraphicsPipeline(pipelineCreateInfo);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TexturedQuadTest::initDescriptorPool()
-{
-    TestApplication::initDescriptorPool({
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1}
-    });
+    quadMesh = make_shared<Mesh>(graphicsDevice, vertexBuffer, indexBuffer, textureEffect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -197,8 +135,8 @@ void TexturedQuadTest::initCommandBuffers()
     const VkExtent2D presentImageSize = graphicsDevice->getSwapChainProperties().imageSize;
 
     VkClearValue clearValues[2];
-    clearValues[0].color = { 0.05f, 0.05f, 0.05f, 1.0f };
-    clearValues[1].depthStencil.depth = 1.0f;
+    clearValues[0].color = { 0.05F, 0.05F, 0.05F, 1.0F };
+    clearValues[1].depthStencil.depth = 1.0F;
     clearValues[1].depthStencil.stencil = 0;
 
     VkViewport viewport;
@@ -206,8 +144,8 @@ void TexturedQuadTest::initCommandBuffers()
     viewport.y = 0;
     viewport.width = static_cast<float>(presentImageSize.width);
     viewport.height = static_cast<float>(presentImageSize.height);
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
+    viewport.minDepth = 0.0F;
+    viewport.maxDepth = 1.0F;
 
     VkRect2D scissor;
     scissor.extent.width = presentImageSize.width;
@@ -232,11 +170,12 @@ void TexturedQuadTest::initCommandBuffers()
         commandBuffer->beginRenderPass(renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
         commandBuffer->setViewport(viewport);
         commandBuffer->setScissor(scissor);
-        commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-        commandBuffer->bindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, textureEffect->getDescriptorSets());
-        commandBuffer->bindVertexBuffers({ vertexBuffer });
-        commandBuffer->bindIndexBuffer(indexBuffer);
-        commandBuffer->drawIndexed(indexBuffer->getIndexCount());
+            commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, textureEffect->getPipeline());
+            commandBuffer->bindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS, 
+                textureEffect->getPipelineLayout(), textureEffect->getDescriptorSets());
+            commandBuffer->bindVertexBuffers({ quadMesh->getVertexBuffer() });
+            commandBuffer->bindIndexBuffer(quadMesh->getIndexBuffer());
+            commandBuffer->drawIndexed(quadMesh->getIndexBuffer()->getIndexCount());
         commandBuffer->endRenderPass();
         commandBuffer->end();
     }
@@ -244,4 +183,3 @@ void TexturedQuadTest::initCommandBuffers()
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-*/

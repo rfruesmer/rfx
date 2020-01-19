@@ -15,7 +15,6 @@ public:
         std::unique_ptr<ShaderProgram>& shaderProgram);
 
 private:
-    void initUniformBuffer();
     void initDescriptorSetLayout();
     void initDescriptorSet();
 };

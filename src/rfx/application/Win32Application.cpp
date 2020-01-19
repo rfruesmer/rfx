@@ -14,7 +14,7 @@ Win32Application::Win32Application(
         : Application(configurationPath),
           instanceHandle(static_cast<HINSTANCE>(instanceHandle))
 {
-    RFX_CHECK_ARGUMENT(instanceHandle != nullptr, "Invalid instance handle");
+    RFX_CHECK_ARGUMENT(instanceHandle != nullptr);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -33,6 +33,8 @@ protected:
         VkRenderPass renderPass,
         std::unique_ptr<ShaderProgram>& shaderProgram);
 
+    void initUniformBuffer(size_t size);
+    void initDescriptorSetLayout(uint32_t bindingCount, const VkDescriptorSetLayoutBinding* bindings);
     void initDescriptorPool(const std::vector<VkDescriptorPoolSize>& poolSizes);
     void initPipelineLayout();
     void initPipeline();

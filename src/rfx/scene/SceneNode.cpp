@@ -72,8 +72,7 @@ Transform& SceneNode::getLocalTransform()
 
 void SceneNode::attach(unique_ptr<SceneNode>& childNode)
 {
-    RFX_CHECK_ARGUMENT(childNode->getParent() == nullptr || childNode->getParent() == this,
-        "Invalid child node");
+    RFX_CHECK_ARGUMENT(childNode->getParent() == nullptr || childNode->getParent() == this);
 
     if (!contains(childNodes, childNode)) {
         childNodes.push_back(std::move(childNode));

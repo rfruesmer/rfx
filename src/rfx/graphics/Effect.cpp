@@ -15,9 +15,30 @@ Effect::Effect(const shared_ptr<GraphicsDevice>& graphicsDevice,
           renderPass(renderPass),
           shaderProgram(move(shaderProgram))
 {
-    RFX_CHECK_ARGUMENT(graphicsDevice != nullptr, "graphicsDevice");
-    RFX_CHECK_ARGUMENT(renderPass != nullptr, "renderPass");
-    RFX_CHECK_ARGUMENT(this->shaderProgram != nullptr, "shaderProgram");
+    RFX_CHECK_ARGUMENT(graphicsDevice != nullptr);
+    RFX_CHECK_ARGUMENT(renderPass != nullptr);
+    RFX_CHECK_ARGUMENT(this->shaderProgram != nullptr);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Effect::initUniformBuffer(size_t size)
+{
+    uniformBuffer = graphicsDevice->createUniformBuffer(size);
+    uniformBuffer->bind();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Effect::initDescriptorSetLayout(uint32_t bindingCount, const VkDescriptorSetLayoutBinding* bindings)
+{
+    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
+    descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    descriptorSetLayoutCreateInfo.pNext = nullptr;
+    descriptorSetLayoutCreateInfo.bindingCount = bindingCount;
+    descriptorSetLayoutCreateInfo.pBindings = bindings;
+
+    descriptorSetLayout = graphicsDevice->createDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

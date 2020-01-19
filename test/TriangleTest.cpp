@@ -131,8 +131,8 @@ void TriangleTest::initCommandBuffers()
     const VkExtent2D presentImageSize = graphicsDevice->getSwapChainProperties().imageSize;
 
     VkClearValue clearValues[2];
-    clearValues[0].color = { 0.05f, 0.05f, 0.05f, 1.0f };
-    clearValues[1].depthStencil.depth = 1.0f;
+    clearValues[0].color = { 0.05F, 0.05F, 0.05F, 1.0F };
+    clearValues[1].depthStencil.depth = 1.0F;
     clearValues[1].depthStencil.stencil = 0;
 
     VkViewport viewport;
@@ -140,8 +140,8 @@ void TriangleTest::initCommandBuffers()
     viewport.y = 0;
     viewport.width = static_cast<float>(presentImageSize.width);
     viewport.height = static_cast<float>(presentImageSize.height);
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
+    viewport.minDepth = 0.0F;
+    viewport.maxDepth = 1.0F;
 
     VkRect2D scissor;
     scissor.extent.width = presentImageSize.width;
@@ -166,14 +166,12 @@ void TriangleTest::initCommandBuffers()
         commandBuffer->beginRenderPass(renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
         commandBuffer->setViewport(viewport);
         commandBuffer->setScissor(scissor);
-
-        commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, vertexColorEffect->getPipeline());
-        commandBuffer->bindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS, 
-            vertexColorEffect->getPipelineLayout(), vertexColorEffect->getDescriptorSets());
-        commandBuffer->bindVertexBuffers({ triangleMesh->getVertexBuffer() });
-        commandBuffer->bindIndexBuffer(triangleMesh->getIndexBuffer());
-        commandBuffer->drawIndexed(triangleMesh->getIndexBuffer()->getIndexCount());
-
+            commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, vertexColorEffect->getPipeline());
+            commandBuffer->bindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS, 
+                vertexColorEffect->getPipelineLayout(), vertexColorEffect->getDescriptorSets());
+            commandBuffer->bindVertexBuffers({ triangleMesh->getVertexBuffer() });
+            commandBuffer->bindIndexBuffer(triangleMesh->getIndexBuffer());
+            commandBuffer->drawIndexed(triangleMesh->getIndexBuffer()->getIndexCount());
         commandBuffer->endRenderPass();
         commandBuffer->end();
     }

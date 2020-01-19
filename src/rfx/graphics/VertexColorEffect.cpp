@@ -14,7 +14,7 @@ VertexColorEffect::VertexColorEffect(
     std::unique_ptr<ShaderProgram>& shaderProgram)
         : Effect(graphicsDevice, renderPass, shaderProgram)
 {
-    initUniformBuffer();
+    initUniformBuffer(sizeof(mat4));
     initDescriptorSetLayout();
     initDescriptorPool({
         { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}
@@ -35,13 +35,7 @@ void VertexColorEffect::initDescriptorSetLayout()
     layoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     layoutBinding.pImmutableSamplers = nullptr;
 
-    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
-    descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    descriptorSetLayoutCreateInfo.pNext = nullptr;
-    descriptorSetLayoutCreateInfo.bindingCount = 1;
-    descriptorSetLayoutCreateInfo.pBindings = &layoutBinding;
-
-    descriptorSetLayout = graphicsDevice->createDescriptorSetLayout(descriptorSetLayoutCreateInfo);
+    Effect::initDescriptorSetLayout(1, &layoutBinding);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -68,14 +62,6 @@ void VertexColorEffect::initDescriptorSet()
     writes.dstBinding = 0;
 
     graphicsDevice->updateDescriptorSets(1, &writes);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void VertexColorEffect::initUniformBuffer()
-{
-    uniformBuffer = graphicsDevice->createUniformBuffer(sizeof(mat4));
-    uniformBuffer->bind();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

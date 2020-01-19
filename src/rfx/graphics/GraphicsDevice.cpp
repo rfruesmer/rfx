@@ -666,7 +666,7 @@ shared_ptr<IndexBuffer> GraphicsDevice::createIndexBuffer(uint32_t indexCount, V
         bufferSize = indexCount;
         break;
     default:
-        RFX_CHECK_ARGUMENT(false, "unknown index format");
+        RFX_CHECK_ARGUMENT(false);
     }
 
     VkBuffer vkBuffer = nullptr;
@@ -777,9 +777,9 @@ void GraphicsDevice::allocateDescriptorSets(const VkDescriptorSetAllocateInfo& a
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void GraphicsDevice::updateDescriptorSets(uint32_t count, const VkWriteDescriptorSet* writes) const
+void GraphicsDevice::updateDescriptorSets(uint32_t writeCount, const VkWriteDescriptorSet* writes) const
 {
-    vkUpdateDescriptorSets(vkDevice, count, writes, 0, nullptr);
+    vkUpdateDescriptorSets(vkDevice, writeCount, writes, 0, nullptr);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

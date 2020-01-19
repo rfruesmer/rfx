@@ -58,7 +58,7 @@ void Buffer::dispose()
 
 void Buffer::load(size_t size, const std::byte* data) const
 {
-    RFX_CHECK_ARGUMENT(size <= this->size, "invalid vertexSize");
+    RFX_CHECK_ARGUMENT(size <= this->size);
 
     uint8_t* memory = nullptr;
     const VkResult result = vkMapMemory(vkDevice, vkDeviceMemory, 0, this->size, 0, reinterpret_cast<void**>(&memory));

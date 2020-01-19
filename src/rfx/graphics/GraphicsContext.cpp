@@ -85,7 +85,7 @@ void GraphicsContext::initialize(const string& applicationName,
                                  const shared_ptr<Window>& window,
                                  const vector<string>& instanceExtensions)
 {
-    RFX_CHECK_ARGUMENT(window != nullptr && window->getHandle() != nullptr, "window");
+    RFX_CHECK_ARGUMENT(window != nullptr && window->getHandle() != nullptr);
 
     loadVulkanLibrary();
     loadVulkanLoaderFunctions();
