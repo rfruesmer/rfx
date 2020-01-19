@@ -1,9 +1,9 @@
 #pragma once
 
 #include "rfx/graphics/GraphicsDeviceInfo.h"
-#include "rfx/graphics/QueueFamilyInfo.h"
+#include "rfx/graphics/command/QueueFamilyInfo.h"
 #include "rfx/graphics/GraphicsDevice.h"
-#include "rfx/application/Window.h"
+#include "rfx/graphics/window/Window.h"
 
 namespace rfx
 {

@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
 #include "test/TriangleTest.h"
-#include "rfx/graphics/ShaderLoader.h"
+#include "rfx/application/ShaderLoader.h"
 
 using namespace rfx;
 using namespace std;

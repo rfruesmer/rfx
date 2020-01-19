@@ -1,14 +1,16 @@
 #pragma once
 
 #include "rfx/graphics/GraphicsDeviceInfo.h"
-#include "rfx/graphics/Queue.h"
-#include "rfx/graphics/CommandPool.h"
-#include "rfx/graphics/Buffer.h"
-#include "rfx/graphics/VertexBuffer.h"
-#include "rfx/graphics/IndexBuffer.h"
-#include "rfx/graphics/Texture2D.h"
-#include "rfx/graphics/Image.h"
-#include "rfx/application/Window.h"
+#include "rfx/graphics/command/Queue.h"
+#include "rfx/graphics/command/CommandPool.h"
+#include "rfx/graphics/buffer/Buffer.h"
+#include "rfx/graphics/buffer/VertexBuffer.h"
+#include "rfx/graphics/buffer/IndexBuffer.h"
+#include "rfx/graphics/shader/VertexShader.h"
+#include "rfx/graphics/shader/FragmentShader.h"
+#include "rfx/graphics/texture/Texture2D.h"
+#include "rfx/graphics/texture/Image.h"
+#include "rfx/graphics/window/Window.h"
 
 
 namespace rfx
@@ -75,6 +77,15 @@ public:
         VkBufferUsageFlags usage, 
         VkMemoryPropertyFlags properties) const;
 
+    std::shared_ptr<VertexShader>  createVertexShader(
+        const VkPipelineShaderStageCreateInfo& createInfo, 
+        const VertexFormat& vertexFormat);
+    std::shared_ptr<FragmentShader> createFragmentShader(
+        const VkPipelineShaderStageCreateInfo& createInfo);
+
+    std::shared_ptr<Texture2D> createTexture2D(int width, int height,
+        VkFormat format, const std::vector<std::byte>& data);
+
     VkDescriptorPool createDescriptorPool(const VkDescriptorPoolCreateInfo& createInfo) const;
     void destroyDescriptorPool(VkDescriptorPool& inOutDescriptorPool) const;
 
@@ -113,9 +124,6 @@ public:
 
     VkPipeline createGraphicsPipeline(const VkGraphicsPipelineCreateInfo& createInfo) const;
     void destroyPipeline(VkPipeline& inOutPipeline) const;
-
-    std::shared_ptr<Texture2D> createTexture2D(int width, int height, 
-        VkFormat format, const std::vector<std::byte>& data);
 
     const GraphicsDeviceInfo& getDeviceInfo() const;
     const VkSwapchainKHR& getSwapChain() const;

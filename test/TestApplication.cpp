@@ -1,13 +1,13 @@
 #include "rfx/pch.h"
 
 #include "test/TestApplication.h"
+#include "rfx/application/ShaderLoader.h"
+#include "rfx/application/Texture2DLoader.h"
 #include "rfx/scene/ModelLoader.h"
 #include "rfx/scene/ModelDefinition.h"
-#include "rfx/graphics/EffectDefinitionDeserializer.h"
-#include "rfx/graphics/ShaderLoader.h"
-#include "rfx/graphics/Texture2DLoader.h"
-#include "rfx/graphics/VertexColorEffect.h"
-#include "rfx/graphics/Texture2DEffect.h"
+#include "rfx/graphics/effect/EffectDefinitionDeserializer.h"
+#include "rfx/graphics/effect/VertexColorEffect.h"
+#include "rfx/graphics/effect/Texture2DEffect.h"
 
 using namespace rfx;
 using namespace glm;

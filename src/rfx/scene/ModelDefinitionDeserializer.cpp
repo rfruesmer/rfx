@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
 #include "rfx/scene/ModelDefinitionDeserializer.h"
-#include "rfx/graphics/EffectDefinitionDeserializer.h"
+#include "rfx/graphics/effect/EffectDefinitionDeserializer.h"
 
 using namespace rfx;
 using namespace glm;

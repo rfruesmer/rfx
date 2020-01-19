@@ -1,7 +1,7 @@
 #pragma once
 
 #include "rfx/scene/Transform.h"
-#include "rfx/graphics/EffectDefinition.h"
+#include "rfx/graphics/effect/EffectDefinition.h"
 
 namespace rfx
 {

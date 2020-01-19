@@ -33,13 +33,7 @@
     <ClInclude Include="src\rfx\core\Logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\application\Window.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\rfx\application\Win32Application.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rfx\application\Win32Window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\rfx\graphics\GraphicsDevice.h">
@@ -63,25 +57,7 @@
     <ClInclude Include="src\rfx\graphics\GraphicsDeviceInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\QueueFamilyInfo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rfx\graphics\CommandBuffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rfx\graphics\CommandPool.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rfx\graphics\Buffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\rfx\core\FileUtil.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rfx\graphics\SPIR.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rfx\graphics\Queue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\rfx\input\InputDevice.h">
@@ -99,12 +75,6 @@
     <ClInclude Include="src\rfx\input\Keyboard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\Texture2DLoader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rfx\graphics\Texture2D.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="test\TestApplication.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -117,15 +87,6 @@
     <ClInclude Include="src\rfx\scene\Mesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\VertexBuffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rfx\graphics\ShaderLoader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rfx\graphics\IndexBuffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="test\TriangleTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -136,9 +97,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="lib\ktx\include\ktxvulkan.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rfx\graphics\Image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="test\TexturedCubesTest.h">
@@ -156,31 +114,73 @@
     <ClInclude Include="src\rfx\scene\Transform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\Effect.h">
+    <ClInclude Include="src\rfx\graphics\buffer\Buffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\Texture2DEffect.h">
+    <ClInclude Include="src\rfx\graphics\command\CommandBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\VertexColorEffect.h">
+    <ClInclude Include="src\rfx\graphics\command\CommandPool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\Shader.h">
+    <ClInclude Include="src\rfx\graphics\effect\Effect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\ShaderProgram.h">
+    <ClInclude Include="src\rfx\graphics\effect\EffectDefinition.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\FragmentShader.h">
+    <ClInclude Include="src\rfx\graphics\effect\EffectDefinitionDeserializer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\VertexShader.h">
+    <ClInclude Include="src\rfx\graphics\shader\FragmentShader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\EffectDefinition.h">
+    <ClInclude Include="src\rfx\graphics\buffer\IndexBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\EffectDefinitionDeserializer.h">
+    <ClInclude Include="src\rfx\graphics\command\QueueFamilyInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\command\Queue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\shader\Shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\shader\ShaderProgram.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\shader\SPIR.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\shader\VertexShader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\buffer\VertexBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\texture\Image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\texture\Texture2D.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\VertexColorEffect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\Texture2DEffect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\window\Win32Window.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\window\Window.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\application\Texture2DLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\application\ShaderLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -194,13 +194,7 @@
     <ClCompile Include="src\rfx\core\Logger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\application\Window.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\rfx\application\Win32Application.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rfx\application\Win32Window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\rfx\graphics\GraphicsDevice.cpp">
@@ -221,22 +215,7 @@
     <ClCompile Include="src\rfx\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\CommandBuffer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rfx\graphics\CommandPool.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rfx\graphics\Buffer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\rfx\core\FileUtil.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rfx\graphics\SPIR.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rfx\graphics\Queue.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\rfx\input\InputDeviceFactory.cpp">
@@ -251,12 +230,6 @@
     <ClCompile Include="src\rfx\input\directx\DXKeyboard.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\Texture2DLoader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rfx\graphics\Texture2D.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="test\TestApplication.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -269,22 +242,10 @@
     <ClCompile Include="src\rfx\scene\Mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\VertexBuffer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rfx\graphics\ShaderLoader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rfx\graphics\IndexBuffer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="test\TriangleTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="test\TexturedQuadTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rfx\graphics\Image.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="test\TexturedCubesTest.cpp">
@@ -299,31 +260,70 @@
     <ClCompile Include="src\rfx\scene\Transform.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\Effect.cpp">
+    <ClCompile Include="src\rfx\graphics\buffer\Buffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\Texture2DEffect.cpp">
+    <ClCompile Include="src\rfx\graphics\command\CommandBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\VertexColorEffect.cpp">
+    <ClCompile Include="src\rfx\graphics\command\CommandPool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\Shader.cpp">
+    <ClCompile Include="src\rfx\graphics\effect\Effect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\ShaderProgram.cpp">
+    <ClCompile Include="src\rfx\graphics\effect\EffectDefinition.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\FragmentShader.cpp">
+    <ClCompile Include="src\rfx\graphics\effect\EffectDefinitionDeserializer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\VertexShader.cpp">
+    <ClCompile Include="src\rfx\graphics\shader\FragmentShader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\EffectDefinition.cpp">
+    <ClCompile Include="src\rfx\graphics\buffer\IndexBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\EffectDefinitionDeserializer.cpp">
+    <ClCompile Include="src\rfx\graphics\command\Queue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\shader\Shader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\shader\ShaderProgram.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\shader\SPIR.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\shader\VertexShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\buffer\VertexBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\texture\Image.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\texture\Texture2D.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\VertexColorEffect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\Texture2DEffect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\window\Win32Window.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\window\Window.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\application\Texture2DLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\application\ShaderLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

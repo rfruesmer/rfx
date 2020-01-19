@@ -219,32 +219,32 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\rfx\graphics\EffectDefinitionDeserializer.h" />
-    <ClInclude Include="src\rfx\graphics\EffectDefinition.h" />
-    <ClInclude Include="src\rfx\graphics\FragmentShader.h" />
-    <ClInclude Include="src\rfx\graphics\Shader.h" />
-    <ClInclude Include="src\rfx\graphics\ShaderProgram.h" />
-    <ClInclude Include="src\rfx\graphics\Effect.h" />
+    <ClInclude Include="src\rfx\graphics\effect\EffectDefinitionDeserializer.h" />
+    <ClInclude Include="src\rfx\graphics\effect\EffectDefinition.h" />
+    <ClInclude Include="src\rfx\graphics\shader\FragmentShader.h" />
+    <ClInclude Include="src\rfx\graphics\shader\Shader.h" />
+    <ClInclude Include="src\rfx\graphics\shader\ShaderProgram.h" />
+    <ClInclude Include="src\rfx\graphics\effect\Effect.h" />
     <ClInclude Include="src\rfx\scene\ModelDefinitionDeserializer.h" />
     <ClInclude Include="src\rfx\scene\ModelDefinition.h" />
     <ClInclude Include="src\rfx\scene\SceneNode.h" />
-    <ClInclude Include="src\rfx\graphics\Image.h" />
+    <ClInclude Include="src\rfx\graphics\texture\Image.h" />
     <ClInclude Include="lib\ktx\include\ktx.h" />
     <ClInclude Include="lib\ktx\include\ktxvulkan.h" />
-    <ClInclude Include="src\rfx\graphics\IndexBuffer.h" />
-    <ClInclude Include="src\rfx\graphics\ShaderLoader.h" />
+    <ClInclude Include="src\rfx\graphics\buffer\IndexBuffer.h" />
+    <ClInclude Include="src\rfx\application\ShaderLoader.h" />
     <ClInclude Include="src\rfx\scene\Mesh.h" />
     <ClInclude Include="src\rfx\scene\ModelLoader.h" />
     <ClInclude Include="src\rfx\core\FileUtil.h" />
-    <ClInclude Include="src\rfx\graphics\Buffer.h" />
-    <ClInclude Include="src\rfx\graphics\CommandPool.h" />
-    <ClInclude Include="src\rfx\graphics\CommandBuffer.h" />
-    <ClInclude Include="src\rfx\graphics\Queue.h" />
+    <ClInclude Include="src\rfx\graphics\buffer\Buffer.h" />
+    <ClInclude Include="src\rfx\graphics\command\CommandPool.h" />
+    <ClInclude Include="src\rfx\graphics\command\CommandBuffer.h" />
+    <ClInclude Include="src\rfx\graphics\command\Queue.h" />
     <ClInclude Include="src\rfx\core\Algorithm.h" />
     <ClInclude Include="src\rfx\graphics\GraphicsContext.h" />
     <ClInclude Include="src\rfx\graphics\GraphicsDeviceInfo.h" />
-    <ClInclude Include="src\rfx\graphics\QueueFamilyInfo.h" />
-    <ClInclude Include="src\rfx\graphics\SPIR.h" />
+    <ClInclude Include="src\rfx\graphics\command\QueueFamilyInfo.h" />
+    <ClInclude Include="src\rfx\graphics\shader\SPIR.h" />
     <ClInclude Include="src\rfx\input\directx\DXKeyboard.h" />
     <ClInclude Include="src\rfx\input\InputDevice.h" />
     <ClInclude Include="src\rfx\input\InputDeviceFactory.h" />
@@ -258,45 +258,45 @@
     <ClInclude Include="res\Resource.h" />
     <ClInclude Include="src\rfx\rfx.h" />
     <ClInclude Include="res\targetver.h" />
-    <ClInclude Include="src\rfx\application\Window.h" />
+    <ClInclude Include="src\rfx\graphics\window\Window.h" />
     <ClInclude Include="src\rfx\application\Win32Application.h" />
-    <ClInclude Include="src\rfx\application\Win32Window.h" />
+    <ClInclude Include="src\rfx\graphics\window\Win32Window.h" />
     <ClInclude Include="src\rfx\core\StringUtil.h" />
     <ClInclude Include="src\rfx\core\Timer.h" />
     <ClInclude Include="test\TexturedCubesTest.h" />
     <ClInclude Include="test\TestApplication.h" />
-    <ClInclude Include="src\rfx\graphics\Texture2DLoader.h" />
-    <ClInclude Include="src\rfx\graphics\Texture2D.h" />
+    <ClInclude Include="src\rfx\application\Texture2DLoader.h" />
+    <ClInclude Include="src\rfx\graphics\texture\Texture2D.h" />
     <ClInclude Include="src\rfx\graphics\VertexFormat.h" />
-    <ClInclude Include="src\rfx\graphics\VertexBuffer.h" />
+    <ClInclude Include="src\rfx\graphics\buffer\VertexBuffer.h" />
     <ClInclude Include="test\TexturedQuadTest.h" />
     <ClInclude Include="test\TriangleTest.h" />
     <ClInclude Include="src\rfx\scene\Transform.h" />
-    <ClInclude Include="src\rfx\graphics\VertexColorEffect.h" />
-    <ClInclude Include="src\rfx\graphics\Texture2DEffect.h" />
-    <ClInclude Include="src\rfx\graphics\VertexShader.h" />
+    <ClInclude Include="src\rfx\graphics\effect\VertexColorEffect.h" />
+    <ClInclude Include="src\rfx\graphics\effect\Texture2DEffect.h" />
+    <ClInclude Include="src\rfx\graphics\shader\VertexShader.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\rfx\graphics\EffectDefinitionDeserializer.cpp" />
-    <ClCompile Include="src\rfx\graphics\EffectDefinition.cpp" />
-    <ClCompile Include="src\rfx\graphics\FragmentShader.cpp" />
-    <ClCompile Include="src\rfx\graphics\Shader.cpp" />
-    <ClCompile Include="src\rfx\graphics\ShaderProgram.cpp" />
-    <ClCompile Include="src\rfx\graphics\Effect.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\EffectDefinitionDeserializer.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\EffectDefinition.cpp" />
+    <ClCompile Include="src\rfx\graphics\shader\FragmentShader.cpp" />
+    <ClCompile Include="src\rfx\graphics\shader\Shader.cpp" />
+    <ClCompile Include="src\rfx\graphics\shader\ShaderProgram.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\Effect.cpp" />
     <ClCompile Include="src\rfx\scene\ModelDefinitionDeserializer.cpp" />
     <ClCompile Include="src\rfx\scene\SceneNode.cpp" />
-    <ClCompile Include="src\rfx\graphics\Image.cpp" />
-    <ClCompile Include="src\rfx\graphics\IndexBuffer.cpp" />
-    <ClCompile Include="src\rfx\graphics\ShaderLoader.cpp" />
+    <ClCompile Include="src\rfx\graphics\texture\Image.cpp" />
+    <ClCompile Include="src\rfx\graphics\buffer\IndexBuffer.cpp" />
+    <ClCompile Include="src\rfx\application\ShaderLoader.cpp" />
     <ClCompile Include="src\rfx\scene\Mesh.cpp" />
     <ClCompile Include="src\rfx\scene\ModelLoader.cpp" />
     <ClCompile Include="src\rfx\core\FileUtil.cpp" />
-    <ClCompile Include="src\rfx\graphics\Buffer.cpp" />
-    <ClCompile Include="src\rfx\graphics\CommandPool.cpp" />
-    <ClCompile Include="src\rfx\graphics\CommandBuffer.cpp" />
-    <ClCompile Include="src\rfx\graphics\Queue.cpp" />
+    <ClCompile Include="src\rfx\graphics\buffer\Buffer.cpp" />
+    <ClCompile Include="src\rfx\graphics\command\CommandPool.cpp" />
+    <ClCompile Include="src\rfx\graphics\command\CommandBuffer.cpp" />
+    <ClCompile Include="src\rfx\graphics\command\Queue.cpp" />
     <ClCompile Include="src\rfx\graphics\GraphicsContext.cpp" />
-    <ClCompile Include="src\rfx\graphics\SPIR.cpp" />
+    <ClCompile Include="src\rfx\graphics\shader\SPIR.cpp" />
     <ClCompile Include="src\rfx\input\directx\DXKeyboard.cpp" />
     <ClCompile Include="src\rfx\input\InputDevice.cpp" />
     <ClCompile Include="src\rfx\input\InputDeviceFactory.cpp" />
@@ -312,28 +312,28 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\rfx\main.cpp" />
-    <ClCompile Include="src\rfx\application\Window.cpp" />
+    <ClCompile Include="src\rfx\graphics\window\Window.cpp" />
     <ClCompile Include="src\rfx\application\Win32Application.cpp" />
-    <ClCompile Include="src\rfx\application\Win32Window.cpp" />
+    <ClCompile Include="src\rfx\graphics\window\Win32Window.cpp" />
     <ClCompile Include="src\rfx\core\StringUtil.cpp" />
     <ClCompile Include="src\rfx\core\Timer.cpp" />
     <ClCompile Include="test\TexturedCubesTest.cpp" />
     <ClCompile Include="test\TestApplication.cpp" />
-    <ClCompile Include="src\rfx\graphics\Texture2DLoader.cpp">
+    <ClCompile Include="src\rfx\application\Texture2DLoader.cpp">
       <StructMemberAlignment Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Default</StructMemberAlignment>
       <StructMemberAlignment Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Default</StructMemberAlignment>
       <StructMemberAlignment Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Default</StructMemberAlignment>
       <StructMemberAlignment Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Default</StructMemberAlignment>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\Texture2D.cpp" />
+    <ClCompile Include="src\rfx\graphics\texture\Texture2D.cpp" />
     <ClCompile Include="src\rfx\graphics\VertexFormat.cpp" />
-    <ClCompile Include="src\rfx\graphics\VertexBuffer.cpp" />
+    <ClCompile Include="src\rfx\graphics\buffer\VertexBuffer.cpp" />
     <ClCompile Include="test\TexturedQuadTest.cpp" />
     <ClCompile Include="test\TriangleTest.cpp" />
     <ClCompile Include="src\rfx\scene\Transform.cpp" />
-    <ClCompile Include="src\rfx\graphics\VertexColorEffect.cpp" />
-    <ClCompile Include="src\rfx\graphics\Texture2DEffect.cpp" />
-    <ClCompile Include="src\rfx\graphics\VertexShader.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\VertexColorEffect.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\Texture2DEffect.cpp" />
+    <ClCompile Include="src\rfx\graphics\shader\VertexShader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="res\rfx.rc" />

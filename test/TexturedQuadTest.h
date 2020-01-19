@@ -1,7 +1,7 @@
 #pragma once
 
 #include "test/TestApplication.h"
-#include "rfx/graphics/Texture2DEffect.h"
+#include "rfx/graphics/effect/Texture2DEffect.h"
 
 namespace rfx
 {

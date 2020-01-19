@@ -1,7 +1,7 @@
 #pragma once
 
 #include "rfx/graphics/GraphicsDevice.h"
-#include "rfx/graphics/Effect.h"
+#include "rfx/graphics/effect/Effect.h"
 
 namespace rfx
 {

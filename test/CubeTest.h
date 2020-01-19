@@ -1,7 +1,6 @@
 #pragma once
 
 #include "test/TestApplication.h"
-#include "rfx/graphics/VertexColorEffect.h"
 
 namespace rfx
 {

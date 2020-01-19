@@ -743,6 +743,22 @@ void GraphicsDevice::createBufferInternal(size_t size,
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+shared_ptr<VertexShader> GraphicsDevice::createVertexShader(
+    const VkPipelineShaderStageCreateInfo& createInfo,
+    const VertexFormat& vertexFormat)
+{
+    return make_shared<VertexShader>(vkDevice, vk, createInfo, vertexFormat);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+shared_ptr<FragmentShader> GraphicsDevice::createFragmentShader(const VkPipelineShaderStageCreateInfo& createInfo)
+{
+    return make_shared<FragmentShader>(vkDevice, vk, createInfo);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 VkDescriptorSetLayout GraphicsDevice::createDescriptorSetLayout(const VkDescriptorSetLayoutCreateInfo& createInfo) const
 {
     VkDescriptorSetLayout descriptorSetLayout = nullptr;

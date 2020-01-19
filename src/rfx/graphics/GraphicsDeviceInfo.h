@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rfx/graphics/QueueFamilyInfo.h"
+#include "rfx/graphics/command/QueueFamilyInfo.h"
 
 namespace rfx
 {

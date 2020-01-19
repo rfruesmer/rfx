@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
 #include "rfx/application/Win32Application.h"
-#include "rfx/application/Win32Window.h"
+#include "rfx/graphics/window/Win32Window.h"
 #include "rfx/input/directx/DXInputDeviceFactory.h"
 
 using namespace rfx;

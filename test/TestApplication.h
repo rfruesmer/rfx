@@ -3,8 +3,8 @@
 #include "rfx/application/Win32Application.h"
 #include "rfx/scene/SceneNode.h"
 #include "rfx/scene/ModelDefinitionDeserializer.h"
-#include "rfx/graphics/Effect.h"
-#include "rfx/graphics/EffectDefinition.h"
+#include "rfx/graphics/effect/Effect.h"
+#include "rfx/graphics/effect/EffectDefinition.h"
 
 
 namespace rfx

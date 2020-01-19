@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rfx/application/Window.h"
+#include "rfx/graphics/window/Window.h"
 #include "rfx/graphics/GraphicsContext.h"
 #include "rfx/graphics/GraphicsDevice.h"
 #include "rfx/input/InputDeviceFactory.h"
