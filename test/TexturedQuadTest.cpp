@@ -65,8 +65,7 @@ void TexturedQuadTest::initScene()
 void TexturedQuadTest::createQuadMesh()
 {
     const uint32_t vertexCount = 4;
-    const VertexFormat vertexFormat(VertexFormat::COORDINATES | VertexFormat::TEXCOORDS);
-    const uint32_t vertexBufferSize = vertexCount * vertexFormat.getVertexSize();
+    const uint32_t vertexBufferSize = vertexCount * VERTEX_FORMAT.getVertexSize();
     vector<float> vertexData = {
         1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
         -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
@@ -82,7 +81,7 @@ void TexturedQuadTest::createQuadMesh()
         reinterpret_cast<const std::byte*>(vertexData.data()));
     stagingVertexBuffer->bind();
 
-    shared_ptr<VertexBuffer> vertexBuffer = graphicsDevice->createVertexBuffer(vertexCount, vertexFormat);
+    shared_ptr<VertexBuffer> vertexBuffer = graphicsDevice->createVertexBuffer(vertexCount, VERTEX_FORMAT);
     vertexBuffer->bind();
 
 

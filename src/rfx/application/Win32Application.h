@@ -9,7 +9,7 @@ class Win32Application : public Application
 {
 public:
     explicit Win32Application(
-        std::filesystem::path configurationPath, 
+        const std::filesystem::path& configurationPath, 
         handle_t instanceHandle);
 
     void run() override;

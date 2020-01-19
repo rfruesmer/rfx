@@ -1,9 +1,15 @@
 #include "rfx/pch.h"
 #include "rfx/graphics/GraphicsDevice.h"
 
-
 using namespace rfx;
 using namespace std;
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+#define LOAD_DEVICE_FUNCTION(name)                                                   \
+    name = (PFN_##name)vkGetDeviceProcAddr(vkDevice, #name);                            \
+    vk.##name = name;                                                                       \
+    RFX_CHECK_STATE(name != nullptr, string("Failed to load function: ") + (#name));
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -113,11 +119,6 @@ void GraphicsDevice::initialize()
 
 void GraphicsDevice::loadDeviceFunctions()
 {
-#define LOAD_DEVICE_FUNCTION(name)                                                   \
-    name = (PFN_##name)vkGetDeviceProcAddr(vkDevice, #name);                            \
-    vk.##name = name;                                                                       \
-    RFX_CHECK_STATE(name != nullptr, string("Failed to load function: ") + (#name));
-
     memset(&vk, 0, sizeof(vk));
 
     LOAD_DEVICE_FUNCTION(vkDeviceWaitIdle);
@@ -738,9 +739,6 @@ void GraphicsDevice::createBufferInternal(size_t size,
     result = vkAllocateMemory(vkDevice, &memoryAllocInfo, nullptr, &outDeviceMemory);
     RFX_CHECK_STATE(result == VK_SUCCESS && outDeviceMemory != nullptr,
         "Failed to allocated memory for uniform buffer");
-
-    //result = vkBindBufferMemory(vkDevice, outBuffer, outDeviceMemory, 0);
-    //RFX_CHECK_STATE(result == VK_SUCCESS, "Failed to bind buffer memory");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1133,9 +1131,9 @@ VkImageView GraphicsDevice::createImageView(const shared_ptr<Image>& image, VkFo
     };
     viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     viewInfo.subresourceRange.baseMipLevel = 0;
-    viewInfo.subresourceRange.levelCount = VK_REMAINING_MIP_LEVELS; // 1;
+    viewInfo.subresourceRange.levelCount = VK_REMAINING_MIP_LEVELS; // 1
     viewInfo.subresourceRange.baseArrayLayer = 0;
-    viewInfo.subresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS; // 1;
+    viewInfo.subresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS; // 1
 
     VkImageView imageView = nullptr;
     const VkResult result = vkCreateImageView(vkDevice, &viewInfo, nullptr, &imageView);

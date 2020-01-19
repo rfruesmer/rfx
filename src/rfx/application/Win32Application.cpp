@@ -5,11 +5,12 @@
 
 using namespace rfx;
 using namespace std;
+using namespace std::filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 Win32Application::Win32Application(
-    std::filesystem::path configurationPath,
+    const path& configurationPath,
     handle_t instanceHandle)
         : Application(configurationPath),
           instanceHandle(static_cast<HINSTANCE>(instanceHandle))
@@ -78,15 +79,15 @@ void Win32Application::run()
 void Win32Application::updateFrameStats() const
 {
     static int frameCount = 0;
-    static float timeElapsed = 0.0f;
+    static float timeElapsed = 0.0F;
 
     frameCount++;
     timeElapsed += timer.getElapsedTime();
 
-    if (timeElapsed >= 1.0f)
+    if (timeElapsed >= 1.0F)
     {
         const float fps = static_cast<float>(frameCount);
-        const float fms = 1000.0f / fps;
+        const float fms = 1000.0F / fps;
 
         const string windowText = window->getTitle() +
             " [FPS: " + to_string(static_cast<int>(fps))  +
@@ -95,7 +96,7 @@ void Win32Application::updateFrameStats() const
         SetWindowTextA(static_cast<HWND>(window->getHandle()), windowText.c_str());
         
         frameCount = 0;
-        timeElapsed = 0.0f;
+        timeElapsed = 0.0F;
     }
 }
 

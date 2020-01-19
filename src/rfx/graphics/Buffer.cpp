@@ -15,16 +15,14 @@ Buffer::Buffer(VkDevice vkDevice,
         : vkDevice(vkDevice),
           vkBuffer(vkBuffer),
           vkDeviceMemory(vkDeviceMemory),
-          size(size)
+          size(size),
+          vkMapMemory(vk.vkMapMemory),
+          vkUnmapMemory(vk.vkUnmapMemory),
+          vkBindBufferMemory(vk.vkBindBufferMemory),
+          vkInvalidateMappedMemoryRanges(vk.vkInvalidateMappedMemoryRanges),
+          vkDestroyBuffer(vk.vkDestroyBuffer),
+          vkFreeMemory(vk.vkFreeMemory)
 {
-    vkMapMemory = vk.vkMapMemory;
-    vkUnmapMemory = vk.vkUnmapMemory;
-    vkBindBufferMemory = vk.vkBindBufferMemory;
-    vkInvalidateMappedMemoryRanges = vk.vkInvalidateMappedMemoryRanges;
-
-    vkDestroyBuffer = vk.vkDestroyBuffer;
-    vkFreeMemory = vk.vkFreeMemory;
-
     vkBufferInfo.buffer = vkBuffer;
     vkBufferInfo.offset = 0;
     vkBufferInfo.range = range;

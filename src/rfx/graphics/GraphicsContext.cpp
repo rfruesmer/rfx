@@ -8,6 +8,32 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+#ifdef _WINDOWS
+#define LOADFUNCTION GetProcAddress
+#define LIBRARYTYPE HMODULE
+#else
+#define LOADFUNCTION dlsym
+#define LIBRARYTYPE void*
+#endif // _WINDOWS
+
+#define LOAD_VULKANLOADER_FUNCTION(name)                                                 \
+    name = (PFN_##name) LOADFUNCTION((LIBRARYTYPE)vkLibrary, #name);                 \
+    RFX_CHECK_STATE(name != nullptr, string("Failed to load function: ") + (#name));
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+#define LOAD_GLOBAL_VULKAN_FUNCTION(name)                                                \
+    name = (PFN_##name)vkGetInstanceProcAddr(nullptr, #name);                            \
+    RFX_CHECK_STATE(name != nullptr, string("Failed to load function: ") + (#name));
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+#define LOAD_INSTANCE_VULKAN_FUNCTION(name)                                              \
+    name = (PFN_##name)vkGetInstanceProcAddr(vkInstance, #name);                     \
+    RFX_CHECK_STATE(name != nullptr, string("Failed to load function: ") + (#name));
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 static const uint16_t REQUIRED_VERSION_MAJOR = 1;
 static const uint16_t REQUIRED_VERSION_MINOR = 1;
 static const uint32_t REQUIRED_VERSION = VK_MAKE_VERSION(REQUIRED_VERSION_MAJOR, REQUIRED_VERSION_MINOR, 0);
@@ -59,7 +85,7 @@ void GraphicsContext::dispose()
         vkInstance = nullptr;
     }
        
-    if (vkLibrary == nullptr)
+    if (vkLibrary != nullptr)
     {
 #ifdef _WINDOWS
         FreeLibrary(static_cast<HMODULE>(vkLibrary));
@@ -117,18 +143,6 @@ void GraphicsContext::loadVulkanLibrary()
 
 void GraphicsContext::loadVulkanLoaderFunctions()
 {
-#ifdef _WINDOWS
-#define LOADFUNCTION GetProcAddress
-#define LIBRARYTYPE HMODULE
-#else
-#define LOADFUNCTION dlsym
-#define LIBRARYTYPE void*
-#endif // _WINDOWS
-
-#define LOAD_VULKANLOADER_FUNCTION(name)                                                 \
-    name = (PFN_##name) LOADFUNCTION((LIBRARYTYPE)vkLibrary, #name);                 \
-    RFX_CHECK_STATE(name != nullptr, string("Failed to load function: ") + (#name));
-
     LOAD_VULKANLOADER_FUNCTION(vkGetInstanceProcAddr);
 }
 
@@ -136,10 +150,6 @@ void GraphicsContext::loadVulkanLoaderFunctions()
 
 void GraphicsContext::loadGlobalFunctions()
 {
-#define LOAD_GLOBAL_VULKAN_FUNCTION(name)                                                \
-    name = (PFN_##name)vkGetInstanceProcAddr(nullptr, #name);                            \
-    RFX_CHECK_STATE(name != nullptr, string("Failed to load function: ") + (#name));
-
     LOAD_GLOBAL_VULKAN_FUNCTION(vkEnumerateInstanceVersion);
     LOAD_GLOBAL_VULKAN_FUNCTION(vkEnumerateInstanceExtensionProperties);
     LOAD_GLOBAL_VULKAN_FUNCTION(vkEnumerateInstanceLayerProperties);
@@ -268,10 +278,6 @@ void GraphicsContext::createVulkanInstance(const string& applicationName,
 
 void GraphicsContext::loadInstanceFunctions()
 {
-#define LOAD_INSTANCE_VULKAN_FUNCTION(name)                                              \
-    name = (PFN_##name)vkGetInstanceProcAddr(vkInstance, #name);                     \
-    RFX_CHECK_STATE(name != nullptr, string("Failed to load function: ") + (#name));
-
     LOAD_INSTANCE_VULKAN_FUNCTION(vkDestroyInstance);
     LOAD_INSTANCE_VULKAN_FUNCTION(vkEnumeratePhysicalDevices);
     LOAD_INSTANCE_VULKAN_FUNCTION(vkEnumerateDeviceExtensionProperties);
@@ -365,9 +371,6 @@ void GraphicsContext::queryPhysicalDevices(const shared_ptr<Window>& window)
         queryProperties(device, deviceInfo);
         queryQueueFamilies(device, deviceInfo);
         queryPresentModes(device, window, deviceInfo);
-        //queryPresentationSurfaceCapabilities(device, deviceInfo);
-        //queryPresentationSurfaceFormats(device, deviceInfo);
-        //querySwapChainImageSize(device, window, deviceInfo);
 
         deviceInfos[device] = deviceInfo;
     }
@@ -714,7 +717,7 @@ shared_ptr<GraphicsDevice> GraphicsContext::createLogicalDevice(
             static_cast<uint32_t>(currentQueueFamily.priorities.size()),
             currentQueueFamily.priorities.data()
         });
-    };
+    }
 
     vector<const char*> extensionsAsChars;
     rfx::transform(extensions, back_inserter(extensionsAsChars),
