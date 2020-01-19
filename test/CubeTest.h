@@ -15,15 +15,6 @@ public:
 
 protected:
     CubeTest(const std::filesystem::path& configurationPath, handle_t instanceHandle);
-
-    void initScene() override;
-    void initCommandBuffers() override;
-
-private:
-    void drawNode(const std::unique_ptr<SceneNode>& sceneNode,
-        const std::shared_ptr<CommandBuffer>& commandBuffer);
-
-    std::shared_ptr<VertexColorEffect> vertexColorEffect;
 };
 
 } // namespace rfx

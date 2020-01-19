@@ -22,6 +22,7 @@ public:
     void setViewProjMatrix(const glm::mat4& matrix);
     void setModelViewProjMatrix(const glm::mat4& matrix) const;
 
+    virtual const std::string& getId() const = 0;
     const std::shared_ptr<Buffer>& getUniformBuffer() const;
     const std::vector<VkDescriptorSet>& getDescriptorSets() const;
     const VertexFormat& getVertexFormat() const;

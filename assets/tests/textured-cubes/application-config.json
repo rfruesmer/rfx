@@ -7,38 +7,48 @@
     "resolution": {
       "x": 1600,
       "y": 1000
-    }
+    },
+    "effect_defaults": [
+      {
+        "id": "texture2D",
+        "vertexFormat": [
+          "COORDINATES",
+          "TEXCOORDS"
+        ],
+        "vertexShaderPath": "assets/common/shaders/texture.vert",
+        "fragmentShaderPath": "assets/common/shaders/texture.frag",
+        "texturePaths": []
+      }
+    ]
   },
   "scene": {
     "models": [
       {
         "path": "assets/common/models/cube.dae",
-        "vertexFormat": [
-          "COORDINATES",
-          "TEXCOORDS"
-        ],
-        "vertexShaderPath": "assets/common/shaders/texture.vert",
-        "fragmentShaderPath": "assets/common/shaders/texture.frag",
-        "texturePath": "assets/tests/textured-cubes/crate01_color_height_rgba.ktx",
+        "effect": {
+          "id": "texture2D",
+          "texturePaths": [
+            "assets/tests/textured-cubes/crate01_color_height_rgba.ktx"
+          ]
+        },
         "transform": {
-          "translation": [ -20, 0, 0 ],
+          "translation": [ -2, 0, 0 ],
           "scale": [ 1, 1, 1 ],
-          "rotation": [ 0, 0, 0 ]
+          "rotation": [ 0, -20, 0 ]
         }
       },
       {
         "path": "assets/common/models/cube.dae",
-        "vertexFormat": [
-          "COORDINATES",
-          "TEXCOORDS"
-        ],
-        "vertexShaderPath": "assets/common/shaders/texture.vert",
-        "fragmentShaderPath": "assets/common/shaders/texture.frag",
-        "texturePath": "assets/tests/textured-cubes/crate02_color_height_rgba.ktx",
+        "effect": {
+          "id": "texture2D",
+          "texturePaths": [
+            "assets/tests/textured-cubes/crate02_color_height_rgba.ktx"
+          ]
+        },
         "transform": {
-          "translation": [ -20, 0, 0 ],
+          "translation": [ 2, 0, 0 ],
           "scale": [ 1, 1, 1 ],
-          "rotation": [ 0, 0, 0 ]
+          "rotation": [ 0, 20, 0 ]
         }
       }
     ]

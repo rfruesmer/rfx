@@ -2,6 +2,7 @@
 
 #include "rfx/application/Win32Application.h"
 #include "rfx/scene/SceneNode.h"
+#include "rfx/scene/ModelDefinitionDeserializer.h"
 #include "rfx/graphics/Effect.h"
 #include "rfx/graphics/EffectDefinition.h"
 
@@ -39,17 +40,19 @@ protected:
     void initRenderPass();
     void initFrameBuffers();
 
-    virtual void initEffects() {}
-    virtual void initScene() = 0;
-    void initCamera();
+    virtual void initScene();
+    void loadEffectsDefaults();
+    void loadEffectDefaults(const Json::Value& jsonEffectDefaults);
     void createSceneGraphRootNode();
     void loadModels();
-    ModelDefinition deserialize(const Json::Value& jsonModelDefinition) const;
+    ModelDefinition deserialize(const Json::Value& jsonModelDefinition,
+        const ModelDefinitionDeserializer& deserializer) const;
     std::shared_ptr<Mesh> loadModel(const ModelDefinition& modelDefinition,
         const std::shared_ptr<Effect>& effect) const;
     void attachToSceneGraph(const std::shared_ptr<Mesh>& mesh, const ModelDefinition& modelDefinition) const;
+    void initCamera();
 
-    virtual void initCommandBuffers() = 0;
+    virtual void initCommandBuffers();
 
     void recreateSwapChain();
     void destroyFrameBuffers();
@@ -74,6 +77,7 @@ protected:
     std::shared_ptr<CommandPool> commandPool;
     std::vector<std::shared_ptr<CommandBuffer>> drawCommandBuffers;
     std::unique_ptr<SceneNode> sceneGraph;
+    std::unordered_map<std::string, EffectDefinition> effectDefaults;
     std::vector<std::shared_ptr<Effect>> effects;
 
 private:
@@ -82,6 +86,8 @@ private:
         std::unique_ptr<ShaderProgram>& shaderProgram,
         const std::vector<std::shared_ptr<Texture2D>>& textures);
     void updateViewProjectionMatrix();
+    void drawSceneNode(const std::unique_ptr<SceneNode>& sceneNode,
+        const std::shared_ptr<CommandBuffer>& commandBuffer);
 };
 
 }

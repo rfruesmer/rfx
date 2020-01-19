@@ -16,6 +16,8 @@ public:
         VkRenderPass renderPass,
         std::unique_ptr<ShaderProgram>& shaderProgram);
 
+    const std::string& getId() const override;
+
 private:
     void initDescriptorSetLayout();
     void initDescriptorSet();

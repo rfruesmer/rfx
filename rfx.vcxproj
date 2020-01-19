@@ -219,6 +219,7 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\rfx\graphics\EffectDefinitionDeserializer.h" />
     <ClInclude Include="src\rfx\graphics\EffectDefinition.h" />
     <ClInclude Include="src\rfx\graphics\FragmentShader.h" />
     <ClInclude Include="src\rfx\graphics\Shader.h" />
@@ -276,6 +277,7 @@
     <ClInclude Include="src\rfx\graphics\VertexShader.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\rfx\graphics\EffectDefinitionDeserializer.cpp" />
     <ClCompile Include="src\rfx\graphics\EffectDefinition.cpp" />
     <ClCompile Include="src\rfx\graphics\FragmentShader.cpp" />
     <ClCompile Include="src\rfx\graphics\Shader.cpp" />

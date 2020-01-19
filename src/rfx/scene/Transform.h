@@ -17,6 +17,8 @@ public:
     void setRotation(const glm::vec3& rotation);
     const glm::vec3& getRotation() const;
 
+    const glm::mat4& getMatrix() const;
+
     void update();
 
 private:

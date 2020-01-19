@@ -1,5 +1,6 @@
 #include "rfx/pch.h"
 #include "rfx/scene/ModelDefinitionDeserializer.h"
+#include "rfx/graphics/EffectDefinitionDeserializer.h"
 
 using namespace rfx;
 using namespace glm;
@@ -8,8 +9,23 @@ using namespace std::filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+ModelDefinitionDeserializer::ModelDefinitionDeserializer(
+    unordered_map<string, EffectDefinition> effectDefaults)
+        : effectDefaults(effectDefaults) {}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 ModelDefinition ModelDefinitionDeserializer::deserialize(const Json::Value& jsonModel) const
 {
+    EffectDefinitionDeserializer effectDefinitionDeserializer;
+    EffectDefinition effectDefinition;
+
+    const Json::Value& jsonEffect = jsonModel["effect"];
+    const auto& it = effectDefaults.find(jsonEffect["id"].asString());
+    effectDefinition = it != effectDefaults.end()
+        ? effectDefinitionDeserializer.deserialize(jsonEffect, it->second)
+        : effectDefinitionDeserializer.deserialize(jsonEffect);
+
     Transform transform;
 
     const Json::Value jsonTransform = jsonModel["transform"];
@@ -46,42 +62,9 @@ ModelDefinition ModelDefinitionDeserializer::deserialize(const Json::Value& json
         }
     }
 
-    const Json::Value& jsonEffect = jsonModel["effect"];
-
-    unsigned int vertexFormatBits = 0;
-
-    for (const auto& it : jsonEffect["vertexFormat"]) {
-        auto currentFormatComponent = it.asString();
-        if (currentFormatComponent == "COORDINATES") {
-            vertexFormatBits |= VertexFormat::COORDINATES;
-        }
-        else if (currentFormatComponent == "COLORS") {
-            vertexFormatBits |= VertexFormat::COLORS;
-        }
-        else if (currentFormatComponent == "NORMALS") {
-            vertexFormatBits |= VertexFormat::NORMALS;
-        }
-        else if (currentFormatComponent == "TEXCOORDS") {
-            vertexFormatBits |= VertexFormat::TEXCOORDS;
-        }
-        else {
-            RFX_THROW("Unknown vertex format component: " + currentFormatComponent);
-        }
-    }
-
-    EffectDefinition effect;
-    effect.id = jsonEffect["id"].asString();
-    effect.vertexFormat = VertexFormat(vertexFormatBits);
-    effect.vertexShaderPath = jsonEffect["vertexShaderPath"].asString();
-    effect.fragmentShaderPath = jsonEffect["fragmentShaderPath"].asString();
-
-    for (const Json::Value& jsonTexturePath : jsonEffect["texturePaths"]) {
-        effect.texturePaths.push_back(jsonTexturePath.asString());
-    }
-
     return ModelDefinition {
         jsonModel["path"].asString(),
-        effect, 
+        effectDefinition, 
         transform
     };
 }

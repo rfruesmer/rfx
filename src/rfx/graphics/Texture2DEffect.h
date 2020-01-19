@@ -16,6 +16,8 @@ public:
         std::unique_ptr<ShaderProgram>& shaderProgram,
         const std::shared_ptr<Texture2D>& texture);
 
+    const std::string& getId() const override;
+
 private:
     void initDescriptorSetLayout();
     void initDescriptorSet();

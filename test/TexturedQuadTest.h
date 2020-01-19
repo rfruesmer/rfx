@@ -14,7 +14,7 @@ public:
     void initialize() override;
 
 protected:
-    void initEffects() override;
+    void initEffects();
     void initScene() override;
     void initCommandBuffers() override;
 

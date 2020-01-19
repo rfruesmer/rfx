@@ -7,20 +7,25 @@
     "resolution": {
       "x": 1600,
       "y": 1000
-    }
+    },
+    "effect_defaults": [
+      {
+        "id": "vertex_color",
+        "vertexFormat": [
+          "COORDINATES",
+          "COLORS"
+        ],
+        "vertexShaderPath": "assets/common/shaders/color.vert",
+        "fragmentShaderPath": "assets/common/shaders/color.frag"
+      }
+    ]
   },
   "scene": {
     "models": [
       {
         "path": "assets/common/models/cube.dae",
         "effect": {
-          "id": "vertex_color",
-          "vertexFormat": [
-            "COORDINATES",
-            "COLORS"
-          ],
-          "vertexShaderPath": "assets/common/shaders/color.vert",
-          "fragmentShaderPath": "assets/common/shaders/color.frag"
+          "id": "vertex_color"
         }
       }
     ]

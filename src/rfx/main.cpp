@@ -38,8 +38,8 @@ int main()
 
         //TriangleTest theApp(instanceHandle);
         //TexturedQuadTest theApp(instanceHandle);
-        CubeTest theApp(instanceHandle);
-        //TexturedCubesTest theApp(instanceHandle);
+        //CubeTest theApp(instanceHandle);
+        TexturedCubesTest theApp(instanceHandle);
 
         theApp.initialize();
         theApp.run();

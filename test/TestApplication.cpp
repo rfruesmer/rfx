@@ -3,7 +3,7 @@
 #include "test/TestApplication.h"
 #include "rfx/scene/ModelLoader.h"
 #include "rfx/scene/ModelDefinition.h"
-#include "rfx/scene/ModelDefinitionDeserializer.h"
+#include "rfx/graphics/EffectDefinitionDeserializer.h"
 #include "rfx/graphics/ShaderLoader.h"
 #include "rfx/graphics/Texture2DLoader.h"
 #include "rfx/graphics/VertexColorEffect.h"
@@ -28,6 +28,35 @@ static_assert(false, "not implemented yet");
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void TestApplication::initScene()
+{
+    loadEffectsDefaults();
+    createSceneGraphRootNode();
+    loadModels();
+    initCamera();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::loadEffectsDefaults()
+{
+    Json::Value jsonEffectDefaults = configuration["graphics"]["effect_defaults"];
+    for (const auto& jsonEffectDefault : jsonEffectDefaults) {
+        loadEffectDefaults(jsonEffectDefault);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::loadEffectDefaults(const Json::Value& jsonEffectDefaults)
+{
+    const EffectDefinitionDeserializer deserializer;
+    const EffectDefinition effectDefinition = deserializer.deserialize(jsonEffectDefaults);
+    effectDefaults[effectDefinition.id] = effectDefinition;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void TestApplication::createSceneGraphRootNode()
 {
     sceneGraph = make_unique<SceneNode>();
@@ -37,10 +66,11 @@ void TestApplication::createSceneGraphRootNode()
 
 void TestApplication::loadModels()
 {
+    const ModelDefinitionDeserializer deserializer(effectDefaults);
     Json::Value jsonModelDefinitions = configuration["scene"]["models"];
 
     for (const auto& jsonModelDefinition : jsonModelDefinitions) {
-        ModelDefinition modelDefinition = deserialize(jsonModelDefinition);
+        ModelDefinition modelDefinition = deserialize(jsonModelDefinition, deserializer);
         const shared_ptr<Effect> effect = loadEffect(modelDefinition.effect);
         const shared_ptr<Mesh> mesh = loadModel(modelDefinition, effect);
         attachToSceneGraph(mesh, modelDefinition);
@@ -49,9 +79,9 @@ void TestApplication::loadModels()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-ModelDefinition TestApplication::deserialize(const Json::Value& jsonModelDefinition) const
+ModelDefinition TestApplication::deserialize(const Json::Value& jsonModelDefinition,
+    const ModelDefinitionDeserializer& deserializer) const
 {
-    const ModelDefinitionDeserializer deserializer;
     return deserializer.deserialize(jsonModelDefinition);
 }
 
@@ -69,16 +99,13 @@ shared_ptr<Effect> TestApplication::loadEffect(const EffectDefinition& effectDef
 
     vector<shared_ptr<Texture2D>> textures;
     const Texture2DLoader textureLoader(graphicsDevice);
-
     for (const string& texturePath : effectDefinition.texturePaths) {
-        shared_ptr<Texture2D> texture = textureLoader.load(texturePath);
-        textures.push_back(texture);
+        textures.push_back(textureLoader.load(texturePath));
     }
 
-    const shared_ptr<Effect> effect = createEffect(effectDefinition, shaderProgram, textures);
-    effects.push_back(effect);
+    effects.push_back(createEffect(effectDefinition, shaderProgram, textures));
 
-    return effect;
+    return effects.back();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -123,10 +150,11 @@ void TestApplication::attachToSceneGraph(const shared_ptr<Mesh>& mesh,
         localTransform.update();
 
         sceneNode->updateWorldTransform();
+
+        mesh->getEffect()->setModelMatrix(sceneNode->getWorldTransform().getMatrix());
     }
 
     sceneNode->attach(mesh);
-
     sceneGraph->attach(sceneNode);
 }
 
@@ -135,7 +163,7 @@ void TestApplication::attachToSceneGraph(const shared_ptr<Mesh>& mesh,
 void TestApplication::initCamera()
 {
     modelMatrix = mat4(1.0F);
-    cameraPosition = vec3(0.0F, 0.0F, 10.0F);
+    cameraPosition = vec3(0.0F, 0.0F, 20.0F);
     cameraLookAt = vec3(0.0F);
     cameraUp = vec3(0.0F, 1.0F, 0.0F);
     projectionMatrix = perspective(radians(45.0F), 1.0F, 0.1F, 100.0F);
@@ -376,6 +404,77 @@ void TestApplication::draw()
 
     graphicsDevice->destroySemaphore(imageAcquiredSemaphore);
     graphicsDevice->destroyFence(drawFence);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::initCommandBuffers()
+{
+    drawCommandBuffers = commandPool->allocateCommandBuffers(graphicsDevice->getSwapChainBuffers().size());
+
+    const VkExtent2D presentImageSize = graphicsDevice->getSwapChainProperties().imageSize;
+
+    VkClearValue clearValues[2] = {};
+    clearValues[0].color = { { 0.05F, 0.05F, 0.05F, 1.0F } };
+    clearValues[1].depthStencil.depth = 1.0F;
+    clearValues[1].depthStencil.stencil = 0;
+
+    VkViewport viewport;
+    viewport.x = 0;
+    viewport.y = 0;
+    viewport.width = static_cast<float>(presentImageSize.width);
+    viewport.height = static_cast<float>(presentImageSize.height);
+    viewport.minDepth = 0.0F;
+    viewport.maxDepth = 1.0F;
+
+    VkRect2D scissor;
+    scissor.extent.width = presentImageSize.width;
+    scissor.extent.height = presentImageSize.height;
+    scissor.offset.x = 0;
+    scissor.offset.y = 0;
+
+
+    for (size_t i = 0, count = drawCommandBuffers.size(); i < count; ++i) {
+        VkRenderPassBeginInfo renderPassBeginInfo = {};
+        renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassBeginInfo.pNext = nullptr;
+        renderPassBeginInfo.renderPass = renderPass;
+        renderPassBeginInfo.framebuffer = frameBuffers[i];
+        renderPassBeginInfo.renderArea.offset.x = 0;
+        renderPassBeginInfo.renderArea.offset.y = 0;
+        renderPassBeginInfo.renderArea.extent = presentImageSize;
+        renderPassBeginInfo.clearValueCount = 2;
+        renderPassBeginInfo.pClearValues = clearValues;
+
+        auto& commandBuffer = drawCommandBuffers[i];
+        commandBuffer->begin();
+        commandBuffer->beginRenderPass(renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        commandBuffer->setViewport(viewport);
+        commandBuffer->setScissor(scissor);
+        drawSceneNode(sceneGraph, commandBuffer);
+        commandBuffer->endRenderPass();
+        commandBuffer->end();
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::drawSceneNode(const unique_ptr<SceneNode>& sceneNode,
+    const shared_ptr<CommandBuffer>& commandBuffer)
+{
+    for (const auto& mesh : sceneNode->getMeshes()) {
+        const shared_ptr<Effect>& currentEffect = mesh->getEffect();
+        commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, currentEffect->getPipeline());
+        commandBuffer->bindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS,
+            currentEffect->getPipelineLayout(), currentEffect->getDescriptorSets());
+        commandBuffer->bindVertexBuffers({ mesh->getVertexBuffer() });
+        commandBuffer->bindIndexBuffer(mesh->getIndexBuffer());
+        commandBuffer->drawIndexed(mesh->getIndexBuffer()->getIndexCount());
+    }
+
+    for (const auto& childNode : sceneNode->getChildNodes()) {
+        drawSceneNode(childNode, commandBuffer);
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

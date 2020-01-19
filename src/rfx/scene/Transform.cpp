@@ -66,6 +66,13 @@ const vec3& Transform::getRotation() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+const mat4& Transform::getMatrix() const
+{
+    return matrix;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void Transform::update()
 {
     matrix = glm::translate(mat4(1.0F), translation);
