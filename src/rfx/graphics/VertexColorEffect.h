@@ -9,6 +9,8 @@ namespace rfx
 class VertexColorEffect : public Effect
 {
 public:
+    static const std::string ID;
+
     explicit VertexColorEffect(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,
         VkRenderPass renderPass,

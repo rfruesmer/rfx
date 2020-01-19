@@ -8,6 +8,8 @@ namespace rfx
 class Texture2DEffect : public Effect
 {
 public:
+    static const std::string ID;
+
     explicit Texture2DEffect(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,
         VkRenderPass renderPass,

@@ -6,6 +6,7 @@
 #include "rfx/scene/ModelDefinitionDeserializer.h"
 #include "rfx/graphics/ShaderLoader.h"
 #include "rfx/graphics/Texture2DLoader.h"
+#include "rfx/graphics/VertexColorEffect.h"
 #include "rfx/graphics/Texture2DEffect.h"
 
 using namespace rfx;
@@ -40,9 +41,8 @@ void TestApplication::loadModels()
 
     for (const auto& jsonModelDefinition : jsonModelDefinitions) {
         ModelDefinition modelDefinition = deserialize(jsonModelDefinition);
-        const shared_ptr<Mesh> mesh = loadModel(modelDefinition);
-        loadShaders(mesh, modelDefinition);
-        loadTexture(mesh, modelDefinition);
+        const shared_ptr<Effect> effect = loadEffect(modelDefinition.effect);
+        const shared_ptr<Mesh> mesh = loadModel(modelDefinition, effect);
         attachToSceneGraph(mesh, modelDefinition);
     }
 }
@@ -57,57 +57,54 @@ ModelDefinition TestApplication::deserialize(const Json::Value& jsonModelDefinit
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-shared_ptr<Mesh> TestApplication::loadModel(const ModelDefinition& modelDefinition) const
+shared_ptr<Effect> TestApplication::loadEffect(const EffectDefinition& effectDefinition)
 {
-    RFX_NOT_IMPLEMENTED();
-
-    ModelLoader modelLoader(graphicsDevice);
-    return modelLoader.load(modelDefinition.modelPath, nullptr);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TestApplication::loadShaders(const shared_ptr<Mesh>& mesh, 
-    const ModelDefinition& modelDefinition) const
-{
-    RFX_NOT_IMPLEMENTED();
-
     ShaderLoader shaderLoader(graphicsDevice);
-
-    shared_ptr<VertexShader> vertexShader = 
-        shaderLoader.loadVertexShader(modelDefinition.vertexShaderPath, "main", modelDefinition.vertexFormat);
-
+    shared_ptr<VertexShader> vertexShader =
+        shaderLoader.loadVertexShader(effectDefinition.vertexShaderPath, "main", effectDefinition.vertexFormat);
     shared_ptr<FragmentShader> fragmentShader =
-        shaderLoader.loadFragmentShader(modelDefinition.fragmentShaderPath, "main");
+        shaderLoader.loadFragmentShader(effectDefinition.fragmentShaderPath, "main");
+    unique_ptr<ShaderProgram> shaderProgram =
+        make_unique<ShaderProgram>(vertexShader, fragmentShader);
 
-    shared_ptr<ShaderProgram> shaderProgram =
-        make_shared<ShaderProgram>(vertexShader, fragmentShader);
+    vector<shared_ptr<Texture2D>> textures;
+    const Texture2DLoader textureLoader(graphicsDevice);
 
-    // TODO
+    for (const string& texturePath : effectDefinition.texturePaths) {
+        shared_ptr<Texture2D> texture = textureLoader.load(texturePath);
+        textures.push_back(texture);
+    }
+
+    const shared_ptr<Effect> effect = createEffect(effectDefinition, shaderProgram, textures);
+    effects.push_back(effect);
+
+    return effect;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestApplication::loadTexture(const shared_ptr<Mesh>& mesh, 
-    const ModelDefinition& modelDefinition)
+shared_ptr<Effect> TestApplication::createEffect(const EffectDefinition& effectDefinition,
+    unique_ptr<ShaderProgram>& shaderProgram, 
+    const vector<shared_ptr<Texture2D>>& textures)
 {
+    if (effectDefinition.id == VertexColorEffect::ID) {
+        return make_shared<VertexColorEffect>(graphicsDevice, renderPass, shaderProgram);
+    }
+
+    if (effectDefinition.id == Texture2DEffect::ID) {
+        return make_shared<Texture2DEffect>(graphicsDevice, renderPass, shaderProgram, textures[0]);
+    }
+
     RFX_NOT_IMPLEMENTED();
+}
 
-    //const path& texturePath = modelDefinition.texturePath; 
-    //if (texturePath.empty()) {
-    //    return;
-    //}
+// ---------------------------------------------------------------------------------------------------------------------
 
-    //const Texture2DLoader textureLoader(graphicsDevice);
-    //const shared_ptr<Texture2D> texture = textureLoader.load(texturePath);
-
-    //shared_ptr<Texture2DEffect> textureEffect = make_shared<Texture2DEffect>(
-    //    graphicsDevice,
-    //    descriptorPool,
-    //    renderPass,
-    //    texture);
-    //effects.push_back(textureEffect);
-
+shared_ptr<Mesh> TestApplication::loadModel(const ModelDefinition& modelDefinition,
+    const shared_ptr<Effect>& effect) const
+{
+    ModelLoader modelLoader(graphicsDevice);
+    return modelLoader.load(modelDefinition.modelPath, effect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

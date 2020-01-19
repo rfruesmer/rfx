@@ -8,6 +8,10 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+const string VertexColorEffect::ID = "vertex_color";
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 VertexColorEffect::VertexColorEffect(
     const shared_ptr<GraphicsDevice>& graphicsDevice,
     VkRenderPass renderPass,

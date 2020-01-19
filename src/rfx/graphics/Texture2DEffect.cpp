@@ -6,6 +6,11 @@ using namespace rfx;
 using namespace glm;
 using namespace std;
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const string Texture2DEffect::ID = "texture2D";
+
 // ---------------------------------------------------------------------------------------------------------------------
 
 Texture2DEffect::Texture2DEffect(const shared_ptr<GraphicsDevice>& graphicsDevice,

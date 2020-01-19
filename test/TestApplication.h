@@ -3,6 +3,8 @@
 #include "rfx/application/Win32Application.h"
 #include "rfx/scene/SceneNode.h"
 #include "rfx/graphics/Effect.h"
+#include "rfx/graphics/EffectDefinition.h"
+
 
 namespace rfx
 {
@@ -37,15 +39,14 @@ protected:
     void initRenderPass();
     void initFrameBuffers();
 
-    virtual void initEffects() = 0;
+    virtual void initEffects() {}
     virtual void initScene() = 0;
     void initCamera();
     void createSceneGraphRootNode();
     void loadModels();
     ModelDefinition deserialize(const Json::Value& jsonModelDefinition) const;
-    std::shared_ptr<Mesh> loadModel(const ModelDefinition& modelDefinition) const;
-    void loadShaders(const std::shared_ptr<Mesh>& mesh, const ModelDefinition& modelDefinition) const;
-    void loadTexture(const std::shared_ptr<Mesh>& mesh, const ModelDefinition& modelDefinition);
+    std::shared_ptr<Mesh> loadModel(const ModelDefinition& modelDefinition,
+        const std::shared_ptr<Effect>& effect) const;
     void attachToSceneGraph(const std::shared_ptr<Mesh>& mesh, const ModelDefinition& modelDefinition) const;
 
     virtual void initCommandBuffers() = 0;
@@ -72,12 +73,14 @@ protected:
     std::vector<VkFramebuffer> frameBuffers;
     std::shared_ptr<CommandPool> commandPool;
     std::vector<std::shared_ptr<CommandBuffer>> drawCommandBuffers;
-
     std::unique_ptr<SceneNode> sceneGraph;
-
     std::vector<std::shared_ptr<Effect>> effects;
 
 private:
+    std::shared_ptr<Effect> loadEffect(const EffectDefinition& effectDefinition);
+    std::shared_ptr<Effect> createEffect(const EffectDefinition& effectDefinition,
+        std::unique_ptr<ShaderProgram>& shaderProgram,
+        const std::vector<std::shared_ptr<Texture2D>>& textures);
     void updateViewProjectionMatrix();
 };
 

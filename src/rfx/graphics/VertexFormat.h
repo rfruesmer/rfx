@@ -10,6 +10,7 @@ public:
     static const int NORMALS = 4;
     static const int TEXCOORDS = 8;
 
+    VertexFormat();
     explicit VertexFormat(unsigned int formatMask);
     VertexFormat(const VertexFormat& theOther);
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "rfx/scene/Transform.h"
-#include "rfx/graphics/VertexFormat.h"
+#include "rfx/graphics/EffectDefinition.h"
 
 namespace rfx
 {
@@ -9,10 +9,7 @@ namespace rfx
 struct ModelDefinition
 {
     std::filesystem::path modelPath;
-    VertexFormat vertexFormat;
-    std::filesystem::path vertexShaderPath;
-    std::filesystem::path fragmentShaderPath;
-    std::filesystem::path texturePath;
+    EffectDefinition effect;
     Transform transform;
 };    
 

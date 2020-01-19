@@ -7,6 +7,11 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+VertexFormat::VertexFormat()
+    : VertexFormat(COORDINATES) {}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 VertexFormat::VertexFormat(unsigned int formatMask)
 {
     RFX_CHECK_ARGUMENT(formatMask & COORDINATES);
