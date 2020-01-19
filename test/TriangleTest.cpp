@@ -5,6 +5,11 @@
 using namespace rfx;
 using namespace std;
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+static const VertexFormat VERTEX_FORMAT(VertexFormat::COORDINATES | VertexFormat::COLORS);
+
 // ---------------------------------------------------------------------------------------------------------------------
 
 TriangleTest::TriangleTest(handle_t instanceHandle)
@@ -20,39 +25,59 @@ void TriangleTest::initialize()
     initRenderPass();
     initFrameBuffers();
 
+    initEffects();
     initScene();
-    initCamera();
-
-    initDescriptorSetLayout();
-    initPipelineLayout();
-    initPipeline();
-    initDescriptorPool();
-    initDescriptorSet();
+    
     initCommandBuffers();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TriangleTest::initEffects()
+{
+    ShaderLoader shaderLoader(graphicsDevice);
+    shared_ptr<VertexShader> vertexShader =
+        shaderLoader.loadVertexShader("assets/common/shaders/color.vert", "main", VERTEX_FORMAT);
+    shared_ptr<FragmentShader> fragmentShader =
+        shaderLoader.loadFragmentShader("assets/common/shaders/color.frag", "main");
+
+    std::unique_ptr<ShaderProgram> shaderProgram = 
+        make_unique<ShaderProgram>(vertexShader, fragmentShader);
+
+    vertexColorEffect = make_shared<VertexColorEffect>(graphicsDevice, renderPass, shaderProgram);
+
+    effects.push_back(vertexColorEffect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void TriangleTest::initScene()
 {
+    createTriangleMesh();
+    initCamera();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TriangleTest::createTriangleMesh()
+{
     const uint32_t vertexCount = 3;
-    const VertexFormat vertexFormat(VertexFormat::COORDINATES | VertexFormat::COLORS);
-    const uint32_t vertexBufferSize = vertexCount * vertexFormat.getVertexSize();
+    const uint32_t vertexBufferSize = vertexCount * VERTEX_FORMAT.getVertexSize();
     vector<float> vertexData = {
-         1.0f,  1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+        1.0f,  1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
         -1.0f,  1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-         0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f
+        0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f
     };
 
     const shared_ptr<Buffer> stagingVertexBuffer = graphicsDevice->createBuffer(
         vertexBufferSize,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    stagingVertexBuffer->load(vertexBufferSize, 
+    stagingVertexBuffer->load(vertexBufferSize,
         reinterpret_cast<const std::byte*>(vertexData.data()));
     stagingVertexBuffer->bind();
 
-    vertexBuffer = graphicsDevice->createVertexBuffer(vertexCount, vertexFormat);
+    shared_ptr<VertexBuffer> vertexBuffer = graphicsDevice->createVertexBuffer(vertexCount, VERTEX_FORMAT);
     vertexBuffer->bind();
 
 
@@ -64,12 +89,13 @@ void TriangleTest::initScene()
         indexBufferSize,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    stagingIndexBuffer->load(indexBufferSize, 
+    stagingIndexBuffer->load(indexBufferSize,
         reinterpret_cast<const std::byte*>(indexData.data()));
     stagingIndexBuffer->bind();
 
-    indexBuffer = graphicsDevice->createIndexBuffer(indexCount, VK_INDEX_TYPE_UINT32);
+    shared_ptr<IndexBuffer> indexBuffer = graphicsDevice->createIndexBuffer(indexCount, VK_INDEX_TYPE_UINT32);
     indexBuffer->bind();
+
 
     const shared_ptr<CommandPool>& commandPool = graphicsDevice->getTempCommandPool();
     shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer();
@@ -93,84 +119,7 @@ void TriangleTest::initScene()
 
     commandPool->freeCommandBuffer(commandBuffer);
 
-    ShaderLoader shaderLoader(graphicsDevice);
-    shaderStages[0] = shaderLoader.load("assets/common/shaders/color.vert", VK_SHADER_STAGE_VERTEX_BIT, "main");
-    shaderStages[1] = shaderLoader.load("assets/common/shaders/color.frag", VK_SHADER_STAGE_FRAGMENT_BIT, "main");
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TriangleTest::initPipeline()
-{
-    RFX_CHECK_STATE(renderPass != nullptr, "Render pass must be setup before");
-
-    VkDynamicState dynamicStateEnables[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
-    VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo = createDynamicState(2, dynamicStateEnables);
-    VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = createInputAssemblyState();
-    VkPipelineRasterizationStateCreateInfo rasterizationState = createRasterizationState();
-    VkPipelineColorBlendAttachmentState colorBlendAttachmentState = createColorBlendAttachmentState();
-    VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo = createColorBlendState(colorBlendAttachmentState);
-    VkPipelineViewportStateCreateInfo viewportStateCreateInfo = createViewportState();
-    VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo = createDepthStencilState();
-    VkPipelineMultisampleStateCreateInfo multiSampleStateCreateInfo = createMultiSampleState();
-
-    VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
-    pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineCreateInfo.pNext = nullptr;
-    pipelineCreateInfo.layout = pipelineLayout;
-    pipelineCreateInfo.basePipelineHandle = nullptr;
-    pipelineCreateInfo.basePipelineIndex = 0;
-    pipelineCreateInfo.flags = 0;
-    pipelineCreateInfo.pVertexInputState = &vertexBuffer->getInputState();
-    pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
-    pipelineCreateInfo.pRasterizationState = &rasterizationState;
-    pipelineCreateInfo.pColorBlendState = &colorBlendStateCreateInfo;
-    pipelineCreateInfo.pTessellationState = nullptr;
-    pipelineCreateInfo.pMultisampleState = &multiSampleStateCreateInfo;
-    pipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
-    pipelineCreateInfo.pViewportState = &viewportStateCreateInfo;
-    pipelineCreateInfo.pDepthStencilState = &depthStencilStateCreateInfo;
-    pipelineCreateInfo.stageCount = 2;
-    pipelineCreateInfo.pStages = shaderStages;
-    pipelineCreateInfo.renderPass = renderPass;
-    pipelineCreateInfo.subpass = 0;
-
-    pipeline = graphicsDevice->createGraphicsPipeline(pipelineCreateInfo);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TriangleTest::initDescriptorPool()
-{
-    TestApplication::initDescriptorPool({
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}
-    });
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TriangleTest::initDescriptorSet()
-{
-    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo;
-    descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    descriptorSetAllocateInfo.pNext = nullptr;
-    descriptorSetAllocateInfo.descriptorPool = descriptorPool;
-    descriptorSetAllocateInfo.descriptorSetCount = NUM_DESCRIPTOR_SETS;
-    descriptorSetAllocateInfo.pSetLayouts = &descriptorSetLayout;
-
-    graphicsDevice->allocateDescriptorSets(descriptorSetAllocateInfo, descriptorSets);
-
-    VkWriteDescriptorSet writes = {};
-    writes.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writes.pNext = nullptr;
-    writes.dstSet = descriptorSets[0];
-    writes.descriptorCount = 1;
-    writes.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    writes.pBufferInfo = &uniformBuffer->getBufferInfo();
-    writes.dstArrayElement = 0;
-    writes.dstBinding = 0;
-
-    graphicsDevice->updateDescriptorSets(1, &writes);
+    triangleMesh = make_shared<Mesh>(graphicsDevice, vertexBuffer, indexBuffer, vertexColorEffect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -217,15 +166,17 @@ void TriangleTest::initCommandBuffers()
         commandBuffer->beginRenderPass(renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
         commandBuffer->setViewport(viewport);
         commandBuffer->setScissor(scissor);
-        commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-        commandBuffer->bindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, descriptorSets);
-        commandBuffer->bindVertexBuffers({ vertexBuffer });
-        commandBuffer->bindIndexBuffer(indexBuffer);
-        commandBuffer->drawIndexed(indexBuffer->getIndexCount());
+
+        commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, vertexColorEffect->getPipeline());
+        commandBuffer->bindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS, 
+            vertexColorEffect->getPipelineLayout(), vertexColorEffect->getDescriptorSets());
+        commandBuffer->bindVertexBuffers({ triangleMesh->getVertexBuffer() });
+        commandBuffer->bindIndexBuffer(triangleMesh->getIndexBuffer());
+        commandBuffer->drawIndexed(triangleMesh->getIndexBuffer()->getIndexCount());
+
         commandBuffer->endRenderPass();
         commandBuffer->end();
     }
-
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

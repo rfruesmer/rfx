@@ -12,7 +12,7 @@ namespace rfx
 class Application : public WindowListener
 {
 public:
-    explicit Application(std::filesystem::path configurationPath);
+    explicit Application(const std::filesystem::path& configurationPath);
     virtual ~Application() = default;
 
     virtual void initialize();

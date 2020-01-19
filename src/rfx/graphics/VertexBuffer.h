@@ -22,17 +22,9 @@ public:
     uint32_t getVertexCount() const;
     VertexFormat getVertexFormat() const;
 
-    const VkPipelineVertexInputStateCreateInfo& getInputState() const;
-
 private:
-    void createVertexDescriptions();
-
     uint32_t vertexCount = 0;
     VertexFormat vertexFormat;
-
-    VkPipelineVertexInputStateCreateInfo inputState = {};
-    VkVertexInputBindingDescription bindingDescription = {};
-    std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
 };
     
 }

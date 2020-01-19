@@ -3,8 +3,10 @@
 #include "rfx/graphics/SPIR.h"
 #include "rfx/core/FileUtil.h"
 
+
 using namespace rfx;
 using namespace std;
+using namespace std::filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -13,10 +15,22 @@ ShaderLoader::ShaderLoader(const std::shared_ptr<GraphicsDevice>& graphicsDevice
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VkPipelineShaderStageCreateInfo ShaderLoader::load(
-    const std::filesystem::path& path, 
+shared_ptr<VertexShader> ShaderLoader::loadVertexShader(const path& path, 
+    const char* entryPoint,
+    const VertexFormat& vertexFormat)
+{
+    VkPipelineShaderStageCreateInfo shaderStageCreateInfo = 
+        loadInternal(path, VK_SHADER_STAGE_VERTEX_BIT, entryPoint);
+
+    return make_shared<VertexShader>(graphicsDevice, shaderStageCreateInfo, vertexFormat);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkPipelineShaderStageCreateInfo ShaderLoader::loadInternal(
+    const path& path, 
     VkShaderStageFlagBits stage,
-    const char* entryPoint)
+    const char* entryPoint) const
 {
     string shaderString;
     FileUtil::readTextFile(path, shaderString);
@@ -44,3 +58,15 @@ VkPipelineShaderStageCreateInfo ShaderLoader::load(
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+
+shared_ptr<FragmentShader> ShaderLoader::loadFragmentShader(const path& path,
+    const char* entryPoint)
+{
+    VkPipelineShaderStageCreateInfo shaderStageCreateInfo =
+        loadInternal(path, VK_SHADER_STAGE_FRAGMENT_BIT, entryPoint);
+
+    return make_shared<FragmentShader>(graphicsDevice, shaderStageCreateInfo);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+

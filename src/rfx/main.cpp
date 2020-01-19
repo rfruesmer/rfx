@@ -36,10 +36,11 @@ int main()
     {
         RFX_LOG_INFO << "Starting rfx application ...";
 
-        //TriangleTest theApp(instanceHandle);
+        TriangleTest theApp(instanceHandle);
         //CubeTest theApp(instanceHandle);
         //TexturedQuadTest theApp(instanceHandle);
-        TexturedCubesTest theApp(instanceHandle);
+        //TexturedCubesTest theApp(instanceHandle);
+
         theApp.initialize();
         theApp.run();
 
@@ -57,7 +58,7 @@ int main()
     return EXIT_FAILURE;
 }
 
-#else // _WINDOWS
+#else
 static_assert(false, "Not implemented");
 #endif // _WINDOWS
 

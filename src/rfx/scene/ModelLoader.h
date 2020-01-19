@@ -14,7 +14,8 @@ public:
 
     explicit ModelLoader(const std::shared_ptr<GraphicsDevice>& graphicsDevice);
 
-    std::shared_ptr<Mesh> load(const std::filesystem::path& modelPath, const VertexFormat& vertexFormat);
+    std::shared_ptr<Mesh> load(const std::filesystem::path& modelPath, 
+        const std::shared_ptr<Effect>& effect);
 
 private:
     void loadInternal(const std::filesystem::path& modelPath, const VertexFormat& vertexFormat);

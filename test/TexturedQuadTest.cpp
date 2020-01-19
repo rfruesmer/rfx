@@ -6,6 +6,7 @@
 using namespace rfx;
 using namespace std;
 
+/**
 // ---------------------------------------------------------------------------------------------------------------------
 
 TexturedQuadTest::TexturedQuadTest(handle_t instanceHandle)
@@ -21,15 +22,21 @@ void TexturedQuadTest::initialize()
     initRenderPass();
     initFrameBuffers();
 
+    initEffects();
     initScene();
-    initCamera();
-
+    
     initDescriptorSetLayout();
     initPipelineLayout();
     initPipeline();
     initDescriptorPool();
-    initDescriptorSet();
     initCommandBuffers();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedQuadTest::initEffects()
+{
+    textureEffect = make_shared<Texture2DEffect>(graphicsDevice, descriptorPool, descriptorSetLayout, texture);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -99,8 +106,10 @@ void TexturedQuadTest::initScene()
     shaderStages[0] = shaderLoader.load("assets/common/shaders/texture.vert", VK_SHADER_STAGE_VERTEX_BIT, "main");
     shaderStages[1] = shaderLoader.load("assets/common/shaders/texture.frag", VK_SHADER_STAGE_FRAGMENT_BIT, "main");
 
-    Texture2DLoader textureLoader(graphicsDevice);
+    const Texture2DLoader textureLoader(graphicsDevice);
     texture = textureLoader.load("assets/common/textures/lunarg_logo-256x256.png");
+
+    initCamera();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -181,41 +190,6 @@ void TexturedQuadTest::initDescriptorPool()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedQuadTest::initDescriptorSet()
-{
-    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo;
-    descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    descriptorSetAllocateInfo.pNext = nullptr;
-    descriptorSetAllocateInfo.descriptorPool = descriptorPool;
-    descriptorSetAllocateInfo.descriptorSetCount = NUM_DESCRIPTOR_SETS;
-    descriptorSetAllocateInfo.pSetLayouts = &descriptorSetLayout;
-
-    graphicsDevice->allocateDescriptorSets(descriptorSetAllocateInfo, descriptorSets);
-
-    VkWriteDescriptorSet writes[2] = {};
-    writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writes[0].pNext = nullptr;
-    writes[0].dstSet = descriptorSets[0];
-    writes[0].dstBinding = 0;
-    writes[0].dstArrayElement = 0;
-    writes[0].descriptorCount = 1;
-    writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    writes[0].pBufferInfo = &uniformBuffer->getBufferInfo();
-
-    writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writes[1].pNext = nullptr;
-    writes[1].dstSet = descriptorSets[0];
-    writes[1].dstBinding = 1;
-    writes[1].dstArrayElement = 0;
-    writes[1].descriptorCount = 1;
-    writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    writes[1].pImageInfo = &texture->getDescriptorImageInfo();
-
-    graphicsDevice->updateDescriptorSets(2, writes);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void TexturedQuadTest::initCommandBuffers()
 {
     drawCommandBuffers = commandPool->allocateCommandBuffers(graphicsDevice->getSwapChainBuffers().size());
@@ -259,7 +233,7 @@ void TexturedQuadTest::initCommandBuffers()
         commandBuffer->setViewport(viewport);
         commandBuffer->setScissor(scissor);
         commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-        commandBuffer->bindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, descriptorSets);
+        commandBuffer->bindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, textureEffect->getDescriptorSets());
         commandBuffer->bindVertexBuffers({ vertexBuffer });
         commandBuffer->bindIndexBuffer(indexBuffer);
         commandBuffer->drawIndexed(indexBuffer->getIndexCount());
@@ -270,3 +244,4 @@ void TexturedQuadTest::initCommandBuffers()
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+*/

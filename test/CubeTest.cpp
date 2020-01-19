@@ -1,15 +1,13 @@
 #include "rfx/pch.h"
 #include "test/CubeTest.h"
-#include "rfx/scene/ModelDefinitionDeserializer.h"
-#include "rfx/scene/ModelLoader.h"
-#include "rfx/graphics/VertexFormat.h"
-#include "rfx/graphics/ShaderLoader.h"
+
 
 using namespace rfx;
 using namespace glm;
 using namespace std;
-using namespace std::filesystem;
+using namespace filesystem;
 
+/**
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -31,15 +29,21 @@ void CubeTest::initialize()
     initRenderPass();
     initFrameBuffers();
 
+    initEffects();
     initScene();
-    initCamera();
 
     initDescriptorSetLayout();
     initPipelineLayout();
     initPipeline();
     initDescriptorPool();
-    initDescriptorSet();
     initCommandBuffers();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CubeTest::initEffects()
+{
+    vertexColorEffect = make_shared<VertexColorEffect>(graphicsDevice, descriptorPool, descriptorSetLayout);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -48,58 +52,7 @@ void CubeTest::initScene()
 {
     createSceneGraphRootNode();
     loadModels();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void CubeTest::createSceneGraphRootNode()
-{
-    sceneGraph = make_unique<SceneNode>();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void CubeTest::loadModels()
-{
-    Json::Value jsonModelDefinitions = configuration["scene"]["models"];
-    const ModelDefinitionDeserializer deserializer;
-
-    for (const auto& jsonModelDefinition : jsonModelDefinitions) {
-        ModelDefinition modelDefinition = deserializer.deserialize(jsonModelDefinition);
-        const shared_ptr<Mesh> mesh = loadModel(modelDefinition);
-        loadShaders(modelDefinition, mesh);
-        attachToSceneGraph(mesh);
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-shared_ptr<Mesh> CubeTest::loadModel(const ModelDefinition& modelDefinition) const
-{
-    ModelLoader modelLoader(graphicsDevice);
-    return modelLoader.load(modelDefinition.getModelPath(), modelDefinition.getVertexFormat());
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void CubeTest::loadShaders(const ModelDefinition& modelDefinition, const shared_ptr<Mesh>& mesh) const
-{
-    ShaderLoader shaderLoader(graphicsDevice);
-
-    const VkPipelineShaderStageCreateInfo vertexShaderStage =
-        shaderLoader.load(modelDefinition.getVertexShaderPath(), VK_SHADER_STAGE_VERTEX_BIT, "main");
-    mesh->setVertexShader(vertexShaderStage);
-
-    const VkPipelineShaderStageCreateInfo fragmentShaderStage =
-        shaderLoader.load(modelDefinition.getFragmentShaderPath(), VK_SHADER_STAGE_FRAGMENT_BIT, "main");
-    mesh->setFragmentShader(fragmentShaderStage);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void CubeTest::attachToSceneGraph(const shared_ptr<Mesh>& mesh) const
-{
-    sceneGraph->attach(mesh);
+    initCamera();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -118,7 +71,7 @@ void CubeTest::initPipeline()
     VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo = createDepthStencilState();
     VkPipelineMultisampleStateCreateInfo multiSampleStateCreateInfo = createMultiSampleState();
 
-    const shared_ptr<Mesh>& mesh = sceneGraph->getMeshes().at(0);
+    const shared_ptr<Mesh>& mesh = sceneGraph->getChildNodes().at(0)->getMeshes().at(0);
 
     VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
     pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -155,32 +108,6 @@ void CubeTest::initDescriptorPool()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void CubeTest::initDescriptorSet()
-{
-    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo;
-    descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    descriptorSetAllocateInfo.pNext = nullptr;
-    descriptorSetAllocateInfo.descriptorPool = descriptorPool;
-    descriptorSetAllocateInfo.descriptorSetCount = NUM_DESCRIPTOR_SETS;
-    descriptorSetAllocateInfo.pSetLayouts = &descriptorSetLayout;
-
-    graphicsDevice->allocateDescriptorSets(descriptorSetAllocateInfo, descriptorSets);
-
-    VkWriteDescriptorSet writes = {};
-    writes.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writes.pNext = nullptr;
-    writes.dstSet = descriptorSets[0];
-    writes.descriptorCount = 1;
-    writes.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    writes.pBufferInfo = &uniformBuffer->getBufferInfo();
-    writes.dstArrayElement = 0;
-    writes.dstBinding = 0;
-
-    graphicsDevice->updateDescriptorSets(1, &writes);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void CubeTest::initCommandBuffers()
 {
     drawCommandBuffers = commandPool->allocateCommandBuffers(graphicsDevice->getSwapChainBuffers().size());
@@ -206,8 +133,6 @@ void CubeTest::initCommandBuffers()
     scissor.offset.x = 0;
     scissor.offset.y = 0;
 
-    const shared_ptr<Mesh>& mesh = sceneGraph->getMeshes().at(0);
-
     for (size_t i = 0, count = drawCommandBuffers.size(); i < count; ++i) {
         VkRenderPassBeginInfo renderPassBeginInfo = {};
         renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -226,13 +151,31 @@ void CubeTest::initCommandBuffers()
         commandBuffer->setViewport(viewport);
         commandBuffer->setScissor(scissor);
         commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-        commandBuffer->bindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, descriptorSets);
-        commandBuffer->bindVertexBuffers({ mesh->getVertexBuffer()  });
-        commandBuffer->bindIndexBuffer(mesh->getIndexBuffer());
-        commandBuffer->drawIndexed(mesh->getIndexBuffer()->getIndexCount());
+        commandBuffer->bindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, vertexColorEffect->getDescriptorSets());
+
+        drawNode(sceneGraph, commandBuffer);
+
         commandBuffer->endRenderPass();
         commandBuffer->end();
     }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+
+void CubeTest::drawNode(const unique_ptr<SceneNode>& sceneNode,
+    const shared_ptr<CommandBuffer>& commandBuffer)
+{
+    for (const auto& mesh : sceneNode->getMeshes()) {
+        commandBuffer->bindVertexBuffers({ mesh->getVertexBuffer() });
+        commandBuffer->bindIndexBuffer(mesh->getIndexBuffer());
+        commandBuffer->drawIndexed(mesh->getIndexBuffer()->getIndexCount());
+    }
+
+    for (const auto& childNode : sceneNode->getChildNodes()) {
+        drawNode(childNode, commandBuffer);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+*/

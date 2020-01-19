@@ -4,6 +4,7 @@
 
 using namespace rfx;
 using namespace std;
+using namespace std::filesystem;
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -13,25 +14,28 @@ ModelLoader::ModelLoader(const shared_ptr<GraphicsDevice>& graphicsDevice)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-shared_ptr<Mesh> ModelLoader::load(const filesystem::path& modelPath, const VertexFormat& vertexFormat)
+shared_ptr<Mesh> ModelLoader::load(const path& modelPath, 
+    const shared_ptr<Effect>& effect)
 {
-    loadInternal(modelPath, vertexFormat);
-    createBuffers(vertexFormat);
+    loadInternal(modelPath, effect->getVertexFormat());
+    createBuffers(effect->getVertexFormat());
     copyBuffers();
 
-    return make_shared<Mesh>(graphicsDevice, vertexBuffer, indexBuffer);
+    return make_shared<Mesh>(graphicsDevice, vertexBuffer, indexBuffer, effect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ModelLoader::loadInternal(const std::filesystem::path& modelPath, const VertexFormat& vertexFormat)
+void ModelLoader::loadInternal(const path& modelPath, const VertexFormat& vertexFormat)
 {
     static const int assimpFlags =
         aiProcess_FlipWindingOrder
         | aiProcess_Triangulate
         | aiProcess_PreTransformVertices;
 
-
+    const path absolutePath = modelPath.is_absolute()
+            ? modelPath
+            : current_path() / modelPath;
     Assimp::Importer assimpImporter;
     const aiScene* assimpScene = assimpImporter.ReadFile(modelPath.string().c_str(), assimpFlags);
 

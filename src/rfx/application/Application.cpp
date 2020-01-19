@@ -7,8 +7,8 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-Application::Application(filesystem::path configurationPath)
-    : configurationPath(move(configurationPath)) {}
+Application::Application(const filesystem::path& configurationPath)
+    : configurationPath(configurationPath) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 

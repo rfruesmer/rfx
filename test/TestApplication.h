@@ -1,9 +1,12 @@
 #pragma once
 
 #include "rfx/application/Win32Application.h"
+#include "rfx/scene/SceneNode.h"
+#include "rfx/graphics/Effect.h"
 
 namespace rfx
 {
+    struct ModelDefinition;
 
 
 class TestApplication :
@@ -19,9 +22,8 @@ public:
     static const uint32_t NUM_VIEWPORTS = 1;
     static const uint32_t NUM_SCISSORS = NUM_VIEWPORTS;
 
-    explicit TestApplication(std::filesystem::path configurationPath, handle_t instanceHandle);
+    explicit TestApplication(const std::filesystem::path& configurationPath, handle_t instanceHandle);
 
-    void updateModelViewProjection();
     void update() override;
     void draw() override;
     void destroyDescriptors();
@@ -29,39 +31,30 @@ public:
     void destroySwapChainAndDepthBuffer() const;
     void createSwapChainAndDepthBuffer() const;
     void destroyRenderPass();
-    void destroyPipelineLayout();
-    void destroyPipeline();
 
 protected:
     void initCommandPool();
     void initRenderPass();
     void initFrameBuffers();
 
+    virtual void initEffects() = 0;
     virtual void initScene() = 0;
     void initCamera();
+    void createSceneGraphRootNode();
+    void loadModels();
+    ModelDefinition deserialize(const Json::Value& jsonModelDefinition) const;
+    std::shared_ptr<Mesh> loadModel(const ModelDefinition& modelDefinition) const;
+    void loadShaders(const std::shared_ptr<Mesh>& mesh, const ModelDefinition& modelDefinition) const;
+    void loadTexture(const std::shared_ptr<Mesh>& mesh, const ModelDefinition& modelDefinition);
+    void attachToSceneGraph(const std::shared_ptr<Mesh>& mesh, const ModelDefinition& modelDefinition) const;
 
-    virtual void initDescriptorSetLayout();
-    void initPipelineLayout();
-    virtual void initPipeline() = 0;
-    void initDescriptorPool(const std::vector<VkDescriptorPoolSize>& poolSizes);
-    virtual void initDescriptorSet() = 0;
     virtual void initCommandBuffers() = 0;
-
-
-    VkPipelineDynamicStateCreateInfo createDynamicState(uint32_t dynamicStateCount, VkDynamicState dynamicStates[]);
-    VkPipelineInputAssemblyStateCreateInfo createInputAssemblyState();
-    VkPipelineRasterizationStateCreateInfo createRasterizationState();
-    VkPipelineColorBlendAttachmentState createColorBlendAttachmentState();
-    VkPipelineColorBlendStateCreateInfo createColorBlendState(
-        const VkPipelineColorBlendAttachmentState& colorBlendAttachmentState);
-    VkPipelineViewportStateCreateInfo createViewportState();
-    VkPipelineDepthStencilStateCreateInfo createDepthStencilState();
-    VkPipelineMultisampleStateCreateInfo createMultiSampleState();
-
 
     void recreateSwapChain();
     void destroyFrameBuffers();
     void freeCommandBuffers() const;
+
+    void onViewProjectionMatrixUpdated();
 
     void shutdown() override;
 
@@ -71,18 +64,21 @@ protected:
     glm::mat4 modelMatrix;
     glm::mat4 viewMatrix;
     glm::mat4 projectionMatrix;
-    glm::mat4 modelViewProjMatrix;
+    glm::mat4 viewProjMatrix;
 
-    VkPipelineLayout pipelineLayout = nullptr;
-    VkDescriptorPool descriptorPool = nullptr;
-    std::vector<VkDescriptorSet> descriptorSets;
-    VkDescriptorSetLayout descriptorSetLayout;
+    VkDescriptorSetLayout descriptorSetLayout = nullptr;
+
     VkRenderPass renderPass = nullptr;
     std::vector<VkFramebuffer> frameBuffers;
     std::shared_ptr<CommandPool> commandPool;
     std::vector<std::shared_ptr<CommandBuffer>> drawCommandBuffers;
-    std::shared_ptr<Buffer> uniformBuffer;
-    VkPipeline pipeline = nullptr;
+
+    std::unique_ptr<SceneNode> sceneGraph;
+
+    std::vector<std::shared_ptr<Effect>> effects;
+
+private:
+    void updateViewProjectionMatrix();
 };
 
 }

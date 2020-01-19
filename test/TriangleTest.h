@@ -1,6 +1,7 @@
 #pragma once
 
 #include "test/TestApplication.h"
+#include "rfx/graphics/VertexColorEffect.h"
 
 namespace rfx
 {
@@ -13,16 +14,15 @@ public:
     void initialize() override;
 
 protected:
+    void initEffects() override;
     void initScene() override;
-    void initDescriptorPool();
-    void initPipeline() override;
-    void initDescriptorSet() override;
     void initCommandBuffers() override;
 
 private:
-    std::shared_ptr<VertexBuffer> vertexBuffer;
-    std::shared_ptr<IndexBuffer> indexBuffer;
-    VkPipelineShaderStageCreateInfo shaderStages[2];
+    void createTriangleMesh();
+
+    std::shared_ptr<Mesh> triangleMesh;
+    std::shared_ptr<VertexColorEffect> vertexColorEffect;
 };
 
 }

@@ -1,39 +1,38 @@
 #include "rfx/pch.h"
-#include "rfx/scene/Mesh.h"
+#include "rfx/graphics/Shader.h"
 
 using namespace rfx;
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-Mesh::Mesh(const shared_ptr<GraphicsDevice>& graphicsDevice,
-           const shared_ptr<VertexBuffer>& vertexBuffer, 
-           const shared_ptr<IndexBuffer>& indexBuffer,
-           const std::shared_ptr<Effect>& effect)
-    : graphicsDevice(graphicsDevice),
-      vertexBuffer(vertexBuffer),
-      indexBuffer(indexBuffer),
-      effect(effect) {}
+Shader::Shader(const std::shared_ptr<GraphicsDevice>& graphicsDevice, 
+    const VkPipelineShaderStageCreateInfo& stageCreateInfo)
+        : graphicsDevice(graphicsDevice),
+          stageCreateInfo(stageCreateInfo) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const shared_ptr<VertexBuffer>& Mesh::getVertexBuffer() const
+Shader::~Shader()
 {
-    return vertexBuffer;
+    dispose();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const shared_ptr<IndexBuffer>& Mesh::getIndexBuffer() const
+void Shader::dispose()
 {
-    return indexBuffer;
+    if (stageCreateInfo.module) {
+        graphicsDevice->destroyShaderModule(stageCreateInfo.module);
+        stageCreateInfo.module = nullptr;
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const shared_ptr<Effect>& Mesh::getEffect() const
+const VkPipelineShaderStageCreateInfo& Shader::getStageCreateInfo() const
 {
-    return effect;
+    return stageCreateInfo;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
