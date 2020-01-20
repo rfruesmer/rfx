@@ -219,6 +219,11 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\rfx\graphics\effect\DirectionalLight.h" />
+    <ClInclude Include="src\rfx\graphics\effect\Light.h" />
+    <ClInclude Include="src\rfx\scene\Scene.h" />
+    <ClInclude Include="src\rfx\graphics\effect\DirectionalVertexLightingEffect.h" />
+    <ClInclude Include="test\DirectionalVertexLightingTest.h" />
     <ClInclude Include="src\rfx\graphics\effect\EffectDefinitionDeserializer.h" />
     <ClInclude Include="src\rfx\graphics\effect\EffectDefinition.h" />
     <ClInclude Include="src\rfx\graphics\shader\FragmentShader.h" />
@@ -277,6 +282,11 @@
     <ClInclude Include="src\rfx\graphics\shader\VertexShader.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\rfx\graphics\effect\DirectionalLight.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\Light.cpp" />
+    <ClCompile Include="src\rfx\scene\Scene.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\DirectionalVertexLightingEffect.cpp" />
+    <ClCompile Include="test\DirectionalVertexLightingTest.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\EffectDefinitionDeserializer.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\EffectDefinition.cpp" />
     <ClCompile Include="src\rfx\graphics\shader\FragmentShader.cpp" />
@@ -348,6 +358,7 @@
     <None Include="assets\application-config.json" />
     <None Include="assets\common\shaders\color.frag" />
     <None Include="assets\common\shaders\color.vert" />
+    <None Include="assets\common\shaders\directional_light.vert" />
     <None Include="assets\common\shaders\texture.frag" />
     <None Include="assets\common\shaders\texture.vert" />
     <None Include="assets\common\textures\checkerboard_nomips_rgba.ktx" />
@@ -358,6 +369,7 @@
     <None Include="assets\shaders\color.vert" />
     <None Include="assets\shaders\texture.frag" />
     <None Include="assets\shaders\texture.vert" />
+    <None Include="assets\tests\directional-vertex-lighting\application-config.json" />
     <None Include="assets\tests\textured-cubes\application-config.json" />
     <None Include="assets\tests\textured-cubes\crate01_color_height_rgba.ktx" />
     <None Include="assets\tests\textured-cubes\crate02_color_height_rgba.ktx" />

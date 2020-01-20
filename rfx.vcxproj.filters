@@ -183,6 +183,21 @@
     <ClInclude Include="src\rfx\application\ShaderLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="test\DirectionalVertexLightingTest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\DirectionalVertexLightingEffect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\scene\Scene.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\DirectionalLight.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\Light.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\rfx\pch.cpp">
@@ -326,6 +341,21 @@
     <ClCompile Include="src\rfx\application\ShaderLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\DirectionalVertexLightingTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\DirectionalVertexLightingEffect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\scene\Scene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\DirectionalLight.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\Light.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\rfx.ico">
@@ -365,5 +395,7 @@
     <None Include="assets\tests\textured-cubes\application-config.json" />
     <None Include="assets\tests\textured-cubes\crate01_color_height_rgba.ktx" />
     <None Include="assets\tests\textured-cubes\crate02_color_height_rgba.ktx" />
+    <None Include="assets\tests\directional-vertex-lighting\application-config.json" />
+    <None Include="assets\common\shaders\directional_light.vert" />
   </ItemGroup>
 </Project>

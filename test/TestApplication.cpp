@@ -31,7 +31,7 @@ static_assert(false, "not implemented yet");
 void TestApplication::initScene()
 {
     loadEffectsDefaults();
-    createSceneGraphRootNode();
+    createScene();
     loadModels();
     initCamera();
 }
@@ -57,9 +57,9 @@ void TestApplication::loadEffectDefaults(const Json::Value& jsonEffectDefaults)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestApplication::createSceneGraphRootNode()
+void TestApplication::createScene()
 {
-    sceneGraph = make_unique<SceneNode>();
+    scene = make_unique<Scene>();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -155,7 +155,7 @@ void TestApplication::attachToSceneGraph(const shared_ptr<Mesh>& mesh,
     }
 
     sceneNode->attach(mesh);
-    sceneGraph->attach(sceneNode);
+    scene->add(sceneNode);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -451,7 +451,7 @@ void TestApplication::initCommandBuffers()
         commandBuffer->beginRenderPass(renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
         commandBuffer->setViewport(viewport);
         commandBuffer->setScissor(scissor);
-        drawSceneNode(sceneGraph, commandBuffer);
+        drawSceneNode(scene->getRootNode(), commandBuffer);
         commandBuffer->endRenderPass();
         commandBuffer->end();
     }

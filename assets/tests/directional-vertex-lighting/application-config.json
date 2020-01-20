@@ -1,0 +1,50 @@
+{
+  "application": {
+    "name": "rfx - Directional Vertex Lighting Demo",
+    "logLevel": "TRACE"
+  },
+  "graphics": {
+    "resolution": {
+      "x": 1600,
+      "y": 1000
+    },
+    "effect_defaults": [
+      {
+        "id": "directional_vertex_lighting",
+        "vertexFormat": [
+          "COORDINATES",
+          "NORMALS"
+        ],
+        "vertexShaderPath": "assets/common/shaders/directional_light.vert",
+        "fragmentShaderPath": "assets/common/shaders/color.frag",
+        "material": {
+          "ambient": [ 0, 0, 0, 1 ],
+          "diffuse": [ 0, 0, 0, 1 ],
+          "specular": [ 0, 0, 0, 1 ],
+          "emissive": [ 0, 0, 0, 1 ],
+          "shininess": 0 
+        }
+      }
+    ]
+  },
+  "scene": {
+    "models": [
+      {
+        "path": "assets/common/models/teapot.dae",
+        "effect": {
+          "id": "directional_vertex_lighting"
+        }
+      }
+    ],
+    "lights": [
+      {
+        "id": "sun",
+        "type": "directional",
+        "direction": [ 0, -1, 0 ],
+        "ambient": [ 0, 0, 0 ],
+        "directional": [ 1, 1, 1 ],
+        "specular": [ 0, 0, 0 ]
+      }
+    ]
+  }
+}

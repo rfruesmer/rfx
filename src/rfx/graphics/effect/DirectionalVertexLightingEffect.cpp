@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "rfx/graphics/effect/VertexColorEffect.h"
+#include "rfx/graphics/effect/DirectionalVertexLightingEffect.h"
 
 
 using namespace rfx;
@@ -8,11 +8,11 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const string VertexColorEffect::ID = "vertex_color";
+const string DirectionalVertexLightingEffect::ID = "directional_vertex_lighting";
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VertexColorEffect::VertexColorEffect(
+DirectionalVertexLightingEffect::DirectionalVertexLightingEffect(
     const shared_ptr<GraphicsDevice>& graphicsDevice,
     VkRenderPass renderPass,
     std::unique_ptr<ShaderProgram>& shaderProgram)
@@ -22,7 +22,7 @@ VertexColorEffect::VertexColorEffect(
     initDescriptorSetLayout();
     initDescriptorPool({
         { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}
-    });
+        });
     initDescriptorSet();
     initPipelineLayout();
     initPipeline();
@@ -30,7 +30,7 @@ VertexColorEffect::VertexColorEffect(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexColorEffect::initDescriptorSetLayout()
+void DirectionalVertexLightingEffect::initDescriptorSetLayout()
 {
     VkDescriptorSetLayoutBinding layoutBinding = {};
     layoutBinding.binding = 0;
@@ -44,7 +44,7 @@ void VertexColorEffect::initDescriptorSetLayout()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexColorEffect::initDescriptorSet()
+void DirectionalVertexLightingEffect::initDescriptorSet()
 {
     VkDescriptorSetAllocateInfo descriptorSetAllocateInfo;
     descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -70,9 +70,10 @@ void VertexColorEffect::initDescriptorSet()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const string& VertexColorEffect::getId() const
+const string& DirectionalVertexLightingEffect::getId() const
 {
     return ID;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+

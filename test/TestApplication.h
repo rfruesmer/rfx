@@ -1,7 +1,7 @@
 #pragma once
 
 #include "rfx/application/Win32Application.h"
-#include "rfx/scene/SceneNode.h"
+#include "rfx/scene/Scene.h"
 #include "rfx/scene/ModelDefinitionDeserializer.h"
 #include "rfx/graphics/effect/Effect.h"
 #include "rfx/graphics/effect/EffectDefinition.h"
@@ -43,7 +43,7 @@ protected:
     virtual void initScene();
     void loadEffectsDefaults();
     void loadEffectDefaults(const Json::Value& jsonEffectDefaults);
-    void createSceneGraphRootNode();
+    void createScene();
     void loadModels();
     ModelDefinition deserialize(const Json::Value& jsonModelDefinition,
         const ModelDefinitionDeserializer& deserializer) const;
@@ -76,7 +76,7 @@ protected:
     std::vector<VkFramebuffer> frameBuffers;
     std::shared_ptr<CommandPool> commandPool;
     std::vector<std::shared_ptr<CommandBuffer>> drawCommandBuffers;
-    std::unique_ptr<SceneNode> sceneGraph;
+    std::unique_ptr<Scene> scene;
     std::unordered_map<std::string, EffectDefinition> effectDefaults;
     std::vector<std::shared_ptr<Effect>> effects;
 
