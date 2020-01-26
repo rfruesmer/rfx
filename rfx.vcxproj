@@ -219,10 +219,16 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\rfx\core\JsonDeserializer.h" />
+    <ClInclude Include="src\rfx\graphics\effect\PointLight.h" />
+    <ClInclude Include="src\rfx\graphics\effect\SpotLight.h" />
+    <ClInclude Include="src\rfx\graphics\effect\LightDefinitionDeserializer.h" />
+    <ClInclude Include="src\rfx\graphics\effect\MaterialDefinitionDeserializer.h" />
+    <ClInclude Include="src\rfx\graphics\effect\Material.h" />
     <ClInclude Include="src\rfx\graphics\effect\DirectionalLight.h" />
     <ClInclude Include="src\rfx\graphics\effect\Light.h" />
     <ClInclude Include="src\rfx\scene\Scene.h" />
-    <ClInclude Include="src\rfx\graphics\effect\DirectionalVertexLightingEffect.h" />
+    <ClInclude Include="src\rfx\graphics\effect\DirectionalLightEffect.h" />
     <ClInclude Include="test\DirectionalVertexLightingTest.h" />
     <ClInclude Include="src\rfx\graphics\effect\EffectDefinitionDeserializer.h" />
     <ClInclude Include="src\rfx\graphics\effect\EffectDefinition.h" />
@@ -282,10 +288,16 @@
     <ClInclude Include="src\rfx\graphics\shader\VertexShader.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\rfx\core\JsonDeserializer.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\PointLight.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\SpotLight.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\LightDefinitionDeserializer.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\MaterialDefinitionDeserializer.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\Material.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\DirectionalLight.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\Light.cpp" />
     <ClCompile Include="src\rfx\scene\Scene.cpp" />
-    <ClCompile Include="src\rfx\graphics\effect\DirectionalVertexLightingEffect.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\DirectionalLightEffect.cpp" />
     <ClCompile Include="test\DirectionalVertexLightingTest.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\EffectDefinitionDeserializer.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\EffectDefinition.cpp" />
@@ -356,6 +368,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\application-config.json" />
+    <None Include="assets\common\models\teapot.dae" />
     <None Include="assets\common\shaders\color.frag" />
     <None Include="assets\common\shaders\color.vert" />
     <None Include="assets\common\shaders\directional_light.vert" />

@@ -311,7 +311,7 @@ void Effect::setViewProjMatrix(const glm::mat4& matrix)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Effect::setModelViewProjMatrix(const glm::mat4& matrix) const
+void Effect::setModelViewProjMatrix(const glm::mat4& matrix)
 {
     uniformBuffer->load(sizeof(glm::mat4), 
         reinterpret_cast<std::byte*>(const_cast<glm::mat4*>(&matrix)));

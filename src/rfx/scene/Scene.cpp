@@ -13,6 +13,13 @@ Scene::Scene()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+const unique_ptr<SceneNode>& Scene::getRootNode() const
+{
+    return rootNode;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void Scene::add(unique_ptr<SceneNode>& node) const
 {
     rootNode->attach(node);
@@ -20,9 +27,16 @@ void Scene::add(unique_ptr<SceneNode>& node) const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const unique_ptr<SceneNode>& Scene::getRootNode() const
+void Scene::add(const shared_ptr<Light>& light)
 {
-    return rootNode;
+    lights.push_back(light);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const vector<shared_ptr<Light>>& Scene::getLights() const
+{
+    return lights;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

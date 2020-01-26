@@ -44,6 +44,7 @@ protected:
     void loadEffectsDefaults();
     void loadEffectDefaults(const Json::Value& jsonEffectDefaults);
     void createScene();
+    void loadLights();
     void loadModels();
     ModelDefinition deserialize(const Json::Value& jsonModelDefinition,
         const ModelDefinitionDeserializer& deserializer) const;

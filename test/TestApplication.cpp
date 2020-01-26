@@ -6,8 +6,10 @@
 #include "rfx/scene/ModelLoader.h"
 #include "rfx/scene/ModelDefinition.h"
 #include "rfx/graphics/effect/EffectDefinitionDeserializer.h"
+#include "rfx/graphics/effect/LightDefinitionDeserializer.h"
 #include "rfx/graphics/effect/VertexColorEffect.h"
 #include "rfx/graphics/effect/Texture2DEffect.h"
+#include "rfx/graphics/effect/DirectionalLightEffect.h"
 
 using namespace rfx;
 using namespace glm;
@@ -32,6 +34,7 @@ void TestApplication::initScene()
 {
     loadEffectsDefaults();
     createScene();
+    loadLights();
     loadModels();
     initCamera();
 }
@@ -64,6 +67,19 @@ void TestApplication::createScene()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void TestApplication::loadLights()
+{
+    Json::Value jsonLightDefinitions = configuration["scene"]["lights"];
+    const LightDefinitionDeserializer deserializer;
+
+    for (const auto& jsonLightDefinition : jsonLightDefinitions) {
+        shared_ptr<Light> light = deserializer.deserialize(jsonLightDefinition);
+        scene->add(light);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void TestApplication::loadModels()
 {
     const ModelDefinitionDeserializer deserializer(effectDefaults);
@@ -89,7 +105,7 @@ ModelDefinition TestApplication::deserialize(const Json::Value& jsonModelDefinit
 
 shared_ptr<Effect> TestApplication::loadEffect(const EffectDefinition& effectDefinition)
 {
-    ShaderLoader shaderLoader(graphicsDevice);
+    const ShaderLoader shaderLoader(graphicsDevice);
     shared_ptr<VertexShader> vertexShader =
         shaderLoader.loadVertexShader(effectDefinition.vertexShaderPath, "main", effectDefinition.vertexFormat);
     shared_ptr<FragmentShader> fragmentShader =
@@ -103,7 +119,11 @@ shared_ptr<Effect> TestApplication::loadEffect(const EffectDefinition& effectDef
         textures.push_back(textureLoader.load(texturePath));
     }
 
-    effects.push_back(createEffect(effectDefinition, shaderProgram, textures));
+    const shared_ptr<Effect> effect = createEffect(effectDefinition, shaderProgram, textures);
+    effect->setLights(scene->getLights());        
+    effect->setMaterial(make_shared<Material>(effectDefinition.material));
+
+    effects.push_back(effect);
 
     return effects.back();
 }
@@ -120,6 +140,10 @@ shared_ptr<Effect> TestApplication::createEffect(const EffectDefinition& effectD
 
     if (effectDefinition.id == Texture2DEffect::ID) {
         return make_shared<Texture2DEffect>(graphicsDevice, renderPass, shaderProgram, textures[0]);
+    }
+
+    if (effectDefinition.id == DirectionalLightEffect::ID) {
+        return make_shared<DirectionalLightEffect>(graphicsDevice, renderPass, shaderProgram);
     }
 
     RFX_NOT_IMPLEMENTED();
@@ -166,7 +190,7 @@ void TestApplication::initCamera()
     cameraPosition = vec3(0.0F, 0.0F, 20.0F);
     cameraLookAt = vec3(0.0F);
     cameraUp = vec3(0.0F, 1.0F, 0.0F);
-    projectionMatrix = perspective(radians(45.0F), 1.0F, 0.1F, 100.0F);
+    projectionMatrix = perspective(radians(45.0F), 1.0F, 0.1F, 10000.0F);
 
     updateViewProjectionMatrix();
 }
@@ -179,6 +203,15 @@ void TestApplication::updateViewProjectionMatrix()
     viewProjMatrix = projectionMatrix * viewMatrix;
 
     onViewProjectionMatrixUpdated();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::onViewProjectionMatrixUpdated()
+{
+    for (const auto& effect : effects) {
+        effect->setViewProjMatrix(viewProjMatrix);
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -504,15 +537,6 @@ void TestApplication::destroyFrameBuffers()
 void TestApplication::freeCommandBuffers() const
 {
     commandPool->freeAllCommandBuffers();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TestApplication::onViewProjectionMatrixUpdated()
-{
-    for (const auto& effect : effects) {
-        effect->setViewProjMatrix(viewProjMatrix);
-    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

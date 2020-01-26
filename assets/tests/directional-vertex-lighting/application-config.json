@@ -19,7 +19,7 @@
         "fragmentShaderPath": "assets/common/shaders/color.frag",
         "material": {
           "ambient": [ 0, 0, 0, 1 ],
-          "diffuse": [ 0, 0, 0, 1 ],
+          "diffuse": [ 0, 1, 0, 1 ],
           "specular": [ 0, 0, 0, 1 ],
           "emissive": [ 0, 0, 0, 1 ],
           "shininess": 0 
@@ -40,10 +40,10 @@
       {
         "id": "sun",
         "type": "directional",
-        "direction": [ 0, -1, 0 ],
         "ambient": [ 0, 0, 0 ],
-        "directional": [ 1, 1, 1 ],
-        "specular": [ 0, 0, 0 ]
+        "diffuse": [ 1, 1, 1 ],
+        "specular": [ 0, 0, 0 ],
+        "direction": [ 0, -1, 0 ]
       }
     ]
   }

@@ -1,28 +1,29 @@
 #include "rfx/pch.h"
-#include "rfx/graphics/effect/DirectionalVertexLightingEffect.h"
+#include "rfx/graphics/effect/DirectionalLightEffect.h"
 
 
 using namespace rfx;
 using namespace glm;
 using namespace std;
 
-// ---------------------------------------------------------------------------------------------------------------------
-
-const string DirectionalVertexLightingEffect::ID = "directional_vertex_lighting";
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-DirectionalVertexLightingEffect::DirectionalVertexLightingEffect(
+const string DirectionalLightEffect::ID = "directional_vertex_lighting";
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+DirectionalLightEffect::DirectionalLightEffect(
     const shared_ptr<GraphicsDevice>& graphicsDevice,
     VkRenderPass renderPass,
     std::unique_ptr<ShaderProgram>& shaderProgram)
         : Effect(graphicsDevice, renderPass, shaderProgram)
 {
-    initUniformBuffer(sizeof(mat4));
+    initUniformBuffer(sizeof(UniformData));
     initDescriptorSetLayout();
     initDescriptorPool({
         { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}
-        });
+    });
     initDescriptorSet();
     initPipelineLayout();
     initPipeline();
@@ -30,7 +31,7 @@ DirectionalVertexLightingEffect::DirectionalVertexLightingEffect(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void DirectionalVertexLightingEffect::initDescriptorSetLayout()
+void DirectionalLightEffect::initDescriptorSetLayout()
 {
     VkDescriptorSetLayoutBinding layoutBinding = {};
     layoutBinding.binding = 0;
@@ -44,7 +45,7 @@ void DirectionalVertexLightingEffect::initDescriptorSetLayout()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void DirectionalVertexLightingEffect::initDescriptorSet()
+void DirectionalLightEffect::initDescriptorSet()
 {
     VkDescriptorSetAllocateInfo descriptorSetAllocateInfo;
     descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -70,9 +71,42 @@ void DirectionalVertexLightingEffect::initDescriptorSet()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const string& DirectionalVertexLightingEffect::getId() const
+const string& DirectionalLightEffect::getId() const
 {
     return ID;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void DirectionalLightEffect::setModelViewProjMatrix(const mat4& matrix)
+{
+    uniformData.modelViewProjection = matrix;
+
+    uniformBuffer->load(sizeof(UniformData),
+        reinterpret_cast<std::byte*>(&uniformData));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void DirectionalLightEffect::setLights(const vector<shared_ptr<Light>>& lights)
+{
+    RFX_CHECK_ARGUMENT(!lights.empty());
+    RFX_CHECK_ARGUMENT(lights[0]->getType() == LightType::DIRECTIONAL);
+
+    uniformData.lightData = lights[0]->getData();
+
+    uniformBuffer->load(sizeof(UniformData),
+        reinterpret_cast<std::byte*>(&uniformData));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void DirectionalLightEffect::setMaterial(const shared_ptr<Material>& material)
+{
+    uniformData.materialData = material->getData();
+
+    uniformBuffer->load(sizeof(UniformData),
+        reinterpret_cast<std::byte*>(&uniformData));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

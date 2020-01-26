@@ -186,9 +186,6 @@
     <ClInclude Include="test\DirectionalVertexLightingTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\effect\DirectionalVertexLightingEffect.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\rfx\scene\Scene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -196,6 +193,27 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\rfx\graphics\effect\Light.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\Material.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\DirectionalLightEffect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\LightDefinitionDeserializer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\MaterialDefinitionDeserializer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\SpotLight.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\PointLight.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\core\JsonDeserializer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -344,9 +362,6 @@
     <ClCompile Include="test\DirectionalVertexLightingTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\effect\DirectionalVertexLightingEffect.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\rfx\scene\Scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -354,6 +369,27 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\rfx\graphics\effect\Light.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\Material.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\DirectionalLightEffect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\LightDefinitionDeserializer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\MaterialDefinitionDeserializer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\SpotLight.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\PointLight.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\core\JsonDeserializer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -397,5 +433,6 @@
     <None Include="assets\tests\textured-cubes\crate02_color_height_rgba.ktx" />
     <None Include="assets\tests\directional-vertex-lighting\application-config.json" />
     <None Include="assets\common\shaders\directional_light.vert" />
+    <None Include="assets\common\models\teapot.dae" />
   </ItemGroup>
 </Project>

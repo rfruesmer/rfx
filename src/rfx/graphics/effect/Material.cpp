@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "rfx/graphics/effect/Light.h"
+#include "rfx/graphics/effect/Material.h"
 
 
 using namespace rfx;
@@ -9,92 +9,82 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-Light::Light(const string& id, LightType type)
-    : id(id)
-{
-    data.type = type;
-}
+Material::Material(const Data& data)
+    : data(data) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const string& Light::getId() const
-{
-    return id;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-LightType Light::getType() const
-{
-    return data.type;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void Light::setAmbient(float red, float green, float blue)
-{
-    setAmbient(vec4(red, green, blue, 1.0F));
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void Light::setAmbient(const vec4& color)
+void Material::setAmbient(const vec4& color)
 {
     data.ambient = color;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const vec4& Light::getAmbient() const
+const vec4& Material::getAmbient() const
 {
     return data.ambient;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Light::setDiffuse(float red, float green, float blue)
-{
-    setDiffuse(vec4(red, green, blue, 1.0F));
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void Light::setDiffuse(const vec4& color)
+void Material::setDiffuse(const vec4& color)
 {
     data.diffuse = color;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const vec4& Light::getDiffuse() const
+const vec4& Material::getDiffuse() const
 {
     return data.diffuse;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Light::setSpecular(float red, float green, float blue)
-{
-    setSpecular(vec4(red, green, blue, 1.0F));
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void Light::setSpecular(const vec4& color)
+void Material::setSpecular(const vec4& color)
 {
     data.specular = color;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const vec4& Light::getSpecular() const
+const vec4& Material::getSpecular() const
 {
     return data.specular;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const Light::Data& Light::getData() const
+void Material::setEmissive(const vec4& color)
+{
+    data.emissive = color;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const vec4& Material::getEmissive() const
+{
+    return data.emissive;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Material::setShininess(float value)
+{
+    data.shininess = value;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+float Material::getShininess() const
+{
+    return data.shininess;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const Material::Data& Material::getData() const
 {
     return data;
 }

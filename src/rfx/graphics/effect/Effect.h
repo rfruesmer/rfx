@@ -3,6 +3,9 @@
 #include "rfx/graphics/buffer/Buffer.h"
 #include "rfx/graphics/GraphicsDevice.h"
 #include "rfx/graphics/shader/ShaderProgram.h"
+#include "rfx/graphics/effect/Light.h"
+#include "rfx/graphics/effect/Material.h"
+
 
 namespace rfx
 {
@@ -20,7 +23,9 @@ public:
 
     void setModelMatrix(const glm::mat4& matrix);
     void setViewProjMatrix(const glm::mat4& matrix);
-    void setModelViewProjMatrix(const glm::mat4& matrix) const;
+    virtual void setModelViewProjMatrix(const glm::mat4& matrix);
+    virtual void setLights(const std::vector<std::shared_ptr<Light>>& lights) {}
+    virtual void setMaterial(const std::shared_ptr<Material>& material) {}
 
     virtual const std::string& getId() const = 0;
     const std::shared_ptr<Buffer>& getUniformBuffer() const;
