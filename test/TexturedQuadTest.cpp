@@ -35,7 +35,7 @@ void TexturedQuadTest::initialize()
 
 void TexturedQuadTest::initEffects()
 {
-    ShaderLoader shaderLoader(graphicsDevice);
+    const ShaderLoader shaderLoader(graphicsDevice);
     shared_ptr<VertexShader> vertexShader = 
         shaderLoader.loadVertexShader("assets/common/shaders/texture.vert", "main", VERTEX_FORMAT);
     shared_ptr<FragmentShader> fragmentShader = 
@@ -123,6 +123,26 @@ void TexturedQuadTest::createQuadMesh()
     commandPool->freeCommandBuffer(commandBuffer);
 
     quadMesh = make_shared<Mesh>(graphicsDevice, vertexBuffer, indexBuffer, textureEffect);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedQuadTest::initCamera()
+{
+    camera = make_shared<Camera>();
+    camera->setPosition(0.0F, 0.0F, 20.0F);
+    camera->setLookAt(0.0F, 0.0F, 0.0F);
+    camera->setUp(0.0F, 1.0F, 0.0F);
+    camera->setProjection(45.0F, 1.0F, 0.1F, 10000.0F);
+
+    onCameraModified();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const shared_ptr<Camera>& TexturedQuadTest::getCamera() const
+{
+    return camera;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -30,10 +30,41 @@ unique_ptr<Scene> SceneLoader::load(const Json::Value& jsonScene)
     this->jsonScene = jsonScene;
     scene = make_unique<Scene>();
 
+    loadCamera();
     loadLights();
     loadModels();
 
     return move(scene);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SceneLoader::loadCamera() const
+{
+    const auto camera = make_shared<Camera>();
+
+    const Json::Value jsonCamera = jsonScene["camera"];
+    if (!jsonCamera.empty()) {
+        camera->setPosition(loadVector3f(jsonCamera["position"]));
+        camera->setLookAt(loadVector3f(jsonCamera["lookAt"]));
+        camera->setUp(loadVector3f(jsonCamera["up"]));
+
+        const Json::Value jsonProjection = jsonCamera["projection"];
+        camera->setProjection(
+            jsonProjection["fov"].asFloat(),
+            jsonProjection["aspect"].asFloat(),
+            jsonProjection["nearZ"].asFloat(),
+            jsonProjection["farZ"].asFloat()
+        );
+    }
+    else {
+        camera->setPosition(0.0F, 0.0F, -100.0F);
+        camera->setLookAt(0.0F, 0.0F, 0.0F);
+        camera->setUp(0.0F, 1.0F, 0.0F);
+        camera->setProjection(45.0F, 1.0F, 0.1F, 10000.0F);
+    }
+
+    scene->setCamera(camera);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

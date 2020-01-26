@@ -16,11 +16,14 @@ public:
 protected:
     void initEffects();
     void initScene() override;
+    [[nodiscard]] const std::shared_ptr<Camera>& getCamera() const override;
     void initCommandBuffers() override;
 
 private:
     void createQuadMesh();
+    void initCamera();
 
+    std::shared_ptr<Camera> camera;
     std::shared_ptr<Mesh> quadMesh;
     std::shared_ptr<Texture2DEffect> textureEffect;
 };

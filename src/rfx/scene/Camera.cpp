@@ -62,6 +62,13 @@ void Camera::setUp(float x, float y, float z)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void Camera::setUp(const vec3& up)
+{
+    this->up = up;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void Camera::setProjection(float fovDeg, float aspect, float nearZ, float farZ)
 {
     projectionMatrix = perspective(radians(fovDeg), aspect, nearZ, farZ);

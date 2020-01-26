@@ -124,6 +124,26 @@ void TriangleTest::createTriangleMesh()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void TriangleTest::initCamera()
+{
+    camera = make_shared<Camera>();
+    camera->setPosition(0.0F, 0.0F, 20.0F);
+    camera->setLookAt(0.0F, 0.0F, 0.0F);
+    camera->setUp(0.0F, 1.0F, 0.0F);
+    camera->setProjection(45.0F, 1.0F, 0.1F, 10000.0F);
+
+    onCameraModified();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const shared_ptr<Camera>& TriangleTest::getCamera() const
+{
+    return camera;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void TriangleTest::initCommandBuffers()
 {
     drawCommandBuffers = commandPool->allocateCommandBuffers(graphicsDevice->getSwapChainBuffers().size());

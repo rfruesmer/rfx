@@ -18,3 +18,14 @@ vec4 JsonDeserializer::loadVector4f(const Json::Value& jsonVector)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+
+vec3 JsonDeserializer::loadVector3f(const Json::Value& jsonVector)
+{
+    return vec3(
+        jsonVector[0].asFloat(),
+        jsonVector[1].asFloat(),
+        jsonVector[2].asFloat()
+    );
+}
+
+// ---------------------------------------------------------------------------------------------------------------------

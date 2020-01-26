@@ -2,11 +2,12 @@
 
 #include "rfx/scene/Scene.h"
 #include "rfx/scene/ModelDefinitionDeserializer.h"
+#include "rfx/core/JsonDeserializer.h"
 
 namespace rfx
 {
 
-class SceneLoader
+class SceneLoader : public JsonDeserializer
 {
 public:
     explicit SceneLoader(
@@ -19,6 +20,7 @@ public:
     const std::vector<std::shared_ptr<Effect>>& getEffects() const;
 
 private:
+    void loadCamera() const;
     void loadLights();
     void loadModels();
     ModelDefinition deserialize(const Json::Value& jsonModelDefinition,

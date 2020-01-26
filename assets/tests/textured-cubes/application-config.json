@@ -22,6 +22,17 @@
     ]
   },
   "scene": {
+    "camera": {
+      "position": [ 0, 0, 100 ],
+      "lookAt": [ 0, 0, 0 ],
+      "up": [ 0, 1, 0 ],
+      "projection": {
+        "fov": 45,
+        "aspect": 1,
+        "nearZ": 0.1,
+        "farZ": 10000
+      }
+    },
     "models": [
       {
         "path": "assets/common/models/cube.dae",

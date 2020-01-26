@@ -27,7 +27,6 @@ void TestApplication::initScene()
 {
     loadEffectsDefaults();
     loadScene();
-    initCamera();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -56,37 +55,26 @@ void TestApplication::loadScene()
     SceneLoader sceneLoader(graphicsDevice, renderPass, effectDefaults);
     scene = sceneLoader.load(configuration["scene"]);
     effects = sceneLoader.getEffects();
+
+    onCameraModified();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestApplication::initCamera()
+void TestApplication::onCameraModified()
 {
-    camera = make_shared<Camera>();
-    camera->setPosition(0.0F, 0.0F, 20.0F);
-    camera->setLookAt(0.0F, 0.0F, 0.0F);
-    camera->setUp(0.0F, 1.0F, 0.0F);
-    camera->setProjection(45.0F, 1.0F, 0.1F, 10000.0F);
-   
-    updateViewProjectionMatrix();
-}
+    getCamera()->update();
 
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TestApplication::updateViewProjectionMatrix()
-{
-    camera->update();
-
-    onViewProjectionMatrixUpdated();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TestApplication::onViewProjectionMatrixUpdated()
-{
     for (const auto& effect : effects) {
-        effect->setViewProjMatrix(camera->getViewProjMatrix());
+        effect->setViewProjMatrix(getCamera()->getViewProjMatrix());
     }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const shared_ptr<Camera>& TestApplication::getCamera() const
+{
+    return scene->getCamera();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -201,6 +189,7 @@ void TestApplication::update()
     Win32Application::update();
 
     bool cameraNeedsUpdate = false;
+    const shared_ptr<Camera>& camera = getCamera();
     vec3 cameraPosition = camera->getPosition();
     vec3 cameraLookAt = camera->getLookAt();
 
@@ -247,7 +236,7 @@ void TestApplication::update()
     if (cameraNeedsUpdate) {
         camera->setPosition(cameraPosition);
         camera->setLookAt(cameraLookAt);
-        updateViewProjectionMatrix();
+        onCameraModified();
     }
 }
 

@@ -44,7 +44,7 @@ protected:
     void loadEffectsDefaults();
     void loadEffectDefaults(const Json::Value& jsonEffectDefaults);
     void loadScene();
-    void initCamera();
+    [[nodiscard]] virtual const std::shared_ptr<Camera>& getCamera() const;
 
     virtual void initCommandBuffers();
 
@@ -52,7 +52,7 @@ protected:
     void destroyFrameBuffers();
     void freeCommandBuffers() const;
 
-    void onViewProjectionMatrixUpdated();
+    void onCameraModified();
 
     void shutdown() override;
 
@@ -63,12 +63,10 @@ protected:
     std::shared_ptr<CommandPool> commandPool;
     std::vector<std::shared_ptr<CommandBuffer>> drawCommandBuffers;
     std::unique_ptr<Scene> scene;
-    std::shared_ptr<Camera> camera;
     std::unordered_map<std::string, EffectDefinition> effectDefaults;
     std::vector<std::shared_ptr<Effect>> effects;
 
 private:
-    void updateViewProjectionMatrix();
     void drawSceneNode(const std::unique_ptr<SceneNode>& sceneNode,
         const std::shared_ptr<CommandBuffer>& commandBuffer);
 };
