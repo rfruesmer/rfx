@@ -216,6 +216,9 @@
     <ClInclude Include="src\rfx\core\JsonDeserializer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\rfx\scene\SceneLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\rfx\pch.cpp">
@@ -390,6 +393,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\rfx\core\JsonDeserializer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\scene\SceneLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

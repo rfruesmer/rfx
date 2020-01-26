@@ -2,7 +2,6 @@
 
 #include "rfx/application/Win32Application.h"
 #include "rfx/scene/Scene.h"
-#include "rfx/scene/ModelDefinitionDeserializer.h"
 #include "rfx/graphics/effect/Effect.h"
 #include "rfx/graphics/effect/EffectDefinition.h"
 
@@ -43,14 +42,7 @@ protected:
     virtual void initScene();
     void loadEffectsDefaults();
     void loadEffectDefaults(const Json::Value& jsonEffectDefaults);
-    void createScene();
-    void loadLights();
-    void loadModels();
-    ModelDefinition deserialize(const Json::Value& jsonModelDefinition,
-        const ModelDefinitionDeserializer& deserializer) const;
-    std::shared_ptr<Mesh> loadModel(const ModelDefinition& modelDefinition,
-        const std::shared_ptr<Effect>& effect) const;
-    void attachToSceneGraph(const std::shared_ptr<Mesh>& mesh, const ModelDefinition& modelDefinition) const;
+    void loadScene();
     void initCamera();
 
     virtual void initCommandBuffers();
@@ -82,10 +74,6 @@ protected:
     std::vector<std::shared_ptr<Effect>> effects;
 
 private:
-    std::shared_ptr<Effect> loadEffect(const EffectDefinition& effectDefinition);
-    std::shared_ptr<Effect> createEffect(const EffectDefinition& effectDefinition,
-        std::unique_ptr<ShaderProgram>& shaderProgram,
-        const std::vector<std::shared_ptr<Texture2D>>& textures);
     void updateViewProjectionMatrix();
     void drawSceneNode(const std::unique_ptr<SceneNode>& sceneNode,
         const std::shared_ptr<CommandBuffer>& commandBuffer);

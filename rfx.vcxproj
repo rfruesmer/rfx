@@ -219,6 +219,7 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\rfx\scene\SceneLoader.h" />
     <ClInclude Include="src\rfx\core\JsonDeserializer.h" />
     <ClInclude Include="src\rfx\graphics\effect\PointLight.h" />
     <ClInclude Include="src\rfx\graphics\effect\SpotLight.h" />
@@ -288,6 +289,7 @@
     <ClInclude Include="src\rfx\graphics\shader\VertexShader.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\rfx\scene\SceneLoader.cpp" />
     <ClCompile Include="src\rfx\core\JsonDeserializer.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\PointLight.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\SpotLight.cpp" />
