@@ -62,12 +62,12 @@ void TestApplication::loadScene()
 
 void TestApplication::initCamera()
 {
-    modelMatrix = mat4(1.0F);
-    cameraPosition = vec3(0.0F, 0.0F, 20.0F);
-    cameraLookAt = vec3(0.0F);
-    cameraUp = vec3(0.0F, 1.0F, 0.0F);
-    projectionMatrix = perspective(radians(45.0F), 1.0F, 0.1F, 10000.0F);
-
+    camera = make_shared<Camera>();
+    camera->setPosition(0.0F, 0.0F, 20.0F);
+    camera->setLookAt(0.0F, 0.0F, 0.0F);
+    camera->setUp(0.0F, 1.0F, 0.0F);
+    camera->setProjection(45.0F, 1.0F, 0.1F, 10000.0F);
+   
     updateViewProjectionMatrix();
 }
 
@@ -75,8 +75,7 @@ void TestApplication::initCamera()
 
 void TestApplication::updateViewProjectionMatrix()
 {
-    viewMatrix = lookAt(cameraPosition, cameraLookAt, cameraUp);
-    viewProjMatrix = projectionMatrix * viewMatrix;
+    camera->update();
 
     onViewProjectionMatrixUpdated();
 }
@@ -86,7 +85,7 @@ void TestApplication::updateViewProjectionMatrix()
 void TestApplication::onViewProjectionMatrixUpdated()
 {
     for (const auto& effect : effects) {
-        effect->setViewProjMatrix(viewProjMatrix);
+        effect->setViewProjMatrix(camera->getViewProjMatrix());
     }
 }
 
@@ -202,6 +201,8 @@ void TestApplication::update()
     Win32Application::update();
 
     bool cameraNeedsUpdate = false;
+    vec3 cameraPosition = camera->getPosition();
+    vec3 cameraLookAt = camera->getLookAt();
 
     if (keyboard->isKeyDown(Keyboard::KEY_W)) {
         cameraPosition.z -= MOVE_DELTA;
@@ -244,6 +245,8 @@ void TestApplication::update()
     }
 
     if (cameraNeedsUpdate) {
+        camera->setPosition(cameraPosition);
+        camera->setLookAt(cameraLookAt);
         updateViewProjectionMatrix();
     }
 }

@@ -4,6 +4,7 @@
 #include "rfx/scene/Scene.h"
 #include "rfx/graphics/effect/Effect.h"
 #include "rfx/graphics/effect/EffectDefinition.h"
+#include "rfx/scene/Camera.h"
 
 
 namespace rfx
@@ -55,14 +56,6 @@ protected:
 
     void shutdown() override;
 
-    glm::vec3 cameraPosition;
-    glm::vec3 cameraLookAt;
-    glm::vec3 cameraUp;
-    glm::mat4 modelMatrix;
-    glm::mat4 viewMatrix;
-    glm::mat4 projectionMatrix;
-    glm::mat4 viewProjMatrix;
-
     VkDescriptorSetLayout descriptorSetLayout = nullptr;
 
     VkRenderPass renderPass = nullptr;
@@ -70,6 +63,7 @@ protected:
     std::shared_ptr<CommandPool> commandPool;
     std::vector<std::shared_ptr<CommandBuffer>> drawCommandBuffers;
     std::unique_ptr<Scene> scene;
+    std::shared_ptr<Camera> camera;
     std::unordered_map<std::string, EffectDefinition> effectDefaults;
     std::vector<std::shared_ptr<Effect>> effects;
 
