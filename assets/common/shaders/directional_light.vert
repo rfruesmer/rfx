@@ -19,6 +19,7 @@ struct Material {
 };
 
 layout (std140, binding = 0) uniform UniformBufferObject {
+    mat4 mv;
     mat4 mvp;
     Light light;
     Material material;
@@ -29,10 +30,21 @@ layout (location = 1) in vec3 inNormal;
 layout (location = 0) out vec4 outColor;
 
 void main() {
-    gl_Position = ubo.mvp * vec4(inPosition, 1.0f);
+    vec4 position = vec4(inPosition, 1.0f);
+    gl_Position = ubo.mvp * position;
     
-    float nDotVP = max(0.0, dot(inNormal, ubo.light.position));
-    
-    outColor = ubo.material.diffuse * ubo.light.diffuse * nDotVP;
-    // outColor = vec4(1.0f);
+    float nDotL = max(0.0, dot(inNormal, ubo.light.position));
+
+    outColor = vec4(0.0f);
+    outColor += ubo.light.ambient * ubo.material.ambient;
+    outColor += ubo.light.diffuse * ubo.material.diffuse * nDotL;
+
+    if (nDotL > 0.0) {
+        vec4 viewVector = normalize(ubo.mv * position);
+        vec3 halfVector = normalize(ubo.light.position - vec3(viewVector));    
+        float nDotH = max(0.0, dot(inNormal, halfVector));
+        outColor += max(0.0, pow(nDotH, ubo.material.shininess))
+            * ubo.material.specular
+            * ubo.light.specular;
+    }
 }

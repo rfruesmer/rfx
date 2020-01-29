@@ -21,6 +21,7 @@ public:
 
     void update();
 
+    const glm::mat4& getViewMatrix() const;
     const glm::mat4& getViewProjMatrix() const;
 
 private:

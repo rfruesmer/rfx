@@ -122,8 +122,8 @@ shared_ptr<Effect> SceneLoader::loadEffect(const EffectDefinition& effectDefinit
     }
 
     const shared_ptr<Effect> effect = createEffect(effectDefinition, shaderProgram, textures);
-    effect->setLights(scene->getLights());
-    effect->setMaterial(make_shared<Material>(effectDefinition.material));
+    effect->updateFrom(scene->getLights());
+    effect->updateFrom(make_shared<Material>(effectDefinition.material));
 
     effects.push_back(effect);
 

@@ -3,6 +3,7 @@
 
 
 using namespace rfx;
+using namespace glm;
 using namespace std;
 
 
@@ -295,7 +296,7 @@ VkPipelineMultisampleStateCreateInfo Effect::createMultiSampleState()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Effect::setModelMatrix(const glm::mat4& matrix)
+void Effect::setModelMatrix(const mat4& matrix)
 {
     modelMatrix = matrix;
     setModelViewProjMatrix(viewProjMatrix * modelMatrix);
@@ -303,7 +304,7 @@ void Effect::setModelMatrix(const glm::mat4& matrix)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Effect::setViewProjMatrix(const glm::mat4& matrix)
+void Effect::setViewProjMatrix(const mat4& matrix)
 {
     viewProjMatrix = matrix;
     setModelViewProjMatrix(viewProjMatrix * modelMatrix);
@@ -311,10 +312,9 @@ void Effect::setViewProjMatrix(const glm::mat4& matrix)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Effect::setModelViewProjMatrix(const glm::mat4& matrix)
+void Effect::updateFrom(const shared_ptr<Camera>& camera)
 {
-    uniformBuffer->load(sizeof(glm::mat4), 
-        reinterpret_cast<std::byte*>(const_cast<glm::mat4*>(&matrix)));
+    setViewProjMatrix(camera->getViewProjMatrix());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

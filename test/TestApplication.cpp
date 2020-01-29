@@ -63,10 +63,12 @@ void TestApplication::loadScene()
 
 void TestApplication::onCameraModified()
 {
-    getCamera()->update();
+    const shared_ptr<Camera>& camera = getCamera();
+    camera->update();
 
     for (const auto& effect : effects) {
-        effect->setViewProjMatrix(getCamera()->getViewProjMatrix());
+        effect->updateFrom(camera);
+        effect->updateUniformBuffer();
     }
 }
 

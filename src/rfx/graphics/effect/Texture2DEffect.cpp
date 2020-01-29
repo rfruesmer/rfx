@@ -96,3 +96,18 @@ const std::string& Texture2DEffect::getId() const
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+
+void Texture2DEffect::setModelViewProjMatrix(const mat4& matrix)
+{
+    uniformData.modelViewProjection = matrix;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Texture2DEffect::updateUniformBuffer()
+{
+    uniformBuffer->load(sizeof(UniformData),
+        reinterpret_cast<std::byte*>(&uniformData));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------

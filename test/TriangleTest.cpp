@@ -35,7 +35,7 @@ void TriangleTest::initialize()
 
 void TriangleTest::initEffects()
 {
-    ShaderLoader shaderLoader(graphicsDevice);
+    const ShaderLoader shaderLoader(graphicsDevice);
     shared_ptr<VertexShader> vertexShader =
         shaderLoader.loadVertexShader("assets/common/shaders/color.vert", "main", VERTEX_FORMAT);
     shared_ptr<FragmentShader> fragmentShader =

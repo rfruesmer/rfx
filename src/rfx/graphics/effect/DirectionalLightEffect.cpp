@@ -81,30 +81,38 @@ const string& DirectionalLightEffect::getId() const
 void DirectionalLightEffect::setModelViewProjMatrix(const mat4& matrix)
 {
     uniformData.modelViewProjection = matrix;
-
-    uniformBuffer->load(sizeof(UniformData),
-        reinterpret_cast<std::byte*>(&uniformData));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void DirectionalLightEffect::setLights(const vector<shared_ptr<Light>>& lights)
+void DirectionalLightEffect::updateFrom(const vector<shared_ptr<Light>>& lights)
 {
     RFX_CHECK_ARGUMENT(!lights.empty());
     RFX_CHECK_ARGUMENT(lights[0]->getType() == LightType::DIRECTIONAL);
 
     uniformData.lightData = lights[0]->getData();
-
-    uniformBuffer->load(sizeof(UniformData),
-        reinterpret_cast<std::byte*>(&uniformData));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void DirectionalLightEffect::setMaterial(const shared_ptr<Material>& material)
+void DirectionalLightEffect::updateFrom(const shared_ptr<Material>& material)
 {
     uniformData.materialData = material->getData();
+}
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+void DirectionalLightEffect::updateFrom(const shared_ptr<Camera>& camera)
+{
+    uniformData.modelView = camera->getViewMatrix() * modelMatrix;
+
+    Effect::updateFrom(camera);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void DirectionalLightEffect::updateUniformBuffer()
+{
     uniformBuffer->load(sizeof(UniformData),
         reinterpret_cast<std::byte*>(&uniformData));
 }

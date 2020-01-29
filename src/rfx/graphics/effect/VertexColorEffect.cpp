@@ -76,3 +76,18 @@ const string& VertexColorEffect::getId() const
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+
+void VertexColorEffect::setModelViewProjMatrix(const mat4& matrix)
+{
+    uniformData.modelViewProjection = matrix;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void VertexColorEffect::updateUniformBuffer()
+{
+    uniformBuffer->load(sizeof(UniformData),
+        reinterpret_cast<std::byte*>(&uniformData));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
