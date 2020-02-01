@@ -1,5 +1,6 @@
 #include "rfx/pch.h"
-#include "test/DirectionalVertexLightingTest.h"
+#include "test/PerVertexDirectionalLightTest.h"
+#include "rfx/graphics/effect/DirectionalLightEffectFactory.h"
 
 
 using namespace rfx;
@@ -9,17 +10,17 @@ using namespace filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-DirectionalVertexLightingTest::DirectionalVertexLightingTest(handle_t instanceHandle)
-    : TestApplication("assets/tests/directional-vertex-lighting/application-config.json", instanceHandle) {}
+PerVertexDirectionalLightTest::PerVertexDirectionalLightTest(handle_t instanceHandle)
+    : TestApplication("assets/tests/vertex-directional-light/application-config.json", instanceHandle) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-DirectionalVertexLightingTest::DirectionalVertexLightingTest(const path& configurationPath, handle_t instanceHandle)
+PerVertexDirectionalLightTest::PerVertexDirectionalLightTest(const path& configurationPath, handle_t instanceHandle)
     : TestApplication(configurationPath, instanceHandle) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void DirectionalVertexLightingTest::initialize()
+void PerVertexDirectionalLightTest::initialize()
 {
     TestApplication::initialize();
 
@@ -34,3 +35,9 @@ void DirectionalVertexLightingTest::initialize()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void PerVertexDirectionalLightTest::createEffectFactories()
+{
+    add(make_shared<DirectionalLightEffectFactory>());
+}
+
+// ---------------------------------------------------------------------------------------------------------------------

@@ -14,6 +14,8 @@ public:
 
 protected:
     CubeTest(const std::filesystem::path& configurationPath, handle_t instanceHandle);
+
+    void createEffectFactories() override;
 };
 
 } // namespace rfx

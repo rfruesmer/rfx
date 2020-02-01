@@ -4,6 +4,7 @@
 #include "rfx/scene/Scene.h"
 #include "rfx/graphics/effect/Effect.h"
 #include "rfx/graphics/effect/EffectDefinition.h"
+#include "rfx/graphics/effect/EffectFactory.h"
 #include "rfx/scene/Camera.h"
 
 
@@ -41,6 +42,8 @@ protected:
     void initFrameBuffers();
 
     virtual void initScene();
+    virtual void createEffectFactories() {}
+    void add(const std::shared_ptr<EffectFactory>& effectFactory);
     void loadEffectsDefaults();
     void loadEffectDefaults(const Json::Value& jsonEffectDefaults);
     void loadScene();
@@ -63,6 +66,7 @@ protected:
     std::shared_ptr<CommandPool> commandPool;
     std::vector<std::shared_ptr<CommandBuffer>> drawCommandBuffers;
     std::unique_ptr<Scene> scene;
+    std::unordered_map<std::string, std::shared_ptr<EffectFactory>> effectFactories;
     std::unordered_map<std::string, EffectDefinition> effectDefaults;
     std::vector<std::shared_ptr<Effect>> effects;
 

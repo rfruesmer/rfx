@@ -1,24 +1,25 @@
 #include "rfx/pch.h"
-#include "test/TexturedCubesTest.h"
 #include "rfx/graphics/effect/Texture2DEffectFactory.h"
+#include "rfx/graphics/effect/Texture2DEffect.h"
 
 
 using namespace rfx;
-using namespace glm;
 using namespace std;
-using namespace filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-TexturedCubesTest::TexturedCubesTest(handle_t instanceHandle)
-    : CubeTest("assets/tests/textured-cubes/application-config.json", instanceHandle) {}
+Texture2DEffectFactory::Texture2DEffectFactory()
+    : EffectFactory("texture2D") {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedCubesTest::createEffectFactories()
+shared_ptr<Effect> Texture2DEffectFactory::create(
+    const shared_ptr<GraphicsDevice>& graphicsDevice,
+    VkRenderPass renderPass,
+    unique_ptr<ShaderProgram>& shaderProgram,
+    const vector<shared_ptr<Texture2D>>& textures) const
 {
-    const shared_ptr<EffectFactory> effectFactory = make_shared<Texture2DEffectFactory>();
-    effectFactories[effectFactory->getEffectId()] = effectFactory;
+    return make_shared<Texture2DEffect>(graphicsDevice, renderPass, shaderProgram, textures[0]);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

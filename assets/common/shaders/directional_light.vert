@@ -2,21 +2,9 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-struct Light {
-    int type;
-    vec3 position;
-    vec4 ambient;
-    vec4 diffuse;
-    vec4 specular;
-};
-
-struct Material {
-    vec4 ambient;
-    vec4 diffuse;
-    vec4 specular;
-    vec4 emissive;
-    float shininess;
-};
+#include "light.glsl"
+#include "material.glsl"
+#include "directional_light.glsl"
 
 layout (std140, binding = 0) uniform UniformBufferObject {
     mat4 mv;
@@ -31,20 +19,18 @@ layout (location = 0) out vec4 outColor;
 
 void main() {
     vec4 position = vec4(inPosition, 1.0f);
+
     gl_Position = ubo.mvp * position;
-    
-    float nDotL = max(0.0, dot(inNormal, ubo.light.position));
+   
+    vec4 ambient = vec4(0.0f);
+    vec4 diffuse = vec4(0.0f);
+    vec4 specular = vec4(0.0f);
 
-    outColor = vec4(0.0f);
-    outColor += ubo.light.ambient * ubo.material.ambient;
-    outColor += ubo.light.diffuse * ubo.material.diffuse * nDotL;
+    DirectionalLight(ubo.light, inNormal, ubo.material, ubo.mv, position, ambient, diffuse, specular);    
 
-    if (nDotL > 0.0) {
-        vec4 viewVector = normalize(ubo.mv * position);
-        vec3 halfVector = normalize(ubo.light.position - vec3(viewVector));    
-        float nDotH = max(0.0, dot(inNormal, halfVector));
-        outColor += max(0.0, pow(nDotH, ubo.material.shininess))
-            * ubo.material.specular
-            * ubo.light.specular;
-    }
+    outColor = ambient * ubo.material.ambient
+        + diffuse * ubo.material.diffuse
+        + specular * ubo.material.specular;
+
+    outColor = clamp(outColor, 0.0, 1.0);
 }

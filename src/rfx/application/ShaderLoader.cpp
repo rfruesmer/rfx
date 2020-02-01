@@ -20,7 +20,7 @@ shared_ptr<VertexShader> ShaderLoader::loadVertexShader(
     const char* entryPoint,
     const VertexFormat& vertexFormat) const
 {
-    VkPipelineShaderStageCreateInfo shaderStageCreateInfo = 
+    const VkPipelineShaderStageCreateInfo shaderStageCreateInfo = 
         loadInternal(path, VK_SHADER_STAGE_VERTEX_BIT, entryPoint);
 
     return graphicsDevice->createVertexShader(shaderStageCreateInfo, vertexFormat);
@@ -35,6 +35,9 @@ VkPipelineShaderStageCreateInfo ShaderLoader::loadInternal(
 {
     string shaderString;
     FileUtil::readTextFile(path, shaderString);
+
+    insertIncludedFiles(path.parent_path(), shaderString);
+
     vector<unsigned int> shaderSPV;
     GLSLtoSPV(stage, shaderString.c_str(), shaderSPV);
 
@@ -60,11 +63,43 @@ VkPipelineShaderStageCreateInfo ShaderLoader::loadInternal(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void ShaderLoader::insertIncludedFiles(const path& currentShaderDirectoryPath, string& inoutShaderString) const
+{
+    smatch match;
+    const std::regex regex("#include \\s*\"(.*)\"");
+
+    while (regex_search(inoutShaderString, match, regex)) {
+        const path relativeIncludedFilePath = match[1].str();
+        insertIncludedFile(currentShaderDirectoryPath, relativeIncludedFilePath, 
+            match.position(), match.length(), inoutShaderString);        
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void ShaderLoader::insertIncludedFile(
+    const path& currentShaderDirectoryPath,
+    const path& relativeIncludedFilePath, 
+    size_t first,
+    size_t length,
+    string& inoutShaderString) const
+{
+    const path absoluteIncludedFilePath = currentShaderDirectoryPath / relativeIncludedFilePath;
+
+    string includedShaderString;
+    FileUtil::readTextFile(absoluteIncludedFilePath, includedShaderString);
+    insertIncludedFiles(absoluteIncludedFilePath, includedShaderString);
+
+    inoutShaderString.replace(first, length, includedShaderString);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 shared_ptr<FragmentShader> ShaderLoader::loadFragmentShader(
     const path& path,
     const char* entryPoint) const
 {
-    VkPipelineShaderStageCreateInfo shaderStageCreateInfo =
+    const VkPipelineShaderStageCreateInfo shaderStageCreateInfo =
         loadInternal(path, VK_SHADER_STAGE_FRAGMENT_BIT, entryPoint);
 
     return graphicsDevice->createFragmentShader(shaderStageCreateInfo);

@@ -219,6 +219,10 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\rfx\graphics\effect\PointLightEffect.h" />
+    <ClInclude Include="src\rfx\graphics\effect\DirectionalLightEffectFactory.h" />
+    <ClInclude Include="src\rfx\graphics\effect\PointLightEffectFactory.h" />
+    <ClInclude Include="src\rfx\graphics\effect\EffectFactory.h" />
     <ClInclude Include="src\rfx\scene\Camera.h" />
     <ClInclude Include="src\rfx\scene\SceneLoader.h" />
     <ClInclude Include="src\rfx\core\JsonDeserializer.h" />
@@ -231,7 +235,7 @@
     <ClInclude Include="src\rfx\graphics\effect\Light.h" />
     <ClInclude Include="src\rfx\scene\Scene.h" />
     <ClInclude Include="src\rfx\graphics\effect\DirectionalLightEffect.h" />
-    <ClInclude Include="test\DirectionalVertexLightingTest.h" />
+    <ClInclude Include="test\PerVertexDirectionalLightTest.h" />
     <ClInclude Include="src\rfx\graphics\effect\EffectDefinitionDeserializer.h" />
     <ClInclude Include="src\rfx\graphics\effect\EffectDefinition.h" />
     <ClInclude Include="src\rfx\graphics\shader\FragmentShader.h" />
@@ -276,6 +280,7 @@
     <ClInclude Include="src\rfx\graphics\window\Win32Window.h" />
     <ClInclude Include="src\rfx\core\StringUtil.h" />
     <ClInclude Include="src\rfx\core\Timer.h" />
+    <ClInclude Include="test\PerVertexPointLightTest.h" />
     <ClInclude Include="test\TexturedCubesTest.h" />
     <ClInclude Include="test\TestApplication.h" />
     <ClInclude Include="src\rfx\application\Texture2DLoader.h" />
@@ -288,8 +293,14 @@
     <ClInclude Include="src\rfx\graphics\effect\VertexColorEffect.h" />
     <ClInclude Include="src\rfx\graphics\effect\Texture2DEffect.h" />
     <ClInclude Include="src\rfx\graphics\shader\VertexShader.h" />
+    <ClInclude Include="src\rfx\graphics\effect\Texture2DEffectFactory.h" />
+    <ClInclude Include="src\rfx\graphics\effect\VertexColorEffectFactory.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\rfx\graphics\effect\PointLightEffect.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\DirectionalLightEffectFactory.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\PointLightEffectFactory.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\EffectFactory.cpp" />
     <ClCompile Include="src\rfx\scene\Camera.cpp" />
     <ClCompile Include="src\rfx\scene\SceneLoader.cpp" />
     <ClCompile Include="src\rfx\core\JsonDeserializer.cpp" />
@@ -302,7 +313,7 @@
     <ClCompile Include="src\rfx\graphics\effect\Light.cpp" />
     <ClCompile Include="src\rfx\scene\Scene.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\DirectionalLightEffect.cpp" />
-    <ClCompile Include="test\DirectionalVertexLightingTest.cpp" />
+    <ClCompile Include="test\PerVertexDirectionalLightTest.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\EffectDefinitionDeserializer.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\EffectDefinition.cpp" />
     <ClCompile Include="src\rfx\graphics\shader\FragmentShader.cpp" />
@@ -343,6 +354,7 @@
     <ClCompile Include="src\rfx\graphics\window\Win32Window.cpp" />
     <ClCompile Include="src\rfx\core\StringUtil.cpp" />
     <ClCompile Include="src\rfx\core\Timer.cpp" />
+    <ClCompile Include="test\PerVertexPointLightTest.cpp" />
     <ClCompile Include="test\TexturedCubesTest.cpp" />
     <ClCompile Include="test\TestApplication.cpp" />
     <ClCompile Include="src\rfx\application\Texture2DLoader.cpp">
@@ -360,6 +372,8 @@
     <ClCompile Include="src\rfx\graphics\effect\VertexColorEffect.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\Texture2DEffect.cpp" />
     <ClCompile Include="src\rfx\graphics\shader\VertexShader.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\Texture2DEffectFactory.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\VertexColorEffectFactory.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="res\rfx.rc" />
@@ -375,7 +389,12 @@
     <None Include="assets\common\models\teapot.dae" />
     <None Include="assets\common\shaders\color.frag" />
     <None Include="assets\common\shaders\color.vert" />
+    <None Include="assets\common\shaders\directional_light.glsl" />
     <None Include="assets\common\shaders\directional_light.vert" />
+    <None Include="assets\common\shaders\light.glsl" />
+    <None Include="assets\common\shaders\material.glsl" />
+    <None Include="assets\common\shaders\point_light.glsl" />
+    <None Include="assets\common\shaders\point_light.vert" />
     <None Include="assets\common\shaders\texture.frag" />
     <None Include="assets\common\shaders\texture.vert" />
     <None Include="assets\common\textures\checkerboard_nomips_rgba.ktx" />
@@ -386,12 +405,13 @@
     <None Include="assets\shaders\color.vert" />
     <None Include="assets\shaders\texture.frag" />
     <None Include="assets\shaders\texture.vert" />
-    <None Include="assets\tests\directional-vertex-lighting\application-config.json" />
+    <None Include="assets\tests\vertex-directional-light\application-config.json" />
     <None Include="assets\tests\textured-cubes\application-config.json" />
     <None Include="assets\tests\textured-cubes\crate01_color_height_rgba.ktx" />
     <None Include="assets\tests\textured-cubes\crate02_color_height_rgba.ktx" />
     <None Include="assets\tests\textured-quad\application-config.json" />
     <None Include="assets\tests\triangle\application-config.json" />
+    <None Include="assets\tests\vertex-point-light\application-config.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

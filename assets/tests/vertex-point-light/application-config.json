@@ -1,6 +1,6 @@
 {
   "application": {
-    "name": "rfx - Directional Vertex Lighting Demo",
+    "name": "rfx - Per-Vertex Point Light Demo",
     "logLevel": "TRACE"
   },
   "graphics": {
@@ -10,12 +10,12 @@
     },
     "effect_defaults": [
       {
-        "id": "directional_vertex_lighting",
+        "id": "point_light",
         "vertexFormat": [
           "COORDINATES",
           "NORMALS"
         ],
-        "vertexShaderPath": "assets/common/shaders/directional_light.vert",
+        "vertexShaderPath": "assets/common/shaders/point_light.vert",
         "fragmentShaderPath": "assets/common/shaders/color.frag",
         "material": {
           "ambient": [ 0, 0, 0, 1 ],
@@ -29,7 +29,7 @@
   },
   "scene": {
     "camera": {
-      "position": [ 0, 0, 100 ],
+      "position": [ 0, 0, 25 ],
       "lookAt": [ 0, 0, 0 ],
       "up": [ 0, 1, 0 ],
       "projection": {
@@ -43,18 +43,18 @@
       {
         "path": "assets/common/models/teapot.dae",
         "effect": {
-          "id": "directional_vertex_lighting"
+          "id": "point_light"
         }
       }
     ],
     "lights": [
       {
         "id": "sun",
-        "type": "directional",
+        "type": "point",
         "ambient": [ 0, 0, 0 ],
         "diffuse": [ 1, 1, 1 ],
         "specular": [ 1, 1, 1 ],
-        "direction": [ 0, -1, 0 ]
+        "position": [ 50, 50, 0 ]
       }
     ]
   }

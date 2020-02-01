@@ -130,5 +130,5 @@ const float RFX_PI = 3.1415926535f;
     + #expr, std::invalid_argument);}}
 #define RFX_CHECK_STATE(expr, message) {if (!(expr)) {RFX_THROW(std::string("Illegal state: ") + message);}}
 
-#define RFX_NOT_IMPLEMENTED() \
+#define RFX_THROW_NOT_IMPLEMENTED() \
     RFX_THROW("not implemented yet")

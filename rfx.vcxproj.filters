@@ -183,9 +183,6 @@
     <ClInclude Include="src\rfx\application\ShaderLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="test\DirectionalVertexLightingTest.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\rfx\scene\Scene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -220,6 +217,30 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\rfx\scene\Camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\PerVertexDirectionalLightTest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\PerVertexPointLightTest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\EffectFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\VertexColorEffectFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\Texture2DEffectFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\PointLightEffectFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\DirectionalLightEffectFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\PointLightEffect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -365,9 +386,6 @@
     <ClCompile Include="src\rfx\application\ShaderLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test\DirectionalVertexLightingTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\rfx\scene\Scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -402,6 +420,30 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\rfx\scene\Camera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\PerVertexDirectionalLightTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\PerVertexPointLightTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\EffectFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\VertexColorEffectFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\Texture2DEffectFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\PointLightEffectFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\DirectionalLightEffectFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\PointLightEffect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -443,8 +485,14 @@
     <None Include="assets\tests\textured-cubes\application-config.json" />
     <None Include="assets\tests\textured-cubes\crate01_color_height_rgba.ktx" />
     <None Include="assets\tests\textured-cubes\crate02_color_height_rgba.ktx" />
-    <None Include="assets\tests\directional-vertex-lighting\application-config.json" />
     <None Include="assets\common\shaders\directional_light.vert" />
     <None Include="assets\common\models\teapot.dae" />
+    <None Include="assets\common\shaders\directional_light.glsl" />
+    <None Include="assets\common\shaders\point_light.glsl" />
+    <None Include="assets\common\shaders\point_light.vert" />
+    <None Include="assets\common\shaders\light.glsl" />
+    <None Include="assets\common\shaders\material.glsl" />
+    <None Include="assets\tests\vertex-directional-light\application-config.json" />
+    <None Include="assets\tests\vertex-point-light\application-config.json" />
   </ItemGroup>
 </Project>

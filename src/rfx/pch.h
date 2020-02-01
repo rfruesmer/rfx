@@ -54,6 +54,7 @@
 #include <fstream>
 #include <filesystem>
 #include <functional>
+#include <regex>
 
 // Assimp Header Files
 #include <assimp/Importer.hpp> 

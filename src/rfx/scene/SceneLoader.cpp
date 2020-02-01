@@ -9,6 +9,7 @@
 #include "rfx/graphics/effect/Texture2DEffect.h"
 #include "rfx/graphics/effect/DirectionalLightEffect.h"
 
+
 using namespace rfx;
 using namespace glm;
 using namespace std;
@@ -16,11 +17,13 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 
 SceneLoader::SceneLoader(
-    const std::shared_ptr<GraphicsDevice>& graphicsDevice,
+    const shared_ptr<GraphicsDevice>& graphicsDevice,
     VkRenderPass renderPass,
-    const std::unordered_map<std::string, EffectDefinition>& effectDefaults)
+    const unordered_map<string, shared_ptr<EffectFactory>>& effectFactories,
+    const unordered_map<string, EffectDefinition>& effectDefaults)
         : graphicsDevice(graphicsDevice),
           renderPass(renderPass),
+          effectFactories(effectFactories),
           effectDefaults(effectDefaults) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -132,23 +135,15 @@ shared_ptr<Effect> SceneLoader::loadEffect(const EffectDefinition& effectDefinit
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-shared_ptr<Effect> SceneLoader::createEffect(const EffectDefinition& effectDefinition,
+shared_ptr<Effect> SceneLoader::createEffect(
+    const EffectDefinition& effectDefinition,
     unique_ptr<ShaderProgram>& shaderProgram,
     const vector<shared_ptr<Texture2D>>& textures)
 {
-    if (effectDefinition.id == VertexColorEffect::ID) {
-        return make_shared<VertexColorEffect>(graphicsDevice, renderPass, shaderProgram);
-    }
+    const auto it = effectFactories.find(effectDefinition.id);
+    RFX_CHECK_STATE(it != effectFactories.end(), "No factory available for effect: " + effectDefinition.id);
 
-    if (effectDefinition.id == Texture2DEffect::ID) {
-        return make_shared<Texture2DEffect>(graphicsDevice, renderPass, shaderProgram, textures[0]);
-    }
-
-    if (effectDefinition.id == DirectionalLightEffect::ID) {
-        return make_shared<DirectionalLightEffect>(graphicsDevice, renderPass, shaderProgram);
-    }
-
-    RFX_NOT_IMPLEMENTED();
+    return it->second->create(graphicsDevice, renderPass, shaderProgram, textures);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

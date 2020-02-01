@@ -20,6 +20,7 @@ public:
         glm::vec4 ambient = { 0.0F, 0.0F, 0.0F, 1.0F };
         glm::vec4 diffuse = { 0.0F, 0.0F, 0.0F, 1.0F };
         glm::vec4 specular = { 0.0F, 0.0F, 0.0F, 1.0F };
+        glm::vec3 attenuation = { 1.0F, 0.0F, 0.0F };
     };
 
     Light(const std::string& id, LightType type);

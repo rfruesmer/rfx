@@ -25,8 +25,16 @@ static_assert(false, "not implemented yet");
 
 void TestApplication::initScene()
 {
+    createEffectFactories();
     loadEffectsDefaults();
     loadScene();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::add(const std::shared_ptr<EffectFactory>& effectFactory)
+{
+    effectFactories[effectFactory->getEffectId()] = effectFactory;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -52,7 +60,7 @@ void TestApplication::loadEffectDefaults(const Json::Value& jsonEffectDefaults)
 
 void TestApplication::loadScene()
 {
-    SceneLoader sceneLoader(graphicsDevice, renderPass, effectDefaults);
+    SceneLoader sceneLoader(graphicsDevice, renderPass, effectFactories, effectDefaults);
     scene = sceneLoader.load(configuration["scene"]);
     effects = sceneLoader.getEffects();
 

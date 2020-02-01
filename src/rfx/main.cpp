@@ -13,7 +13,8 @@ static_assert(false, "Not implemented");
 #include "test/TexturedQuadTest.h"
 #include "test/CubeTest.h"
 #include "test/TexturedCubesTest.h"
-#include "test/DirectionalVertexLightingTest.h"
+#include "test/PerVertexDirectionalLightTest.h"
+#include "test/PerVertexPointLightTest.h"
 
 using namespace rfx;
 using namespace std;
@@ -41,7 +42,9 @@ int main()
         //TexturedQuadTest theApp(instanceHandle);
         //CubeTest theApp(instanceHandle);
         //TexturedCubesTest theApp(instanceHandle);
-        DirectionalVertexLightingTest theApp(instanceHandle);
+        //PerVertexDirectionalLightTest theApp(instanceHandle);
+        PerVertexPointLightTest theApp(instanceHandle);
+
 
         theApp.initialize();
         theApp.run();

@@ -2,6 +2,7 @@
 
 #include "rfx/scene/Scene.h"
 #include "rfx/scene/ModelDefinitionDeserializer.h"
+#include "rfx/graphics/effect/EffectFactory.h"
 #include "rfx/core/JsonDeserializer.h"
 
 namespace rfx
@@ -13,6 +14,7 @@ public:
     explicit SceneLoader(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,
         VkRenderPass renderPass,
+        const std::unordered_map<std::string, std::shared_ptr<EffectFactory>>& effectFactories,
         const std::unordered_map<std::string, EffectDefinition>& effectDefaults);
 
     std::unique_ptr<Scene> load(const Json::Value& jsonScene);
@@ -35,12 +37,13 @@ private:
         const ModelDefinition& modelDefinition) const;
 
     std::shared_ptr<GraphicsDevice> graphicsDevice;
+    VkRenderPass renderPass;
+    std::unordered_map<std::string, std::shared_ptr<EffectFactory>> effectFactories;
     std::unordered_map<std::string, EffectDefinition> effectDefaults;
 
     Json::Value jsonScene;
     std::unique_ptr<Scene> scene;
     std::vector<std::shared_ptr<Effect>> effects;
-    VkRenderPass renderPass;
 };
 
 }

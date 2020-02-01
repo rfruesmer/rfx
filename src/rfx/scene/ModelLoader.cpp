@@ -28,10 +28,7 @@ shared_ptr<Mesh> ModelLoader::load(const path& modelPath,
 
 void ModelLoader::loadInternal(const path& modelPath, const VertexFormat& vertexFormat)
 {
-    static const int assimpFlags =
-        aiProcess_FlipWindingOrder
-        | aiProcess_Triangulate
-        | aiProcess_PreTransformVertices;
+    static const int assimpFlags = aiProcess_FlipWindingOrder | aiProcess_Triangulate;
 
     const path absolutePath = modelPath.is_absolute()
             ? modelPath

@@ -27,6 +27,15 @@ private:
         VkShaderStageFlagBits stage,
         const char* entryPoint) const;
 
+    void insertIncludedFiles(const std::filesystem::path& currentShaderDirectoryPath, 
+                             std::string& inoutShaderString) const;
+
+    void insertIncludedFile(const std::filesystem::path& currentShaderDirectoryPath, 
+        const std::filesystem::path& relativeIncludedFilePath,
+        size_t first, 
+        size_t length,
+        std::string& inoutShaderString) const;
+
     std::shared_ptr<GraphicsDevice> graphicsDevice;
 };
     

@@ -21,7 +21,7 @@ void DirectionalLight::setDirection(float x, float y, float z)
 
 void DirectionalLight::setDirection(const vec3& direction)
 {
-    data.position = direction;
+    data.position = normalize(direction);
     data.position.y *= -1.0F;
 }
 
