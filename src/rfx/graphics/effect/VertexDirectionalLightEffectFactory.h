@@ -6,10 +6,10 @@
 namespace rfx
 {
 
-class PointLightEffectFactory : public EffectFactory
+class VertexDirectionalLightEffectFactory : public EffectFactory
 {
 public:
-    explicit PointLightEffectFactory();
+    explicit VertexDirectionalLightEffectFactory();
 
     std::shared_ptr<Effect> create(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,

@@ -195,9 +195,6 @@
     <ClInclude Include="src\rfx\graphics\effect\Material.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\effect\DirectionalLightEffect.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\rfx\graphics\effect\LightDefinitionDeserializer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -228,21 +225,6 @@
     <ClInclude Include="src\rfx\graphics\effect\Texture2DEffectFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\effect\PointLightEffectFactory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rfx\graphics\effect\DirectionalLightEffectFactory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rfx\graphics\effect\PointLightEffect.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rfx\graphics\effect\SpotLightEffect.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rfx\graphics\effect\SpotLightEffectFactory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="test\VertexDirectionalLightTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -250,6 +232,24 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="test\VertexSpotLightTest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\VertexDirectionalLightEffect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\VertexDirectionalLightEffectFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\VertexPointLightEffect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\VertexPointLightEffectFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\VertexSpotLightEffect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\VertexSpotLightEffectFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -407,9 +407,6 @@
     <ClCompile Include="src\rfx\graphics\effect\Material.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\effect\DirectionalLightEffect.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\rfx\graphics\effect\LightDefinitionDeserializer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -440,21 +437,6 @@
     <ClCompile Include="src\rfx\graphics\effect\Texture2DEffectFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\effect\PointLightEffectFactory.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rfx\graphics\effect\DirectionalLightEffectFactory.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rfx\graphics\effect\PointLightEffect.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rfx\graphics\effect\SpotLightEffect.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rfx\graphics\effect\SpotLightEffectFactory.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="test\VertexDirectionalLightTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -462,6 +444,24 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="test\VertexSpotLightTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\VertexDirectionalLightEffect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\VertexDirectionalLightEffectFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\VertexPointLightEffect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\VertexPointLightEffectFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\VertexSpotLightEffect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\VertexSpotLightEffectFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -515,5 +515,7 @@
     <None Include="assets\tests\vertex-spot-light\application-config.json" />
     <None Include="assets\common\shaders\spot_light.vert" />
     <None Include="assets\common\shaders\spot_light.glsl" />
+    <None Include="assets\common\shaders\directional_light.frag" />
+    <None Include="assets\common\shaders\common_light.vert" />
   </ItemGroup>
 </Project>

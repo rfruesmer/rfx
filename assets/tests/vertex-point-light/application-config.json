@@ -10,7 +10,7 @@
     },
     "effect_defaults": [
       {
-        "id": "point_light",
+        "id": "vertex_point_light",
         "vertexFormat": [
           "COORDINATES",
           "NORMALS"
@@ -43,7 +43,7 @@
       {
         "path": "assets/common/models/teapot.dae",
         "effect": {
-          "id": "point_light"
+          "id": "vertex_point_light"
         }
       }
     ],

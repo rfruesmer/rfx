@@ -1,6 +1,6 @@
 {
   "application": {
-    "name": "rfx - Per-Vertex Directional Light Demo",
+    "name": "rfx - Per-Fragment Directional Light Demo",
     "logLevel": "TRACE"
   },
   "graphics": {
@@ -10,7 +10,7 @@
     },
     "effect_defaults": [
       {
-        "id": "vertex_directional_light",
+        "id": "directional_light",
         "vertexFormat": [
           "COORDINATES",
           "NORMALS"
@@ -43,7 +43,7 @@
       {
         "path": "assets/common/models/teapot.dae",
         "effect": {
-          "id": "vertex_directional_light"
+          "id": "directional_light"
         }
       }
     ],

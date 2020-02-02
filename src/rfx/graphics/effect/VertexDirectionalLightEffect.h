@@ -7,12 +7,12 @@
 namespace rfx
 {
 
-class DirectionalLightEffect : public Effect
+class VertexDirectionalLightEffect : public Effect
 {
 public:
     static const std::string ID;
 
-    explicit DirectionalLightEffect(
+    explicit VertexDirectionalLightEffect(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,
         VkRenderPass renderPass,
         std::unique_ptr<ShaderProgram>& shaderProgram);

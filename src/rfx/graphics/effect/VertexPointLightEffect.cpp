@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "rfx/graphics/effect/DirectionalLightEffect.h"
+#include "rfx/graphics/effect/VertexPointLightEffect.h"
 
 using namespace rfx;
 using namespace glm;
@@ -7,11 +7,11 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const string DirectionalLightEffect::ID = "directional_light";
+const string VertexPointLightEffect::ID = "vertex_point_light";
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-DirectionalLightEffect::DirectionalLightEffect(
+VertexPointLightEffect::VertexPointLightEffect(
     const shared_ptr<GraphicsDevice>& graphicsDevice,
     VkRenderPass renderPass,
     std::unique_ptr<ShaderProgram>& shaderProgram)
@@ -29,7 +29,7 @@ DirectionalLightEffect::DirectionalLightEffect(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void DirectionalLightEffect::initDescriptorSetLayout()
+void VertexPointLightEffect::initDescriptorSetLayout()
 {
     VkDescriptorSetLayoutBinding layoutBinding = {};
     layoutBinding.binding = 0;
@@ -43,7 +43,7 @@ void DirectionalLightEffect::initDescriptorSetLayout()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void DirectionalLightEffect::initDescriptorSet()
+void VertexPointLightEffect::initDescriptorSet()
 {
     VkDescriptorSetAllocateInfo descriptorSetAllocateInfo;
     descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -69,38 +69,38 @@ void DirectionalLightEffect::initDescriptorSet()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const string& DirectionalLightEffect::getId() const
+const string& VertexPointLightEffect::getId() const
 {
     return ID;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void DirectionalLightEffect::setModelViewProjMatrix(const mat4& matrix)
+void VertexPointLightEffect::setModelViewProjMatrix(const mat4& matrix)
 {
     uniformData.modelViewProjection = matrix;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void DirectionalLightEffect::updateFrom(const vector<shared_ptr<Light>>& lights)
+void VertexPointLightEffect::updateFrom(const vector<shared_ptr<Light>>& lights)
 {
     RFX_CHECK_ARGUMENT(!lights.empty());
-    RFX_CHECK_ARGUMENT(lights[0]->getType() == LightType::DIRECTIONAL);
+    RFX_CHECK_ARGUMENT(lights[0]->getType() == LightType::POINT);
 
     uniformData.lightData = lights[0]->getData();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void DirectionalLightEffect::updateFrom(const shared_ptr<Material>& material)
+void VertexPointLightEffect::updateFrom(const shared_ptr<Material>& material)
 {
     uniformData.materialData = material->getData();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void DirectionalLightEffect::updateFrom(const shared_ptr<Camera>& camera)
+void VertexPointLightEffect::updateFrom(const shared_ptr<Camera>& camera)
 {
     uniformData.modelView = camera->getViewMatrix() * modelMatrix;
 
@@ -109,7 +109,7 @@ void DirectionalLightEffect::updateFrom(const shared_ptr<Camera>& camera)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void DirectionalLightEffect::updateUniformBuffer()
+void VertexPointLightEffect::updateUniformBuffer()
 {
     uniformBuffer->load(sizeof(UniformData),
         reinterpret_cast<std::byte*>(&uniformData));

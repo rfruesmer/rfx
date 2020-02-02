@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
 #include "test/VertexSpotLightTest.h"
-#include "rfx/graphics/effect/SpotLightEffectFactory.h"
+#include "rfx/graphics/effect/VertexSpotLightEffectFactory.h"
 
 
 using namespace rfx;
@@ -22,7 +22,7 @@ VertexSpotLightTest::VertexSpotLightTest(const path& configurationPath, handle_t
 
 void VertexSpotLightTest::createEffectFactories()
 {
-    add(make_shared<SpotLightEffectFactory>());
+    add(make_shared<VertexSpotLightEffectFactory>());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -7,7 +7,7 @@
 #include "rfx/graphics/effect/LightDefinitionDeserializer.h"
 #include "rfx/graphics/effect/VertexColorEffect.h"
 #include "rfx/graphics/effect/Texture2DEffect.h"
-#include "rfx/graphics/effect/DirectionalLightEffect.h"
+#include "rfx/graphics/effect/VertexDirectionalLightEffect.h"
 
 
 using namespace rfx;

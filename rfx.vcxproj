@@ -219,12 +219,12 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\rfx\graphics\effect\SpotLightEffect.h" />
-    <ClInclude Include="src\rfx\graphics\effect\SpotLightEffectFactory.h" />
+    <ClInclude Include="src\rfx\graphics\effect\VertexSpotLightEffect.h" />
+    <ClInclude Include="src\rfx\graphics\effect\VertexSpotLightEffectFactory.h" />
     <ClInclude Include="test\VertexSpotLightTest.h" />
-    <ClInclude Include="src\rfx\graphics\effect\PointLightEffect.h" />
-    <ClInclude Include="src\rfx\graphics\effect\DirectionalLightEffectFactory.h" />
-    <ClInclude Include="src\rfx\graphics\effect\PointLightEffectFactory.h" />
+    <ClInclude Include="src\rfx\graphics\effect\VertexPointLightEffect.h" />
+    <ClInclude Include="src\rfx\graphics\effect\VertexDirectionalLightEffectFactory.h" />
+    <ClInclude Include="src\rfx\graphics\effect\VertexPointLightEffectFactory.h" />
     <ClInclude Include="src\rfx\graphics\effect\EffectFactory.h" />
     <ClInclude Include="src\rfx\scene\Camera.h" />
     <ClInclude Include="src\rfx\scene\SceneLoader.h" />
@@ -237,7 +237,7 @@
     <ClInclude Include="src\rfx\graphics\effect\DirectionalLight.h" />
     <ClInclude Include="src\rfx\graphics\effect\Light.h" />
     <ClInclude Include="src\rfx\scene\Scene.h" />
-    <ClInclude Include="src\rfx\graphics\effect\DirectionalLightEffect.h" />
+    <ClInclude Include="src\rfx\graphics\effect\VertexDirectionalLightEffect.h" />
     <ClInclude Include="test\VertexDirectionalLightTest.h" />
     <ClInclude Include="src\rfx\graphics\effect\EffectDefinitionDeserializer.h" />
     <ClInclude Include="src\rfx\graphics\effect\EffectDefinition.h" />
@@ -300,12 +300,12 @@
     <ClInclude Include="src\rfx\graphics\effect\VertexColorEffectFactory.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\rfx\graphics\effect\SpotLightEffect.cpp" />
-    <ClCompile Include="src\rfx\graphics\effect\SpotLightEffectFactory.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\VertexSpotLightEffect.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\VertexSpotLightEffectFactory.cpp" />
     <ClCompile Include="test\VertexSpotLightTest.cpp" />
-    <ClCompile Include="src\rfx\graphics\effect\PointLightEffect.cpp" />
-    <ClCompile Include="src\rfx\graphics\effect\DirectionalLightEffectFactory.cpp" />
-    <ClCompile Include="src\rfx\graphics\effect\PointLightEffectFactory.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\VertexPointLightEffect.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\VertexDirectionalLightEffectFactory.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\VertexPointLightEffectFactory.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\EffectFactory.cpp" />
     <ClCompile Include="src\rfx\scene\Camera.cpp" />
     <ClCompile Include="src\rfx\scene\SceneLoader.cpp" />
@@ -318,7 +318,7 @@
     <ClCompile Include="src\rfx\graphics\effect\DirectionalLight.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\Light.cpp" />
     <ClCompile Include="src\rfx\scene\Scene.cpp" />
-    <ClCompile Include="src\rfx\graphics\effect\DirectionalLightEffect.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\VertexDirectionalLightEffect.cpp" />
     <ClCompile Include="test\VertexDirectionalLightTest.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\EffectDefinitionDeserializer.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\EffectDefinition.cpp" />
@@ -395,6 +395,8 @@
     <None Include="assets\common\models\teapot.dae" />
     <None Include="assets\common\shaders\color.frag" />
     <None Include="assets\common\shaders\color.vert" />
+    <None Include="assets\common\shaders\common_light.vert" />
+    <None Include="assets\common\shaders\directional_light.frag" />
     <None Include="assets\common\shaders\directional_light.glsl" />
     <None Include="assets\common\shaders\directional_light.vert" />
     <None Include="assets\common\shaders\light.glsl" />

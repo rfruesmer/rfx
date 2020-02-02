@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
 #include "test/VertexDirectionalLightTest.h"
-#include "rfx/graphics/effect/DirectionalLightEffectFactory.h"
+#include "rfx/graphics/effect/VertexDirectionalLightEffectFactory.h"
 
 
 using namespace rfx;
@@ -22,7 +22,7 @@ VertexDirectionalLightTest::VertexDirectionalLightTest(const path& configuration
 
 void VertexDirectionalLightTest::createEffectFactories()
 {
-    add(make_shared<DirectionalLightEffectFactory>());
+    add(make_shared<VertexDirectionalLightEffectFactory>());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

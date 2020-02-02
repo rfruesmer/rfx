@@ -1,24 +1,24 @@
 #include "rfx/pch.h"
-#include "rfx/graphics/effect/DirectionalLightEffectFactory.h"
-#include "rfx/graphics/effect/DirectionalLightEffect.h"
+#include "rfx/graphics/effect/VertexDirectionalLightEffectFactory.h"
+#include "rfx/graphics/effect/VertexDirectionalLightEffect.h"
 
 using namespace rfx;
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-DirectionalLightEffectFactory::DirectionalLightEffectFactory()
-    : EffectFactory(DirectionalLightEffect::ID) {}
+VertexDirectionalLightEffectFactory::VertexDirectionalLightEffectFactory()
+    : EffectFactory(VertexDirectionalLightEffect::ID) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-shared_ptr<Effect> DirectionalLightEffectFactory::create(
+shared_ptr<Effect> VertexDirectionalLightEffectFactory::create(
     const shared_ptr<GraphicsDevice>& graphicsDevice,
     VkRenderPass renderPass, 
     unique_ptr<ShaderProgram>& shaderProgram,
     const vector<shared_ptr<Texture2D>>&) const
 {
-    return make_shared<DirectionalLightEffect>(graphicsDevice, renderPass, shaderProgram);
+    return make_shared<VertexDirectionalLightEffect>(graphicsDevice, renderPass, shaderProgram);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

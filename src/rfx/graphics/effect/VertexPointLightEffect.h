@@ -7,12 +7,12 @@
 namespace rfx
 {
 
-class PointLightEffect : public Effect
+class VertexPointLightEffect : public Effect
 {
 public:
     static const std::string ID;
 
-    explicit PointLightEffect(
+    explicit VertexPointLightEffect(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,
         VkRenderPass renderPass,
         std::unique_ptr<ShaderProgram>& shaderProgram);

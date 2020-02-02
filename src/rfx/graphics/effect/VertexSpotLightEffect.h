@@ -1,18 +1,18 @@
 #pragma once
 
-#include "rfx/graphics/effect/PointLightEffect.h"
+#include "rfx/graphics/effect/VertexPointLightEffect.h"
 
 
 
 namespace rfx
 {
 
-class SpotLightEffect : public PointLightEffect
+class VertexSpotLightEffect : public VertexPointLightEffect
 {
 public:
     static const std::string ID;
 
-    explicit SpotLightEffect(
+    explicit VertexSpotLightEffect(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,
         VkRenderPass renderPass,
         std::unique_ptr<ShaderProgram>& shaderProgram);
