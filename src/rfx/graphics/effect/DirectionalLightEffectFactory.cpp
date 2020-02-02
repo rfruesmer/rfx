@@ -8,7 +8,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 
 DirectionalLightEffectFactory::DirectionalLightEffectFactory()
-    : EffectFactory("directional_light") {}
+    : EffectFactory(DirectionalLightEffect::ID) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 

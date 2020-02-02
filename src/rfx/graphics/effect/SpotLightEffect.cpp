@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "rfx/graphics/effect/DirectionalLight.h"
+#include "rfx/graphics/effect/SpotLightEffect.h"
 
 using namespace rfx;
 using namespace glm;
@@ -7,29 +7,32 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-DirectionalLight::DirectionalLight(const string& id)
-    : Light(id, LightType::DIRECTIONAL) {}
+const string SpotLightEffect::ID = "spot_light";
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void DirectionalLight::setDirection(float x, float y, float z)
+SpotLightEffect::SpotLightEffect(
+    const shared_ptr<GraphicsDevice>& graphicsDevice,
+    VkRenderPass renderPass,
+    std::unique_ptr<ShaderProgram>& shaderProgram)
+        : PointLightEffect(graphicsDevice, renderPass, shaderProgram) {}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const string& SpotLightEffect::getId() const
 {
-    setDirection(vec3(x, y ,z));
+    return ID;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void DirectionalLight::setDirection(const vec3& direction)
+void SpotLightEffect::updateFrom(const std::vector<std::shared_ptr<Light>>& lights)
 {
-    data.direction = normalize(direction);
-    data.direction.y *= -1.0F;
+    RFX_CHECK_ARGUMENT(!lights.empty());
+    RFX_CHECK_ARGUMENT(lights[0]->getType() == LightType::SPOT);
+
+    uniformData.lightData = lights[0]->getData();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const vec3& DirectionalLight::getDirection() const
-{
-    return data.direction;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------

@@ -26,7 +26,7 @@ public:
     void setModelViewProjMatrix(const glm::mat4& matrix) override;
     void updateUniformBuffer() override;
 
-private:
+protected:
     struct UniformData
     {
         glm::mat4 modelView;
@@ -35,10 +35,11 @@ private:
         Material::Data materialData;
     };
 
+    UniformData uniformData;
+
+private:
     void initDescriptorSetLayout();
     void initDescriptorSet();
-
-    UniformData uniformData;
 };
 
 }

@@ -243,6 +243,15 @@
     <ClInclude Include="src\rfx\graphics\effect\PointLightEffect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="test\PerVertexSpotLightTest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\SpotLightEffect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rfx\graphics\effect\SpotLightEffectFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\rfx\pch.cpp">
@@ -446,6 +455,15 @@
     <ClCompile Include="src\rfx\graphics\effect\PointLightEffect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\PerVertexSpotLightTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\SpotLightEffect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rfx\graphics\effect\SpotLightEffectFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\rfx.ico">
@@ -494,5 +512,8 @@
     <None Include="assets\common\shaders\material.glsl" />
     <None Include="assets\tests\vertex-directional-light\application-config.json" />
     <None Include="assets\tests\vertex-point-light\application-config.json" />
+    <None Include="assets\tests\vertex-spot-light\application-config.json" />
+    <None Include="assets\common\shaders\spot_light.vert" />
+    <None Include="assets\common\shaders\spot_light.glsl" />
   </ItemGroup>
 </Project>

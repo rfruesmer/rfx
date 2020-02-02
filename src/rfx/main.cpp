@@ -15,6 +15,7 @@ static_assert(false, "Not implemented");
 #include "test/TexturedCubesTest.h"
 #include "test/PerVertexDirectionalLightTest.h"
 #include "test/PerVertexPointLightTest.h"
+#include "test/PerVertexSpotLightTest.h"
 
 using namespace rfx;
 using namespace std;
@@ -43,7 +44,8 @@ int main()
         //CubeTest theApp(instanceHandle);
         //TexturedCubesTest theApp(instanceHandle);
         //PerVertexDirectionalLightTest theApp(instanceHandle);
-        PerVertexPointLightTest theApp(instanceHandle);
+        //PerVertexPointLightTest theApp(instanceHandle);
+        PerVertexSpotLightTest theApp(instanceHandle);
 
 
         theApp.initialize();
@@ -51,7 +53,7 @@ int main()
 
         return EXIT_SUCCESS;
     }
-    catch (const exception & ex)
+    catch (const exception& ex) // NOSONAR
     {
         RFX_LOG_FATAL << ex.what();
     }

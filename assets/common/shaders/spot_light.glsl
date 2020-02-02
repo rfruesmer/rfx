@@ -1,5 +1,5 @@
 
-void PointLight(const in Light light,
+void SpotLight(const in Light light,
                 const in vec3 normal,
                 const in Material material,
                 const in mat4 mv,
@@ -15,7 +15,15 @@ void PointLight(const in Light light,
     float attenuation = 1.0 / light.attenuationFactors.x
             + light.attenuationFactors.y * lightDistance
             + light.attenuationFactors.z * lightDistance * lightDistance;
-            
+
+    float spotDot = dot(-lightDirection, normalize(light.direction));
+    if (spotDot < light.spotCutoff) {
+        attenuation *= pow(spotDot, light.spotExponent);
+    }
+    else {
+        attenuation = 0.0;
+    }
+
     float nDotL = max(0.0, dot(normal, lightDirection));
 
     ambient += light.ambient * attenuation;
@@ -28,5 +36,3 @@ void PointLight(const in Light light,
         specular += max(0.0, pow(nDotH, material.shininess)) * light.specular * attenuation;
     }
 }
-
-

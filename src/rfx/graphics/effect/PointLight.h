@@ -15,6 +15,9 @@ public:
     [[nodiscard]] const glm::vec3& getPosition() const;
 
     void setAttenuation(float constant, float linear, float quadratic);
+
+protected:
+    explicit PointLight(const std::string& id, LightType type);
 };
 
 }

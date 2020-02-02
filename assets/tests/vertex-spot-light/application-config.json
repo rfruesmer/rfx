@@ -1,6 +1,6 @@
 {
   "application": {
-    "name": "rfx - Per-Vertex Point Light Demo",
+    "name": "rfx - Per-Vertex Spot Light Demo",
     "logLevel": "TRACE"
   },
   "graphics": {
@@ -10,12 +10,12 @@
     },
     "effect_defaults": [
       {
-        "id": "point_light",
+        "id": "spot_light",
         "vertexFormat": [
           "COORDINATES",
           "NORMALS"
         ],
-        "vertexShaderPath": "assets/common/shaders/point_light.vert",
+        "vertexShaderPath": "assets/common/shaders/spot_light.vert",
         "fragmentShaderPath": "assets/common/shaders/color.frag",
         "material": {
           "ambient": [ 0, 0, 0, 1 ],
@@ -41,20 +41,24 @@
     },
     "models": [
       {
-        "path": "assets/common/models/teapot.dae",
+        "path": "assets/common/models/plane.obj",
         "effect": {
-          "id": "point_light"
+          "id": "spot_light"
         }
       }
     ],
     "lights": [
       {
-        "id": "point",
-        "type": "point",
+        "id": "spot",
+        "type": "spot",
         "ambient": [ 0, 0, 0 ],
         "diffuse": [ 1, 1, 1 ],
         "specular": [ 1, 1, 1 ],
-        "position": [ 50, 50, 0 ]
+        "position": [ 0, 5, 0 ],
+        "direction": [ 0, -1, 0 ],
+        "attenuation": [ 1, 0, 0 ],
+        "spotExponent": 2,
+        "spotCutoff": 45
       }
     ]
   }

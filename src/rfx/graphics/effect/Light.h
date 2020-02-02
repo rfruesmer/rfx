@@ -16,11 +16,14 @@ public:
     struct Data
     {
         LightType type;
+        glm::vec3 direction = { 0.0F, 0.0F, 1.0F };
         glm::vec3 position = { 0.0F, 0.0F, 0.0F };
         glm::vec4 ambient = { 0.0F, 0.0F, 0.0F, 1.0F };
         glm::vec4 diffuse = { 0.0F, 0.0F, 0.0F, 1.0F };
         glm::vec4 specular = { 0.0F, 0.0F, 0.0F, 1.0F };
-        glm::vec3 attenuation = { 1.0F, 0.0F, 0.0F };
+        glm::vec3 attenuationFactors = { 1.0F, 0.0F, 0.0F };
+        float spotExponent = 0.0F;
+        float spotCutoff = 45.0F; // [0.0, 90.0]
     };
 
     Light(const std::string& id, LightType type);

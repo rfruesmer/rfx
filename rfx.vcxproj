@@ -219,6 +219,9 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\rfx\graphics\effect\SpotLightEffect.h" />
+    <ClInclude Include="src\rfx\graphics\effect\SpotLightEffectFactory.h" />
+    <ClInclude Include="test\PerVertexSpotLightTest.h" />
     <ClInclude Include="src\rfx\graphics\effect\PointLightEffect.h" />
     <ClInclude Include="src\rfx\graphics\effect\DirectionalLightEffectFactory.h" />
     <ClInclude Include="src\rfx\graphics\effect\PointLightEffectFactory.h" />
@@ -297,6 +300,9 @@
     <ClInclude Include="src\rfx\graphics\effect\VertexColorEffectFactory.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\rfx\graphics\effect\SpotLightEffect.cpp" />
+    <ClCompile Include="src\rfx\graphics\effect\SpotLightEffectFactory.cpp" />
+    <ClCompile Include="test\PerVertexSpotLightTest.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\PointLightEffect.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\DirectionalLightEffectFactory.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\PointLightEffectFactory.cpp" />
@@ -395,6 +401,8 @@
     <None Include="assets\common\shaders\material.glsl" />
     <None Include="assets\common\shaders\point_light.glsl" />
     <None Include="assets\common\shaders\point_light.vert" />
+    <None Include="assets\common\shaders\spot_light.glsl" />
+    <None Include="assets\common\shaders\spot_light.vert" />
     <None Include="assets\common\shaders\texture.frag" />
     <None Include="assets\common\shaders\texture.vert" />
     <None Include="assets\common\textures\checkerboard_nomips_rgba.ktx" />
@@ -412,6 +420,7 @@
     <None Include="assets\tests\textured-quad\application-config.json" />
     <None Include="assets\tests\triangle\application-config.json" />
     <None Include="assets\tests\vertex-point-light\application-config.json" />
+    <None Include="assets\tests\vertex-spot-light\application-config.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

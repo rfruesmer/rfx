@@ -12,6 +12,11 @@ PointLight::PointLight(const string& id)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+PointLight::PointLight(const std::string& id, LightType type)
+    : Light(id, type) {}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void PointLight::setPosition(float x, float y, float z)
 {
     setPosition(vec3(x, y ,z));
@@ -36,9 +41,9 @@ const vec3& PointLight::getPosition() const
 
 void PointLight::setAttenuation(float constant, float linear, float quadratic)
 {
-    data.attenuation.x = constant;
-    data.attenuation.y = linear;
-    data.attenuation.z = quadratic;
+    data.attenuationFactors.x = constant;
+    data.attenuationFactors.y = linear;
+    data.attenuationFactors.z = quadratic;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

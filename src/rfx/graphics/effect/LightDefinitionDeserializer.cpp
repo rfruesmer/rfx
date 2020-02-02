@@ -76,8 +76,8 @@ shared_ptr<Light> LightDefinitionDeserializer::deserializePointLight(const Json:
 
     deserializeCommonLightAttributes(jsonLight, light);
 
-    Json::Value direction = jsonLight["position"];
-    light->setPosition(direction[0].asFloat(), direction[1].asFloat(), direction[2].asFloat());
+    Json::Value position = jsonLight["position"];
+    light->setPosition(position[0].asFloat(), position[1].asFloat(), position[2].asFloat());
 
     return light;
 }
@@ -87,6 +87,17 @@ shared_ptr<Light> LightDefinitionDeserializer::deserializePointLight(const Json:
 shared_ptr<Light> LightDefinitionDeserializer::deserializeSpotLight(const Json::Value& jsonLight) const
 {
     shared_ptr<SpotLight> light = make_unique<SpotLight>(jsonLight["id"].asString());
+
+    deserializeCommonLightAttributes(jsonLight, light);
+
+    Json::Value position = jsonLight["position"];
+    light->setPosition(position[0].asFloat(), position[1].asFloat(), position[2].asFloat());
+
+    Json::Value direction = jsonLight["direction"];
+    light->setDirection(direction[0].asFloat(), direction[1].asFloat(), direction[2].asFloat());
+
+    light->setCutoff(jsonLight["spotCutoff"].asFloat());
+    light->setExponent(jsonLight["spotExponent"].asFloat());
 
     return light;
 }
