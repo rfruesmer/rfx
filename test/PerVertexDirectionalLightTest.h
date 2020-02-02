@@ -9,9 +9,7 @@ namespace rfx
 class PerVertexDirectionalLightTest : public TestApplication
 {
 public:
-    PerVertexDirectionalLightTest(handle_t instanceHandle);
-
-    void initialize() override;
+    explicit PerVertexDirectionalLightTest(handle_t instanceHandle);
 
 protected:
     PerVertexDirectionalLightTest(const std::filesystem::path& configurationPath, handle_t instanceHandle);

@@ -8,9 +8,7 @@ namespace rfx
 class CubeTest : public TestApplication
 {
 public:
-    CubeTest(handle_t instanceHandle);
-
-    void initialize() override;
+    explicit CubeTest(handle_t instanceHandle);
 
 protected:
     CubeTest(const std::filesystem::path& configurationPath, handle_t instanceHandle);

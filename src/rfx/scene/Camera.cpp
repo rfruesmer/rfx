@@ -10,7 +10,7 @@ using namespace std;
 void Camera::setPosition(float x, float y, float z)
 {
     position.x = x;
-    position.y = y;
+    position.y = -1.0F * y;
     position.z = z;
 }
 
@@ -19,6 +19,7 @@ void Camera::setPosition(float x, float y, float z)
 void Camera::setPosition(const vec3& position)
 {
     this->position = position;
+    this->position.y *= -1.0F;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

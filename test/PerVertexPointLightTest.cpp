@@ -20,21 +20,6 @@ PerVertexPointLightTest::PerVertexPointLightTest(const path& configurationPath, 
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PerVertexPointLightTest::initialize()
-{
-    TestApplication::initialize();
-
-    initCommandPool();
-    initRenderPass();
-    initFrameBuffers();
-
-    initScene();
-
-    initCommandBuffers();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void PerVertexPointLightTest::createEffectFactories()
 {
     add(make_shared<PointLightEffectFactory>());

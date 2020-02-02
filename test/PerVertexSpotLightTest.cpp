@@ -20,21 +20,6 @@ PerVertexSpotLightTest::PerVertexSpotLightTest(const path& configurationPath, ha
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PerVertexSpotLightTest::initialize()
-{
-    TestApplication::initialize();
-
-    initCommandPool();
-    initRenderPass();
-    initFrameBuffers();
-
-    initScene();
-
-    initCommandBuffers();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void PerVertexSpotLightTest::createEffectFactories()
 {
     add(make_shared<SpotLightEffectFactory>());

@@ -20,21 +20,6 @@ CubeTest::CubeTest(const path& configurationPath, handle_t instanceHandle)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void CubeTest::initialize()
-{
-    TestApplication::initialize();
-
-    initCommandPool();
-    initRenderPass();
-    initFrameBuffers();
-
-    initScene();
-
-    initCommandBuffers();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void CubeTest::createEffectFactories()
 {
     add(make_shared<VertexColorEffectFactory>());

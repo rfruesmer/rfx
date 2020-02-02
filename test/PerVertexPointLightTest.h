@@ -8,9 +8,7 @@ namespace rfx
 class PerVertexPointLightTest : public TestApplication
 {
 public:
-    PerVertexPointLightTest(handle_t instanceHandle);
-
-    void initialize() override;
+    explicit PerVertexPointLightTest(handle_t instanceHandle);
 
 protected:
     PerVertexPointLightTest(const std::filesystem::path& configurationPath, handle_t instanceHandle);

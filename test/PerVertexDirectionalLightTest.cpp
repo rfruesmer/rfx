@@ -20,21 +20,6 @@ PerVertexDirectionalLightTest::PerVertexDirectionalLightTest(const path& configu
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PerVertexDirectionalLightTest::initialize()
-{
-    TestApplication::initialize();
-
-    initCommandPool();
-    initRenderPass();
-    initFrameBuffers();
-
-    initScene();
-
-    initCommandBuffers();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void PerVertexDirectionalLightTest::createEffectFactories()
 {
     add(make_shared<DirectionalLightEffectFactory>());

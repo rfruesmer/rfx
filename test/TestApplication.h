@@ -28,6 +28,8 @@ public:
 
     explicit TestApplication(const std::filesystem::path& configurationPath, handle_t instanceHandle);
 
+    void initialize() override;
+
     void update() override;
     void draw() override;
     void destroyDescriptors();

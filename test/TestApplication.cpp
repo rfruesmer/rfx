@@ -23,6 +23,21 @@ static_assert(false, "not implemented yet");
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void TestApplication::initialize()
+{
+    Application::initialize();
+
+    initCommandPool();
+    initRenderPass();
+    initFrameBuffers();
+
+    initScene();
+
+    initCommandBuffers();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void TestApplication::initScene()
 {
     createEffectFactories();

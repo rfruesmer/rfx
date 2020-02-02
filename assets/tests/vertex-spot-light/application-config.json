@@ -29,7 +29,7 @@
   },
   "scene": {
     "camera": {
-      "position": [ 0, 0, 25 ],
+      "position": [ 0, 5, 25 ],
       "lookAt": [ 0, 0, 0 ],
       "up": [ 0, 1, 0 ],
       "projection": {

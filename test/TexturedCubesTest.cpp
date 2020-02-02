@@ -17,8 +17,7 @@ TexturedCubesTest::TexturedCubesTest(handle_t instanceHandle)
 
 void TexturedCubesTest::createEffectFactories()
 {
-    const shared_ptr<EffectFactory> effectFactory = make_shared<Texture2DEffectFactory>();
-    effectFactories[effectFactory->getEffectId()] = effectFactory;
+    add(make_shared<Texture2DEffectFactory>());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
