@@ -25,8 +25,9 @@ Effect::Effect(const shared_ptr<GraphicsDevice>& graphicsDevice,
 
 void Effect::initUniformBuffer(size_t size)
 {
-    uniformBuffer = graphicsDevice->createUniformBuffer(size);
+    const shared_ptr<Buffer> uniformBuffer = graphicsDevice->createUniformBuffer(size);
     uniformBuffer->bind();
+    uniformBuffers.push_back(uniformBuffer);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -67,10 +68,10 @@ Effect::~Effect()
 
 void Effect::dispose()
 {
-    if (uniformBuffer) {
+    for (const auto& uniformBuffer : uniformBuffers) {
         uniformBuffer->dispose();
-        uniformBuffer = nullptr;
     }
+    uniformBuffers.clear();
 
     if (pipeline) {
         graphicsDevice->destroyPipeline(pipeline);
@@ -315,13 +316,6 @@ void Effect::setViewProjMatrix(const mat4& matrix)
 void Effect::updateFrom(const shared_ptr<Camera>& camera)
 {
     setViewProjMatrix(camera->getViewProjMatrix());
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-const shared_ptr<Buffer>& Effect::getUniformBuffer() const
-{
-    return uniformBuffer;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

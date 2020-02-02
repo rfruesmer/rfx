@@ -8,7 +8,6 @@
 
 layout (std140, binding = 0) uniform UniformBufferObject {
     mat4 mv;
-    mat4 mvp;
     Light light;
     Material material;
 } ubo;

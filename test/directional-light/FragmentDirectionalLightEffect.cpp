@@ -1,32 +1,27 @@
 #include "rfx/pch.h"
-#include "test/texture-mapping/Texture2DEffect.h"
-
+#include "test/directional-light/FragmentDirectionalLightEffect.h"
 
 using namespace rfx;
 using namespace glm;
 using namespace std;
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+const string FragmentDirectionalLightEffect::ID = "fragment_directional_light";
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const string Texture2DEffect::ID = "texture2D";
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-Texture2DEffect::Texture2DEffect(const shared_ptr<GraphicsDevice>& graphicsDevice,
+FragmentDirectionalLightEffect::FragmentDirectionalLightEffect(
+    const shared_ptr<GraphicsDevice>& graphicsDevice,
     VkRenderPass renderPass,
-    unique_ptr<ShaderProgram>& shaderProgram,
-    const shared_ptr<Texture2D>& texture)
-        : Effect(graphicsDevice, renderPass, shaderProgram),
-          texture(texture)
+    std::unique_ptr<ShaderProgram>& shaderProgram)
+        : Effect(graphicsDevice, renderPass, shaderProgram)
 {
-    RFX_CHECK_ARGUMENT(texture != nullptr);
-
-    initUniformBuffer(sizeof(mat4));
+    initUniformBuffer(sizeof(VertexShaderConstants));
+    initUniformBuffer(sizeof(FragmentShaderConstants));
     initDescriptorSetLayout();
     initDescriptorPool({
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1}
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2}
     });
     initDescriptorSet();
     initPipelineLayout();
@@ -35,7 +30,7 @@ Texture2DEffect::Texture2DEffect(const shared_ptr<GraphicsDevice>& graphicsDevic
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Texture2DEffect::initDescriptorSetLayout()
+void FragmentDirectionalLightEffect::initDescriptorSetLayout()
 {
     VkDescriptorSetLayoutBinding layoutBindings[2] = {};
     layoutBindings[0].binding = 0;
@@ -44,18 +39,18 @@ void Texture2DEffect::initDescriptorSetLayout()
     layoutBindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     layoutBindings[0].pImmutableSamplers = nullptr;
 
-    layoutBindings[1].binding = 1;
-    layoutBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    layoutBindings[1].binding = 0;
+    layoutBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     layoutBindings[1].descriptorCount = 1;
     layoutBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     layoutBindings[1].pImmutableSamplers = nullptr;
 
-    Effect::initDescriptorSetLayout(2, layoutBindings);
+    Effect::initDescriptorSetLayout(1, layoutBindings);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Texture2DEffect::initDescriptorSet()
+void FragmentDirectionalLightEffect::initDescriptorSet()
 {
     VkDescriptorSetAllocateInfo descriptorSetAllocateInfo;
     descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -70,44 +65,75 @@ void Texture2DEffect::initDescriptorSet()
     writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writes[0].pNext = nullptr;
     writes[0].dstSet = descriptorSets[0];
-    writes[0].dstBinding = 0;
-    writes[0].dstArrayElement = 0;
     writes[0].descriptorCount = 1;
     writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     writes[0].pBufferInfo = &uniformBuffers[0]->getBufferInfo();
+    writes[0].dstArrayElement = 0;
+    writes[0].dstBinding = 0;
 
     writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writes[1].pNext = nullptr;
     writes[1].dstSet = descriptorSets[0];
-    writes[1].dstBinding = 1;
-    writes[1].dstArrayElement = 0;
     writes[1].descriptorCount = 1;
-    writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    writes[1].pImageInfo = &texture->getDescriptorImageInfo();
+    writes[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    writes[1].pBufferInfo = &uniformBuffers[1]->getBufferInfo();
+    writes[1].dstArrayElement = 0;
+    writes[1].dstBinding = 0;
 
     graphicsDevice->updateDescriptorSets(2, writes);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const std::string& Texture2DEffect::getId() const
+const string& FragmentDirectionalLightEffect::getId() const
 {
     return ID;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Texture2DEffect::setModelViewProjMatrix(const mat4& matrix)
+void FragmentDirectionalLightEffect::setModelViewProjMatrix(const mat4& matrix)
 {
-    uniformData.modelViewProjection = matrix;
+    vertexShaderConstants.modelViewProjection = matrix;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Texture2DEffect::updateUniformBuffer()
+void FragmentDirectionalLightEffect::updateFrom(const vector<shared_ptr<Light>>& lights)
 {
-    uniformBuffers[0]->load(sizeof(UniformData),
-        reinterpret_cast<std::byte*>(&uniformData));
+    RFX_CHECK_ARGUMENT(!lights.empty());
+    RFX_CHECK_ARGUMENT(lights[0]->getType() == LightType::DIRECTIONAL);
+
+    fragmentShaderConstants.lightData = lights[0]->getData();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+
+void FragmentDirectionalLightEffect::updateFrom(const shared_ptr<Material>& material)
+{
+    fragmentShaderConstants.materialData = material->getData();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void FragmentDirectionalLightEffect::updateFrom(const shared_ptr<Camera>& camera)
+{
+    vertexShaderConstants.modelView = camera->getViewMatrix() * modelMatrix;
+    fragmentShaderConstants.modelView = vertexShaderConstants.modelView;
+
+    Effect::updateFrom(camera);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void FragmentDirectionalLightEffect::updateUniformBuffer()
+{
+    uniformBuffers[0]->load(sizeof(VertexShaderConstants),
+        reinterpret_cast<std::byte*>(&vertexShaderConstants));
+
+    uniformBuffers[1]->load(sizeof(FragmentShaderConstants),
+        reinterpret_cast<std::byte*>(&fragmentShaderConstants));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+

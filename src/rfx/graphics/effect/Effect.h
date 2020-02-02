@@ -33,7 +33,6 @@ public:
     virtual void updateUniformBuffer() = 0;
 
     virtual const std::string& getId() const = 0;
-    const std::shared_ptr<Buffer>& getUniformBuffer() const;
     const std::vector<VkDescriptorSet>& getDescriptorSets() const;
     const VertexFormat& getVertexFormat() const;
     VkPipeline getPipeline() const;
@@ -69,7 +68,7 @@ protected:
     VkPipelineLayout pipelineLayout = nullptr;
     VkPipeline pipeline = nullptr;
 
-    std::shared_ptr<Buffer> uniformBuffer;
+    std::vector<std::shared_ptr<Buffer>> uniformBuffers;
     VkDescriptorSetLayout descriptorSetLayout = nullptr;
     std::vector<VkDescriptorSet> descriptorSets;
 

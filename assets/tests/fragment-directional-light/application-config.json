@@ -10,13 +10,13 @@
     },
     "effect_defaults": [
       {
-        "id": "directional_light",
+        "id": "fragment_directional_light",
         "vertexFormat": [
           "COORDINATES",
           "NORMALS"
         ],
-        "vertexShaderPath": "assets/common/shaders/directional_light.vert",
-        "fragmentShaderPath": "assets/common/shaders/color.frag",
+        "vertexShaderPath": "assets/common/shaders/common_light.vert",
+        "fragmentShaderPath": "assets/common/shaders/directional_light.frag",
         "material": {
           "ambient": [ 0, 0, 0, 1 ],
           "diffuse": [ 0, 1, 0, 1 ],
@@ -43,7 +43,7 @@
       {
         "path": "assets/common/models/teapot.dae",
         "effect": {
-          "id": "directional_light"
+          "id": "fragment_directional_light"
         }
       }
     ],

@@ -252,6 +252,15 @@
     <ClInclude Include="test\texture-mapping\Texture2DEffectFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="test\directional-light\FragmentDirectionalLightEffect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\directional-light\FragmentDirectionalLightEffectFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\directional-light\FragmentDirectionalLightTest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\rfx\pch.cpp">
@@ -464,6 +473,15 @@
     <ClCompile Include="test\texture-mapping\Texture2DEffectFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\directional-light\FragmentDirectionalLightEffect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\directional-light\FragmentDirectionalLightEffectFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\directional-light\FragmentDirectionalLightTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\rfx.ico">
@@ -517,5 +535,6 @@
     <None Include="assets\common\shaders\spot_light.glsl" />
     <None Include="assets\common\shaders\directional_light.frag" />
     <None Include="assets\common\shaders\common_light.vert" />
+    <None Include="assets\tests\fragment-directional-light\application-config.json" />
   </ItemGroup>
 </Project>

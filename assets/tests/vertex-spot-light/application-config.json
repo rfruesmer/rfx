@@ -10,7 +10,7 @@
     },
     "effect_defaults": [
       {
-        "id": "spot_light",
+        "id": "vertex_spot_light",
         "vertexFormat": [
           "COORDINATES",
           "NORMALS"
@@ -43,7 +43,7 @@
       {
         "path": "assets/common/models/plane.obj",
         "effect": {
-          "id": "spot_light"
+          "id": "vertex_spot_light"
         }
       }
     ],

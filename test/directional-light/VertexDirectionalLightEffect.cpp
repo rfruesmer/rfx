@@ -60,7 +60,7 @@ void VertexDirectionalLightEffect::initDescriptorSet()
     writes.dstSet = descriptorSets[0];
     writes.descriptorCount = 1;
     writes.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    writes.pBufferInfo = &uniformBuffer->getBufferInfo();
+    writes.pBufferInfo = &uniformBuffers[0]->getBufferInfo();
     writes.dstArrayElement = 0;
     writes.dstBinding = 0;
 
@@ -111,7 +111,7 @@ void VertexDirectionalLightEffect::updateFrom(const shared_ptr<Camera>& camera)
 
 void VertexDirectionalLightEffect::updateUniformBuffer()
 {
-    uniformBuffer->load(sizeof(UniformData),
+    uniformBuffers[0]->load(sizeof(UniformData),
         reinterpret_cast<std::byte*>(&uniformData));
 }
 

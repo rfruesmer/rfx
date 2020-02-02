@@ -14,6 +14,7 @@ static_assert(false, "Not implemented");
 #include "test/texture-mapping/TexturedQuadTest.h"
 #include "test/texture-mapping/TexturedCubesTest.h"
 #include "test/directional-light/VertexDirectionalLightTest.h"
+#include "test/directional-light/FragmentDirectionalLightTest.h"
 #include "test/point-light/VertexPointLightTest.h"
 #include "test/spot-light/VertexSpotLightTest.h"
 
@@ -44,16 +45,16 @@ int main()
         //CubeTest theApp(instanceHandle);
         //TexturedCubesTest theApp(instanceHandle);
         //VertexDirectionalLightTest theApp(instanceHandle);
+        //FragmentDirectionalLightTest theApp(instanceHandle);
         //VertexPointLightTest theApp(instanceHandle);
         VertexSpotLightTest theApp(instanceHandle);
-
 
         theApp.initialize();
         theApp.run();
 
         return EXIT_SUCCESS;
     }
-    catch (const exception& ex) // NOSONAR
+    catch (const exception& ex)
     {
         RFX_LOG_FATAL << ex.what();
     }

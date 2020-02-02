@@ -15,7 +15,7 @@ class Light
 public:
     struct Data
     {
-        LightType type;
+        LightType type = LightType::POINT;
         glm::vec3 direction = { 0.0F, 0.0F, 1.0F };
         glm::vec3 position = { 0.0F, 0.0F, 0.0F };
         glm::vec4 ambient = { 0.0F, 0.0F, 0.0F, 1.0F };
@@ -29,7 +29,7 @@ public:
     Light(const std::string& id, LightType type);
     virtual ~Light() = default;
 
-    const std::string& getId() const;
+    [[nodiscard]] const std::string& getId() const;
     [[nodiscard]] LightType getType() const;
 
     void setAmbient(float red, float green, float blue);
@@ -44,7 +44,7 @@ public:
     void setSpecular(const glm::vec4& color);
     [[nodiscard]] const glm::vec4& getSpecular() const;
 
-    const Data& getData() const;
+    [[nodiscard]] const Data& getData() const;
 
 protected:
     Data data;

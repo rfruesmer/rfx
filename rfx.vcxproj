@@ -219,6 +219,9 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="test\directional-light\FragmentDirectionalLightEffect.h" />
+    <ClInclude Include="test\directional-light\FragmentDirectionalLightEffectFactory.h" />
+    <ClInclude Include="test\directional-light\FragmentDirectionalLightTest.h" />
     <ClInclude Include="test\spot-light\VertexSpotLightEffect.h" />
     <ClInclude Include="test\spot-light\VertexSpotLightEffectFactory.h" />
     <ClInclude Include="test\spot-light\VertexSpotLightTest.h" />
@@ -300,6 +303,9 @@
     <ClInclude Include="test\basic\VertexColorEffectFactory.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="test\directional-light\FragmentDirectionalLightEffect.cpp" />
+    <ClCompile Include="test\directional-light\FragmentDirectionalLightEffectFactory.cpp" />
+    <ClCompile Include="test\directional-light\FragmentDirectionalLightTest.cpp" />
     <ClCompile Include="test\spot-light\VertexSpotLightEffect.cpp" />
     <ClCompile Include="test\spot-light\VertexSpotLightEffectFactory.cpp" />
     <ClCompile Include="test\spot-light\VertexSpotLightTest.cpp" />
@@ -415,6 +421,7 @@
     <None Include="assets\shaders\color.vert" />
     <None Include="assets\shaders\texture.frag" />
     <None Include="assets\shaders\texture.vert" />
+    <None Include="assets\tests\fragment-directional-light\application-config.json" />
     <None Include="assets\tests\vertex-directional-light\application-config.json" />
     <None Include="assets\tests\textured-cubes\application-config.json" />
     <None Include="assets\tests\textured-cubes\crate01_color_height_rgba.ktx" />
