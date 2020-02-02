@@ -243,14 +243,14 @@ void TestApplication::update()
     }
 
     if (keyboard->isKeyDown(Keyboard::KEY_UP)) {
-        cameraPosition.y -= MOVE_DELTA;
-        cameraLookAt.y -= MOVE_DELTA;
+        cameraPosition.y += MOVE_DELTA;
+        cameraLookAt.y += MOVE_DELTA;
         cameraNeedsUpdate = true;
     }
 
     if (keyboard->isKeyDown(Keyboard::KEY_DOWN)) {
-        cameraPosition.y += MOVE_DELTA;
-        cameraLookAt.y += MOVE_DELTA;
+        cameraPosition.y -= MOVE_DELTA;
+        cameraLookAt.y -= MOVE_DELTA;
         cameraNeedsUpdate = true;
     }
 

@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "rfx/graphics/effect/VertexSpotLightEffect.h"
+#include "test/spot-light/VertexSpotLightEffect.h"
 
 using namespace rfx;
 using namespace glm;

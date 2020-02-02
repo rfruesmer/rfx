@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rfx/graphics/effect/VertexPointLightEffect.h"
+#include "test/point-light/VertexPointLightEffect.h"
 
 
 

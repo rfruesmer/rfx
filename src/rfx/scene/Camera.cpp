@@ -10,7 +10,7 @@ using namespace std;
 void Camera::setPosition(float x, float y, float z)
 {
     position.x = x;
-    position.y = -1.0F * y;
+    position.y = y;
     position.z = z;
 }
 
@@ -19,7 +19,6 @@ void Camera::setPosition(float x, float y, float z)
 void Camera::setPosition(const vec3& position)
 {
     this->position = position;
-    this->position.y *= -1.0F;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -79,7 +78,10 @@ void Camera::setProjection(float fovDeg, float aspect, float nearZ, float farZ)
 
 void Camera::update()
 {
-    viewMatrix = glm::lookAt(position, lookAt, up);
+    const vec3 copyOfPosition(position.x, -position.y, position.z);
+    const vec3 copyOfLookAt(lookAt.x, -lookAt.y, lookAt.z);
+
+    viewMatrix = glm::lookAt(copyOfPosition, copyOfLookAt, up);
     viewProjMatrix = projectionMatrix * viewMatrix;
 }
 

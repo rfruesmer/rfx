@@ -1,6 +1,6 @@
 #pragma once
 
-#include "test/CubeTest.h"
+#include "test/basic/CubeTest.h"
 
 namespace rfx
 {

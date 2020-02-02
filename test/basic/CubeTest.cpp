@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
-#include "test/VertexPointLightTest.h"
-#include "rfx/graphics/effect/VertexPointLightEffectFactory.h"
+#include "test/basic/CubeTest.h"
+#include "test/basic/VertexColorEffectFactory.h"
 
 
 using namespace rfx;
@@ -10,19 +10,19 @@ using namespace filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VertexPointLightTest::VertexPointLightTest(handle_t instanceHandle)
-    : TestApplication("assets/tests/vertex-point-light/application-config.json", instanceHandle) {}
+CubeTest::CubeTest(handle_t instanceHandle)
+    : TestApplication("assets/tests/cube/application-config.json", instanceHandle) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VertexPointLightTest::VertexPointLightTest(const path& configurationPath, handle_t instanceHandle)
+CubeTest::CubeTest(const path& configurationPath, handle_t instanceHandle)
     : TestApplication(configurationPath, instanceHandle) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexPointLightTest::createEffectFactories()
+void CubeTest::createEffectFactories()
 {
-    add(make_shared<VertexPointLightEffectFactory>());
+    add(make_shared<VertexColorEffectFactory>());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

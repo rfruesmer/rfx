@@ -9,13 +9,13 @@
 static_assert(false, "Not implemented");
 #endif // _WINDOWS
 
-#include "test/TriangleTest.h"
-#include "test/TexturedQuadTest.h"
-#include "test/CubeTest.h"
-#include "test/TexturedCubesTest.h"
-#include "test/VertexDirectionalLightTest.h"
-#include "test/VertexPointLightTest.h"
-#include "test/VertexSpotLightTest.h"
+#include "test/basic/TriangleTest.h"
+#include "test/basic/CubeTest.h"
+#include "test/texture-mapping/TexturedQuadTest.h"
+#include "test/texture-mapping/TexturedCubesTest.h"
+#include "test/directional-light/VertexDirectionalLightTest.h"
+#include "test/point-light/VertexPointLightTest.h"
+#include "test/spot-light/VertexSpotLightTest.h"
 
 using namespace rfx;
 using namespace std;

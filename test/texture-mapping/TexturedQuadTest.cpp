@@ -1,23 +1,23 @@
 #include "rfx/pch.h"
-#include "test/TriangleTest.h"
+#include "test/texture-mapping/TexturedQuadTest.h"
+#include "rfx/application/Texture2DLoader.h"
 #include "rfx/application/ShaderLoader.h"
 
 using namespace rfx;
 using namespace std;
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+static const VertexFormat VERTEX_FORMAT(VertexFormat::COORDINATES | VertexFormat::TEXCOORDS);
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-static const VertexFormat VERTEX_FORMAT(VertexFormat::COORDINATES | VertexFormat::COLORS);
+TexturedQuadTest::TexturedQuadTest(handle_t instanceHandle)
+    : TestApplication("assets/tests/textured-quad/application-config.json", instanceHandle) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-TriangleTest::TriangleTest(handle_t instanceHandle)
-    : TestApplication("assets/tests/triangle/application-config.json", instanceHandle) {}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TriangleTest::initialize()
+void TexturedQuadTest::initialize()
 {
     Application::initialize();
 
@@ -33,40 +33,44 @@ void TriangleTest::initialize()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TriangleTest::initEffects()
+void TexturedQuadTest::initEffects()
 {
     const ShaderLoader shaderLoader(graphicsDevice);
-    shared_ptr<VertexShader> vertexShader =
-        shaderLoader.loadVertexShader("assets/common/shaders/color.vert", "main", VERTEX_FORMAT);
-    shared_ptr<FragmentShader> fragmentShader =
-        shaderLoader.loadFragmentShader("assets/common/shaders/color.frag", "main");
+    shared_ptr<VertexShader> vertexShader = 
+        shaderLoader.loadVertexShader("assets/common/shaders/texture.vert", "main", VERTEX_FORMAT);
+    shared_ptr<FragmentShader> fragmentShader = 
+        shaderLoader.loadFragmentShader("assets/common/shaders/texture.frag", "main");
 
-    std::unique_ptr<ShaderProgram> shaderProgram = 
+    const Texture2DLoader textureLoader(graphicsDevice);
+    shared_ptr<Texture2D> texture = textureLoader.load("assets/common/textures/lunarg_logo-256x256.png");
+
+    std::unique_ptr<ShaderProgram> shaderProgram =
         make_unique<ShaderProgram>(vertexShader, fragmentShader);
 
-    vertexColorEffect = make_shared<VertexColorEffect>(graphicsDevice, renderPass, shaderProgram);
+    textureEffect = make_shared<Texture2DEffect>(graphicsDevice, renderPass, shaderProgram, texture);
 
-    effects.push_back(vertexColorEffect);
+    effects.push_back(textureEffect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TriangleTest::initScene()
+void TexturedQuadTest::initScene()
 {
-    createTriangleMesh();
+    createQuadMesh();
     initCamera();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TriangleTest::createTriangleMesh()
+void TexturedQuadTest::createQuadMesh()
 {
-    const uint32_t vertexCount = 3;
+    const uint32_t vertexCount = 4;
     const uint32_t vertexBufferSize = vertexCount * VERTEX_FORMAT.getVertexSize();
     vector<float> vertexData = {
-        1.0f,  1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-        -1.0f,  1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-        0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f
+        1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+        -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+        -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+        1.0f, -1.0f, 0.0f, 1.0f, 0.0f
     };
 
     const shared_ptr<Buffer> stagingVertexBuffer = graphicsDevice->createBuffer(
@@ -81,9 +85,9 @@ void TriangleTest::createTriangleMesh()
     vertexBuffer->bind();
 
 
-    const uint32_t indexCount = 3;
+    const uint32_t indexCount = 6;
     const uint32_t indexBufferSize = indexCount * sizeof(uint32_t);
-    const vector<uint32_t> indexData = { 0, 1, 2 };
+    const vector<uint32_t> indexData = { 0, 1, 2, 2, 3, 0 };
 
     const shared_ptr<Buffer> stagingIndexBuffer = graphicsDevice->createBuffer(
         indexBufferSize,
@@ -95,7 +99,6 @@ void TriangleTest::createTriangleMesh()
 
     shared_ptr<IndexBuffer> indexBuffer = graphicsDevice->createIndexBuffer(indexCount, VK_INDEX_TYPE_UINT32);
     indexBuffer->bind();
-
 
     const shared_ptr<CommandPool>& commandPool = graphicsDevice->getTempCommandPool();
     shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer();
@@ -119,12 +122,12 @@ void TriangleTest::createTriangleMesh()
 
     commandPool->freeCommandBuffer(commandBuffer);
 
-    triangleMesh = make_shared<Mesh>(graphicsDevice, vertexBuffer, indexBuffer, vertexColorEffect);
+    quadMesh = make_shared<Mesh>(graphicsDevice, vertexBuffer, indexBuffer, textureEffect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TriangleTest::initCamera()
+void TexturedQuadTest::initCamera()
 {
     camera = make_shared<Camera>();
     camera->setPosition(0.0F, 0.0F, 20.0F);
@@ -137,14 +140,14 @@ void TriangleTest::initCamera()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const shared_ptr<Camera>& TriangleTest::getCamera() const
+const shared_ptr<Camera>& TexturedQuadTest::getCamera() const
 {
     return camera;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TriangleTest::initCommandBuffers()
+void TexturedQuadTest::initCommandBuffers()
 {
     drawCommandBuffers = commandPool->allocateCommandBuffers(graphicsDevice->getSwapChainBuffers().size());
 
@@ -186,15 +189,16 @@ void TriangleTest::initCommandBuffers()
         commandBuffer->beginRenderPass(renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
         commandBuffer->setViewport(viewport);
         commandBuffer->setScissor(scissor);
-            commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, vertexColorEffect->getPipeline());
+            commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, textureEffect->getPipeline());
             commandBuffer->bindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS, 
-                vertexColorEffect->getPipelineLayout(), vertexColorEffect->getDescriptorSets());
-            commandBuffer->bindVertexBuffers({ triangleMesh->getVertexBuffer() });
-            commandBuffer->bindIndexBuffer(triangleMesh->getIndexBuffer());
-            commandBuffer->drawIndexed(triangleMesh->getIndexBuffer()->getIndexCount());
+                textureEffect->getPipelineLayout(), textureEffect->getDescriptorSets());
+            commandBuffer->bindVertexBuffers({ quadMesh->getVertexBuffer() });
+            commandBuffer->bindIndexBuffer(quadMesh->getIndexBuffer());
+            commandBuffer->drawIndexed(quadMesh->getIndexBuffer()->getIndexCount());
         commandBuffer->endRenderPass();
         commandBuffer->end();
     }
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

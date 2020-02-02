@@ -219,12 +219,12 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\rfx\graphics\effect\VertexSpotLightEffect.h" />
-    <ClInclude Include="src\rfx\graphics\effect\VertexSpotLightEffectFactory.h" />
-    <ClInclude Include="test\VertexSpotLightTest.h" />
-    <ClInclude Include="src\rfx\graphics\effect\VertexPointLightEffect.h" />
-    <ClInclude Include="src\rfx\graphics\effect\VertexDirectionalLightEffectFactory.h" />
-    <ClInclude Include="src\rfx\graphics\effect\VertexPointLightEffectFactory.h" />
+    <ClInclude Include="test\spot-light\VertexSpotLightEffect.h" />
+    <ClInclude Include="test\spot-light\VertexSpotLightEffectFactory.h" />
+    <ClInclude Include="test\spot-light\VertexSpotLightTest.h" />
+    <ClInclude Include="test\point-light\VertexPointLightEffect.h" />
+    <ClInclude Include="test\directional-light\VertexDirectionalLightEffectFactory.h" />
+    <ClInclude Include="test\point-light\VertexPointLightEffectFactory.h" />
     <ClInclude Include="src\rfx\graphics\effect\EffectFactory.h" />
     <ClInclude Include="src\rfx\scene\Camera.h" />
     <ClInclude Include="src\rfx\scene\SceneLoader.h" />
@@ -237,8 +237,8 @@
     <ClInclude Include="src\rfx\graphics\effect\DirectionalLight.h" />
     <ClInclude Include="src\rfx\graphics\effect\Light.h" />
     <ClInclude Include="src\rfx\scene\Scene.h" />
-    <ClInclude Include="src\rfx\graphics\effect\VertexDirectionalLightEffect.h" />
-    <ClInclude Include="test\VertexDirectionalLightTest.h" />
+    <ClInclude Include="test\directional-light\VertexDirectionalLightEffect.h" />
+    <ClInclude Include="test\directional-light\VertexDirectionalLightTest.h" />
     <ClInclude Include="src\rfx\graphics\effect\EffectDefinitionDeserializer.h" />
     <ClInclude Include="src\rfx\graphics\effect\EffectDefinition.h" />
     <ClInclude Include="src\rfx\graphics\shader\FragmentShader.h" />
@@ -270,7 +270,7 @@
     <ClInclude Include="src\rfx\input\InputDeviceFactory.h" />
     <ClInclude Include="src\rfx\input\directx\DXInputDeviceFactory.h" />
     <ClInclude Include="src\rfx\input\Keyboard.h" />
-    <ClInclude Include="test\CubeTest.h" />
+    <ClInclude Include="test\basic\CubeTest.h" />
     <ClInclude Include="src\rfx\graphics\GraphicsDevice.h" />
     <ClInclude Include="src\rfx\core\Logger.h" />
     <ClInclude Include="src\rfx\application\Application.h" />
@@ -283,29 +283,29 @@
     <ClInclude Include="src\rfx\graphics\window\Win32Window.h" />
     <ClInclude Include="src\rfx\core\StringUtil.h" />
     <ClInclude Include="src\rfx\core\Timer.h" />
-    <ClInclude Include="test\VertexPointLightTest.h" />
-    <ClInclude Include="test\TexturedCubesTest.h" />
+    <ClInclude Include="test\point-light\VertexPointLightTest.h" />
+    <ClInclude Include="test\texture-mapping\TexturedCubesTest.h" />
     <ClInclude Include="test\TestApplication.h" />
     <ClInclude Include="src\rfx\application\Texture2DLoader.h" />
     <ClInclude Include="src\rfx\graphics\texture\Texture2D.h" />
     <ClInclude Include="src\rfx\graphics\VertexFormat.h" />
     <ClInclude Include="src\rfx\graphics\buffer\VertexBuffer.h" />
-    <ClInclude Include="test\TexturedQuadTest.h" />
-    <ClInclude Include="test\TriangleTest.h" />
+    <ClInclude Include="test\texture-mapping\TexturedQuadTest.h" />
+    <ClInclude Include="test\basic\TriangleTest.h" />
     <ClInclude Include="src\rfx\scene\Transform.h" />
-    <ClInclude Include="src\rfx\graphics\effect\VertexColorEffect.h" />
-    <ClInclude Include="src\rfx\graphics\effect\Texture2DEffect.h" />
+    <ClInclude Include="test\basic\VertexColorEffect.h" />
+    <ClInclude Include="test\texture-mapping\Texture2DEffect.h" />
     <ClInclude Include="src\rfx\graphics\shader\VertexShader.h" />
-    <ClInclude Include="src\rfx\graphics\effect\Texture2DEffectFactory.h" />
-    <ClInclude Include="src\rfx\graphics\effect\VertexColorEffectFactory.h" />
+    <ClInclude Include="test\texture-mapping\Texture2DEffectFactory.h" />
+    <ClInclude Include="test\basic\VertexColorEffectFactory.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\rfx\graphics\effect\VertexSpotLightEffect.cpp" />
-    <ClCompile Include="src\rfx\graphics\effect\VertexSpotLightEffectFactory.cpp" />
-    <ClCompile Include="test\VertexSpotLightTest.cpp" />
-    <ClCompile Include="src\rfx\graphics\effect\VertexPointLightEffect.cpp" />
-    <ClCompile Include="src\rfx\graphics\effect\VertexDirectionalLightEffectFactory.cpp" />
-    <ClCompile Include="src\rfx\graphics\effect\VertexPointLightEffectFactory.cpp" />
+    <ClCompile Include="test\spot-light\VertexSpotLightEffect.cpp" />
+    <ClCompile Include="test\spot-light\VertexSpotLightEffectFactory.cpp" />
+    <ClCompile Include="test\spot-light\VertexSpotLightTest.cpp" />
+    <ClCompile Include="test\point-light\VertexPointLightEffect.cpp" />
+    <ClCompile Include="test\directional-light\VertexDirectionalLightEffectFactory.cpp" />
+    <ClCompile Include="test\point-light\VertexPointLightEffectFactory.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\EffectFactory.cpp" />
     <ClCompile Include="src\rfx\scene\Camera.cpp" />
     <ClCompile Include="src\rfx\scene\SceneLoader.cpp" />
@@ -318,8 +318,8 @@
     <ClCompile Include="src\rfx\graphics\effect\DirectionalLight.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\Light.cpp" />
     <ClCompile Include="src\rfx\scene\Scene.cpp" />
-    <ClCompile Include="src\rfx\graphics\effect\VertexDirectionalLightEffect.cpp" />
-    <ClCompile Include="test\VertexDirectionalLightTest.cpp" />
+    <ClCompile Include="test\directional-light\VertexDirectionalLightEffect.cpp" />
+    <ClCompile Include="test\directional-light\VertexDirectionalLightTest.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\EffectDefinitionDeserializer.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\EffectDefinition.cpp" />
     <ClCompile Include="src\rfx\graphics\shader\FragmentShader.cpp" />
@@ -344,7 +344,7 @@
     <ClCompile Include="src\rfx\input\InputDevice.cpp" />
     <ClCompile Include="src\rfx\input\InputDeviceFactory.cpp" />
     <ClCompile Include="src\rfx\input\directx\DXInputDeviceFactory.cpp" />
-    <ClCompile Include="test\CubeTest.cpp" />
+    <ClCompile Include="test\basic\CubeTest.cpp" />
     <ClCompile Include="src\rfx\graphics\GraphicsDevice.cpp" />
     <ClCompile Include="src\rfx\core\Logger.cpp" />
     <ClCompile Include="src\rfx\application\Application.cpp" />
@@ -360,8 +360,8 @@
     <ClCompile Include="src\rfx\graphics\window\Win32Window.cpp" />
     <ClCompile Include="src\rfx\core\StringUtil.cpp" />
     <ClCompile Include="src\rfx\core\Timer.cpp" />
-    <ClCompile Include="test\VertexPointLightTest.cpp" />
-    <ClCompile Include="test\TexturedCubesTest.cpp" />
+    <ClCompile Include="test\point-light\VertexPointLightTest.cpp" />
+    <ClCompile Include="test\texture-mapping\TexturedCubesTest.cpp" />
     <ClCompile Include="test\TestApplication.cpp" />
     <ClCompile Include="src\rfx\application\Texture2DLoader.cpp">
       <StructMemberAlignment Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Default</StructMemberAlignment>
@@ -372,14 +372,14 @@
     <ClCompile Include="src\rfx\graphics\texture\Texture2D.cpp" />
     <ClCompile Include="src\rfx\graphics\VertexFormat.cpp" />
     <ClCompile Include="src\rfx\graphics\buffer\VertexBuffer.cpp" />
-    <ClCompile Include="test\TexturedQuadTest.cpp" />
-    <ClCompile Include="test\TriangleTest.cpp" />
+    <ClCompile Include="test\texture-mapping\TexturedQuadTest.cpp" />
+    <ClCompile Include="test\basic\TriangleTest.cpp" />
     <ClCompile Include="src\rfx\scene\Transform.cpp" />
-    <ClCompile Include="src\rfx\graphics\effect\VertexColorEffect.cpp" />
-    <ClCompile Include="src\rfx\graphics\effect\Texture2DEffect.cpp" />
+    <ClCompile Include="test\basic\VertexColorEffect.cpp" />
+    <ClCompile Include="test\texture-mapping\Texture2DEffect.cpp" />
     <ClCompile Include="src\rfx\graphics\shader\VertexShader.cpp" />
-    <ClCompile Include="src\rfx\graphics\effect\Texture2DEffectFactory.cpp" />
-    <ClCompile Include="src\rfx\graphics\effect\VertexColorEffectFactory.cpp" />
+    <ClCompile Include="test\texture-mapping\Texture2DEffectFactory.cpp" />
+    <ClCompile Include="test\basic\VertexColorEffectFactory.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="res\rfx.rc" />

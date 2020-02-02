@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "rfx/graphics/effect/Texture2DEffect.h"
+#include "test/texture-mapping/Texture2DEffect.h"
 
 
 using namespace rfx;

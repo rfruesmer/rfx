@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
-#include "test/VertexSpotLightTest.h"
-#include "rfx/graphics/effect/VertexSpotLightEffectFactory.h"
+#include "test/directional-light/VertexDirectionalLightTest.h"
+#include "test/directional-light/VertexDirectionalLightEffectFactory.h"
 
 
 using namespace rfx;
@@ -10,19 +10,19 @@ using namespace filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VertexSpotLightTest::VertexSpotLightTest(handle_t instanceHandle)
-    : TestApplication("assets/tests/vertex-spot-light/application-config.json", instanceHandle) {}
+VertexDirectionalLightTest::VertexDirectionalLightTest(handle_t instanceHandle)
+    : TestApplication("assets/tests/vertex-directional-light/application-config.json", instanceHandle) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VertexSpotLightTest::VertexSpotLightTest(const path& configurationPath, handle_t instanceHandle)
+VertexDirectionalLightTest::VertexDirectionalLightTest(const path& configurationPath, handle_t instanceHandle)
     : TestApplication(configurationPath, instanceHandle) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexSpotLightTest::createEffectFactories()
+void VertexDirectionalLightTest::createEffectFactories()
 {
-    add(make_shared<VertexSpotLightEffectFactory>());
+    add(make_shared<VertexDirectionalLightEffectFactory>());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

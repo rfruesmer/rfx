@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "rfx/graphics/effect/VertexColorEffect.h"
+#include "test/basic/VertexColorEffect.h"
 
 
 using namespace rfx;

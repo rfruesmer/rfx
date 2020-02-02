@@ -1,24 +1,24 @@
 #include "rfx/pch.h"
-#include "rfx/graphics/effect/VertexPointLightEffectFactory.h"
-#include "rfx/graphics/effect/VertexPointLightEffect.h"
+#include "test/spot-light/VertexSpotLightEffectFactory.h"
+#include "test/spot-light/VertexSpotLightEffect.h"
 
 using namespace rfx;
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VertexPointLightEffectFactory::VertexPointLightEffectFactory()
-    : EffectFactory(VertexPointLightEffect::ID) {}
+VertexSpotLightEffectFactory::VertexSpotLightEffectFactory()
+    : EffectFactory(VertexSpotLightEffect::ID) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-shared_ptr<Effect> VertexPointLightEffectFactory::create(
+shared_ptr<Effect> VertexSpotLightEffectFactory::create(
     const shared_ptr<GraphicsDevice>& graphicsDevice,
     VkRenderPass renderPass,
     unique_ptr<ShaderProgram>& shaderProgram,
     const vector<shared_ptr<Texture2D>>&) const
 {
-    return make_shared<VertexPointLightEffect>(graphicsDevice, renderPass, shaderProgram);
+    return make_shared<VertexSpotLightEffect>(graphicsDevice, renderPass, shaderProgram);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

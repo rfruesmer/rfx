@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
-#include "test/TexturedCubesTest.h"
-#include "rfx/graphics/effect/Texture2DEffectFactory.h"
+#include "test/texture-mapping/TexturedCubesTest.h"
+#include "test/texture-mapping/Texture2DEffectFactory.h"
 
 
 using namespace rfx;

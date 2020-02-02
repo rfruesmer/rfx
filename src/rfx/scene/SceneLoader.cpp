@@ -5,9 +5,6 @@
 #include "rfx/scene/ModelLoader.h"
 #include "rfx/scene/ModelDefinition.h"
 #include "rfx/graphics/effect/LightDefinitionDeserializer.h"
-#include "rfx/graphics/effect/VertexColorEffect.h"
-#include "rfx/graphics/effect/Texture2DEffect.h"
-#include "rfx/graphics/effect/VertexDirectionalLightEffect.h"
 
 
 using namespace rfx;

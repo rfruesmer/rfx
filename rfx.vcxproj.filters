@@ -45,9 +45,6 @@
     <ClInclude Include="src\rfx\core\Timer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="test\CubeTest.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\rfx\graphics\GraphicsContext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -87,19 +84,10 @@
     <ClInclude Include="src\rfx\scene\Mesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="test\TriangleTest.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="test\TexturedQuadTest.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="lib\ktx\include\ktx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="lib\ktx\include\ktxvulkan.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="test\TexturedCubesTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\rfx\scene\SceneNode.h">
@@ -165,12 +153,6 @@
     <ClInclude Include="src\rfx\graphics\texture\Texture2D.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\effect\VertexColorEffect.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rfx\graphics\effect\Texture2DEffect.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\rfx\graphics\window\Win32Window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -219,37 +201,55 @@
     <ClInclude Include="src\rfx\graphics\effect\EffectFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\effect\VertexColorEffectFactory.h">
+    <ClInclude Include="test\directional-light\VertexDirectionalLightTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\effect\Texture2DEffectFactory.h">
+    <ClInclude Include="test\point-light\VertexPointLightTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="test\VertexDirectionalLightTest.h">
+    <ClInclude Include="test\spot-light\VertexSpotLightTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="test\VertexPointLightTest.h">
+    <ClInclude Include="test\directional-light\VertexDirectionalLightEffect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="test\VertexSpotLightTest.h">
+    <ClInclude Include="test\directional-light\VertexDirectionalLightEffectFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\effect\VertexDirectionalLightEffect.h">
+    <ClInclude Include="test\point-light\VertexPointLightEffect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\effect\VertexDirectionalLightEffectFactory.h">
+    <ClInclude Include="test\point-light\VertexPointLightEffectFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\effect\VertexPointLightEffect.h">
+    <ClInclude Include="test\spot-light\VertexSpotLightEffect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\effect\VertexPointLightEffectFactory.h">
+    <ClInclude Include="test\spot-light\VertexSpotLightEffectFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\effect\VertexSpotLightEffect.h">
+    <ClInclude Include="test\basic\CubeTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rfx\graphics\effect\VertexSpotLightEffectFactory.h">
+    <ClInclude Include="test\basic\TriangleTest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\basic\VertexColorEffect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\basic\VertexColorEffectFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\texture-mapping\TexturedCubesTest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\texture-mapping\TexturedQuadTest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\texture-mapping\Texture2DEffect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\texture-mapping\Texture2DEffectFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -273,9 +273,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\rfx\core\Timer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="test\CubeTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\rfx\graphics\GraphicsContext.cpp">
@@ -309,15 +306,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\rfx\scene\Mesh.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="test\TriangleTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="test\TexturedQuadTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="test\TexturedCubesTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\rfx\scene\SceneNode.cpp">
@@ -377,12 +365,6 @@
     <ClCompile Include="src\rfx\graphics\texture\Texture2D.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\effect\VertexColorEffect.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rfx\graphics\effect\Texture2DEffect.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\rfx\graphics\window\Win32Window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -431,37 +413,55 @@
     <ClCompile Include="src\rfx\graphics\effect\EffectFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\effect\VertexColorEffectFactory.cpp">
+    <ClCompile Include="test\directional-light\VertexDirectionalLightTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\effect\Texture2DEffectFactory.cpp">
+    <ClCompile Include="test\point-light\VertexPointLightTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test\VertexDirectionalLightTest.cpp">
+    <ClCompile Include="test\spot-light\VertexSpotLightTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test\VertexPointLightTest.cpp">
+    <ClCompile Include="test\directional-light\VertexDirectionalLightEffect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test\VertexSpotLightTest.cpp">
+    <ClCompile Include="test\directional-light\VertexDirectionalLightEffectFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\effect\VertexDirectionalLightEffect.cpp">
+    <ClCompile Include="test\point-light\VertexPointLightEffect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\effect\VertexDirectionalLightEffectFactory.cpp">
+    <ClCompile Include="test\point-light\VertexPointLightEffectFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\effect\VertexPointLightEffect.cpp">
+    <ClCompile Include="test\spot-light\VertexSpotLightEffect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\effect\VertexPointLightEffectFactory.cpp">
+    <ClCompile Include="test\spot-light\VertexSpotLightEffectFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\effect\VertexSpotLightEffect.cpp">
+    <ClCompile Include="test\basic\CubeTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rfx\graphics\effect\VertexSpotLightEffectFactory.cpp">
+    <ClCompile Include="test\basic\TriangleTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\basic\VertexColorEffect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\basic\VertexColorEffectFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\texture-mapping\TexturedCubesTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\texture-mapping\TexturedQuadTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\texture-mapping\Texture2DEffect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\texture-mapping\Texture2DEffectFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
