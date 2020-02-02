@@ -219,12 +219,6 @@
     <ClInclude Include="src\rfx\scene\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="test\PerVertexDirectionalLightTest.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="test\PerVertexPointLightTest.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\rfx\graphics\effect\EffectFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -243,13 +237,19 @@
     <ClInclude Include="src\rfx\graphics\effect\PointLightEffect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="test\PerVertexSpotLightTest.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\rfx\graphics\effect\SpotLightEffect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\rfx\graphics\effect\SpotLightEffectFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\VertexDirectionalLightTest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\VertexPointLightTest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\VertexSpotLightTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -431,12 +431,6 @@
     <ClCompile Include="src\rfx\scene\Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test\PerVertexDirectionalLightTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="test\PerVertexPointLightTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\rfx\graphics\effect\EffectFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -455,13 +449,19 @@
     <ClCompile Include="src\rfx\graphics\effect\PointLightEffect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test\PerVertexSpotLightTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\rfx\graphics\effect\SpotLightEffect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\rfx\graphics\effect\SpotLightEffectFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\VertexDirectionalLightTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\VertexPointLightTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\VertexSpotLightTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

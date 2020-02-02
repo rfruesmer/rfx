@@ -221,7 +221,7 @@
   <ItemGroup>
     <ClInclude Include="src\rfx\graphics\effect\SpotLightEffect.h" />
     <ClInclude Include="src\rfx\graphics\effect\SpotLightEffectFactory.h" />
-    <ClInclude Include="test\PerVertexSpotLightTest.h" />
+    <ClInclude Include="test\VertexSpotLightTest.h" />
     <ClInclude Include="src\rfx\graphics\effect\PointLightEffect.h" />
     <ClInclude Include="src\rfx\graphics\effect\DirectionalLightEffectFactory.h" />
     <ClInclude Include="src\rfx\graphics\effect\PointLightEffectFactory.h" />
@@ -238,7 +238,7 @@
     <ClInclude Include="src\rfx\graphics\effect\Light.h" />
     <ClInclude Include="src\rfx\scene\Scene.h" />
     <ClInclude Include="src\rfx\graphics\effect\DirectionalLightEffect.h" />
-    <ClInclude Include="test\PerVertexDirectionalLightTest.h" />
+    <ClInclude Include="test\VertexDirectionalLightTest.h" />
     <ClInclude Include="src\rfx\graphics\effect\EffectDefinitionDeserializer.h" />
     <ClInclude Include="src\rfx\graphics\effect\EffectDefinition.h" />
     <ClInclude Include="src\rfx\graphics\shader\FragmentShader.h" />
@@ -283,7 +283,7 @@
     <ClInclude Include="src\rfx\graphics\window\Win32Window.h" />
     <ClInclude Include="src\rfx\core\StringUtil.h" />
     <ClInclude Include="src\rfx\core\Timer.h" />
-    <ClInclude Include="test\PerVertexPointLightTest.h" />
+    <ClInclude Include="test\VertexPointLightTest.h" />
     <ClInclude Include="test\TexturedCubesTest.h" />
     <ClInclude Include="test\TestApplication.h" />
     <ClInclude Include="src\rfx\application\Texture2DLoader.h" />
@@ -302,7 +302,7 @@
   <ItemGroup>
     <ClCompile Include="src\rfx\graphics\effect\SpotLightEffect.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\SpotLightEffectFactory.cpp" />
-    <ClCompile Include="test\PerVertexSpotLightTest.cpp" />
+    <ClCompile Include="test\VertexSpotLightTest.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\PointLightEffect.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\DirectionalLightEffectFactory.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\PointLightEffectFactory.cpp" />
@@ -319,7 +319,7 @@
     <ClCompile Include="src\rfx\graphics\effect\Light.cpp" />
     <ClCompile Include="src\rfx\scene\Scene.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\DirectionalLightEffect.cpp" />
-    <ClCompile Include="test\PerVertexDirectionalLightTest.cpp" />
+    <ClCompile Include="test\VertexDirectionalLightTest.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\EffectDefinitionDeserializer.cpp" />
     <ClCompile Include="src\rfx\graphics\effect\EffectDefinition.cpp" />
     <ClCompile Include="src\rfx\graphics\shader\FragmentShader.cpp" />
@@ -360,7 +360,7 @@
     <ClCompile Include="src\rfx\graphics\window\Win32Window.cpp" />
     <ClCompile Include="src\rfx\core\StringUtil.cpp" />
     <ClCompile Include="src\rfx\core\Timer.cpp" />
-    <ClCompile Include="test\PerVertexPointLightTest.cpp" />
+    <ClCompile Include="test\VertexPointLightTest.cpp" />
     <ClCompile Include="test\TexturedCubesTest.cpp" />
     <ClCompile Include="test\TestApplication.cpp" />
     <ClCompile Include="src\rfx\application\Texture2DLoader.cpp">
