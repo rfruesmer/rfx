@@ -94,7 +94,7 @@ public:
 
     void allocateDescriptorSets(const VkDescriptorSetAllocateInfo& allocateInfo,
         std::vector<VkDescriptorSet>& outDescriptorSets) const;
-    void updateDescriptorSets(uint32_t writeCount, const VkWriteDescriptorSet* writes) const;
+    void updateDescriptorSets(const std::vector<VkWriteDescriptorSet>& writes) const;
 
     VkPipelineLayout createPipelineLayout(const VkPipelineLayoutCreateInfo& createInfo) const;
     void destroyPipelineLayout(VkPipelineLayout& inOutPipelineLayout) const;

@@ -45,6 +45,7 @@ void TriangleTest::initEffects()
         make_unique<ShaderProgram>(vertexShader, fragmentShader);
 
     vertexColorEffect = make_shared<VertexColorEffect>(graphicsDevice, renderPass, shaderProgram);
+    vertexColorEffect->init();
 
     effects.push_back(vertexColorEffect);
 }

@@ -6,7 +6,7 @@
 #include "material.glsl"
 #include "directional_light.glsl"
 
-layout (std140, binding = 0) uniform UniformBufferObject {
+layout (std140, binding = 1) uniform UniformBufferObject {
     mat4 mv;
     Light light;
     Material material;

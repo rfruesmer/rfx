@@ -20,6 +20,7 @@ public:
     Effect& operator=(Effect&&) = delete;
     virtual ~Effect();
 
+    void init();
     void dispose();
 
     void setModelMatrix(const glm::mat4& matrix);
@@ -40,14 +41,41 @@ public:
 
 protected:
     explicit Effect(const std::shared_ptr<GraphicsDevice>& graphicsDevice, 
-        VkRenderPass renderPass,
-        std::unique_ptr<ShaderProgram>& shaderProgram);
+                    VkRenderPass renderPass,
+                    std::unique_ptr<ShaderProgram>& shaderProgram);
 
-    void initUniformBuffer(size_t size);
-    void initDescriptorSetLayout(uint32_t bindingCount, const VkDescriptorSetLayoutBinding* bindings);
-    void initDescriptorPool(const std::vector<VkDescriptorPoolSize>& poolSizes);
-    void initPipelineLayout();
-    void initPipeline();
+    virtual void createUniformBuffers() = 0;
+    void createUniformBuffer(size_t size);
+
+    virtual void createDescriptorSetLayout() = 0;
+    void createDescriptorSetLayout(const std::vector<VkDescriptorSetLayoutBinding>& bindings);
+
+    virtual void createDescriptorPool() = 0;
+
+    void initDescriptorSets();
+    virtual void allocateDescriptorSets();
+    virtual void updateDescriptorSets() = 0;
+
+    static VkDescriptorSetLayoutBinding createDescriptorSetLayoutBinding(
+        uint32_t index, 
+        VkDescriptorType type, 
+        VkShaderStageFlagBits stageFlags);
+
+    static VkWriteDescriptorSet createDescriptorWrite(
+        uint32_t index,
+        VkDescriptorSet descriptorSet,
+        VkDescriptorType descriptorType, 
+        const VkDescriptorBufferInfo& descriptorBufferInfo);
+
+    static VkWriteDescriptorSet createDescriptorWrite(
+        uint32_t index, 
+        VkDescriptorSet descriptorSet,
+        VkDescriptorType descriptorType, 
+        const VkDescriptorImageInfo& descriptorImageInfo);
+
+    void createDescriptorPool(const std::vector<VkDescriptorPoolSize>& poolSizes);
+    void createPipelineLayout();
+    void createPipeline();
 
     virtual VkPipelineDynamicStateCreateInfo createDynamicState(
         uint32_t dynamicStateCount, VkDynamicState dynamicStates[]);

@@ -48,6 +48,7 @@ void TexturedQuadTest::initEffects()
         make_unique<ShaderProgram>(vertexShader, fragmentShader);
 
     textureEffect = make_shared<Texture2DEffect>(graphicsDevice, renderPass, shaderProgram, texture);
+    textureEffect->init();
 
     effects.push_back(textureEffect);
 }

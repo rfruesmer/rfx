@@ -23,7 +23,19 @@ Effect::Effect(const shared_ptr<GraphicsDevice>& graphicsDevice,
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Effect::initUniformBuffer(size_t size)
+void Effect::init()
+{
+    createUniformBuffers();
+    createDescriptorSetLayout();
+    createDescriptorPool();
+    initDescriptorSets();
+    createPipelineLayout();
+    createPipeline();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Effect::createUniformBuffer(size_t size)
 {
     const shared_ptr<Buffer> uniformBuffer = graphicsDevice->createUniformBuffer(size);
     uniformBuffer->bind();
@@ -32,20 +44,101 @@ void Effect::initUniformBuffer(size_t size)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Effect::initDescriptorSetLayout(uint32_t bindingCount, const VkDescriptorSetLayoutBinding* bindings)
+void Effect::initDescriptorSets()
+{
+    allocateDescriptorSets();
+    updateDescriptorSets();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Effect::allocateDescriptorSets()
+{
+    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo;
+    descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    descriptorSetAllocateInfo.pNext = nullptr;
+    descriptorSetAllocateInfo.descriptorPool = descriptorPool;
+    descriptorSetAllocateInfo.descriptorSetCount = 1;
+    descriptorSetAllocateInfo.pSetLayouts = &descriptorSetLayout;
+
+    graphicsDevice->allocateDescriptorSets(descriptorSetAllocateInfo, descriptorSets);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Effect::createDescriptorSetLayout(const vector<VkDescriptorSetLayoutBinding>& bindings)
 {
     VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
     descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     descriptorSetLayoutCreateInfo.pNext = nullptr;
-    descriptorSetLayoutCreateInfo.bindingCount = bindingCount;
-    descriptorSetLayoutCreateInfo.pBindings = bindings;
+    descriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+    descriptorSetLayoutCreateInfo.pBindings = bindings.data();
 
     descriptorSetLayout = graphicsDevice->createDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Effect::initDescriptorPool(const std::vector<VkDescriptorPoolSize>& poolSizes)
+VkDescriptorSetLayoutBinding Effect::createDescriptorSetLayoutBinding(
+    uint32_t index, 
+    VkDescriptorType type,
+    VkShaderStageFlagBits stageFlags)
+{
+    VkDescriptorSetLayoutBinding layoutBinding = {};
+    layoutBinding.binding = index;
+    layoutBinding.descriptorType = type;
+    layoutBinding.descriptorCount = 1;
+    layoutBinding.stageFlags = stageFlags;
+    layoutBinding.pImmutableSamplers = nullptr;
+
+    return layoutBinding;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkWriteDescriptorSet Effect::createDescriptorWrite(
+    uint32_t index, 
+    VkDescriptorSet descriptorSet, 
+    VkDescriptorType descriptorType,
+    const VkDescriptorBufferInfo& descriptorBufferInfo)
+{
+    VkWriteDescriptorSet write = {};
+    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.pNext = nullptr;
+    write.dstBinding = index;
+    write.dstSet = descriptorSet;
+    write.dstArrayElement = 0;
+    write.descriptorCount = 1;
+    write.descriptorType = descriptorType;
+    write.pBufferInfo = &descriptorBufferInfo;
+
+    return write;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkWriteDescriptorSet Effect::createDescriptorWrite(
+    uint32_t index, 
+    VkDescriptorSet descriptorSet,
+    VkDescriptorType descriptorType, 
+    const VkDescriptorImageInfo& descriptorImageInfo)
+{
+    VkWriteDescriptorSet write = {};
+    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.pNext = nullptr;
+    write.dstBinding = index;
+    write.dstSet = descriptorSet;
+    write.dstArrayElement = 0;
+    write.descriptorCount = 1;
+    write.descriptorType = descriptorType;
+    write.pImageInfo = &descriptorImageInfo;
+
+    return write;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Effect::createDescriptorPool(const std::vector<VkDescriptorPoolSize>& poolSizes)
 {
     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {};
     descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -91,7 +184,7 @@ void Effect::dispose()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Effect::initPipelineLayout()
+void Effect::createPipelineLayout()
 {
     RFX_CHECK_STATE(descriptorSetLayout != nullptr, "descriptorSetLayout must be created before");
 
@@ -108,7 +201,7 @@ void Effect::initPipelineLayout()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Effect::initPipeline()
+void Effect::createPipeline()
 {
     RFX_CHECK_STATE(pipelineLayout != nullptr, "Render pass must be setup before");
     RFX_CHECK_STATE(renderPass != nullptr, "Render pass must be setup before");

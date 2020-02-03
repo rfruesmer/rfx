@@ -27,6 +27,11 @@ public:
     void updateUniformBuffer() override;
 
 protected:
+    void createUniformBuffers() override;
+    void createDescriptorSetLayout() override;
+    void createDescriptorPool() override;
+    void updateDescriptorSets() override;
+
     struct UniformData
     {
         glm::mat4 modelView;
@@ -36,10 +41,6 @@ protected:
     };
 
     UniformData uniformData;
-
-private:
-    void initDescriptorSetLayout();
-    void initDescriptorSet();
 };
 
 }

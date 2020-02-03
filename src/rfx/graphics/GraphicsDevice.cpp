@@ -791,9 +791,9 @@ void GraphicsDevice::allocateDescriptorSets(const VkDescriptorSetAllocateInfo& a
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void GraphicsDevice::updateDescriptorSets(uint32_t writeCount, const VkWriteDescriptorSet* writes) const
+void GraphicsDevice::updateDescriptorSets(const vector<VkWriteDescriptorSet>& writes) const
 {
-    vkUpdateDescriptorSets(vkDevice, writeCount, writes, 0, nullptr);
+    vkUpdateDescriptorSets(vkDevice, static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

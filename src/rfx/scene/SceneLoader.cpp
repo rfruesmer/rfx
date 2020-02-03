@@ -140,7 +140,10 @@ shared_ptr<Effect> SceneLoader::createEffect(
     const auto it = effectFactories.find(effectDefinition.id);
     RFX_CHECK_STATE(it != effectFactories.end(), "No factory available for effect: " + effectDefinition.id);
 
-    return it->second->create(graphicsDevice, renderPass, shaderProgram, textures);
+    shared_ptr<Effect> effect = it->second->create(graphicsDevice, renderPass, shaderProgram, textures);
+    effect->init();
+
+    return effect;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
