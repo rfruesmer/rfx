@@ -352,11 +352,17 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
+# Clion cache/options directory
 .idea/
+
+# Generated binaries inside workspace folder
+cmake-*
+lib/
+
+# 3rd party artwork
 assets/common/models/
 assets/common/textures/
 assets/**/*.ktx
 assets/**/*.png
 assets/**/*.jpg
 assets/**/*.dds
-lib/
