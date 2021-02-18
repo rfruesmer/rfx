@@ -2,6 +2,7 @@
 
 #include "rfx/graphics/GraphicsDeviceDesc.h"
 #include "rfx/graphics/SwapChain.h"
+#include "rfx/graphics/DepthBuffer.h"
 #include "rfx/graphics/Queue.h"
 #include "rfx/graphics/CommandBuffer.h"
 #include "rfx/graphics/VertexBuffer.h"
@@ -33,14 +34,20 @@ public:
     void createSwapChain(
         uint32_t width,
         uint32_t height);
+
     void createSwapChain(
         uint32_t width,
         uint32_t height,
         VkFormat desiredFormat,
         VkColorSpaceKHR desiredColorSpace);
+
+    [[nodiscard]]
     const std::unique_ptr<SwapChain>& getSwapChain() const;
 
-    void createDepthBuffer();
+    void createDepthBuffer(VkFormat format);
+
+    [[nodiscard]]
+    const std::unique_ptr<DepthBuffer>& getDepthBuffer() const;
 
     [[nodiscard]]
     std::shared_ptr<Buffer> createBuffer(
@@ -74,10 +81,14 @@ public:
         uint32_t height,
         VkFormat format,
         VkImageUsageFlags usage,
+        VkImageTiling tiling,
         VkMemoryPropertyFlags properties) const;
 
     [[nodiscard]]
-    VkImageView createImageView(const std::shared_ptr<Image>& image, VkFormat format) const;
+    VkImageView createImageView(
+        const std::shared_ptr<Image>& image,
+        VkFormat format,
+        VkImageAspectFlags imageAspect) const;
 
     void updateImage(
         const std::shared_ptr<Image>& image,
@@ -118,8 +129,12 @@ private:
         VkFormat desiredFormat,
         VkColorSpaceKHR desiredColorSpace,
         SwapChainDesc* inOutSwapChainDesc);
-    void updateSwapChainPresentMode(SwapChainDesc* inOutSwapChainDesc);
+    static void updateSwapChainPresentMode(SwapChainDesc* inOutSwapChainDesc);
     void createSwapChainInternal(const SwapChainDesc& swapChainDesc);
+
+    void checkFormat(VkFormat format, VkImageTiling tiling, VkFormatFeatureFlags features);
+    std::shared_ptr<Image> createDepthBufferImage(VkFormat format);
+
 
     void createCommandPool();
     void createBufferInternal(
@@ -138,8 +153,8 @@ private:
     std::shared_ptr<Queue> presentationQueue;
     VkSurfaceKHR presentSurface;
     std::unique_ptr<SwapChain> swapChain;
+    std::unique_ptr<DepthBuffer> depthBuffer;
     VkCommandPool graphicsCommandPool = VK_NULL_HANDLE;
-
 };
 
 } // namespace rfx

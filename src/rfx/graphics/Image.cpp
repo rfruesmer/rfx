@@ -10,11 +10,13 @@ using namespace std;
 Image::Image(
     uint32_t width,
     uint32_t height,
+    VkFormat format,
     VkDevice device,
     VkImage image,
     VkDeviceMemory deviceMemory)
         : width(width),
           height(height),
+          format(format),
           device(device),
           image(image),
           deviceMemory(deviceMemory) {}
@@ -46,6 +48,13 @@ uint32_t Image::getWidth() const
 uint32_t Image::getHeight() const
 {
     return height;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkFormat Image::getFormat() const
+{
+    return format;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

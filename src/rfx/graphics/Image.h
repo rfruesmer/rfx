@@ -8,6 +8,7 @@ public:
     Image(
         uint32_t width,
         uint32_t height,
+        VkFormat format,
         VkDevice device,
         VkImage image,
         VkDeviceMemory deviceMemory);
@@ -17,10 +18,12 @@ public:
     [[nodiscard]] VkImage getHandle() const;
     [[nodiscard]] uint32_t getWidth() const;
     [[nodiscard]] uint32_t getHeight() const;
+    [[nodiscard]] VkFormat getFormat() const;
 
 private:
     uint32_t width;
     uint32_t height;
+    VkFormat format;
     VkDevice device;
     VkImage image;
     VkDeviceMemory deviceMemory;

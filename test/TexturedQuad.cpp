@@ -51,10 +51,15 @@ void TexturedQuad::createVertexBuffer()
     };
 
     const std::vector<Vertex> vertices = {
-        {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},
-        {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},
-        {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-        {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
+        {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},
+        {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},
+        {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
+        {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+
+        {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},
+        {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},
+        {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
+        {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
     };
 
     const VertexFormat vertexFormat(VertexFormat::COORDINATES | VertexFormat::COLORS | VertexFormat::TEXCOORDS);
@@ -77,6 +82,43 @@ void TexturedQuad::createVertexBuffer()
     shared_ptr<CommandBuffer> commandBuffer = graphicsDevice->createCommandBuffer(graphicsCommandPool);
     commandBuffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
     commandBuffer->copyBuffer(stagingBuffer, vertexBuffer);
+    commandBuffer->end();
+
+    const shared_ptr<Queue>& graphicsQueue = graphicsDevice->getGraphicsQueue();
+    graphicsQueue->submit(commandBuffer);
+    graphicsQueue->waitIdle();
+
+    graphicsDevice->destroyCommandBuffer(commandBuffer, graphicsCommandPool);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedQuad::createIndexBuffer()
+{
+    const std::vector<uint16_t> indices = {
+        0, 1, 2, 2, 3, 0,
+        4, 5, 6, 6, 7, 4
+    };
+
+    const VkDeviceSize bufferSize = indices.size() * sizeof(uint16_t);
+    shared_ptr<Buffer> stagingBuffer = graphicsDevice->createBuffer(
+        bufferSize,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+    void* data = nullptr;
+    graphicsDevice->bind(stagingBuffer);
+    graphicsDevice->map(stagingBuffer, &data);
+    memcpy(data, indices.data(), stagingBuffer->getSize());
+    graphicsDevice->unmap(stagingBuffer);
+
+    indexBuffer = graphicsDevice->createIndexBuffer(indices.size(), VK_INDEX_TYPE_UINT16);
+    graphicsDevice->bind(indexBuffer);
+
+    VkCommandPool graphicsCommandPool = graphicsDevice->getGraphicsCommandPool();
+    shared_ptr<CommandBuffer> commandBuffer = graphicsDevice->createCommandBuffer(graphicsCommandPool);
+    commandBuffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+    commandBuffer->copyBuffer(stagingBuffer, indexBuffer);
     commandBuffer->end();
 
     const shared_ptr<Queue>& graphicsQueue = graphicsDevice->getGraphicsQueue();
@@ -225,6 +267,25 @@ void TexturedQuad::createDescriptorSets()
             0,
             nullptr);
     }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedQuad::update(int bufferIndex)
+{
+    const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
+
+    UniformBufferObject ubo {
+        .model = glm::identity<glm::mat4>(),
+        .view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
+        .proj = glm::perspective(glm::radians(45.0f), swapChainDesc.extent.width / (float) swapChainDesc.extent.height, 0.1f, 10.0f)
+    };
+    ubo.proj[1][1] *= -1;
+
+    void* data;
+    graphicsDevice->map(uniformBuffers[bufferIndex], &data);
+    memcpy(data, &ubo, sizeof(ubo));
+    graphicsDevice->unmap(uniformBuffers[bufferIndex]);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

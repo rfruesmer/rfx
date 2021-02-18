@@ -14,15 +14,17 @@ protected:
     };
 
     virtual void buildScene();
+    virtual void createVertexBuffer();
     virtual void createIndexBuffer();
     virtual void createUniformBuffers();
     virtual void createDescriptorPool();
     virtual void createDescriptorSetLayout();
     virtual void createDescriptorSets();
-    virtual void createVertexBuffer();
 
     void cleanupSwapChain() override;
     void recreateSwapChain() override;
+
+    void update(int bufferIndex) override;
 
 // scene
     VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
@@ -36,7 +38,6 @@ protected:
 
 private:
     void initGraphics() override;
-    void update(int bufferIndex) override;
     void cleanup() override;
 
     void createRenderPass();

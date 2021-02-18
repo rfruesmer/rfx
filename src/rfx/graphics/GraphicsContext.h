@@ -29,6 +29,13 @@ private:
     void createPresentationSurface();
     void queryPhysicalDevices();
     static void queryProperties(VkPhysicalDevice physicalDevice, GraphicsDeviceDesc* deviceDesc);
+    static void queryDepthBufferFormat(VkPhysicalDevice physicalDevice, GraphicsDeviceDesc* deviceDesc);
+    static void queryFormat(
+        VkPhysicalDevice physicalDevice,
+        const std::vector<VkFormat>& candidates,
+        VkImageTiling tiling,
+        VkFormatFeatureFlags features,
+        GraphicsDeviceDesc* deviceDesc);
     static void queryFeatures(VkPhysicalDevice physicalDevice, GraphicsDeviceDesc* deviceDesc);
     static void queryExtensions(VkPhysicalDevice physicalDevice, GraphicsDeviceDesc* deviceDesc);
     void queryQueueFamilies(VkPhysicalDevice physicalDevice, GraphicsDeviceDesc* deviceDesc);

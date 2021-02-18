@@ -271,6 +271,7 @@ void GraphicsDevice::updateSwapChainPresentMode(SwapChainDesc* inOutSwapChainDes
 
 void GraphicsDevice::createSwapChainInternal(const SwapChainDesc& swapChainDesc)
 {
+    depthBuffer.reset();
     swapChain.reset();
 
     uint32_t imageCount = swapChainDesc.surface.capabilities.minImageCount + 1;
@@ -332,9 +333,61 @@ const unique_ptr<SwapChain>& GraphicsDevice::getSwapChain() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void GraphicsDevice::createDepthBuffer()
+void GraphicsDevice::createDepthBuffer(VkFormat format)
 {
+    checkFormat(
+        format,
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
+    shared_ptr<Image> image = createDepthBufferImage(format);
+    VkImageView imageView = createImageView(image, format, VK_IMAGE_ASPECT_DEPTH_BIT);
+    depthBuffer = make_unique<DepthBuffer>(device, image, imageView);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void GraphicsDevice::checkFormat(
+    VkFormat format,
+    VkImageTiling tiling,
+    VkFormatFeatureFlags features)
+{
+    VkFormatProperties formatProperties {};
+    vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &formatProperties);
+
+    if (tiling == VK_IMAGE_TILING_LINEAR
+            && (formatProperties.linearTilingFeatures & features) == features) {
+        return;
+    }
+
+    if (tiling == VK_IMAGE_TILING_OPTIMAL
+            && (formatProperties.optimalTilingFeatures & features) == features) {
+        return;
+    }
+
+    RFX_THROW("Failed to find supported format");
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+shared_ptr<Image> GraphicsDevice::createDepthBufferImage(VkFormat format)
+{
+    const SwapChainDesc& swapChainDesc = swapChain->getDesc();
+
+    return createImage(
+        swapChainDesc.extent.width,
+        swapChainDesc.extent.height,
+        format,
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const unique_ptr<DepthBuffer>& GraphicsDevice::getDepthBuffer() const
+{
+    return depthBuffer;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -566,9 +619,10 @@ shared_ptr<Texture2D> GraphicsDevice::createTexture2D(
         height,
         format,
         VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_IMAGE_TILING_OPTIMAL,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     updateImage(textureImage, data);
-    VkImageView textureImageView = createImageView(textureImage, format);
+    VkImageView textureImageView = createImageView(textureImage, format, VK_IMAGE_ASPECT_COLOR_BIT);
     VkSampler textureSampler = createTextureSampler();
 
     return make_shared<Texture2D>(
@@ -586,6 +640,7 @@ shared_ptr<Image> GraphicsDevice::createImage(
     uint32_t height,
     VkFormat format,
     VkImageUsageFlags usage,
+    VkImageTiling tiling,
     VkMemoryPropertyFlags properties) const
 {
     VkImageCreateInfo imageCreateInfo = {
@@ -598,7 +653,7 @@ shared_ptr<Image> GraphicsDevice::createImage(
         .mipLevels = 1,
         .arrayLayers = 1,
         .samples = VK_SAMPLE_COUNT_1_BIT,
-        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .tiling = tiling,
         .usage = usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = graphicsQueue->getFamilyIndex(),
@@ -632,7 +687,13 @@ shared_ptr<Image> GraphicsDevice::createImage(
 
     vkBindImageMemory(device, image, imageMemory, 0);
 
-    return make_shared<Image>(width, height, device, image, imageMemory);
+    return make_shared<Image>(
+        width,
+        height,
+        format,
+        device,
+        image,
+        imageMemory);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -683,7 +744,10 @@ void GraphicsDevice::updateImage(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VkImageView GraphicsDevice::createImageView(const shared_ptr<Image>& image, VkFormat format) const
+VkImageView GraphicsDevice::createImageView(
+    const shared_ptr<Image>& image,
+    VkFormat format,
+    VkImageAspectFlags imageAspect) const
 {
     VkImageViewCreateInfo viewInfo {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
@@ -697,11 +761,11 @@ VkImageView GraphicsDevice::createImageView(const shared_ptr<Image>& image, VkFo
             VK_COMPONENT_SWIZZLE_IDENTITY
         },
         .subresourceRange = {
-            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .aspectMask = imageAspect,
             .baseMipLevel = 0,
-            .levelCount = VK_REMAINING_MIP_LEVELS, // 1
+            .levelCount = VK_REMAINING_MIP_LEVELS,
             .baseArrayLayer = 0,
-            .layerCount = VK_REMAINING_ARRAY_LAYERS // 1
+            .layerCount = VK_REMAINING_ARRAY_LAYERS
         }
     };
 

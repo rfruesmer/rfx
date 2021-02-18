@@ -32,7 +32,7 @@ void ColoredQuad::createRenderPass()
     const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
 
-    VkAttachmentDescription colorAttachment = {
+    VkAttachmentDescription colorAttachment {
         .format = swapChainDesc.format,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
@@ -43,30 +43,55 @@ void ColoredQuad::createRenderPass()
         .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
     };
 
-    VkAttachmentReference colorAttachmentRef = {
+    VkAttachmentReference colorAttachmentRef {
         .attachment = 0,
         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
     };
 
-    VkSubpassDescription subpass = {
+    VkAttachmentDescription depthAttachment {
+        .format = graphicsDevice->getDepthBuffer()->getFormat(),
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+    };
+
+    VkAttachmentReference depthAttachmentRef {
+        .attachment = 1,
+        .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+    };
+
+    VkSubpassDescription subpass {
         .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
         .colorAttachmentCount = 1,
-        .pColorAttachments = &colorAttachmentRef
+        .pColorAttachments = &colorAttachmentRef,
+        .pDepthStencilAttachment = &depthAttachmentRef
     };
 
-    VkSubpassDependency subpassDependency = {
+    VkSubpassDependency subpassDependency {
         .srcSubpass = VK_SUBPASS_EXTERNAL,
         .dstSubpass = 0,
-        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+                      | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+                      | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
         .srcAccessMask = 0,
         .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
+                       | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT
     };
 
-    VkRenderPassCreateInfo renderPassInfo = {
+    std::array<VkAttachmentDescription, 2> attachments {
+        colorAttachment,
+        depthAttachment
+    };
+
+    VkRenderPassCreateInfo renderPassInfo {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-        .attachmentCount = 1,
-        .pAttachments = &colorAttachment,
+        .attachmentCount = static_cast<uint32_t>(attachments.size()),
+        .pAttachments = attachments.data(),
         .subpassCount = 1,
         .pSubpasses = &subpass,
         .dependencyCount = 1,
@@ -364,6 +389,19 @@ void ColoredQuad::createGraphicsPipeline()
         .blendConstants = { 0.0f, 0.0f, 0.0f, 0.0f }
     };
 
+    VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .depthTestEnable = VK_TRUE,
+        .depthWriteEnable = VK_TRUE,
+        .depthCompareOp = VK_COMPARE_OP_LESS,
+        .depthBoundsTestEnable = VK_FALSE,
+        .stencilTestEnable = VK_FALSE,
+        .front = {}, // Optional
+        .back = {}, // Optional
+        .minDepthBounds = 0.0f, // Optional
+        .maxDepthBounds = 1.0f, // Optional
+    };
+
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .setLayoutCount = 1,
@@ -391,7 +429,7 @@ void ColoredQuad::createGraphicsPipeline()
         .pViewportState = &viewportStateCreateInfo,
         .pRasterizationState = &rasterizationStateCreateInfo,
         .pMultisampleState = &multisampleStateCreateInfo,
-        .pDepthStencilState = nullptr, // Optional
+        .pDepthStencilState = &depthStencilStateCreateInfo,
         .pColorBlendState = &colorBlendStateCreateInfo,
         .pDynamicState = nullptr, // Optional
         .layout = pipelineLayout,
@@ -418,7 +456,10 @@ void ColoredQuad::createCommandBuffers()
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
     const vector<VkFramebuffer>& swapChainFramebuffers = swapChain->getFramebuffers();
 
-    const VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
+    std::array<VkClearValue, 2> clearValues {};
+    clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+    clearValues[1].depthStencil = { 1.0f, 0 };
+
     const vector<shared_ptr<VertexBuffer>> vertexBuffers = { vertexBuffer };
 
     VkRenderPassBeginInfo renderPassBeginInfo = {
@@ -428,8 +469,8 @@ void ColoredQuad::createCommandBuffers()
             .offset = { 0, 0 },
             .extent = swapChainDesc.extent
         },
-        .clearValueCount = 1,
-        .pClearValues = &clearColor
+        .clearValueCount = clearValues.size(),
+        .pClearValues = clearValues.data()
     };
 
     VkCommandPool graphicsCommandPool = graphicsDevice->getGraphicsCommandPool();

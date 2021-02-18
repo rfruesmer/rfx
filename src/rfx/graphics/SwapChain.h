@@ -1,6 +1,7 @@
 #pragma once
 
-#include "SwapChainDesc.h"
+#include "rfx/graphics/SwapChainDesc.h"
+#include "rfx/graphics/DepthBuffer.h"
 
 
 namespace rfx {
@@ -8,10 +9,15 @@ namespace rfx {
 class SwapChain
 {
 public:
-    SwapChain(VkDevice device, VkSwapchainKHR swapChain, SwapChainDesc swapChainDesc);
+    SwapChain(
+        VkDevice device,
+        VkSwapchainKHR swapChain,
+        SwapChainDesc swapChainDesc);
     ~SwapChain();
 
-    void createFrameBuffers(VkRenderPass renderPass);
+    void createFrameBuffers(
+        VkRenderPass renderPass,
+        const std::unique_ptr<DepthBuffer>& depthBuffer);
 
     [[nodiscard]] VkSwapchainKHR getHandle() const;
     [[nodiscard]] const SwapChainDesc& getDesc() const;

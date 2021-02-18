@@ -12,7 +12,12 @@ protected:
     void createDescriptorSetLayout() override;
     void createDescriptorSets() override;
     void createVertexBuffer() override;
+
+    void createIndexBuffer() override;
+
     void cleanup() override;
+
+    void update(int bufferIndex) override;
 
 private:
     void createTexture();

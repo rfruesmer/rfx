@@ -8,7 +8,9 @@ using namespace rfx;
 // ---------------------------------------------------------------------------------------------------------------------
 
 SwapChain::SwapChain(VkDevice device, VkSwapchainKHR swapChain, SwapChainDesc swapChainDesc)
-    : device(device), swapChain(swapChain), desc(std::move(swapChainDesc))
+    : device(device),
+      swapChain(swapChain),
+      desc(std::move(swapChainDesc))
 {
     ThrowIfFailed(vkGetSwapchainImagesKHR(
         device,
@@ -85,25 +87,30 @@ const SwapChainDesc& SwapChain::getDesc() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SwapChain::createFrameBuffers(VkRenderPass renderPass)
+void SwapChain::createFrameBuffers(
+    VkRenderPass renderPass,
+    const std::unique_ptr<DepthBuffer>& depthBuffer)
 {
     framebuffers.resize(desc.bufferCount);
 
     VkFramebufferCreateInfo framebufferInfo = {
         .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
         .renderPass = renderPass,
-        .attachmentCount = 1,
         .width = desc.extent.width,
         .height = desc.extent.height,
         .layers = 1
     };
 
-    for (size_t i = 0; i < desc.bufferCount; ++i) {
-        VkImageView attachments[] = {
-            imageViews[i]
-        };
 
-        framebufferInfo.pAttachments = attachments;
+    for (size_t i = 0; i < desc.bufferCount; ++i) {
+
+        std::vector<VkImageView> attachments = { imageViews[i] };
+        if (depthBuffer != nullptr) {
+            attachments.push_back(depthBuffer->getImageView());
+        }
+
+        framebufferInfo.attachmentCount = attachments.size();
+        framebufferInfo.pAttachments = attachments.data();
 
         ThrowIfFailed(vkCreateFramebuffer(
             device,

@@ -87,8 +87,7 @@ void Application::initGraphics()
     int width, height;
     glfwGetFramebufferSize(window->getGlfwWindow(), &width, &height);
     graphicsDevice->createSwapChain(width, height);
-
-    graphicsDevice->createDepthBuffer();
+    graphicsDevice->createDepthBuffer(GraphicsDevice::DEFAULT_DEPTHBUFFER_FORMAT);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -108,7 +107,7 @@ path Application::getAssetsPath()
 
 void Application::createFrameBuffers()
 {
-    graphicsDevice->getSwapChain()->createFrameBuffers(renderPass);
+    graphicsDevice->getSwapChain()->createFrameBuffers(renderPass, graphicsDevice->getDepthBuffer());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -306,6 +305,7 @@ void Application::recreateSwapChain()
     int width, height;
     glfwGetFramebufferSize(window->getGlfwWindow(), &width, &height);
     graphicsDevice->createSwapChain(width, height);
+    graphicsDevice->createDepthBuffer(GraphicsDevice::DEFAULT_DEPTHBUFFER_FORMAT);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

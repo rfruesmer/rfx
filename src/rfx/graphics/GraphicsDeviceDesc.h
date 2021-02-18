@@ -12,7 +12,7 @@ struct GraphicsDeviceDesc
     VkPhysicalDeviceFeatures features {};
     std::vector<VkExtensionProperties> extensions;
     std::vector<QueueFamilyDesc> queueFamilies;
-    VkFormatProperties depthBufferFormatProperties {};
+    VkFormat depthBufferFormat = VK_FORMAT_UNDEFINED;
 };
 
 } // namespace rfx

@@ -68,7 +68,7 @@ GraphicsContext::~GraphicsContext()
 
 void GraphicsContext::initialize()
 {
-    dumpExtensions();
+//    dumpExtensions();
     checkValidationSupport();
 
     createVulkanInstance();
@@ -286,10 +286,6 @@ void GraphicsContext::queryDeviceGroups()
 void GraphicsContext::queryProperties(VkPhysicalDevice physicalDevice, GraphicsDeviceDesc* deviceDesc)
 {
     vkGetPhysicalDeviceProperties(physicalDevice, &deviceDesc->properties);
-    vkGetPhysicalDeviceFormatProperties(
-        physicalDevice,
-        GraphicsDevice::DEFAULT_DEPTHBUFFER_FORMAT,
-        &deviceDesc->depthBufferFormatProperties);
     vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceDesc->memoryProperties);
 }
 
