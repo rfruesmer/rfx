@@ -6,7 +6,7 @@
 using namespace rfx;
 using namespace rfx::test;
 using namespace std;
-using namespace std::filesystem;
+using namespace filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -48,16 +48,20 @@ void ColoredQuad::createRenderPass()
         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
     };
 
-    VkAttachmentDescription depthAttachment {
-        .format = graphicsDevice->getDepthBuffer()->getFormat(),
-        .samples = VK_SAMPLE_COUNT_1_BIT,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-        .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-    };
+    const unique_ptr<DepthBuffer>& depthBuffer = graphicsDevice->getDepthBuffer();
+    VkAttachmentDescription depthAttachment {};
+    if (depthBuffer) {
+        depthAttachment = {
+            .format = depthBuffer->getFormat(),
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+        };
+    }
 
     VkAttachmentReference depthAttachmentRef {
         .attachment = 1,
@@ -68,7 +72,7 @@ void ColoredQuad::createRenderPass()
         .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
         .colorAttachmentCount = 1,
         .pColorAttachments = &colorAttachmentRef,
-        .pDepthStencilAttachment = &depthAttachmentRef
+        .pDepthStencilAttachment = depthBuffer ? &depthAttachmentRef : nullptr
     };
 
     VkSubpassDependency subpassDependency {
@@ -83,10 +87,10 @@ void ColoredQuad::createRenderPass()
                        | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT
     };
 
-    std::array<VkAttachmentDescription, 2> attachments {
-        colorAttachment,
-        depthAttachment
-    };
+    vector<VkAttachmentDescription> attachments { colorAttachment };
+    if (depthBuffer) {
+        attachments.push_back(depthAttachment);
+    }
 
     VkRenderPassCreateInfo renderPassInfo {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
@@ -281,7 +285,7 @@ void ColoredQuad::createDescriptorSets()
 {
     const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
 
-    std::vector<VkDescriptorSetLayout> layouts(swapChainDesc.bufferCount, descriptorSetLayout);
+    vector<VkDescriptorSetLayout> layouts(swapChainDesc.bufferCount, descriptorSetLayout);
     VkDescriptorSetAllocateInfo allocInfo {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .descriptorPool = descriptorPool,
@@ -455,10 +459,14 @@ void ColoredQuad::createCommandBuffers()
     const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
     const vector<VkFramebuffer>& swapChainFramebuffers = swapChain->getFramebuffers();
+    const unique_ptr<DepthBuffer>& depthBuffer = graphicsDevice->getDepthBuffer();
 
-    std::array<VkClearValue, 2> clearValues {};
+    vector<VkClearValue> clearValues(1);
     clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-    clearValues[1].depthStencil = { 1.0f, 0 };
+    if (depthBuffer) {
+        clearValues.resize(2);
+        clearValues[1].depthStencil = { 1.0f, 0 };
+    }
 
     const vector<shared_ptr<VertexBuffer>> vertexBuffers = { vertexBuffer };
 
@@ -469,7 +477,7 @@ void ColoredQuad::createCommandBuffers()
             .offset = { 0, 0 },
             .extent = swapChainDesc.extent
         },
-        .clearValueCount = clearValues.size(),
+        .clearValueCount = static_cast<uint32_t>(clearValues.size()),
         .pClearValues = clearValues.data()
     };
 
