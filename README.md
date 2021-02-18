@@ -1,7 +1,7 @@
 # rfx
 Vulkan Playground
 
-## Build Instructions (Windows)
+## Build Instructions
 
 ### System requirements
 
