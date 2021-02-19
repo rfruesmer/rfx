@@ -79,6 +79,7 @@ public:
     std::shared_ptr<Image> createImage(
         uint32_t width,
         uint32_t height,
+        uint32_t mipLevels,
         VkFormat format,
         VkImageUsageFlags usage,
         VkImageTiling tiling,
@@ -88,11 +89,8 @@ public:
     VkImageView createImageView(
         const std::shared_ptr<Image>& image,
         VkFormat format,
-        VkImageAspectFlags imageAspect) const;
-
-    void updateImage(
-        const std::shared_ptr<Image>& image,
-        const std::vector<std::byte>& imageData) const;
+        VkImageAspectFlags imageAspect,
+        uint32_t mipLevels) const;
 
     [[nodiscard]] VkFence createFence() const;
     [[nodiscard]] VkFence createFence(const VkFenceCreateInfo& createInfo) const;
@@ -135,7 +133,6 @@ private:
     void checkFormat(VkFormat format, VkImageTiling tiling, VkFormatFeatureFlags features);
     std::shared_ptr<Image> createDepthBufferImage(VkFormat format);
 
-
     void createCommandPool();
     void createBufferInternal(
         VkDeviceSize size,
@@ -144,7 +141,25 @@ private:
         VkBuffer& outBuffer,
         VkDeviceMemory& outDeviceMemory) const;
     [[nodiscard]] uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
-    [[nodiscard]] VkSampler createTextureSampler() const;
+
+    void transitionImageLayout(
+        VkImage image,
+        VkImageLayout oldLayout,
+        VkImageLayout newLayout,
+        uint32_t mipLevels) const;
+
+    void updateImage(
+        const std::shared_ptr<Image>& image,
+        const std::vector<std::byte>& imageData) const;
+
+    void generateMipmaps(
+        VkImage image,
+        VkFormat imageFormat,
+        int32_t texWidth,
+        int32_t texHeight,
+        uint32_t mipLevels) const;
+
+    [[nodiscard]] VkSampler createTextureSampler(uint32_t mipLevels) const;
 
     GraphicsDeviceDesc desc {};
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
