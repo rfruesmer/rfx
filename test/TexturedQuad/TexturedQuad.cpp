@@ -58,7 +58,7 @@ void TexturedQuad::createRenderPass()
         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+        .finalLayout = devToolsEnabled ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
     };
 
     VkAttachmentReference colorAttachmentRef {
@@ -110,7 +110,7 @@ void TexturedQuad::createRenderPass()
         attachments.push_back(depthAttachment);
     }
 
-    VkRenderPassCreateInfo renderPassInfo {
+    VkRenderPassCreateInfo renderPassCreateInfo {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
         .attachmentCount = static_cast<uint32_t>(attachments.size()),
         .pAttachments = attachments.data(),
@@ -122,7 +122,7 @@ void TexturedQuad::createRenderPass()
 
     ThrowIfFailed(vkCreateRenderPass(
         graphicsDevice->getLogicalDevice(),
-        &renderPassInfo,
+        &renderPassCreateInfo,
         nullptr,
         &renderPass));
 }
@@ -133,7 +133,7 @@ void TexturedQuad::buildScene()
 {
     createTexture();
 
-    const path assetsPath = getAssetsPath();
+    const path assetsPath = getAssetsDirectory();
     const path vertexShaderPath = assetsPath / "shaders/texture.vert";
     const path fragmentShaderPath = assetsPath / "shaders/texture.frag";
 
@@ -286,7 +286,7 @@ void TexturedQuad::createTexture()
 //    const path texturePath =
 //        getAssetsPath() / "samples/vulkan_asset_pack_gltf/data/textures/lavaplanet_rgba.ktx";
     const path texturePath =
-        getAssetsPath() / "textures/ttex_v01/metal08.jpg";
+        getAssetsDirectory() / "textures/ttex_v01/metal08.jpg";
 
     Texture2DLoader textureLoader(graphicsDevice);
     texture = textureLoader.load(texturePath);
@@ -364,10 +364,10 @@ void TexturedQuad::createVertexBuffer()
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-    void* data = nullptr;
+    void* mappedMemory = nullptr;
     graphicsDevice->bind(stagingBuffer);
-    graphicsDevice->map(stagingBuffer, &data);
-    memcpy(data, vertices.data(), stagingBuffer->getSize());
+    graphicsDevice->map(stagingBuffer, &mappedMemory);
+    memcpy(mappedMemory, vertices.data(), stagingBuffer->getSize());
     graphicsDevice->unmap(stagingBuffer);
 
     vertexBuffer = graphicsDevice->createVertexBuffer(vertices.size(), vertexFormat);
@@ -401,10 +401,10 @@ void TexturedQuad::createIndexBuffer()
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-    void* data = nullptr;
+    void* mappedMemory = nullptr;
     graphicsDevice->bind(stagingBuffer);
-    graphicsDevice->map(stagingBuffer, &data);
-    memcpy(data, indices.data(), stagingBuffer->getSize());
+    graphicsDevice->map(stagingBuffer, &mappedMemory);
+    memcpy(mappedMemory, indices.data(), stagingBuffer->getSize());
     graphicsDevice->unmap(stagingBuffer);
 
     indexBuffer = graphicsDevice->createIndexBuffer(indices.size(), VK_INDEX_TYPE_UINT16);
@@ -621,6 +621,9 @@ void TexturedQuad::createDescriptorSets()
 
 void TexturedQuad::update(int bufferIndex)
 {
+    Application::update(bufferIndex);
+
+
     const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
 
     UniformBufferObject ubo {
@@ -630,9 +633,9 @@ void TexturedQuad::update(int bufferIndex)
     };
     ubo.proj[1][1] *= -1;
 
-    void* data;
-    graphicsDevice->map(uniformBuffers[bufferIndex], &data);
-    memcpy(data, &ubo, sizeof(ubo));
+    void* mappedMemory = nullptr;
+    graphicsDevice->map(uniformBuffers[bufferIndex], &mappedMemory);
+    memcpy(mappedMemory, &ubo, sizeof(ubo));
     graphicsDevice->unmap(uniformBuffers[bufferIndex]);
 }
 

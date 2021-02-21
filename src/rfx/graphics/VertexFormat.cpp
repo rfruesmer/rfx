@@ -21,8 +21,12 @@ VertexFormat::VertexFormat(unsigned int formatMask)
         vertexSize += 12;
     }
 
-    if (formatMask & COLORS) {
-        colors = true;
+    if (formatMask & COLORS_3) {
+        colors3 = true;
+        vertexSize += 12;
+    }
+    else if (formatMask & COLORS_4) {
+        colors4 = true;
         vertexSize += 16;
     }
 
@@ -43,7 +47,8 @@ VertexFormat::VertexFormat(const VertexFormat& theOther)
     : vertexSize(theOther.vertexSize),
       coordinates(theOther.coordinates),
       normals(theOther.normals),
-      colors(theOther.colors),
+      colors3(theOther.colors3),
+      colors4(theOther.colors4),
       texCoords(theOther.texCoords) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -69,9 +74,16 @@ bool VertexFormat::containsNormals() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-bool VertexFormat::containsColors() const
+bool VertexFormat::containsColors3() const
 {
-    return colors;
+    return colors3;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+bool VertexFormat::containsColors4() const
+{
+    return colors4;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

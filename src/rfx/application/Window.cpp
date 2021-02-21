@@ -24,8 +24,9 @@ void Window::create(const string& title, int width, int height)
     if (!window) {
         RFX_THROW("Failed to create window");
     }
-    glfwSetWindowUserPointer(window, this);
 
+    glfwGetFramebufferSize(window, &width_, &height_);
+    glfwSetWindowUserPointer(window, this);
     glfwSetKeyCallback(window, onKeyEvent);
     glfwSetFramebufferSizeCallback(window, onResize);
 }
@@ -42,6 +43,9 @@ void Window::onResize(GLFWwindow* window, int width, int height)
 
 void Window::onResize(int width, int height)
 {
+    width_ = width;
+    height_ = height;
+
     ranges::for_each(listeners,
         [this, width, height](const weak_ptr<WindowListener>& weakListener) {
             if (auto listener = weakListener.lock()) {
@@ -62,6 +66,20 @@ GLFWwindow* Window::getGlfwWindow() const
 void* Window::getHandle() const
 {
     return glfwGetWin32Window(window);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+uint32_t Window::getClientWidth() const
+{
+    return width_;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+uint32_t Window::getClientHeight() const
+{
+    return height_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

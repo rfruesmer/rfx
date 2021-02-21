@@ -6,9 +6,10 @@ class VertexFormat
 {
 public:
     static const int COORDINATES = 1;
-    static const int COLORS = 2;
-    static const int NORMALS = 4;
-    static const int TEXCOORDS = 8;
+    static const int COLORS_3 = 2;
+    static const int COLORS_4 = 4;
+    static const int NORMALS = 8;
+    static const int TEXCOORDS = 16;
 
     VertexFormat();
     explicit VertexFormat(unsigned int formatMask);
@@ -21,7 +22,10 @@ public:
     bool containsCoordinates() const;
 
     [[nodiscard]]
-    bool containsColors() const;
+    bool containsColors3() const;
+
+    [[nodiscard]]
+    bool containsColors4() const;
 
     [[nodiscard]]
     bool containsNormals() const;
@@ -32,7 +36,8 @@ public:
 private:
     uint32_t vertexSize = 0;
     bool coordinates = false;
-    bool colors = false;
+    bool colors3 = false;
+    bool colors4 = false;
     bool normals = false;
     bool texCoords = false;
 };

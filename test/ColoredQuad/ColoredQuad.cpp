@@ -56,7 +56,7 @@ void ColoredQuad::createRenderPass()
         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+        .finalLayout = devToolsEnabled ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
     };
 
     VkAttachmentReference colorAttachmentRef {
@@ -129,12 +129,12 @@ void ColoredQuad::createRenderPass()
 
 void ColoredQuad::buildScene()
 {
-    const path assetsPath = getAssetsPath();
+    const path assetsPath = getAssetsDirectory();
     const path vertexShaderPath = assetsPath / "shaders/color.vert";
     const path fragmentShaderPath = assetsPath / "shaders/color.frag";
 
     const ShaderLoader shaderLoader(graphicsDevice);
-    vertexShader = shaderLoader.loadVertexShader(vertexShaderPath, "main", VertexFormat(VertexFormat::COORDINATES | VertexFormat::COLORS));
+    vertexShader = shaderLoader.loadVertexShader(vertexShaderPath, "main", VertexFormat(VertexFormat::COORDINATES | VertexFormat::COLORS_4));
     fragmentShader = shaderLoader.loadFragmentShader(fragmentShaderPath, "main");
 
     createVertexBuffer();
@@ -160,17 +160,17 @@ void ColoredQuad::createVertexBuffer()
         {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}}
     };
 
-    const VertexFormat vertexFormat(VertexFormat::COORDINATES | VertexFormat::COLORS);
+    const VertexFormat vertexFormat(VertexFormat::COORDINATES | VertexFormat::COLORS_4);
     const VkDeviceSize bufferSize = vertices.size() * vertexFormat.getVertexSize();
     shared_ptr<Buffer> stagingBuffer = graphicsDevice->createBuffer(
         bufferSize,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-    void* data = nullptr;
+    void* mappedMemory = nullptr;
     graphicsDevice->bind(stagingBuffer);
-    graphicsDevice->map(stagingBuffer, &data);
-    memcpy(data, vertices.data(), stagingBuffer->getSize());
+    graphicsDevice->map(stagingBuffer, &mappedMemory);
+    memcpy(mappedMemory, vertices.data(), stagingBuffer->getSize());
     graphicsDevice->unmap(stagingBuffer);
 
     vertexBuffer = graphicsDevice->createVertexBuffer(vertices.size(), vertexFormat);
@@ -203,10 +203,10 @@ void ColoredQuad::createIndexBuffer()
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-    void* data = nullptr;
+    void* mappedMemory = nullptr;
     graphicsDevice->bind(stagingBuffer);
-    graphicsDevice->map(stagingBuffer, &data);
-    memcpy(data, indices.data(), stagingBuffer->getSize());
+    graphicsDevice->map(stagingBuffer, &mappedMemory);
+    memcpy(mappedMemory, indices.data(), stagingBuffer->getSize());
     graphicsDevice->unmap(stagingBuffer);
 
     indexBuffer = graphicsDevice->createIndexBuffer(indices.size(), VK_INDEX_TYPE_UINT16);
@@ -535,9 +535,9 @@ void ColoredQuad::update(int bufferIndex)
     };
     ubo.proj[1][1] *= -1;
 
-    void* data;
-    graphicsDevice->map(uniformBuffers[bufferIndex], &data);
-    memcpy(data, &ubo, sizeof(ubo));
+    void* mappedMemory = nullptr;
+    graphicsDevice->map(uniformBuffers[bufferIndex], &mappedMemory);
+    memcpy(mappedMemory, &ubo, sizeof(ubo));
     graphicsDevice->unmap(uniformBuffers[bufferIndex]);
 }
 

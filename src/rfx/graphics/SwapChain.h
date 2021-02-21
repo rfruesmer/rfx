@@ -22,6 +22,7 @@ public:
     [[nodiscard]] VkSwapchainKHR getHandle() const;
     [[nodiscard]] const SwapChainDesc& getDesc() const;
     [[nodiscard]] const std::vector<VkFramebuffer>& getFramebuffers() const;
+    [[nodiscard]] const std::vector<VkImageView>& getImageViews() const;
 
 private:
     VkDevice device = VK_NULL_HANDLE;

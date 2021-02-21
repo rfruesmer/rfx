@@ -19,6 +19,8 @@ public:
 
     [[nodiscard]] GLFWwindow* getGlfwWindow() const;
     [[nodiscard]] void* getHandle() const;
+    [[nodiscard]] uint32_t getClientWidth() const;
+    [[nodiscard]] uint32_t getClientHeight() const;
 
     void addListener(const std::shared_ptr<WindowListener>& listener);
 
@@ -27,6 +29,8 @@ private:
     void onResize(int width, int height);
 
     GLFWwindow* window = nullptr;
+    int width_ = 0;
+    int height_ = 0;
     std::vector<std::shared_ptr<WindowListener>> listeners; // TODO: use weak_ptr
 };
 

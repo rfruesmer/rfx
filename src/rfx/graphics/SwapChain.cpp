@@ -128,3 +128,10 @@ const std::vector<VkFramebuffer>& SwapChain::getFramebuffers() const
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+
+const std::vector<VkImageView>& SwapChain::getImageViews() const
+{
+    return imageViews;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------

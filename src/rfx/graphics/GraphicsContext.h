@@ -15,11 +15,13 @@ public:
     void initialize();
 
     [[nodiscard]]
+    VkInstance getInstance() const;
+
+    [[nodiscard]]
     std::shared_ptr<GraphicsDevice> createGraphicsDevice(
         const VkPhysicalDeviceFeatures& features,
         const std::vector<std::string>& extensions,
         const std::vector<VkQueueFlagBits>& queueCapabilities);
-
 
 private:
     static void dumpExtensions();
@@ -29,13 +31,6 @@ private:
     void createPresentationSurface();
     void queryPhysicalDevices();
     static void queryProperties(VkPhysicalDevice physicalDevice, GraphicsDeviceDesc* deviceDesc);
-    static void queryDepthBufferFormat(VkPhysicalDevice physicalDevice, GraphicsDeviceDesc* deviceDesc);
-    static void queryFormat(
-        VkPhysicalDevice physicalDevice,
-        const std::vector<VkFormat>& candidates,
-        VkImageTiling tiling,
-        VkFormatFeatureFlags features,
-        GraphicsDeviceDesc* deviceDesc);
     static void queryFeatures(VkPhysicalDevice physicalDevice, GraphicsDeviceDesc* deviceDesc);
     static void queryExtensions(VkPhysicalDevice physicalDevice, GraphicsDeviceDesc* deviceDesc);
     void queryQueueFamilies(VkPhysicalDevice physicalDevice, GraphicsDeviceDesc* deviceDesc);
@@ -48,7 +43,7 @@ private:
     VkPhysicalDevice findFirstMatchingPhysicalDevice(
         const VkPhysicalDeviceFeatures& features,
         const std::vector<std::string>& extensions,
-        const std::vector<VkQueueFlagBits>& queueCapabilities);
+        const std::vector<VkQueueFlagBits>& queueCapabilities) const;
 
     [[nodiscard]]
     bool isMatching(
@@ -91,17 +86,17 @@ private:
         VkPhysicalDevice physicalDevice,
         const VkPhysicalDeviceFeatures& features,
         const std::vector<std::string>& extensions,
-        const std::vector<VkQueueFlagBits>& queueCapabilities);
+        const std::vector<VkQueueFlagBits>& queueCapabilities) const;
 
     void selectQueueFamilies(
         VkPhysicalDevice physicalDevice,
         const std::vector<VkQueueFlagBits>& queueCapabilities,
         std::vector<QueueFamilyDesc>& outSelectedQueueFamilies,
         uint32_t& outGraphicsQueueFamilyIndex,
-        uint32_t& outPresentQueueFamilyIndex);
+        uint32_t& outPresentQueueFamilyIndex) const;
 
     [[nodiscard]]
-    int getDeviceGroupIndex(VkPhysicalDevice physicalDevice);
+    int getDeviceGroupIndex(VkPhysicalDevice physicalDevice) const;
 
     static SurfaceDesc querySurfaceDesc(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
 

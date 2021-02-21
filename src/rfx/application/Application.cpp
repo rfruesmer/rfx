@@ -41,6 +41,7 @@ void Application::initialize()
     initGlfw();
     createWindow();
     initGraphics();
+    initDevTools();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -109,9 +110,8 @@ void Application::createGraphicsDevice()
 
 void Application::createSwapChainAndDepthBuffer()
 {
-    int width = 0;
-    int height = 0;
-    glfwGetFramebufferSize(window->getGlfwWindow(), &width, &height);
+    const int width = window->getClientWidth();
+    const int height = window->getClientHeight();
 
     graphicsDevice->createSwapChain(width, height);
     graphicsDevice->createDepthBuffer(GraphicsDevice::DEFAULT_DEPTHBUFFER_FORMAT);
@@ -119,7 +119,24 @@ void Application::createSwapChainAndDepthBuffer()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-path Application::getAssetsPath()
+void Application::initDevTools()
+{
+    devTools = make_unique<DevTools>(
+        window,
+        graphicsContext,
+        graphicsDevice);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Application::drawDevTools(uint32_t frameIndex)
+{
+    devTools->draw(frameIndex);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+path Application::getAssetsDirectory()
 {
     filesystem::path assetsPath = filesystem::current_path();
 
@@ -228,14 +245,20 @@ void Application::drawFrame()
     VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
     update(imageIndex);
+    drawDevTools(imageIndex);
+
+    std::array<VkCommandBuffer, 2> submitCommandBuffers {
+        commandBuffers[imageIndex]->getHandle(),
+        devTools->getCommandBuffer(imageIndex)
+    };
 
     VkSubmitInfo submitInfo = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .waitSemaphoreCount = 1,
         .pWaitSemaphores = waitSemaphores,
         .pWaitDstStageMask = waitStages,
-        .commandBufferCount = 1,
-        .pCommandBuffers = &commandBuffers[imageIndex]->getHandle(),
+        .commandBufferCount = submitCommandBuffers.size(),
+        .pCommandBuffers = submitCommandBuffers.data(),
         .signalSemaphoreCount = 1,
         .pSignalSemaphores = signalSemaphores
     };
@@ -268,6 +291,8 @@ void Application::drawFrame()
 
 void Application::cleanup()
 {
+    devTools.reset();
+
     cleanupSwapChain();
     destroySyncObjects();
 
@@ -324,11 +349,14 @@ void Application::recreateSwapChain()
 {
     graphicsDevice->waitIdle();
 
+    devTools.reset();
+
     destroySyncObjects();
     createSyncObjects();
 
     cleanupSwapChain();
     createSwapChainAndDepthBuffer();
+    initDevTools();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -338,6 +366,13 @@ void Application::onResized(const Window&, int width, int height)
     windowResized = true;
 
     paused = (width == 0 || height == 0);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Application::update(int frameIndex)
+{
+    // do nothing
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

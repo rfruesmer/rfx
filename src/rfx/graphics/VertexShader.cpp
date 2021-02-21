@@ -40,7 +40,7 @@ void VertexShader::createVertexInputState()
     vertexAttributeDescriptions.push_back(attributeDescription);
     offset += 12;
 
-    if (vertexFormat.containsColors()) {
+    if (vertexFormat.containsColors3()) {
         attributeDescription = {
             .location = location++,
             .binding = VERTEX_BUFFER_BIND_ID,
@@ -49,6 +49,16 @@ void VertexShader::createVertexInputState()
         };
         vertexAttributeDescriptions.push_back(attributeDescription);
         offset += 12;
+    }
+    else if (vertexFormat.containsColors4()) {
+        attributeDescription = {
+            .location = location++,
+            .binding = VERTEX_BUFFER_BIND_ID,
+            .format = VK_FORMAT_R32G32B32A32_SFLOAT,
+            .offset = offset
+        };
+        vertexAttributeDescriptions.push_back(attributeDescription);
+        offset += 16;
     }
 
     if (vertexFormat.containsNormals()) {

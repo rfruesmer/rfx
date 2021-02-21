@@ -41,6 +41,7 @@
 
 #include <SPIRV/GlslangToSpv.h>
 #include <ktx.h>
+#include <imgui.h>
 
 #include "rfx.h"
 

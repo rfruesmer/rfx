@@ -419,7 +419,7 @@ shared_ptr<GraphicsDevice> GraphicsContext::createGraphicsDevice(
 VkPhysicalDevice GraphicsContext::findFirstMatchingPhysicalDevice(
     const VkPhysicalDeviceFeatures& features,
     const vector<string>& extensions,
-    const vector<VkQueueFlagBits>& queueCapabilities)
+    const vector<VkQueueFlagBits>& queueCapabilities) const
 {
     VkPhysicalDevice matchingDevice = VK_NULL_HANDLE;
 
@@ -428,7 +428,9 @@ VkPhysicalDevice GraphicsContext::findFirstMatchingPhysicalDevice(
 
         for (uint32_t i = 0; i < deviceGroup.physicalDeviceCount; ++i) {
             VkPhysicalDevice currentDevice = deviceGroup.physicalDevices[i];
-            const GraphicsDeviceDesc& deviceDesc = deviceDescs[currentDevice];
+            const auto& it = deviceDescs.find(currentDevice);
+            RFX_CHECK_STATE(it != deviceDescs.end(), "Internal error");
+            const GraphicsDeviceDesc& deviceDesc = it->second;
 
             if (!isMatching(deviceDesc, features, extensions, queueCapabilities)) {
                 matchingDevice = nullptr;
@@ -623,7 +625,7 @@ shared_ptr<GraphicsDevice> GraphicsContext::createLogicalDevice(
     VkPhysicalDevice physicalDevice,
     const VkPhysicalDeviceFeatures& features,
     const vector<string>& extensions,
-    const vector<VkQueueFlagBits>& queueCapabilities)
+    const vector<VkQueueFlagBits>& queueCapabilities) const
 {
     vector<QueueFamilyDesc> selectedQueueFamilies;
     uint32_t graphicsQueueFamilyIndex = UINT32_MAX;
@@ -693,8 +695,11 @@ shared_ptr<GraphicsDevice> GraphicsContext::createLogicalDevice(
     RFX_CHECK_STATE(vkQueue != VK_NULL_HANDLE, "Failed to get presentation queue");
     const auto presentQueue = make_shared<Queue>(vkQueue, presentQueueFamilyIndex);
 
+    const auto& it = deviceDescs.find(physicalDevice);
+    RFX_CHECK_STATE(it != deviceDescs.end(), "Internal error");
+    const GraphicsDeviceDesc& deviceDesc = it->second;
     shared_ptr<GraphicsDevice> graphicsDevice = make_shared<GraphicsDevice>(
-        deviceDescs[physicalDevice],
+        deviceDesc,
         physicalDevice,
         logicalDevice,
         graphicsQueue,
@@ -706,7 +711,7 @@ shared_ptr<GraphicsDevice> GraphicsContext::createLogicalDevice(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-int GraphicsContext::getDeviceGroupIndex(VkPhysicalDevice physicalDevice)
+int GraphicsContext::getDeviceGroupIndex(VkPhysicalDevice physicalDevice) const
 {
     for (size_t i = 0, count = deviceGroups.size(); i < count; ++i) {
         const VkPhysicalDeviceGroupProperties& currentGroup = deviceGroups[i];
@@ -727,14 +732,16 @@ void GraphicsContext::selectQueueFamilies(
     const vector<VkQueueFlagBits>& queueCapabilities,
     vector<QueueFamilyDesc>& outSelectedQueueFamilies,
     uint32_t& outGraphicsQueueFamilyIndex,
-    uint32_t& outPresentQueueFamilyIndex)
+    uint32_t& outPresentQueueFamilyIndex) const
 {
     outSelectedQueueFamilies.clear();
     outGraphicsQueueFamilyIndex = UINT32_MAX;
     outPresentQueueFamilyIndex = UINT32_MAX;
 
     // #1: try to find family with graphics and presentation capability
-    const GraphicsDeviceDesc& deviceDesc = deviceDescs[physicalDevice];
+    const auto& it = deviceDescs.find(physicalDevice);
+    RFX_CHECK_STATE(it != deviceDescs.end(), "Internal error");
+    const GraphicsDeviceDesc& deviceDesc = it->second;
     const vector<QueueFamilyDesc>& queueFamilies = deviceDesc.queueFamilies;
     for (size_t i = 0, count = queueFamilies.size(); i < count; ++i) {
         if (queueFamilies[i].properties.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
@@ -784,6 +791,13 @@ void GraphicsContext::selectQueueFamilies(
         RFX_CHECK_STATE(pos != queueFamilies.end(), "Required capability not found: " + to_string(currentCapability));
         outSelectedQueueFamilies.push_back(*pos);
     }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkInstance GraphicsContext::getInstance() const
+{
+    return instance;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -65,6 +65,7 @@ public:
 
     [[nodiscard]]
     std::shared_ptr<CommandBuffer> createCommandBuffer(VkCommandPool commandPool) const;
+    void flush(const std::shared_ptr<CommandBuffer>& commandBuffer) const;
     void destroyCommandBuffer(const std::shared_ptr<CommandBuffer>& commandBuffer, VkCommandPool commandPool) const;
 
     [[nodiscard]]
@@ -112,6 +113,9 @@ public:
     [[nodiscard]] VkCommandPool getGraphicsCommandPool() const;
     [[nodiscard]] const std::shared_ptr<Queue>& getPresentationQueue() const;
 
+    [[nodiscard]]
+    uint32_t getMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
+
 private:
     SwapChainDesc buildSwapChainDesc(
         uint32_t width,
@@ -142,9 +146,6 @@ private:
         VkMemoryPropertyFlags memoryProperties,
         VkBuffer& outBuffer,
         VkDeviceMemory& outDeviceMemory) const;
-
-    [[nodiscard]]
-    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 
     [[nodiscard]]
     std::shared_ptr<Image> createImage(

@@ -18,6 +18,7 @@ Please use [vcpkg](https://github.com/microsoft/vcpkg/releases) for installation
 - [GLFW](https://www.glfw.org/)
 - [glm](https://github.com/g-truc/glm)
 - [glslang](https://github.com/KhronosGroup/glslang)
+- [Dear ImGui](https://github.com/ocornut/imgui)
 - [stb](https://github.com/nothings/stb)
 
 For compressed, mipmapped and cubemap texture files the [.ktx](https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/) format is used.

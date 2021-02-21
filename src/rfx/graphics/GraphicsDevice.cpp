@@ -452,7 +452,7 @@ void GraphicsDevice::createBufferInternal(
     VkMemoryAllocateInfo allocInfo = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         .allocationSize = memoryRequirements.size,
-        .memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, memoryProperties)
+        .memoryTypeIndex = getMemoryType(memoryRequirements.memoryTypeBits, memoryProperties)
     };
 
     ThrowIfFailed(vkAllocateMemory(
@@ -464,7 +464,7 @@ void GraphicsDevice::createBufferInternal(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-uint32_t GraphicsDevice::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const
+uint32_t GraphicsDevice::getMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const
 {
     VkPhysicalDeviceMemoryProperties memoryProperties;
     vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
@@ -602,6 +602,17 @@ vector<shared_ptr<CommandBuffer>> GraphicsDevice::createCommandBuffers(VkCommand
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void GraphicsDevice::flush(
+    const std::shared_ptr<CommandBuffer>& commandBuffer) const
+{
+    VkFence fence = createFence();
+    graphicsQueue->submit(commandBuffer, fence);
+    ThrowIfFailed(waitForFence(fence, DEFAULT_FENCE_TIMEOUT));
+    destroyFence(fence);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void GraphicsDevice::destroyCommandBuffer(
     const shared_ptr<CommandBuffer>& commandBuffer,
     VkCommandPool commandPool) const
@@ -720,7 +731,7 @@ std::shared_ptr<Image> GraphicsDevice::createImage(
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         .pNext = nullptr,
         .allocationSize = memoryRequirements.size,
-        .memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, properties)
+        .memoryTypeIndex = getMemoryType(memoryRequirements.memoryTypeBits, properties)
     };
 
     VkDeviceMemory imageMemory = nullptr;
@@ -1148,3 +1159,4 @@ void GraphicsDevice::transitionImageLayout(
     graphicsQueue->submit(commandBuffer);
     graphicsQueue->waitIdle();
 }
+
