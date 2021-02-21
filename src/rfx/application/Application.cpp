@@ -37,13 +37,19 @@ void Application::run()
 
 void Application::initialize()
 {
+    initLogging();
+    initGlfw();
+    createWindow();
+    initGraphics();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Application::initLogging()
+{
 #ifdef _DEBUG
     Logger::setLogLevel(LogLevel::DEBUG);
 #endif // _DEBUG
-
-    initGlfw();
-    initWindow();
-    initGraphics();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -60,7 +66,7 @@ void Application::initGlfw()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Application::initWindow()
+void Application::createWindow()
 {
     window = make_unique<Window>();
     window->create("rfx", 800, 450);
@@ -71,9 +77,23 @@ void Application::initWindow()
 
 void Application::initGraphics()
 {
+    createGraphicsContext();
+    createGraphicsDevice();
+    createSwapChainAndDepthBuffer();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Application::createGraphicsContext()
+{
     graphicsContext = make_unique<GraphicsContext>(window);
     graphicsContext->initialize();
+}
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Application::createGraphicsDevice()
+{
     VkPhysicalDeviceFeatures features {
         .geometryShader = VK_TRUE,
         .samplerAnisotropy = VK_TRUE
@@ -81,11 +101,18 @@ void Application::initGraphics()
 
     graphicsDevice = graphicsContext->createGraphicsDevice(
         features,
-        { VK_KHR_SWAPCHAIN_EXTENSION_NAME },
+        { VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_MAINTENANCE1_EXTENSION_NAME},
         { VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT });
+}
 
-    int width, height;
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Application::createSwapChainAndDepthBuffer()
+{
+    int width = 0;
+    int height = 0;
     glfwGetFramebufferSize(window->getGlfwWindow(), &width, &height);
+
     graphicsDevice->createSwapChain(width, height);
     graphicsDevice->createDepthBuffer(GraphicsDevice::DEFAULT_DEPTHBUFFER_FORMAT);
 }
@@ -301,11 +328,7 @@ void Application::recreateSwapChain()
     createSyncObjects();
 
     cleanupSwapChain();
-
-    int width, height;
-    glfwGetFramebufferSize(window->getGlfwWindow(), &width, &height);
-    graphicsDevice->createSwapChain(width, height);
-    graphicsDevice->createDepthBuffer(GraphicsDevice::DEFAULT_DEPTHBUFFER_FORMAT);
+    createSwapChainAndDepthBuffer();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

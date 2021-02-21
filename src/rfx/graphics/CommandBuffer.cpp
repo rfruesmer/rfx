@@ -139,47 +139,34 @@ void CommandBuffer::copyBuffer(
 
 void CommandBuffer::copyBufferToImage(
     const shared_ptr<Buffer>& buffer,
-    const shared_ptr<Image>& image) const
+    const shared_ptr<Image>& image,
+    const std::vector<VkBufferImageCopy>& regions) const
 {
-    VkBufferImageCopy region {
-        .bufferOffset = 0,
-        .bufferRowLength = 0,
-        .bufferImageHeight = 0,
-        .imageSubresource = {
-            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-            .mipLevel = 0,
-            .baseArrayLayer = 0,
-            .layerCount = 1
-        },
-        .imageOffset = { 0, 0, 0 },
-        .imageExtent = { image->getWidth(), image->getHeight(), 1 }
-    };
-
     vkCmdCopyBufferToImage(
         commandBuffer,
         buffer->getHandle(),
         image->getHandle(),
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        1,
-        &region);
+        regions.size(),
+        regions.data());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void CommandBuffer::setImageMemoryBarrier(
     const shared_ptr<Image>& image,
-    VkAccessFlags sourceAccess,
-    VkAccessFlags destAccess,
+    VkAccessFlags srcAccess,
+    VkAccessFlags dstAccess,
     VkImageLayout oldLayout,
     VkImageLayout newLayout,
-    VkPipelineStageFlags sourceStage,
-    VkPipelineStageFlags destinationStage) const
+    VkPipelineStageFlags srcStageMask,
+    VkPipelineStageFlags dstStageMask) const
 {
-    VkImageMemoryBarrier barrier = {
+    VkImageMemoryBarrier barrier {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
         .pNext = nullptr,
-        .srcAccessMask = sourceAccess,
-        .dstAccessMask = destAccess,
+        .srcAccessMask = srcAccess,
+        .dstAccessMask = dstAccess,
         .oldLayout = oldLayout,
         .newLayout = newLayout,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
@@ -188,16 +175,15 @@ void CommandBuffer::setImageMemoryBarrier(
         .subresourceRange = {
             .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
             .baseMipLevel = 0,
-            .levelCount = VK_REMAINING_MIP_LEVELS,
-            .baseArrayLayer = 0,
-            .layerCount = VK_REMAINING_ARRAY_LAYERS
+            .levelCount = image->getDesc().mipLevels,
+            .layerCount = 1
         }
     };
 
     vkCmdPipelineBarrier(
         commandBuffer,
-        sourceStage,
-        destinationStage,
+        srcStageMask,
+        dstStageMask,
         0,
         0,
         nullptr,

@@ -41,13 +41,15 @@ protected:
 
 private:
     void initialize();
+    void initLogging();
     void initGlfw();
-    void initWindow();
+    void createGraphicsDevice();
+    void createGraphicsContext();
+    void createSwapChainAndDepthBuffer();
+    void createWindow();
     void runMainLoop();
     void drawFrame();
-
     void destroySyncObjects();
-
 
     std::vector<VkSemaphore> imageAvailableSemaphores;
     std::vector<VkSemaphore> renderFinishedSemaphores;

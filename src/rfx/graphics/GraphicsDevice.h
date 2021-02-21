@@ -10,6 +10,7 @@
 #include "rfx/graphics/IndexBuffer.h"
 #include "rfx/graphics/Texture2D.h"
 #include "rfx/graphics/Image.h"
+#include "rfx/graphics/ImageDesc.h"
 
 
 namespace rfx {
@@ -20,6 +21,7 @@ public:
     static const VkFormat DEFAULT_SWAPCHAIN_FORMAT = VK_FORMAT_B8G8R8A8_SRGB;
     static const VkColorSpaceKHR DEFAULT_COLORSPACE = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
     static const VkFormat DEFAULT_DEPTHBUFFER_FORMAT = VK_FORMAT_D16_UNORM;
+    static const uint64_t DEFAULT_FENCE_TIMEOUT = 100000000000; // in nanoseconds
 
     GraphicsDevice(
         GraphicsDeviceDesc desc,
@@ -70,17 +72,17 @@ public:
 
     [[nodiscard]]
     std::shared_ptr<Texture2D> createTexture2D(
-        int width,
-        int height,
-        VkFormat format,
-        const std::vector<std::byte>& data) const;
+        const ImageDesc& imageDesc,
+        const std::vector<std::byte>& imageData,
+        bool isGenerateMipmaps) const;
 
     [[nodiscard]]
     std::shared_ptr<Image> createImage(
+        VkFormat format,
         uint32_t width,
         uint32_t height,
         uint32_t mipLevels,
-        VkFormat format,
+        const std::vector<VkDeviceSize>& mipOffsets,
         VkImageUsageFlags usage,
         VkImageTiling tiling,
         VkMemoryPropertyFlags properties) const;
@@ -140,7 +142,16 @@ private:
         VkMemoryPropertyFlags memoryProperties,
         VkBuffer& outBuffer,
         VkDeviceMemory& outDeviceMemory) const;
-    [[nodiscard]] uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
+
+    [[nodiscard]]
+    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
+
+    [[nodiscard]]
+    std::shared_ptr<Image> createImage(
+        const ImageDesc& imageDesc,
+        VkImageUsageFlags usage,
+        VkImageTiling tiling,
+        VkMemoryPropertyFlags properties) const;
 
     void transitionImageLayout(
         VkImage image,
@@ -150,7 +161,8 @@ private:
 
     void updateImage(
         const std::shared_ptr<Image>& image,
-        const std::vector<std::byte>& imageData) const;
+        const std::vector<std::byte>& imageData,
+        bool isGenerateMipmaps) const;
 
     void generateMipmaps(
         VkImage image,

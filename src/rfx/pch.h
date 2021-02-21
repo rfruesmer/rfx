@@ -39,8 +39,8 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <SPIRV/GlslangToSpv.h>
+#include <ktx.h>
+
 #include "rfx.h"
 
-#include <SPIRV/GlslangToSpv.h>
-
-#include <ktx.h>

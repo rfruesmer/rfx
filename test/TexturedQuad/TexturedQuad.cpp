@@ -1,16 +1,34 @@
 #include "rfx/pch.h"
-#include "ColoredQuad.h"
+#include "TexturedQuad.h"
+#include "rfx/application/Texture2DLoader.h"
 #include "rfx/application/ShaderLoader.h"
-
+#include "rfx/common/Logger.h"
 
 using namespace rfx;
 using namespace rfx::test;
+using namespace glm;
 using namespace std;
-using namespace filesystem;
+using namespace std::filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::initGraphics()
+int main()
+{
+    try {
+        auto theApp = make_shared<TexturedQuad>();
+        theApp->run();
+    }
+    catch (const exception& ex) {
+        RFX_LOG_ERROR << ex.what() << endl;
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedQuad::initGraphics()
 {
     Application::initGraphics();
 
@@ -27,7 +45,7 @@ void ColoredQuad::initGraphics()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::createRenderPass()
+void TexturedQuad::createRenderPass()
 {
     const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
@@ -79,12 +97,12 @@ void ColoredQuad::createRenderPass()
         .srcSubpass = VK_SUBPASS_EXTERNAL,
         .dstSubpass = 0,
         .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
-                      | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+                        | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
         .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
-                      | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+                        | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
         .srcAccessMask = 0,
         .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
-                       | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT
+                         | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT
     };
 
     vector<VkAttachmentDescription> attachments { colorAttachment };
@@ -111,14 +129,19 @@ void ColoredQuad::createRenderPass()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::buildScene()
+void TexturedQuad::buildScene()
 {
+    createTexture();
+
     const path assetsPath = getAssetsPath();
-    const path vertexShaderPath = assetsPath / "colored-triangle.vert";
-    const path fragmentShaderPath = assetsPath / "colored-triangle.frag";
+    const path vertexShaderPath = assetsPath / "shaders/texture.vert";
+    const path fragmentShaderPath = assetsPath / "shaders/texture.frag";
 
     const ShaderLoader shaderLoader(graphicsDevice);
-    vertexShader = shaderLoader.loadVertexShader(vertexShaderPath, "main", VertexFormat(VertexFormat::COORDINATES | VertexFormat::COLORS));
+    vertexShader = shaderLoader.loadVertexShader(
+        vertexShaderPath,
+        "main",
+        VertexFormat(VertexFormat::COORDINATES | VertexFormat::TEXCOORDS));
     fragmentShader = shaderLoader.loadFragmentShader(fragmentShaderPath, "main");
 
     createVertexBuffer();
@@ -130,203 +153,7 @@ void ColoredQuad::buildScene()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::createVertexBuffer()
-{
-    struct Vertex {
-        glm::vec3 pos;
-        glm::vec4 color;
-    };
-
-    const vector<Vertex> vertices = {
-        {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
-        {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
-        {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},
-        {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}}
-    };
-
-    const VertexFormat vertexFormat(VertexFormat::COORDINATES | VertexFormat::COLORS);
-    const VkDeviceSize bufferSize = vertices.size() * vertexFormat.getVertexSize();
-    shared_ptr<Buffer> stagingBuffer = graphicsDevice->createBuffer(
-        bufferSize,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-    void* data = nullptr;
-    graphicsDevice->bind(stagingBuffer);
-    graphicsDevice->map(stagingBuffer, &data);
-    memcpy(data, vertices.data(), stagingBuffer->getSize());
-    graphicsDevice->unmap(stagingBuffer);
-
-    vertexBuffer = graphicsDevice->createVertexBuffer(vertices.size(), vertexFormat);
-    graphicsDevice->bind(vertexBuffer);
-
-    VkCommandPool graphicsCommandPool = graphicsDevice->getGraphicsCommandPool();
-    shared_ptr<CommandBuffer> commandBuffer = graphicsDevice->createCommandBuffer(graphicsCommandPool);
-    commandBuffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-    commandBuffer->copyBuffer(stagingBuffer, vertexBuffer);
-    commandBuffer->end();
-
-    const shared_ptr<Queue>& graphicsQueue = graphicsDevice->getGraphicsQueue();
-    graphicsQueue->submit(commandBuffer);
-    graphicsQueue->waitIdle();
-
-    graphicsDevice->destroyCommandBuffer(commandBuffer, graphicsCommandPool);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void ColoredQuad::createIndexBuffer()
-{
-    const vector<uint16_t> indices = {
-        0, 1, 2, 2, 3, 0
-    };
-
-    const VkDeviceSize bufferSize = indices.size() * sizeof(uint16_t);
-    shared_ptr<Buffer> stagingBuffer = graphicsDevice->createBuffer(
-        bufferSize,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-    void* data = nullptr;
-    graphicsDevice->bind(stagingBuffer);
-    graphicsDevice->map(stagingBuffer, &data);
-    memcpy(data, indices.data(), stagingBuffer->getSize());
-    graphicsDevice->unmap(stagingBuffer);
-
-    indexBuffer = graphicsDevice->createIndexBuffer(indices.size(), VK_INDEX_TYPE_UINT16);
-    graphicsDevice->bind(indexBuffer);
-
-    VkCommandPool graphicsCommandPool = graphicsDevice->getGraphicsCommandPool();
-    shared_ptr<CommandBuffer> commandBuffer = graphicsDevice->createCommandBuffer(graphicsCommandPool);
-    commandBuffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-    commandBuffer->copyBuffer(stagingBuffer, indexBuffer);
-    commandBuffer->end();
-
-    const shared_ptr<Queue>& graphicsQueue = graphicsDevice->getGraphicsQueue();
-    graphicsQueue->submit(commandBuffer);
-    graphicsQueue->waitIdle();
-
-    graphicsDevice->destroyCommandBuffer(commandBuffer, graphicsCommandPool);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void ColoredQuad::createUniformBuffers()
-{
-    VkDeviceSize bufferSize = sizeof(UniformBufferObject);
-    const size_t bufferCount = graphicsDevice->getSwapChain()->getDesc().bufferCount;
-
-    uniformBuffers.resize(bufferCount);
-
-    for (size_t i = 0; i < bufferCount; ++i) {
-        uniformBuffers[i] =
-            graphicsDevice->createBuffer(
-                bufferSize,
-                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-        graphicsDevice->bind(uniformBuffers[i]);
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void ColoredQuad::createDescriptorPool()
-{
-    const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
-
-    VkDescriptorPoolSize poolSize {
-        .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptorCount = swapChainDesc.bufferCount
-    };
-
-    VkDescriptorPoolCreateInfo poolCreateInfo {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .maxSets = swapChainDesc.bufferCount,
-        .poolSizeCount = 1,
-        .pPoolSizes = &poolSize
-    };
-
-    ThrowIfFailed(vkCreateDescriptorPool(
-        graphicsDevice->getLogicalDevice(),
-        &poolCreateInfo,
-        nullptr,
-        &descriptorPool));
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void ColoredQuad::createDescriptorSetLayout()
-{
-    VkDescriptorSetLayoutBinding layoutBinding {
-        .binding = 0,
-        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptorCount = 1,
-        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-        .pImmutableSamplers = nullptr // Optional
-    };
-
-    VkDescriptorSetLayoutCreateInfo layoutInfo {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .bindingCount = 1,
-        .pBindings = &layoutBinding
-    };
-
-    ThrowIfFailed(vkCreateDescriptorSetLayout(
-        graphicsDevice->getLogicalDevice(),
-        &layoutInfo,
-        nullptr,
-        &descriptorSetLayout));
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void ColoredQuad::createDescriptorSets()
-{
-    const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
-
-    vector<VkDescriptorSetLayout> layouts(swapChainDesc.bufferCount, descriptorSetLayout);
-    VkDescriptorSetAllocateInfo allocInfo {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .descriptorPool = descriptorPool,
-        .descriptorSetCount = swapChainDesc.bufferCount,
-        .pSetLayouts = layouts.data()
-    };
-
-    descriptorSets.resize(swapChainDesc.bufferCount);
-
-    ThrowIfFailed(vkAllocateDescriptorSets(
-        graphicsDevice->getLogicalDevice(),
-        &allocInfo,
-        descriptorSets.data()));
-
-    VkDescriptorBufferInfo bufferInfo {
-        .offset = 0,
-        .range = sizeof(UniformBufferObject)
-    };
-
-    VkWriteDescriptorSet descriptorWrite {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .dstBinding = 0,
-        .dstArrayElement = 0,
-        .descriptorCount = 1,
-        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .pImageInfo = nullptr, // Optional
-        .pBufferInfo = &bufferInfo,
-        .pTexelBufferView = nullptr // Optional
-    };
-
-    for (uint32_t i = 0; i < swapChainDesc.bufferCount; ++i) {
-        bufferInfo.buffer = uniformBuffers[i]->getHandle();
-        descriptorWrite.dstSet = descriptorSets[i];
-
-        vkUpdateDescriptorSets(graphicsDevice->getLogicalDevice(), 1, &descriptorWrite, 0, nullptr);
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void ColoredQuad::createGraphicsPipeline()
+void TexturedQuad::createGraphicsPipeline()
 {
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
@@ -340,8 +167,8 @@ void ColoredQuad::createGraphicsPipeline()
     VkViewport viewport = {
         .x = 0.0f,
         .y = 0.0f,
-        .width = (float) swapChainDesc.extent.width,
-        .height = (float) swapChainDesc.extent.height,
+        .width = static_cast<float>(swapChainDesc.extent.width),
+        .height = static_cast<float>(swapChainDesc.extent.height),
         .minDepth = 0.0f,
         .maxDepth = 1.0f
     };
@@ -454,7 +281,20 @@ void ColoredQuad::createGraphicsPipeline()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::createCommandBuffers()
+void TexturedQuad::createTexture()
+{
+//    const path texturePath =
+//        getAssetsPath() / "samples/vulkan_asset_pack_gltf/data/textures/lavaplanet_rgba.ktx";
+    const path texturePath =
+        getAssetsPath() / "textures/ttex_v01/metal08.jpg";
+
+    Texture2DLoader textureLoader(graphicsDevice);
+    texture = textureLoader.load(texturePath);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedQuad::createCommandBuffers()
 {
     const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
@@ -503,51 +343,123 @@ void ColoredQuad::createCommandBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::update(int bufferIndex)
+void TexturedQuad::createVertexBuffer()
 {
-    updateUniformBuffer(bufferIndex);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void ColoredQuad::updateUniformBuffer(uint32_t index)
-{
-    static auto startTime = chrono::high_resolution_clock::now();
-
-    auto currentTime = chrono::high_resolution_clock::now();
-    float time = chrono::duration<float, chrono::seconds::period>(currentTime - startTime).count();
-
-    const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
-
-    UniformBufferObject ubo {
-        .model = glm::rotate(glm::mat4(1.0f), time * glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
-        .view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
-        .proj = glm::perspective(glm::radians(45.0f), swapChainDesc.extent.width / (float) swapChainDesc.extent.height, 0.1f, 10.0f)
+    struct Vertex {
+        vec3 pos;
+        vec2 texCoord;
     };
-    ubo.proj[1][1] *= -1;
 
-    void* data;
-    graphicsDevice->map(uniformBuffers[index], &data);
-    memcpy(data, &ubo, sizeof(ubo));
-    graphicsDevice->unmap(uniformBuffers[index]);
+    const std::vector<Vertex> vertices = {
+        {{ -1.0f,  1.0f,  0.0f}, { 0.0f, 0.0f }},
+        {{ -1.0f, -1.0f,  0.0f}, { 0.0f, 1.0f }},
+        {{  1.0f, -1.0f,  0.0f}, { 1.0f, 1.0f }},
+        {{  1.0f,  1.0f,  0.0f}, { 1.0f, 0.0f }}
+    };
+
+    const VertexFormat vertexFormat(VertexFormat::COORDINATES | VertexFormat::TEXCOORDS);
+    const VkDeviceSize bufferSize = vertices.size() * vertexFormat.getVertexSize();
+    shared_ptr<Buffer> stagingBuffer = graphicsDevice->createBuffer(
+        bufferSize,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+    void* data = nullptr;
+    graphicsDevice->bind(stagingBuffer);
+    graphicsDevice->map(stagingBuffer, &data);
+    memcpy(data, vertices.data(), stagingBuffer->getSize());
+    graphicsDevice->unmap(stagingBuffer);
+
+    vertexBuffer = graphicsDevice->createVertexBuffer(vertices.size(), vertexFormat);
+    graphicsDevice->bind(vertexBuffer);
+
+    VkCommandPool graphicsCommandPool = graphicsDevice->getGraphicsCommandPool();
+    shared_ptr<CommandBuffer> commandBuffer = graphicsDevice->createCommandBuffer(graphicsCommandPool);
+    commandBuffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+    commandBuffer->copyBuffer(stagingBuffer, vertexBuffer);
+    commandBuffer->end();
+
+    const shared_ptr<Queue>& graphicsQueue = graphicsDevice->getGraphicsQueue();
+    graphicsQueue->submit(commandBuffer);
+    graphicsQueue->waitIdle();
+
+    graphicsDevice->destroyCommandBuffer(commandBuffer, graphicsCommandPool);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::cleanup()
+void TexturedQuad::createIndexBuffer()
+{
+    const std::vector<uint16_t> indices = {
+        0, 1, 2, 2, 3, 0,
+//        4, 5, 6, 6, 7, 4
+    };
+
+    const VkDeviceSize bufferSize = indices.size() * sizeof(uint16_t);
+    shared_ptr<Buffer> stagingBuffer = graphicsDevice->createBuffer(
+        bufferSize,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+    void* data = nullptr;
+    graphicsDevice->bind(stagingBuffer);
+    graphicsDevice->map(stagingBuffer, &data);
+    memcpy(data, indices.data(), stagingBuffer->getSize());
+    graphicsDevice->unmap(stagingBuffer);
+
+    indexBuffer = graphicsDevice->createIndexBuffer(indices.size(), VK_INDEX_TYPE_UINT16);
+    graphicsDevice->bind(indexBuffer);
+
+    VkCommandPool graphicsCommandPool = graphicsDevice->getGraphicsCommandPool();
+    shared_ptr<CommandBuffer> commandBuffer = graphicsDevice->createCommandBuffer(graphicsCommandPool);
+    commandBuffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+    commandBuffer->copyBuffer(stagingBuffer, indexBuffer);
+    commandBuffer->end();
+
+    const shared_ptr<Queue>& graphicsQueue = graphicsDevice->getGraphicsQueue();
+    graphicsQueue->submit(commandBuffer);
+    graphicsQueue->waitIdle();
+
+    graphicsDevice->destroyCommandBuffer(commandBuffer, graphicsCommandPool);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedQuad::createUniformBuffers()
+{
+    VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+    const size_t bufferCount = graphicsDevice->getSwapChain()->getDesc().bufferCount;
+
+    uniformBuffers.resize(bufferCount);
+
+    for (size_t i = 0; i < bufferCount; ++i) {
+        uniformBuffers[i] =
+            graphicsDevice->createBuffer(
+                bufferSize,
+                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+        graphicsDevice->bind(uniformBuffers[i]);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedQuad::cleanup()
 {
     vkDestroyDescriptorSetLayout(graphicsDevice->getLogicalDevice(), descriptorSetLayout, nullptr);
     vertexBuffer.reset();
     indexBuffer.reset();
     vertexShader.reset();
     fragmentShader.reset();
+    texture.reset();
 
     Application::cleanup();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::cleanupSwapChain()
+void TexturedQuad::cleanupSwapChain()
 {
     uniformBuffers.clear();
     vkDestroyDescriptorPool(graphicsDevice->getLogicalDevice(), descriptorPool, nullptr);
@@ -557,7 +469,7 @@ void ColoredQuad::cleanupSwapChain()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::recreateSwapChain()
+void TexturedQuad::recreateSwapChain()
 {
     Application::recreateSwapChain();
 
@@ -573,3 +485,155 @@ void ColoredQuad::recreateSwapChain()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void TexturedQuad::createDescriptorSetLayout()
+{
+    VkDescriptorSetLayoutBinding uniformBufferLayoutBinding {
+        .binding = 0,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = 1,
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+        .pImmutableSamplers = nullptr // Optional
+    };
+
+    VkDescriptorSetLayoutBinding samplerLayoutBinding {
+        .binding = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .descriptorCount = 1,
+        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .pImmutableSamplers = nullptr
+    };
+
+    std::array<VkDescriptorSetLayoutBinding, 2> layoutBindings {
+        uniformBufferLayoutBinding,
+        samplerLayoutBinding
+    };
+
+    VkDescriptorSetLayoutCreateInfo layoutInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .bindingCount = static_cast<uint32_t>(layoutBindings.size()),
+        .pBindings = layoutBindings.data()
+    };
+
+    ThrowIfFailed(vkCreateDescriptorSetLayout(
+        graphicsDevice->getLogicalDevice(),
+        &layoutInfo,
+        nullptr,
+        &descriptorSetLayout));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedQuad::createDescriptorPool()
+{
+    const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
+
+    std::array<VkDescriptorPoolSize, 2> poolSizes {};
+    poolSizes[0] = {
+        .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = static_cast<uint32_t>(swapChainDesc.bufferCount)
+    };
+
+    poolSizes[1] = {
+        .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .descriptorCount = static_cast<uint32_t>(swapChainDesc.bufferCount)
+    };
+
+    VkDescriptorPoolCreateInfo poolCreateInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .maxSets = swapChainDesc.bufferCount,
+        .poolSizeCount = static_cast<uint32_t>(poolSizes.size()),
+        .pPoolSizes = poolSizes.data()
+    };
+
+    ThrowIfFailed(vkCreateDescriptorPool(
+        graphicsDevice->getLogicalDevice(),
+        &poolCreateInfo,
+        nullptr,
+        &descriptorPool));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedQuad::createDescriptorSets()
+{
+    const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
+
+    std::vector<VkDescriptorSetLayout> layouts(swapChainDesc.bufferCount, descriptorSetLayout);
+    VkDescriptorSetAllocateInfo allocInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool = descriptorPool,
+        .descriptorSetCount = swapChainDesc.bufferCount,
+        .pSetLayouts = layouts.data()
+    };
+
+    descriptorSets.resize(swapChainDesc.bufferCount);
+
+    ThrowIfFailed(vkAllocateDescriptorSets(
+        graphicsDevice->getLogicalDevice(),
+        &allocInfo,
+        descriptorSets.data()));
+
+    VkDescriptorBufferInfo bufferInfo {
+        .offset = 0,
+        .range = sizeof(UniformBufferObject)
+    };
+
+    VkDescriptorImageInfo imageInfo {
+        .sampler = texture->getSampler(),
+        .imageView = texture->getImageView(),
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    };
+
+    std::array<VkWriteDescriptorSet, 2> descriptorWrites {};
+    descriptorWrites[0] = {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstBinding = 0,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .pBufferInfo = &bufferInfo
+    };
+
+    descriptorWrites[1] = {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstBinding = 1,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .pImageInfo = &imageInfo
+    };
+
+    for (uint32_t i = 0; i < swapChainDesc.bufferCount; ++i) {
+        bufferInfo.buffer = uniformBuffers[i]->getHandle();
+        descriptorWrites[0].dstSet = descriptorSets[i];
+        descriptorWrites[1].dstSet = descriptorSets[i];
+
+        vkUpdateDescriptorSets(
+            graphicsDevice->getLogicalDevice(),
+            static_cast<uint32_t>(descriptorWrites.size()),
+            descriptorWrites.data(),
+            0,
+            nullptr);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedQuad::update(int bufferIndex)
+{
+    const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
+
+    UniformBufferObject ubo {
+        .model = glm::identity<mat4>(),
+        .view = lookAt(vec3(0.0f, 0.0f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f)),
+        .proj = perspective(radians(45.0f), swapChainDesc.extent.width / (float) swapChainDesc.extent.height, 0.1f, 1000.0f)
+    };
+    ubo.proj[1][1] *= -1;
+
+    void* data;
+    graphicsDevice->map(uniformBuffers[bufferIndex], &data);
+    memcpy(data, &ubo, sizeof(ubo));
+    graphicsDevice->unmap(uniformBuffers[bufferIndex]);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------

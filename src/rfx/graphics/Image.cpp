@@ -8,15 +8,11 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 
 Image::Image(
-    uint32_t width,
-    uint32_t height,
-    VkFormat format,
+    ImageDesc desc,
     VkDevice device,
     VkImage image,
     VkDeviceMemory deviceMemory)
-        : width(width),
-          height(height),
-          format(format),
+        : desc(move(desc)),
           device(device),
           image(image),
           deviceMemory(deviceMemory) {}
@@ -25,8 +21,8 @@ Image::Image(
 
 Image::~Image()
 {
-    vkDestroyImage(device, image, nullptr);
     vkFreeMemory(device, deviceMemory, nullptr);
+    vkDestroyImage(device, image, nullptr);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -38,23 +34,9 @@ VkImage Image::getHandle() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-uint32_t Image::getWidth() const
+const ImageDesc& Image::getDesc() const
 {
-    return width;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-uint32_t Image::getHeight() const
-{
-    return height;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-VkFormat Image::getFormat() const
-{
-    return format;
+    return desc;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

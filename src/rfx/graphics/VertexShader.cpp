@@ -34,7 +34,7 @@ void VertexShader::createVertexInputState()
     VkVertexInputAttributeDescription attributeDescription = {
         .location = location++,
         .binding = VERTEX_BUFFER_BIND_ID,
-        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .format = VK_FORMAT_R32G32_SFLOAT,
         .offset = offset
     };
     vertexAttributeDescriptions.push_back(attributeDescription);
@@ -44,11 +44,11 @@ void VertexShader::createVertexInputState()
         attributeDescription = {
             .location = location++,
             .binding = VERTEX_BUFFER_BIND_ID,
-            .format = VK_FORMAT_R32G32B32A32_SFLOAT,
+            .format = VK_FORMAT_R32G32B32_SFLOAT,
             .offset = offset
         };
         vertexAttributeDescriptions.push_back(attributeDescription);
-        offset += 16;
+        offset += 12;
     }
 
     if (vertexFormat.containsNormals()) {

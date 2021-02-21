@@ -22,7 +22,7 @@ DepthBuffer::~DepthBuffer()
 
 VkFormat DepthBuffer::getFormat() const
 {
-    return image->getFormat();
+    return image->getDesc().format;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

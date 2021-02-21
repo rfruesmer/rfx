@@ -1,15 +1,11 @@
 #include "rfx/pch.h"
 #include "rfx/application/Texture2DLoader.h"
+#include "ImageLoader.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
-#define STB_DEFINE
-#include "stb.h"
 
 using namespace rfx;
 using namespace std;
-using namespace std::filesystem;
+using namespace filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -28,25 +24,41 @@ shared_ptr<Texture2D> Texture2DLoader::load(const filesystem::path& filePath) co
         filePath.is_absolute() ? filePath : current_path() / filePath;
     const string extension = filePath.extension().string();
 
+    RFX_CHECK_STATE(exists(absoluteImagePath), "File not found: " + absoluteImagePath.string());
+
     ImageDesc imageDesc = {};
+    vector<byte> imageData;
+    bool createMipmaps = false;
+
     if (extension == KTX_FILE_EXTENSION) {
-        loadFromKTXFile(absoluteImagePath, imageDesc);
+        loadFromKTXFile(absoluteImagePath, imageDesc, imageData);
     }
     else {
-        loadFromImageFile(absoluteImagePath, imageDesc);
+        loadFromImageFile(absoluteImagePath, imageDesc, imageData);
+        createMipmaps = true;
     }
 
-    return graphicsDevice->createTexture2D(
-        imageDesc.width,
-        imageDesc.height,
-        imageDesc.format,
-        imageDesc.data);
+    return graphicsDevice->createTexture2D(imageDesc, imageData, createMipmaps);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Texture2DLoader::loadFromKTXFile(const path& path, ImageDesc& outImageDesc) const
+void Texture2DLoader::loadFromKTXFile(
+    const path& path,
+    ImageDesc& outImageDesc,
+    vector<byte>& outImageData) const
 {
+    KTXHeader header = readKTXHeader(path);
+    if (header.gl_format == GL_RGBA) {
+        outImageDesc.bytesPerPixel = 4;
+    }
+    else if (header.gl_format == GL_RGB) {
+        outImageDesc.bytesPerPixel = 3;
+    }
+    else {
+        RFX_THROW("Unsupported texture format");
+    }
+
     ktxTexture* texture = nullptr;
     KTX_error_code result = ktxTexture_CreateFromNamedFile(
         path.string().c_str(),
@@ -55,52 +67,63 @@ void Texture2DLoader::loadFromKTXFile(const path& path, ImageDesc& outImageDesc)
     RFX_CHECK_STATE(result == KTX_SUCCESS,
         "Failed to load KTX file: " + path.string());
 
-    const ktx_uint32_t level = 0;
-    const ktx_uint32_t layer = 0;
-    const ktx_uint32_t faceSlice = 0;
-    ktx_size_t offset = 0;
-
-    result = ktxTexture_GetImageOffset(texture, level, layer, faceSlice, &offset);
-    RFX_CHECK_STATE(result == KTX_SUCCESS,
-        "Failed to get image offset for: " + path.string());
-
-    const ktx_uint8_t* imageData = ktxTexture_GetData(texture) + offset;
+    const ktx_uint8_t* imageData = ktxTexture_GetData(texture);
     const ktx_size_t imageDataSize = ktxTexture_GetDataSize(texture);
+    outImageDesc.bytesPerPixel = imageDataSize / (texture->baseWidth * texture->baseHeight);
 
-    outImageDesc.width = texture->baseWidth;
-    outImageDesc.height = texture->baseHeight;
-    outImageDesc.format = VK_FORMAT_R8G8B8A8_UNORM;
-    outImageDesc.data.resize(imageDataSize);
-    memcpy(&outImageDesc.data[0], imageData, imageDataSize);
+    outImageDesc = {
+        .format = VK_FORMAT_R8G8B8A8_UNORM,
+        .width = texture->baseWidth,
+        .height = texture->baseHeight,
+        .mipLevels = texture->numLevels,
+        .mipOffsets = {}
+    };
+
+    for (uint32_t i = 0; i < texture->numLevels; ++i) {
+        ktx_size_t offset;
+        result = ktxTexture_GetImageOffset(texture, i, 0, 0, &offset);
+        RFX_CHECK_STATE(result == KTX_SUCCESS, "");
+        outImageDesc.mipOffsets.push_back(offset);
+    }
+
+    outImageData.resize(imageDataSize);
+    memcpy(&outImageData[0], imageData, imageDataSize);
 
     ktxTexture_Destroy(texture);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Texture2DLoader::loadFromImageFile(const path& path, ImageDesc& outImageDesc) const
+Texture2DLoader::KTXHeader Texture2DLoader::readKTXHeader(const path& path) const
 {
-    int bytesPerPixel = 0;
+    static const uint8_t expectedIdentifier[] = { 0xAB, 0x4B, 0x54, 0x58, 0x20, 0x31, 0x31, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A };
 
-    outImageDesc.mipMapLevels = 1;
+    ifstream inputStream(path.string(), ifstream::binary);
 
-    void* imageData = stbi_load(path.string().c_str(),
-        &outImageDesc.width,
-        &outImageDesc.height,
-        &bytesPerPixel,
-        STBI_rgb_alpha);
+    uint8_t identifier[12];
+    inputStream.read(reinterpret_cast<char*>(&identifier), sizeof(identifier));
+    RFX_CHECK_STATE(memcmp(identifier, expectedIdentifier, sizeof(expectedIdentifier)) == 0, "Invalid KTX file");
 
-    RFX_CHECK_STATE(imageData != nullptr
-                    && outImageDesc.width > 0
-                    && outImageDesc.height > 0
-                    && bytesPerPixel == 4,
-        "Failed to load image");
+    KTXHeader header {};
+    inputStream.read(reinterpret_cast<char*>(&header), sizeof(header));
 
-    const size_t imageDataSize = outImageDesc.width * outImageDesc.height * STBI_rgb_alpha;
-    outImageDesc.data.resize(imageDataSize);
-    memcpy(&outImageDesc.data[0], imageData, imageDataSize);
+    return header;
+}
 
-    stbi_image_free(imageData);
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Texture2DLoader::loadFromImageFile(
+    const path& path,
+    ImageDesc& outImageDesc,
+    vector<byte>& outImageData) const
+{
+    ImageLoader imageLoader;
+    imageLoader.load(path, &outImageDesc, &outImageData);
+
+    outImageDesc.mipOffsets = { 0 };
+//    outImageDesc.mipLevels = static_cast<uint32_t>(
+//        floor(log2(max(outImageDesc.width, outImageDesc.height)))) + 1;
+    outImageDesc.mipLevels = 1;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

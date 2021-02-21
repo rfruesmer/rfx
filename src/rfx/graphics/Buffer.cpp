@@ -21,8 +21,8 @@ Buffer::Buffer(
 
 Buffer::~Buffer()
 {
-    vkDestroyBuffer(device, buffer, nullptr);
     vkFreeMemory(device, deviceMemory, nullptr);
+    vkDestroyBuffer(device, buffer, nullptr);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -26,19 +26,20 @@ public:
     void copyBuffer(
         const std::shared_ptr<Buffer>& sourceBuffer,
         const std::shared_ptr<Buffer>& destBuffer) const;
+
     void copyBufferToImage(
         const std::shared_ptr<Buffer>& buffer,
-        const std::shared_ptr<Image>& image) const;
-
+        const std::shared_ptr<Image>& image,
+        const std::vector<VkBufferImageCopy>& regions) const;
 
     void setImageMemoryBarrier(
         const std::shared_ptr<Image>& image,
-        VkAccessFlags sourceAccess,
-        VkAccessFlags destAccess,
+        VkAccessFlags srcAccess,
+        VkAccessFlags dstAccess,
         VkImageLayout oldLayout,
         VkImageLayout newLayout,
-        VkPipelineStageFlags sourceStage,
-        VkPipelineStageFlags destinationStage) const;
+        VkPipelineStageFlags srcStageMask,
+        VkPipelineStageFlags dstStageMask) const;
 
     [[nodiscard]] const VkCommandBuffer& getHandle() const;
 

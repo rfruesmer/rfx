@@ -1,14 +1,14 @@
 #pragma once
 
+#include "rfx/graphics/ImageDesc.h"
+
 namespace rfx {
 
 class Image
 {
 public:
     Image(
-        uint32_t width,
-        uint32_t height,
-        VkFormat format,
+        ImageDesc desc,
         VkDevice device,
         VkImage image,
         VkDeviceMemory deviceMemory);
@@ -16,16 +16,12 @@ public:
     ~Image();
 
     [[nodiscard]] VkImage getHandle() const;
-    [[nodiscard]] uint32_t getWidth() const;
-    [[nodiscard]] uint32_t getHeight() const;
-    [[nodiscard]] VkFormat getFormat() const;
+    [[nodiscard]] const ImageDesc& getDesc() const;
 
 private:
-    uint32_t width;
-    uint32_t height;
-    VkFormat format;
-    VkDevice device;
+    ImageDesc desc;
     VkImage image;
+    VkDevice device;
     VkDeviceMemory deviceMemory;
 };
 
