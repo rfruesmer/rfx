@@ -133,7 +133,7 @@ void ColoredQuad::createRenderPass()
         attachments.push_back(depthAttachment);
     }
 
-    VkRenderPassCreateInfo renderPassInfo {
+    VkRenderPassCreateInfo renderPassCreateInfo {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
         .attachmentCount = static_cast<uint32_t>(attachments.size()),
         .pAttachments = attachments.data(),
@@ -145,7 +145,7 @@ void ColoredQuad::createRenderPass()
 
     ThrowIfFailed(vkCreateRenderPass(
         graphicsDevice->getLogicalDevice(),
-        &renderPassInfo,
+        &renderPassCreateInfo,
         nullptr,
         &renderPass));
 }
@@ -159,7 +159,10 @@ void ColoredQuad::buildScene()
     const path fragmentShaderPath = assetsPath / "shaders/color.frag";
 
     const ShaderLoader shaderLoader(graphicsDevice);
-    vertexShader = shaderLoader.loadVertexShader(vertexShaderPath, "main", VertexFormat(VertexFormat::COORDINATES | VertexFormat::COLORS_4));
+    vertexShader = shaderLoader.loadVertexShader(
+        vertexShaderPath,
+        "main",
+        VertexFormat(VertexFormat::COORDINATES | VertexFormat::COLORS_4));
     fragmentShader = shaderLoader.loadFragmentShader(fragmentShaderPath, "main");
 
     createVertexBuffer();
@@ -179,10 +182,10 @@ void ColoredQuad::createVertexBuffer()
     };
 
     const vector<Vertex> vertices = {
-        {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
-        {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
-        {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},
-        {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}}
+        {{ -0.5f, -0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
+        {{  0.5f, -0.5f, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
+        {{  0.5f,  0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
+        {{ -0.5f,  0.5f, 0.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
     };
 
     const VertexFormat vertexFormat(VertexFormat::COORDINATES | VertexFormat::COLORS_4);
@@ -297,31 +300,6 @@ void ColoredQuad::createDescriptorPool()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::createDescriptorSetLayout()
-{
-    VkDescriptorSetLayoutBinding layoutBinding {
-        .binding = 0,
-        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptorCount = 1,
-        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-        .pImmutableSamplers = nullptr // Optional
-    };
-
-    VkDescriptorSetLayoutCreateInfo layoutInfo {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .bindingCount = 1,
-        .pBindings = &layoutBinding
-    };
-
-    ThrowIfFailed(vkCreateDescriptorSetLayout(
-        graphicsDevice->getLogicalDevice(),
-        &layoutInfo,
-        nullptr,
-        &descriptorSetLayout));
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void ColoredQuad::createDescriptorSets()
 {
     const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
@@ -363,6 +341,31 @@ void ColoredQuad::createDescriptorSets()
 
         vkUpdateDescriptorSets(graphicsDevice->getLogicalDevice(), 1, &descriptorWrite, 0, nullptr);
     }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void ColoredQuad::createDescriptorSetLayout()
+{
+    VkDescriptorSetLayoutBinding uniformBufferLayoutBinding {
+        .binding = 0,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = 1,
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+        .pImmutableSamplers = nullptr // Optional
+    };
+
+    VkDescriptorSetLayoutCreateInfo layoutInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .bindingCount = 1,
+        .pBindings = &uniformBufferLayoutBinding
+    };
+
+    ThrowIfFailed(vkCreateDescriptorSetLayout(
+        graphicsDevice->getLogicalDevice(),
+        &layoutInfo,
+        nullptr,
+        &descriptorSetLayout));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
