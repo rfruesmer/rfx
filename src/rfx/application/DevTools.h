@@ -17,9 +17,9 @@ public:
 
     ~DevTools();
 
-    void draw(uint32_t frameIndex);
+    void draw(uint32_t frameIndex, uint32_t lastFPS);
 
-    VkCommandBuffer getCommandBuffer(uint32_t frameIndex) const;
+    [[nodiscard]] VkCommandBuffer getCommandBuffer(uint32_t frameIndex) const;
 
 private:
     static void checkResult(VkResult result);

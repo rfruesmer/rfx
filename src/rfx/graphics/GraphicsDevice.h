@@ -33,6 +33,8 @@ public:
 
     ~GraphicsDevice();
 
+    const GraphicsDeviceDesc& getDesc() const;
+
     void createSwapChain(
         uint32_t width,
         uint32_t height);

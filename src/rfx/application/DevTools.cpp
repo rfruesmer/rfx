@@ -200,14 +200,16 @@ void DevTools::createCommandBuffers(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void DevTools::draw(uint32_t frameIndex)
+void DevTools::draw(uint32_t frameIndex, uint32_t lastFPS)
 {
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
+
     ImGui::NewFrame();
 
-    ImGui::Begin("DevTools");
-    ImGui::Text("This is some useful text.");
+    ImGui::Begin("DevTools", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::Text("%s", graphicsDevice_->getDesc().properties.deviceName);
+    ImGui::Text("%.2f ms/frame (%.1d fps)", (1000.0f / lastFPS), lastFPS);
     ImGui::End();
     ImGui::Render();
 

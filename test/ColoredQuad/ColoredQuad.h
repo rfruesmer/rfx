@@ -26,7 +26,7 @@ private:
     void createGraphicsPipeline();
     void createCommandBuffers();
 
-    void update(int bufferIndex) override;
+    void update() override;
 
     void cleanup() override;
     void cleanupSwapChain() override;

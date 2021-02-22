@@ -27,7 +27,7 @@ private:
     void createCommandBuffers();
     void createTexture();
 
-    void update(int bufferIndex) override;
+    void update() override;
 
     void cleanup() override;
     void cleanupSwapChain() override;

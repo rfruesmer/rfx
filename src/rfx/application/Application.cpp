@@ -5,6 +5,7 @@
 
 using namespace rfx;
 using namespace std;
+using namespace std::chrono;
 using namespace filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -121,17 +122,21 @@ void Application::createSwapChainAndDepthBuffer()
 
 void Application::initDevTools()
 {
-    devTools = make_unique<DevTools>(
-        window,
-        graphicsContext,
-        graphicsDevice);
+    if (devToolsEnabled) {
+        devTools = make_unique<DevTools>(
+            window,
+            graphicsContext,
+            graphicsDevice);
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Application::drawDevTools(uint32_t frameIndex)
+void Application::drawDevTools()
 {
-    devTools->draw(frameIndex);
+    if (devToolsEnabled) {
+        devTools->draw(currentImageIndex, lastFPS);
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -140,9 +145,9 @@ path Application::getAssetsDirectory()
 {
     filesystem::path assetsPath = filesystem::current_path();
 
-#ifdef _DEBUG
+//#ifdef _DEBUG
     assetsPath = assetsPath.parent_path();
-#endif
+//#endif
 
     return assetsPath / "assets";
 }
@@ -200,12 +205,22 @@ void Application::createSyncObjects()
 
 void Application::runMainLoop()
 {
-    while (!glfwWindowShouldClose(window->getGlfwWindow())) {
-        glfwPollEvents();
+    while (!glfwWindowShouldClose(window->getGlfwWindow()))
+    {
+        beginFrame();
 
-        if (!paused) {
-            drawFrame();
+        glfwPollEvents();
+        if (paused) {
+            continue;
         }
+
+        if (acquireNextImage()) {
+            update();
+            drawDevTools();
+            submitAndPresent();
+        }
+
+        endFrame();
     }
 
     vkDeviceWaitIdle(graphicsDevice->getLogicalDevice());
@@ -213,58 +228,85 @@ void Application::runMainLoop()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Application::drawFrame()
+void Application::beginFrame()
+{
+    stopWatch.start();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Application::endFrame()
+{
+    StopWatch::TimePoint stopTime = stopWatch.stop();
+    float fpsTimer = static_cast<float>(duration<double, milli>(stopTime - lastFPSUpdateTimePoint).count());
+    if (fpsTimer >= 1000.0f) {
+        lastFPS = static_cast<uint32_t>((float) frameCounter * (1000.0f / fpsTimer));
+        frameCounter = 0;
+        lastFPSUpdateTimePoint = stopTime;
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+bool Application::acquireNextImage()
 {
     vkWaitForFences(graphicsDevice->getLogicalDevice(), 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
-    uint32_t imageIndex = 0;
     VkResult result = vkAcquireNextImageKHR(
         graphicsDevice->getLogicalDevice(),
         graphicsDevice->getSwapChain()->getHandle(),
         UINT64_MAX,
         imageAvailableSemaphores[currentFrame],
         VK_NULL_HANDLE,
-        &imageIndex);
+        &currentImageIndex);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || windowResized) {
         windowResized = false;
         recreateSwapChain();
-        return;
+        return false;
     }
     RFX_CHECK_STATE(result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR, "Failed to acquire swap chain image");
 
-    if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
-        vkWaitForFences(graphicsDevice->getLogicalDevice(), 1, &imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
+    if (imagesInFlight[currentImageIndex] != VK_NULL_HANDLE) {
+        vkWaitForFences(graphicsDevice->getLogicalDevice(), 1, &imagesInFlight[currentImageIndex], VK_TRUE, UINT64_MAX);
     }
 
-    imagesInFlight[imageIndex] = inFlightFences[currentFrame];
+    imagesInFlight[currentImageIndex] = inFlightFences[currentFrame];
     vkResetFences(graphicsDevice->getLogicalDevice(), 1, &inFlightFences[currentFrame]);
 
-    VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
-    VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };
+    frameCounter++;
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Application::submitAndPresent()
+{
+    VkSemaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame] };
+    VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame] };
     VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
-    update(imageIndex);
-    drawDevTools(imageIndex);
-
-    std::array<VkCommandBuffer, 2> submitCommandBuffers {
-        commandBuffers[imageIndex]->getHandle(),
-        devTools->getCommandBuffer(imageIndex)
+    vector<VkCommandBuffer> submitCommandBuffers {
+        commandBuffers[currentImageIndex]->getHandle()
     };
+    if (devToolsEnabled) {
+        submitCommandBuffers.push_back(devTools->getCommandBuffer(currentImageIndex));
+    }
 
-    VkSubmitInfo submitInfo = {
+    VkSubmitInfo submitInfo {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .waitSemaphoreCount = 1,
         .pWaitSemaphores = waitSemaphores,
         .pWaitDstStageMask = waitStages,
-        .commandBufferCount = submitCommandBuffers.size(),
+        .commandBufferCount = static_cast<uint32_t>(submitCommandBuffers.size()),
         .pCommandBuffers = submitCommandBuffers.data(),
         .signalSemaphoreCount = 1,
         .pSignalSemaphores = signalSemaphores
     };
     graphicsDevice->getGraphicsQueue()->submit(submitInfo, inFlightFences[currentFrame]);
 
-    VkSwapchainKHR swapChains[] = { graphicsDevice->getSwapChain()->getHandle() };
+    VkSwapchainKHR swapChains[] = {graphicsDevice->getSwapChain()->getHandle() };
 
     VkPresentInfoKHR presentInfo = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
@@ -272,11 +314,11 @@ void Application::drawFrame()
         .pWaitSemaphores = signalSemaphores,
         .swapchainCount = 1,
         .pSwapchains = swapChains,
-        .pImageIndices = &imageIndex,
+        .pImageIndices = &currentImageIndex,
         .pResults = nullptr // Optional
     };
 
-    result = graphicsDevice->getPresentationQueue()->present(presentInfo);
+    VkResult result = graphicsDevice->getPresentationQueue()->present(presentInfo);
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || windowResized) {
         windowResized = false;
         recreateSwapChain();
@@ -370,9 +412,10 @@ void Application::onResized(const Window&, int width, int height)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Application::update(int frameIndex)
+void Application::update()
 {
     // do nothing
 }
+
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -519,7 +519,7 @@ void ColoredQuad::createCommandBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::update(int bufferIndex)
+void ColoredQuad::update()
 {
     static auto startTime = chrono::high_resolution_clock::now();
 
@@ -536,9 +536,9 @@ void ColoredQuad::update(int bufferIndex)
     ubo.proj[1][1] *= -1;
 
     void* mappedMemory = nullptr;
-    graphicsDevice->map(uniformBuffers[bufferIndex], &mappedMemory);
+    graphicsDevice->map(uniformBuffers[currentImageIndex], &mappedMemory);
     memcpy(mappedMemory, &ubo, sizeof(ubo));
-    graphicsDevice->unmap(uniformBuffers[bufferIndex]);
+    graphicsDevice->unmap(uniformBuffers[currentImageIndex]);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

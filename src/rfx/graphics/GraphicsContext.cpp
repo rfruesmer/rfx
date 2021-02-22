@@ -49,8 +49,11 @@ GraphicsContext::GraphicsContext(shared_ptr<Window> window)
 {
 #ifdef _DEBUG
     validationEnabled = true;
-    requiredLayers.insert(requiredLayers.end(), validationLayers.begin(), validationLayers.end());
 #endif // _DEBUG
+
+    if (validationEnabled) {
+        requiredLayers.insert(requiredLayers.end(), validationLayers.begin(), validationLayers.end());
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
