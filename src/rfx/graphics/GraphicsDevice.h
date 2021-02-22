@@ -200,6 +200,10 @@ private:
     VkSampleCountFlagBits multiSampleCount = VK_SAMPLE_COUNT_1_BIT;
     std::shared_ptr<Image> multiSampleImage;
     VkImageView multiSampleImageView = VK_NULL_HANDLE;
+
+    void destroyDepthBuffer();
+
+    void destroySwapChain();
 };
 
 } // namespace rfx

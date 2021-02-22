@@ -48,12 +48,36 @@ void GraphicsDevice::createCommandPool()
 GraphicsDevice::~GraphicsDevice()
 {
     destroyMultiSamplingBuffer();
-
-    depthBuffer.reset();
-    swapChain.reset();
+    destroyDepthBuffer();
+    destroySwapChain();
 
     vkDestroyCommandPool(device, graphicsCommandPool, nullptr);
     vkDestroyDevice(device, nullptr);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void GraphicsDevice::destroyDepthBuffer()
+{
+    depthBuffer.reset();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void GraphicsDevice::destroySwapChain()
+{
+    swapChain.reset();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void GraphicsDevice::destroyMultiSamplingBuffer()
+{
+    if (multiSampleImageView != VK_NULL_HANDLE) {
+        vkDestroyImageView(device, multiSampleImageView, nullptr);
+        multiSampleImageView = VK_NULL_HANDLE;
+    }
+    multiSampleImage.reset();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -274,8 +298,8 @@ void GraphicsDevice::updateSwapChainPresentMode(SwapChainDesc* inOutSwapChainDes
 
 void GraphicsDevice::createSwapChainInternal(const SwapChainDesc& swapChainDesc)
 {
-    depthBuffer.reset();
-    swapChain.reset();
+    destroyDepthBuffer();
+    destroySwapChain();
 
     uint32_t imageCount = swapChainDesc.surface.capabilities.minImageCount + 1;
     if (swapChainDesc.surface.capabilities.maxImageCount > 0
@@ -419,17 +443,6 @@ void GraphicsDevice::createMultiSamplingBuffer(VkSampleCountFlagBits sampleCount
         VK_IMAGE_TILING_OPTIMAL,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     multiSampleImageView = createImageView(multiSampleImage, swapChainDesc.format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void GraphicsDevice::destroyMultiSamplingBuffer()
-{
-    if (multiSampleImageView != VK_NULL_HANDLE) {
-        vkDestroyImageView(device, multiSampleImageView, nullptr);
-        multiSampleImageView = VK_NULL_HANDLE;
-    }
-    multiSampleImage.reset();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
