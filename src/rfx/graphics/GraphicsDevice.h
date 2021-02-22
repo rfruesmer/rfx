@@ -55,6 +55,7 @@ public:
 
     void createMultiSamplingBuffer(VkSampleCountFlagBits sampleCount);
 
+    [[nodiscard]]
     VkImageView getMultiSampleImageView() const;
 
     [[nodiscard]]
@@ -148,6 +149,8 @@ private:
 
     void checkFormat(VkFormat format, VkImageTiling tiling, VkFormatFeatureFlags features);
     std::shared_ptr<Image> createDepthBufferImage(VkFormat format);
+
+    void destroyMultiSamplingBuffer();
 
     void createCommandPool();
     void createBufferInternal(

@@ -47,16 +47,19 @@ void ColoredQuad::createRenderPass()
 {
     const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
+    const VkSampleCountFlagBits multiSampleCount = graphicsDevice->getMultiSampleCount();
 
     VkAttachmentDescription colorAttachment {
         .format = swapChainDesc.format,
-        .samples = graphicsDevice->getMultiSampleCount(),
+        .samples = multiSampleCount,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        .finalLayout = devToolsEnabled || multiSampleCount > VK_SAMPLE_COUNT_1_BIT
+            ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+            : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
     };
 
     VkAttachmentReference colorAttachmentRef {
@@ -78,7 +81,7 @@ void ColoredQuad::createRenderPass()
     };
 
     VkAttachmentReference colorAttachmentResolveRef {
-        .attachment = 2,
+        .attachment = 1,
         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
     };
 
@@ -87,7 +90,7 @@ void ColoredQuad::createRenderPass()
     if (depthBuffer) {
         depthAttachment = {
             .format = depthBuffer->getFormat(),
-            .samples = graphicsDevice->getMultiSampleCount(),
+            .samples = multiSampleCount,
             .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
             .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
@@ -98,7 +101,7 @@ void ColoredQuad::createRenderPass()
     }
 
     VkAttachmentReference depthAttachmentRef {
-        .attachment = 1,
+        .attachment = static_cast<uint32_t>(multiSampleCount > VK_SAMPLE_COUNT_1_BIT ? 2 : 1),
         .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
     };
 
@@ -106,7 +109,7 @@ void ColoredQuad::createRenderPass()
         .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
         .colorAttachmentCount = 1,
         .pColorAttachments = &colorAttachmentRef,
-        .pResolveAttachments = &colorAttachmentResolveRef,
+        .pResolveAttachments = multiSampleCount > VK_SAMPLE_COUNT_1_BIT ? &colorAttachmentResolveRef : nullptr,
         .pDepthStencilAttachment = depthBuffer ? &depthAttachmentRef : nullptr
     };
 
@@ -123,10 +126,12 @@ void ColoredQuad::createRenderPass()
     };
 
     vector<VkAttachmentDescription> attachments { colorAttachment };
+    if (multiSampleCount > VK_SAMPLE_COUNT_1_BIT) {
+        attachments.push_back(colorAttachmentResolve);
+    }
     if (depthBuffer) {
         attachments.push_back(depthAttachment);
     }
-    attachments.push_back(colorAttachmentResolve);
 
     VkRenderPassCreateInfo renderPassInfo {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
@@ -499,9 +504,15 @@ void ColoredQuad::createCommandBuffers()
 
     vector<VkClearValue> clearValues(1);
     clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+    if (graphicsDevice->getMultiSampleCount() > VK_SAMPLE_COUNT_1_BIT) {
+        clearValues.resize(clearValues.size() + 1);
+        clearValues[clearValues.size() - 1].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+    }
+
     if (depthBuffer) {
-        clearValues.resize(2);
-        clearValues[1].depthStencil = { 1.0f, 0 };
+        clearValues.resize(clearValues.size() + 1);
+        clearValues[clearValues.size() - 1].depthStencil = { 1.0f, 0 };
     }
 
     const vector<shared_ptr<VertexBuffer>> vertexBuffers = { vertexBuffer };

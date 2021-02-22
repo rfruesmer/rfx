@@ -8,7 +8,7 @@ using namespace rfx;
 using namespace rfx::test;
 using namespace glm;
 using namespace std;
-using namespace std::filesystem;
+using namespace filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -49,16 +49,19 @@ void TexturedQuad::createRenderPass()
 {
     const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
+    const VkSampleCountFlagBits multiSampleCount = graphicsDevice->getMultiSampleCount();
 
     VkAttachmentDescription colorAttachment {
         .format = swapChainDesc.format,
-        .samples = graphicsDevice->getMultiSampleCount(),
+        .samples = multiSampleCount,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        .finalLayout = devToolsEnabled || multiSampleCount > VK_SAMPLE_COUNT_1_BIT
+                       ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+                       : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
     };
 
     VkAttachmentReference colorAttachmentRef {
@@ -80,7 +83,7 @@ void TexturedQuad::createRenderPass()
     };
 
     VkAttachmentReference colorAttachmentResolveRef {
-        .attachment = 2,
+        .attachment = 1,
         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
     };
 
@@ -89,7 +92,7 @@ void TexturedQuad::createRenderPass()
     if (depthBuffer) {
         depthAttachment = {
             .format = depthBuffer->getFormat(),
-            .samples = graphicsDevice->getMultiSampleCount(),
+            .samples = multiSampleCount,
             .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
             .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
@@ -100,7 +103,7 @@ void TexturedQuad::createRenderPass()
     }
 
     VkAttachmentReference depthAttachmentRef {
-        .attachment = 1,
+        .attachment = static_cast<uint32_t>(multiSampleCount > VK_SAMPLE_COUNT_1_BIT ? 2 : 1),
         .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
     };
 
@@ -108,7 +111,7 @@ void TexturedQuad::createRenderPass()
         .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
         .colorAttachmentCount = 1,
         .pColorAttachments = &colorAttachmentRef,
-        .pResolveAttachments = &colorAttachmentResolveRef,
+        .pResolveAttachments = multiSampleCount > VK_SAMPLE_COUNT_1_BIT ? &colorAttachmentResolveRef : nullptr,
         .pDepthStencilAttachment = depthBuffer ? &depthAttachmentRef : nullptr
     };
 
@@ -125,10 +128,12 @@ void TexturedQuad::createRenderPass()
     };
 
     vector<VkAttachmentDescription> attachments { colorAttachment };
+    if (multiSampleCount > VK_SAMPLE_COUNT_1_BIT) {
+        attachments.push_back(colorAttachmentResolve);
+    }
     if (depthBuffer) {
         attachments.push_back(depthAttachment);
     }
-    attachments.push_back(colorAttachmentResolve);
 
     VkRenderPassCreateInfo renderPassCreateInfo {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
@@ -323,9 +328,15 @@ void TexturedQuad::createCommandBuffers()
 
     vector<VkClearValue> clearValues(1);
     clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+    if (graphicsDevice->getMultiSampleCount() > VK_SAMPLE_COUNT_1_BIT) {
+        clearValues.resize(clearValues.size() + 1);
+        clearValues[clearValues.size() - 1].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+    }
+
     if (depthBuffer) {
-        clearValues.resize(2);
-        clearValues[1].depthStencil = { 1.0f, 0 };
+        clearValues.resize(clearValues.size() + 1);
+        clearValues[clearValues.size() - 1].depthStencil = { 1.0f, 0 };
     }
 
     const vector<shared_ptr<VertexBuffer>> vertexBuffers = { vertexBuffer };
@@ -370,7 +381,7 @@ void TexturedQuad::createVertexBuffer()
         vec2 texCoord;
     };
 
-    const std::vector<Vertex> vertices = {
+    const vector<Vertex> vertices = {
         {{ -1.0f,  1.0f,  0.0f}, { 0.0f, 0.0f }},
         {{ -1.0f, -1.0f,  0.0f}, { 0.0f, 1.0f }},
         {{  1.0f, -1.0f,  0.0f}, { 1.0f, 1.0f }},
@@ -410,7 +421,7 @@ void TexturedQuad::createVertexBuffer()
 
 void TexturedQuad::createIndexBuffer()
 {
-    const std::vector<uint16_t> indices = {
+    const vector<uint16_t> indices = {
         0, 1, 2, 2, 3, 0,
 //        4, 5, 6, 6, 7, 4
     };
@@ -523,7 +534,7 @@ void TexturedQuad::createDescriptorSetLayout()
         .pImmutableSamplers = nullptr
     };
 
-    std::array<VkDescriptorSetLayoutBinding, 2> layoutBindings {
+    array<VkDescriptorSetLayoutBinding, 2> layoutBindings {
         uniformBufferLayoutBinding,
         samplerLayoutBinding
     };
@@ -547,7 +558,7 @@ void TexturedQuad::createDescriptorPool()
 {
     const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
 
-    std::array<VkDescriptorPoolSize, 2> poolSizes {};
+    array<VkDescriptorPoolSize, 2> poolSizes {};
     poolSizes[0] = {
         .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .descriptorCount = static_cast<uint32_t>(swapChainDesc.bufferCount)
@@ -578,7 +589,7 @@ void TexturedQuad::createDescriptorSets()
 {
     const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
 
-    std::vector<VkDescriptorSetLayout> layouts(swapChainDesc.bufferCount, descriptorSetLayout);
+    vector<VkDescriptorSetLayout> layouts(swapChainDesc.bufferCount, descriptorSetLayout);
     VkDescriptorSetAllocateInfo allocInfo {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .descriptorPool = descriptorPool,
@@ -604,7 +615,7 @@ void TexturedQuad::createDescriptorSets()
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 
-    std::array<VkWriteDescriptorSet, 2> descriptorWrites {};
+    array<VkWriteDescriptorSet, 2> descriptorWrites {};
     descriptorWrites[0] = {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .dstBinding = 0,

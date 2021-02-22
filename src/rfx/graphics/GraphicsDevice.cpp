@@ -47,8 +47,8 @@ void GraphicsDevice::createCommandPool()
 
 GraphicsDevice::~GraphicsDevice()
 {
-    vkDestroyImageView(device, multiSampleImageView, nullptr);
-    multiSampleImage.reset();
+    destroyMultiSamplingBuffer();
+
     depthBuffer.reset();
     swapChain.reset();
 
@@ -400,13 +400,14 @@ const unique_ptr<DepthBuffer>& GraphicsDevice::getDepthBuffer() const
 
 void GraphicsDevice::createMultiSamplingBuffer(VkSampleCountFlagBits sampleCount)
 {
-    if (multiSampleImageView != VK_NULL_HANDLE) {
-        vkDestroyImageView(device, multiSampleImageView, nullptr);
+    destroyMultiSamplingBuffer();
+
+    multiSampleCount = sampleCount;
+    if (sampleCount == VK_SAMPLE_COUNT_1_BIT) {
+        return;
     }
-    multiSampleImage.reset();
 
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
-
     multiSampleImage = createImage(
         swapChainDesc.format,
         swapChainDesc.extent.width,
@@ -417,10 +418,18 @@ void GraphicsDevice::createMultiSamplingBuffer(VkSampleCountFlagBits sampleCount
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         VK_IMAGE_TILING_OPTIMAL,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
     multiSampleImageView = createImageView(multiSampleImage, swapChainDesc.format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+}
 
-    multiSampleCount = sampleCount;
+// ---------------------------------------------------------------------------------------------------------------------
+
+void GraphicsDevice::destroyMultiSamplingBuffer()
+{
+    if (multiSampleImageView != VK_NULL_HANDLE) {
+        vkDestroyImageView(device, multiSampleImageView, nullptr);
+        multiSampleImageView = VK_NULL_HANDLE;
+    }
+    multiSampleImage.reset();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

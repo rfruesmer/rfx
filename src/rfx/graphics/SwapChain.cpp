@@ -4,13 +4,14 @@
 #include <utility>
 
 using namespace rfx;
+using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 SwapChain::SwapChain(VkDevice device, VkSwapchainKHR swapChain, SwapChainDesc swapChainDesc)
     : device(device),
       swapChain(swapChain),
-      desc(std::move(swapChainDesc))
+      desc(move(swapChainDesc))
 {
     ThrowIfFailed(vkGetSwapchainImagesKHR(
         device,
@@ -89,7 +90,7 @@ const SwapChainDesc& SwapChain::getDesc() const
 
 void SwapChain::createFrameBuffers(
     VkRenderPass renderPass,
-    const std::unique_ptr<DepthBuffer>& depthBuffer,
+    const unique_ptr<DepthBuffer>& depthBuffer,
     VkImageView multiSampleImageView)
 {
     framebuffers.resize(desc.bufferCount);
@@ -102,15 +103,16 @@ void SwapChain::createFrameBuffers(
         .layers = 1
     };
 
-
-    for (size_t i = 0; i < desc.bufferCount; ++i) {
-
-        std::vector<VkImageView> attachments;
-        attachments.push_back(multiSampleImageView);
+    for (size_t i = 0; i < desc.bufferCount; ++i)
+    {
+        vector<VkImageView> attachments;
+        if (multiSampleImageView != VK_NULL_HANDLE) {
+            attachments.push_back(multiSampleImageView);
+        }
+        attachments.push_back(imageViews[i]);
         if (depthBuffer != nullptr) {
             attachments.push_back(depthBuffer->getImageView());
         }
-        attachments.push_back(imageViews[i]);
 
         framebufferInfo.attachmentCount = attachments.size();
         framebufferInfo.pAttachments = attachments.data();
@@ -125,14 +127,14 @@ void SwapChain::createFrameBuffers(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const std::vector<VkFramebuffer>& SwapChain::getFramebuffers() const
+const vector<VkFramebuffer>& SwapChain::getFramebuffers() const
 {
     return framebuffers;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const std::vector<VkImageView>& SwapChain::getImageViews() const
+const vector<VkImageView>& SwapChain::getImageViews() const
 {
     return imageViews;
 }

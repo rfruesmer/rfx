@@ -130,7 +130,6 @@ void Application::createDepthBuffer()
 void Application::createMultiSamplingBuffer()
 {
     graphicsDevice->createMultiSamplingBuffer(graphicsDevice->getDesc().maxSampleCount);
-//    graphicsDevice->createMultiSamplingBuffer(VK_SAMPLE_COUNT_1_BIT);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
