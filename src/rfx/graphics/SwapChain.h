@@ -17,7 +17,8 @@ public:
 
     void createFrameBuffers(
         VkRenderPass renderPass,
-        const std::unique_ptr<DepthBuffer>& depthBuffer);
+        const std::unique_ptr<DepthBuffer>& depthBuffer,
+        VkImageView multiSampleImageView);
 
     [[nodiscard]] VkSwapchainKHR getHandle() const;
     [[nodiscard]] const SwapChainDesc& getDesc() const;

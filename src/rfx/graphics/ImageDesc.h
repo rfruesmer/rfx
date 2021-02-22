@@ -10,6 +10,7 @@ struct ImageDesc
     uint32_t mipLevels = 0;
     uint32_t bytesPerPixel = 0;
     std::vector<VkDeviceSize> mipOffsets;
+    VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT;
 };
 
 } // namespace rfx

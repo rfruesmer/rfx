@@ -53,6 +53,13 @@ public:
     [[nodiscard]]
     const std::unique_ptr<DepthBuffer>& getDepthBuffer() const;
 
+    void createMultiSamplingBuffer(VkSampleCountFlagBits sampleCount);
+
+    VkImageView getMultiSampleImageView() const;
+
+    [[nodiscard]]
+    VkSampleCountFlagBits getMultiSampleCount() const;
+
     [[nodiscard]]
     std::shared_ptr<Buffer> createBuffer(
         VkDeviceSize size,
@@ -86,6 +93,7 @@ public:
         uint32_t height,
         uint32_t mipLevels,
         const std::vector<VkDeviceSize>& mipOffsets,
+        VkSampleCountFlagBits sampleCount,
         VkImageUsageFlags usage,
         VkImageTiling tiling,
         VkMemoryPropertyFlags properties) const;
@@ -185,6 +193,10 @@ private:
     std::unique_ptr<SwapChain> swapChain;
     std::unique_ptr<DepthBuffer> depthBuffer;
     VkCommandPool graphicsCommandPool = VK_NULL_HANDLE;
+
+    VkSampleCountFlagBits multiSampleCount = VK_SAMPLE_COUNT_1_BIT;
+    std::shared_ptr<Image> multiSampleImage;
+    VkImageView multiSampleImageView = VK_NULL_HANDLE;
 };
 
 } // namespace rfx

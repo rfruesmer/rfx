@@ -50,17 +50,35 @@ void ColoredQuad::createRenderPass()
 
     VkAttachmentDescription colorAttachment {
         .format = swapChainDesc.format,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .samples = graphicsDevice->getMultiSampleCount(),
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .finalLayout = devToolsEnabled ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+        .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
     };
 
     VkAttachmentReference colorAttachmentRef {
         .attachment = 0,
+        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+    };
+
+    VkAttachmentDescription colorAttachmentResolve {
+        .format = swapChainDesc.format,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .finalLayout = devToolsEnabled
+            ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+            : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+    };
+
+    VkAttachmentReference colorAttachmentResolveRef {
+        .attachment = 2,
         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
     };
 
@@ -69,7 +87,7 @@ void ColoredQuad::createRenderPass()
     if (depthBuffer) {
         depthAttachment = {
             .format = depthBuffer->getFormat(),
-            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .samples = graphicsDevice->getMultiSampleCount(),
             .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
             .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
@@ -88,6 +106,7 @@ void ColoredQuad::createRenderPass()
         .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
         .colorAttachmentCount = 1,
         .pColorAttachments = &colorAttachmentRef,
+        .pResolveAttachments = &colorAttachmentResolveRef,
         .pDepthStencilAttachment = depthBuffer ? &depthAttachmentRef : nullptr
     };
 
@@ -107,6 +126,7 @@ void ColoredQuad::createRenderPass()
     if (depthBuffer) {
         attachments.push_back(depthAttachment);
     }
+    attachments.push_back(colorAttachmentResolve);
 
     VkRenderPassCreateInfo renderPassInfo {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
@@ -388,7 +408,7 @@ void ColoredQuad::createGraphicsPipeline()
 
     VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+        .rasterizationSamples = graphicsDevice->getMultiSampleCount(),
         .sampleShadingEnable = VK_FALSE
     };
 

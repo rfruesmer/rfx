@@ -52,7 +52,9 @@ private:
     void initGlfw();
     void createGraphicsDevice();
     void createGraphicsContext();
-    void createSwapChainAndDepthBuffer();
+    void createSwapChain();
+    void createDepthBuffer();
+    void createMultiSamplingBuffer();
     void createWindow();
     void initDevTools();
     void runMainLoop();
@@ -69,7 +71,7 @@ private:
     std::vector<VkSemaphore> renderFinishedSemaphores;
 
     size_t currentFrame = 0;
-    std::vector<VkFence> inFlightFences;
+    std::vector<VkFence> fencesInFlight;
     std::vector<VkFence> imagesInFlight;
     bool windowResized = false;
     bool paused = false;

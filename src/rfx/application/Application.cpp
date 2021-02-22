@@ -81,7 +81,9 @@ void Application::initGraphics()
 {
     createGraphicsContext();
     createGraphicsDevice();
-    createSwapChainAndDepthBuffer();
+    createSwapChain();
+    createMultiSamplingBuffer();
+    createDepthBuffer();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -109,13 +111,26 @@ void Application::createGraphicsDevice()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Application::createSwapChainAndDepthBuffer()
+void Application::createSwapChain()
 {
-    const int width = window->getClientWidth();
-    const int height = window->getClientHeight();
+    graphicsDevice->createSwapChain(
+        window->getClientWidth(),
+        window->getClientHeight());
+}
 
-    graphicsDevice->createSwapChain(width, height);
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Application::createDepthBuffer()
+{
     graphicsDevice->createDepthBuffer(GraphicsDevice::DEFAULT_DEPTHBUFFER_FORMAT);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Application::createMultiSamplingBuffer()
+{
+    graphicsDevice->createMultiSamplingBuffer(graphicsDevice->getDesc().maxSampleCount);
+//    graphicsDevice->createMultiSamplingBuffer(VK_SAMPLE_COUNT_1_BIT);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -156,7 +171,10 @@ path Application::getAssetsDirectory()
 
 void Application::createFrameBuffers()
 {
-    graphicsDevice->getSwapChain()->createFrameBuffers(renderPass, graphicsDevice->getDepthBuffer());
+    graphicsDevice->getSwapChain()->createFrameBuffers(
+        renderPass,
+        graphicsDevice->getDepthBuffer(),
+        graphicsDevice->getMultiSampleImageView());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -168,7 +186,7 @@ void Application::createSyncObjects()
     
     imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-    inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+    fencesInFlight.resize(MAX_FRAMES_IN_FLIGHT);
     imagesInFlight.resize(swapChainDesc.bufferCount, VK_NULL_HANDLE);
     
     VkSemaphoreCreateInfo semaphoreCreateInfo = {
@@ -197,7 +215,7 @@ void Application::createSyncObjects()
             graphicsDevice->getLogicalDevice(),
             &fenceInfo,
             nullptr,
-            &inFlightFences[i]));
+            &fencesInFlight[i]));
     }
 }
 
@@ -250,7 +268,7 @@ void Application::endFrame()
 
 bool Application::acquireNextImage()
 {
-    vkWaitForFences(graphicsDevice->getLogicalDevice(), 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+    vkWaitForFences(graphicsDevice->getLogicalDevice(), 1, &fencesInFlight[currentFrame], VK_TRUE, UINT64_MAX);
 
     VkResult result = vkAcquireNextImageKHR(
         graphicsDevice->getLogicalDevice(),
@@ -271,8 +289,8 @@ bool Application::acquireNextImage()
         vkWaitForFences(graphicsDevice->getLogicalDevice(), 1, &imagesInFlight[currentImageIndex], VK_TRUE, UINT64_MAX);
     }
 
-    imagesInFlight[currentImageIndex] = inFlightFences[currentFrame];
-    vkResetFences(graphicsDevice->getLogicalDevice(), 1, &inFlightFences[currentFrame]);
+    imagesInFlight[currentImageIndex] = fencesInFlight[currentFrame];
+    vkResetFences(graphicsDevice->getLogicalDevice(), 1, &fencesInFlight[currentFrame]);
 
     frameCounter++;
 
@@ -304,7 +322,7 @@ void Application::submitAndPresent()
         .signalSemaphoreCount = 1,
         .pSignalSemaphores = signalSemaphores
     };
-    graphicsDevice->getGraphicsQueue()->submit(submitInfo, inFlightFences[currentFrame]);
+    graphicsDevice->getGraphicsQueue()->submit(submitInfo, fencesInFlight[currentFrame]);
 
     VkSwapchainKHR swapChains[] = {graphicsDevice->getSwapChain()->getHandle() };
 
@@ -354,12 +372,12 @@ void Application::destroySyncObjects()
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroySemaphore(graphicsDevice->getLogicalDevice(), renderFinishedSemaphores[i], nullptr);
         vkDestroySemaphore(graphicsDevice->getLogicalDevice(), imageAvailableSemaphores[i], nullptr);
-        vkDestroyFence(graphicsDevice->getLogicalDevice(), inFlightFences[i], nullptr);
+        vkDestroyFence(graphicsDevice->getLogicalDevice(), fencesInFlight[i], nullptr);
     }
 
     renderFinishedSemaphores.clear();
     imageAvailableSemaphores.clear();
-    inFlightFences.clear();
+    fencesInFlight.clear();
     imagesInFlight.clear();
 }
 
@@ -397,7 +415,9 @@ void Application::recreateSwapChain()
     createSyncObjects();
 
     cleanupSwapChain();
-    createSwapChainAndDepthBuffer();
+    createSwapChain();
+    createMultiSamplingBuffer();
+    createDepthBuffer();
     initDevTools();
 }
 
@@ -416,6 +436,5 @@ void Application::update()
 {
     // do nothing
 }
-
 
 // ---------------------------------------------------------------------------------------------------------------------

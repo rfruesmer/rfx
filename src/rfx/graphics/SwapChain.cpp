@@ -89,7 +89,8 @@ const SwapChainDesc& SwapChain::getDesc() const
 
 void SwapChain::createFrameBuffers(
     VkRenderPass renderPass,
-    const std::unique_ptr<DepthBuffer>& depthBuffer)
+    const std::unique_ptr<DepthBuffer>& depthBuffer,
+    VkImageView multiSampleImageView)
 {
     framebuffers.resize(desc.bufferCount);
 
@@ -104,10 +105,12 @@ void SwapChain::createFrameBuffers(
 
     for (size_t i = 0; i < desc.bufferCount; ++i) {
 
-        std::vector<VkImageView> attachments = { imageViews[i] };
+        std::vector<VkImageView> attachments;
+        attachments.push_back(multiSampleImageView);
         if (depthBuffer != nullptr) {
             attachments.push_back(depthBuffer->getImageView());
         }
+        attachments.push_back(imageViews[i]);
 
         framebufferInfo.attachmentCount = attachments.size();
         framebufferInfo.pAttachments = attachments.data();

@@ -47,6 +47,8 @@ void GraphicsDevice::createCommandPool()
 
 GraphicsDevice::~GraphicsDevice()
 {
+    vkDestroyImageView(device, multiSampleImageView, nullptr);
+    multiSampleImage.reset();
     depthBuffer.reset();
     swapChain.reset();
 
@@ -381,6 +383,7 @@ shared_ptr<Image> GraphicsDevice::createDepthBufferImage(VkFormat format)
         swapChainDesc.extent.height,
         1,
         { 0 },
+        multiSampleCount,
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
         VK_IMAGE_TILING_OPTIMAL,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -391,6 +394,47 @@ shared_ptr<Image> GraphicsDevice::createDepthBufferImage(VkFormat format)
 const unique_ptr<DepthBuffer>& GraphicsDevice::getDepthBuffer() const
 {
     return depthBuffer;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void GraphicsDevice::createMultiSamplingBuffer(VkSampleCountFlagBits sampleCount)
+{
+    if (multiSampleImageView != VK_NULL_HANDLE) {
+        vkDestroyImageView(device, multiSampleImageView, nullptr);
+    }
+    multiSampleImage.reset();
+
+    const SwapChainDesc& swapChainDesc = swapChain->getDesc();
+
+    multiSampleImage = createImage(
+        swapChainDesc.format,
+        swapChainDesc.extent.width,
+        swapChainDesc.extent.height,
+        1,
+        {0},
+        sampleCount,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+    multiSampleImageView = createImageView(multiSampleImage, swapChainDesc.format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+
+    multiSampleCount = sampleCount;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkSampleCountFlagBits GraphicsDevice::getMultiSampleCount() const
+{
+    return multiSampleCount;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkImageView GraphicsDevice::getMultiSampleImageView() const
+{
+    return multiSampleImageView;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -682,6 +726,7 @@ shared_ptr<Image> GraphicsDevice::createImage(
         imageDesc.height,
         imageDesc.mipLevels,
         imageDesc.mipOffsets,
+        imageDesc.sampleCount,
         usage,
         tiling,
         properties);
@@ -695,6 +740,7 @@ std::shared_ptr<Image> GraphicsDevice::createImage(
     uint32_t height,
     uint32_t mipLevels,
     const std::vector<VkDeviceSize>& mipOffsets,
+    VkSampleCountFlagBits sampleCount,
     VkImageUsageFlags usage,
     VkImageTiling tiling,
     VkMemoryPropertyFlags properties) const
@@ -708,7 +754,7 @@ std::shared_ptr<Image> GraphicsDevice::createImage(
         .extent = { width, height, 1 },
         .mipLevels = mipLevels,
         .arrayLayers = 1,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .samples = sampleCount,
         .tiling = tiling,
         .usage = usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,

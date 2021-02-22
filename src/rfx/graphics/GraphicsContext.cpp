@@ -290,6 +290,16 @@ void GraphicsContext::queryProperties(VkPhysicalDevice physicalDevice, GraphicsD
 {
     vkGetPhysicalDeviceProperties(physicalDevice, &deviceDesc->properties);
     vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceDesc->memoryProperties);
+
+    VkSampleCountFlags counts =
+        min(deviceDesc->properties.limits.framebufferColorSampleCounts,
+            deviceDesc->properties.limits.framebufferDepthSampleCounts);
+    if      (counts & VK_SAMPLE_COUNT_64_BIT) { deviceDesc->maxSampleCount = VK_SAMPLE_COUNT_64_BIT; }
+    else if (counts & VK_SAMPLE_COUNT_32_BIT) { deviceDesc->maxSampleCount = VK_SAMPLE_COUNT_32_BIT; }
+    else if (counts & VK_SAMPLE_COUNT_16_BIT) { deviceDesc->maxSampleCount = VK_SAMPLE_COUNT_16_BIT; }
+    else if (counts & VK_SAMPLE_COUNT_8_BIT)  { deviceDesc->maxSampleCount = VK_SAMPLE_COUNT_8_BIT; }
+    else if (counts & VK_SAMPLE_COUNT_4_BIT)  { deviceDesc->maxSampleCount = VK_SAMPLE_COUNT_4_BIT; }
+    else if (counts & VK_SAMPLE_COUNT_2_BIT)  { deviceDesc->maxSampleCount = VK_SAMPLE_COUNT_2_BIT; }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
