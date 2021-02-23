@@ -5,14 +5,13 @@
 
 namespace rfx::test {
 
-class TexturedQuad : public Application
+class ColoredQuadTest : public Application
 {
 private:
     struct UniformBufferObject {
         glm::mat4 model;
         glm::mat4 view;
         glm::mat4 proj;
-        float lodBias = 0.0f;
     };
 
     void initGraphics() override;
@@ -26,10 +25,8 @@ private:
     void createRenderPass();
     void createGraphicsPipeline();
     void createCommandBuffers();
-    void createTexture();
 
     void update() override;
-    void updateDevTools() override;
 
     void cleanup() override;
     void cleanupSwapChain() override;
@@ -43,8 +40,6 @@ private:
     std::shared_ptr<VertexShader> vertexShader;
     std::shared_ptr<FragmentShader> fragmentShader;
     std::vector<std::shared_ptr<Buffer>> uniformBuffers;
-    std::shared_ptr<Texture2D> texture;
-    UniformBufferObject ubo;
 };
 
-} // namespace rfx
+} // namespace rfx::test

@@ -84,6 +84,7 @@ void Application::initGraphics()
     createSwapChain();
     createMultiSamplingBuffer();
     createDepthBuffer();
+    createSyncObjects();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

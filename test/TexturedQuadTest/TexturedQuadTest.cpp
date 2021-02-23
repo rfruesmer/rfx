@@ -1,10 +1,12 @@
 #include "rfx/pch.h"
-#include "ColoredQuad.h"
+#include "TexturedQuadTest.h"
+#include "rfx/application/Texture2DLoader.h"
 #include "rfx/application/ShaderLoader.h"
 #include "rfx/common/Logger.h"
 
 using namespace rfx;
 using namespace rfx::test;
+using namespace glm;
 using namespace std;
 using namespace filesystem;
 
@@ -13,7 +15,7 @@ using namespace filesystem;
 int main()
 {
     try {
-        auto theApp = make_shared<ColoredQuad>();
+        auto theApp = make_shared<TexturedQuadTest>();
         theApp->run();
     }
     catch (const exception& ex) {
@@ -26,7 +28,7 @@ int main()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::initGraphics()
+void TexturedQuadTest::initGraphics()
 {
     Application::initGraphics();
 
@@ -38,12 +40,11 @@ void ColoredQuad::initGraphics()
     createGraphicsPipeline();
     createFrameBuffers();
     createCommandBuffers();
-    createSyncObjects();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::createRenderPass()
+void TexturedQuadTest::createRenderPass()
 {
     const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
@@ -58,8 +59,8 @@ void ColoredQuad::createRenderPass()
         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
         .finalLayout = devToolsEnabled || multiSampleCount > VK_SAMPLE_COUNT_1_BIT
-            ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-            : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+                       ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+                       : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
     };
 
     VkAttachmentReference colorAttachmentRef {
@@ -117,12 +118,12 @@ void ColoredQuad::createRenderPass()
         .srcSubpass = VK_SUBPASS_EXTERNAL,
         .dstSubpass = 0,
         .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
-                      | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+                        | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
         .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
-                      | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+                        | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
         .srcAccessMask = 0,
         .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
-                       | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT
+                         | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT
     };
 
     vector<VkAttachmentDescription> attachments { colorAttachment };
@@ -152,43 +153,44 @@ void ColoredQuad::createRenderPass()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::buildScene()
+void TexturedQuadTest::buildScene()
 {
     const path assetsPath = getAssetsDirectory();
-    const path vertexShaderPath = assetsPath / "shaders/color.vert";
-    const path fragmentShaderPath = assetsPath / "shaders/color.frag";
+    const path vertexShaderPath = assetsPath / "shaders/texture.vert";
+    const path fragmentShaderPath = assetsPath / "shaders/texture.frag";
 
     const ShaderLoader shaderLoader(graphicsDevice);
     vertexShader = shaderLoader.loadVertexShader(
         vertexShaderPath,
         "main",
-        VertexFormat(VertexFormat::COORDINATES | VertexFormat::COLORS_4));
+        VertexFormat(VertexFormat::COORDINATES | VertexFormat::TEXCOORDS));
     fragmentShader = shaderLoader.loadFragmentShader(fragmentShaderPath, "main");
 
     createVertexBuffer();
     createIndexBuffer();
     createUniformBuffers();
+    createTexture();
     createDescriptorPool();
     createDescriptorSets();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::createVertexBuffer()
+void TexturedQuadTest::createVertexBuffer()
 {
     struct Vertex {
-        glm::vec3 pos;
-        glm::vec4 color;
+        vec3 pos;
+        vec2 texCoord;
     };
 
     const vector<Vertex> vertices = {
-        {{ -0.5f, -0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
-        {{  0.5f, -0.5f, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
-        {{  0.5f,  0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
-        {{ -0.5f,  0.5f, 0.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
+        {{ -1.0f,  1.0f,  0.0f}, { 0.0f, 0.0f }},
+        {{ -1.0f, -1.0f,  0.0f}, { 0.0f, 1.0f }},
+        {{  1.0f, -1.0f,  0.0f}, { 1.0f, 1.0f }},
+        {{  1.0f,  1.0f,  0.0f}, { 1.0f, 0.0f }}
     };
 
-    const VertexFormat vertexFormat(VertexFormat::COORDINATES | VertexFormat::COLORS_4);
+    const VertexFormat vertexFormat(VertexFormat::COORDINATES | VertexFormat::TEXCOORDS);
     const VkDeviceSize bufferSize = vertices.size() * vertexFormat.getVertexSize();
     shared_ptr<Buffer> stagingBuffer = graphicsDevice->createBuffer(
         bufferSize,
@@ -219,7 +221,7 @@ void ColoredQuad::createVertexBuffer()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::createIndexBuffer()
+void TexturedQuadTest::createIndexBuffer()
 {
     const vector<uint16_t> indices = {
         0, 1, 2, 2, 3, 0
@@ -255,7 +257,7 @@ void ColoredQuad::createIndexBuffer()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::createUniformBuffers()
+void TexturedQuadTest::createUniformBuffers()
 {
     VkDeviceSize bufferSize = sizeof(UniformBufferObject);
     const size_t bufferCount = graphicsDevice->getSwapChain()->getDesc().bufferCount;
@@ -275,20 +277,26 @@ void ColoredQuad::createUniformBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::createDescriptorPool()
+void TexturedQuadTest::createDescriptorPool()
 {
     const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
 
-    VkDescriptorPoolSize poolSize {
+    array<VkDescriptorPoolSize, 2> poolSizes {};
+    poolSizes[0] = {
         .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptorCount = swapChainDesc.bufferCount
+        .descriptorCount = static_cast<uint32_t>(swapChainDesc.bufferCount)
+    };
+
+    poolSizes[1] = {
+        .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .descriptorCount = static_cast<uint32_t>(swapChainDesc.bufferCount)
     };
 
     VkDescriptorPoolCreateInfo poolCreateInfo {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .maxSets = swapChainDesc.bufferCount,
-        .poolSizeCount = 1,
-        .pPoolSizes = &poolSize
+        .poolSizeCount = static_cast<uint32_t>(poolSizes.size()),
+        .pPoolSizes = poolSizes.data()
     };
 
     ThrowIfFailed(vkCreateDescriptorPool(
@@ -300,7 +308,7 @@ void ColoredQuad::createDescriptorPool()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::createDescriptorSets()
+void TexturedQuadTest::createDescriptorSets()
 {
     const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
 
@@ -324,28 +332,48 @@ void ColoredQuad::createDescriptorSets()
         .range = sizeof(UniformBufferObject)
     };
 
-    VkWriteDescriptorSet descriptorWrite {
+    VkDescriptorImageInfo imageInfo {
+        .sampler = texture->getSampler(),
+        .imageView = texture->getImageView(),
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    };
+
+    array<VkWriteDescriptorSet, 2> descriptorWrites {};
+    descriptorWrites[0] = {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .dstBinding = 0,
         .dstArrayElement = 0,
         .descriptorCount = 1,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .pImageInfo = nullptr, // Optional
-        .pBufferInfo = &bufferInfo,
-        .pTexelBufferView = nullptr // Optional
+        .pBufferInfo = &bufferInfo
+    };
+
+    descriptorWrites[1] = {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstBinding = 1,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .pImageInfo = &imageInfo
     };
 
     for (uint32_t i = 0; i < swapChainDesc.bufferCount; ++i) {
         bufferInfo.buffer = uniformBuffers[i]->getHandle();
-        descriptorWrite.dstSet = descriptorSets[i];
+        descriptorWrites[0].dstSet = descriptorSets[i];
+        descriptorWrites[1].dstSet = descriptorSets[i];
 
-        vkUpdateDescriptorSets(graphicsDevice->getLogicalDevice(), 1, &descriptorWrite, 0, nullptr);
+        vkUpdateDescriptorSets(
+            graphicsDevice->getLogicalDevice(),
+            static_cast<uint32_t>(descriptorWrites.size()),
+            descriptorWrites.data(),
+            0,
+            nullptr);
     }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::createDescriptorSetLayout()
+void TexturedQuadTest::createDescriptorSetLayout()
 {
     VkDescriptorSetLayoutBinding uniformBufferLayoutBinding {
         .binding = 0,
@@ -355,10 +383,23 @@ void ColoredQuad::createDescriptorSetLayout()
         .pImmutableSamplers = nullptr // Optional
     };
 
+    VkDescriptorSetLayoutBinding samplerLayoutBinding {
+        .binding = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .descriptorCount = 1,
+        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .pImmutableSamplers = nullptr
+    };
+
+    array<VkDescriptorSetLayoutBinding, 2> layoutBindings {
+        uniformBufferLayoutBinding,
+        samplerLayoutBinding
+    };
+
     VkDescriptorSetLayoutCreateInfo layoutInfo {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .bindingCount = 1,
-        .pBindings = &uniformBufferLayoutBinding
+        .bindingCount = static_cast<uint32_t>(layoutBindings.size()),
+        .pBindings = layoutBindings.data()
     };
 
     ThrowIfFailed(vkCreateDescriptorSetLayout(
@@ -370,7 +411,7 @@ void ColoredQuad::createDescriptorSetLayout()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::createGraphicsPipeline()
+void TexturedQuadTest::createGraphicsPipeline()
 {
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
@@ -498,7 +539,7 @@ void ColoredQuad::createGraphicsPipeline()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::createCommandBuffers()
+void TexturedQuadTest::createCommandBuffers()
 {
     const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
@@ -553,20 +594,13 @@ void ColoredQuad::createCommandBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::update()
+void TexturedQuadTest::update()
 {
-    static auto startTime = chrono::high_resolution_clock::now();
-
-    auto currentTime = chrono::high_resolution_clock::now();
-    float time = chrono::duration<float, chrono::seconds::period>(currentTime - startTime).count();
-
     const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
 
-    UniformBufferObject ubo {
-        .model = glm::rotate(glm::mat4(1.0f), time * glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
-        .view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
-        .proj = glm::perspective(glm::radians(45.0f), swapChainDesc.extent.width / (float) swapChainDesc.extent.height, 0.1f, 10.0f)
-    };
+    ubo.model = glm::identity<mat4>(),
+    ubo.view = lookAt(vec3(1.0f, 1.0f, 1.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    ubo.proj = perspective(radians(45.0f), swapChainDesc.extent.width / (float) swapChainDesc.extent.height, 0.1f, 1000.0f);
     ubo.proj[1][1] *= -1;
 
     void* mappedMemory = nullptr;
@@ -577,20 +611,21 @@ void ColoredQuad::update()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::cleanup()
+void TexturedQuadTest::cleanup()
 {
     vkDestroyDescriptorSetLayout(graphicsDevice->getLogicalDevice(), descriptorSetLayout, nullptr);
     vertexBuffer.reset();
     indexBuffer.reset();
     vertexShader.reset();
     fragmentShader.reset();
+    texture.reset();
 
     Application::cleanup();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::cleanupSwapChain()
+void TexturedQuadTest::cleanupSwapChain()
 {
     uniformBuffers.clear();
     vkDestroyDescriptorPool(graphicsDevice->getLogicalDevice(), descriptorPool, nullptr);
@@ -600,7 +635,7 @@ void ColoredQuad::cleanupSwapChain()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuad::recreateSwapChain()
+void TexturedQuadTest::recreateSwapChain()
 {
     Application::recreateSwapChain();
 
@@ -616,3 +651,26 @@ void ColoredQuad::recreateSwapChain()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void TexturedQuadTest::createTexture()
+{
+//    const path texturePath =
+//        getAssetsPath() / "samples/vulkan_asset_pack_gltf/data/textures/lavaplanet_rgba.ktx";
+    const path texturePath =
+        getAssetsDirectory() / "textures/ttex_v01/metal08.jpg";
+
+    Texture2DLoader textureLoader(graphicsDevice);
+    texture = textureLoader.load(texturePath);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedQuadTest::updateDevTools()
+{
+    devTools->sliderFloat(
+        "LOD bias",
+        &ubo.lodBias,
+        0.0f,
+        static_cast<float>(texture->getImage()->getDesc().mipLevels));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------

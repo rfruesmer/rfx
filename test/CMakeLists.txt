@@ -17,8 +17,9 @@ function(buildTests)
 endfunction()
 
 set(TESTS
-    ColoredQuad
-    TexturedQuad
+        ColoredQuadTest
+        TexturedQuadTest
+    SceneTest
 )
 
 buildTests()
