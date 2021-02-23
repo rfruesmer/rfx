@@ -200,8 +200,10 @@ void DevTools::createCommandBuffers(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void DevTools::draw(uint32_t frameIndex, uint32_t lastFPS)
+void DevTools::beginDraw(uint32_t frameIndex, uint32_t lastFPS)
 {
+    currentFrameIndex = frameIndex;
+
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
 
@@ -210,6 +212,12 @@ void DevTools::draw(uint32_t frameIndex, uint32_t lastFPS)
     ImGui::Begin("DevTools", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Text("%s", graphicsDevice_->getDesc().properties.deviceName);
     ImGui::Text("%.2f ms/frame (%.1d fps)", (1000.0f / lastFPS), lastFPS);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void DevTools::endDraw()
+{
     ImGui::End();
     ImGui::Render();
 
@@ -219,7 +227,7 @@ void DevTools::draw(uint32_t frameIndex, uint32_t lastFPS)
     };
 
     ThrowIfFailed(vkBeginCommandBuffer(
-        commandBuffers_[frameIndex],
+        commandBuffers_[currentFrameIndex],
         &commandBufferBeginInfo));
 
     const SwapChainDesc& swapChainDesc = graphicsDevice_->getSwapChain()->getDesc();
@@ -230,7 +238,7 @@ void DevTools::draw(uint32_t frameIndex, uint32_t lastFPS)
     VkRenderPassBeginInfo renderPassBeginInfo {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
         .renderPass = renderPass,
-        .framebuffer = frameBuffers[frameIndex],
+        .framebuffer = frameBuffers[currentFrameIndex],
         .renderArea {
             .extent { swapChainDesc.extent.width, swapChainDesc.extent.height }
         },
@@ -238,12 +246,12 @@ void DevTools::draw(uint32_t frameIndex, uint32_t lastFPS)
         .pClearValues = &clearValue,
     };
 
-    vkCmdBeginRenderPass(commandBuffers_[frameIndex], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(commandBuffers_[currentFrameIndex], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     ImDrawData* draw_data = ImGui::GetDrawData();
-    ImGui_ImplVulkan_RenderDrawData(draw_data, commandBuffers_[frameIndex]);
-    vkCmdEndRenderPass(commandBuffers_[frameIndex]);
+    ImGui_ImplVulkan_RenderDrawData(draw_data, commandBuffers_[currentFrameIndex]);
+    vkCmdEndRenderPass(commandBuffers_[currentFrameIndex]);
     ThrowIfFailed(vkEndCommandBuffer(
-        commandBuffers_[frameIndex]));
+        commandBuffers_[currentFrameIndex]));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -270,6 +278,13 @@ DevTools::~DevTools()
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
     vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+bool DevTools::sliderFloat(const char* caption, float* value, float min, float max)
+{
+    return ImGui::SliderFloat(caption, value, min, max);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

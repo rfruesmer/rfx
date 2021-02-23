@@ -16,6 +16,7 @@ public:
 
     ~Texture2D();
 
+    [[nodiscard]] const std::shared_ptr<Image>& getImage() const;
     [[nodiscard]] VkImageView getImageView() const;
     [[nodiscard]] VkSampler getSampler() const;
 

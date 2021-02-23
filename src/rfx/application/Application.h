@@ -62,6 +62,7 @@ private:
     void beginFrame();
     bool acquireNextImage();
     void drawDevTools();
+    virtual void updateDevTools() {};
     void submitAndPresent();
     void endFrame();
 

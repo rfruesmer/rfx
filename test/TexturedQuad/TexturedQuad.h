@@ -12,6 +12,7 @@ private:
         glm::mat4 model;
         glm::mat4 view;
         glm::mat4 proj;
+        float lodBias = 0.0f;
     };
 
     void initGraphics() override;
@@ -28,6 +29,7 @@ private:
     void createTexture();
 
     void update() override;
+    void updateDevTools() override;
 
     void cleanup() override;
     void cleanupSwapChain() override;
@@ -42,6 +44,7 @@ private:
     std::shared_ptr<FragmentShader> fragmentShader;
     std::vector<std::shared_ptr<Buffer>> uniformBuffers;
     std::shared_ptr<Texture2D> texture;
+    UniformBufferObject ubo;
 };
 
 } // namespace rfx

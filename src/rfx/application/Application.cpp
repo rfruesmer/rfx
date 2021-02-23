@@ -149,7 +149,9 @@ void Application::initDevTools()
 void Application::drawDevTools()
 {
     if (devToolsEnabled) {
-        devTools->draw(currentImageIndex, lastFPS);
+        devTools->beginDraw(currentImageIndex, lastFPS);
+        updateDevTools();
+        devTools->endDraw();
     }
 }
 

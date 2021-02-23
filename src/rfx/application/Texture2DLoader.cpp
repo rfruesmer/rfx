@@ -121,9 +121,8 @@ void Texture2DLoader::loadFromImageFile(
     imageLoader.load(path, &outImageDesc, &outImageData);
 
     outImageDesc.mipOffsets = { 0 };
-//    outImageDesc.mipLevels = static_cast<uint32_t>(
-//        floor(log2(max(outImageDesc.width, outImageDesc.height)))) + 1;
-    outImageDesc.mipLevels = 1;
+    outImageDesc.mipLevels = static_cast<uint32_t>(
+        floor(log2(max(outImageDesc.width, outImageDesc.height)))) + 1;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

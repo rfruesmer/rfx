@@ -599,11 +599,9 @@ void TexturedQuad::update()
 {
     const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
 
-    UniformBufferObject ubo {
-        .model = glm::identity<mat4>(),
-        .view = lookAt(vec3(1.0f, 1.0f, 1.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f)),
-        .proj = perspective(radians(45.0f), swapChainDesc.extent.width / (float) swapChainDesc.extent.height, 0.1f, 1000.0f)
-    };
+    ubo.model = glm::identity<mat4>(),
+    ubo.view = lookAt(vec3(1.0f, 1.0f, 1.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    ubo.proj = perspective(radians(45.0f), swapChainDesc.extent.width / (float) swapChainDesc.extent.height, 0.1f, 1000.0f);
     ubo.proj[1][1] *= -1;
 
     void* mappedMemory = nullptr;
@@ -663,6 +661,17 @@ void TexturedQuad::createTexture()
 
     Texture2DLoader textureLoader(graphicsDevice);
     texture = textureLoader.load(texturePath);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedQuad::updateDevTools()
+{
+    devTools->sliderFloat(
+        "LOD bias",
+        &ubo.lodBias,
+        0.0f,
+        static_cast<float>(texture->getImage()->getDesc().mipLevels));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

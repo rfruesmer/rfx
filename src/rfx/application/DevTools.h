@@ -17,7 +17,10 @@ public:
 
     ~DevTools();
 
-    void draw(uint32_t frameIndex, uint32_t lastFPS);
+    void beginDraw(uint32_t frameIndex, uint32_t lastFPS);
+    void endDraw();
+
+    bool sliderFloat(const char* caption, float* value, float min, float max);
 
     [[nodiscard]] VkCommandBuffer getCommandBuffer(uint32_t frameIndex) const;
 
@@ -36,6 +39,7 @@ private:
     VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
     VkRenderPass renderPass = VK_NULL_HANDLE;
     std::vector<VkFramebuffer> frameBuffers;
+    uint32_t currentFrameIndex;
 };
 
 } // namespace rfx
