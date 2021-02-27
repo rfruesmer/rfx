@@ -23,7 +23,10 @@ shared_ptr<VertexShader> ShaderLoader::loadVertexShader(
     const VkPipelineShaderStageCreateInfo shaderStageCreateInfo = 
         loadInternal(path, VK_SHADER_STAGE_VERTEX_BIT, entryPoint);
 
-    return make_shared<VertexShader>(graphicsDevice->getLogicalDevice(), shaderStageCreateInfo, vertexFormat);
+    return make_shared<VertexShader>(
+        graphicsDevice->getLogicalDevice(),
+        shaderStageCreateInfo,
+        vertexFormat);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -107,7 +110,9 @@ shared_ptr<FragmentShader> ShaderLoader::loadFragmentShader(
     const VkPipelineShaderStageCreateInfo shaderStageCreateInfo =
         loadInternal(path, VK_SHADER_STAGE_FRAGMENT_BIT, entryPoint);
 
-    return make_shared<FragmentShader>(graphicsDevice->getLogicalDevice(), shaderStageCreateInfo);
+    return make_shared<FragmentShader>(
+        graphicsDevice->getLogicalDevice(),
+        shaderStageCreateInfo);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

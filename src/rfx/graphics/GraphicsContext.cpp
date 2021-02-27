@@ -701,12 +701,12 @@ shared_ptr<GraphicsDevice> GraphicsContext::createLogicalDevice(
     VkQueue vkQueue = VK_NULL_HANDLE;
     vkGetDeviceQueue(logicalDevice, graphicsQueueFamilyIndex, 0, &vkQueue);
     RFX_CHECK_STATE(vkQueue != VK_NULL_HANDLE, "Failed to get graphics queue");
-    const auto graphicsQueue = make_shared<Queue>(vkQueue, graphicsQueueFamilyIndex);
+    const auto graphicsQueue = make_shared<Queue>(vkQueue, graphicsQueueFamilyIndex, logicalDevice);
 
     vkQueue = VK_NULL_HANDLE;
     vkGetDeviceQueue(logicalDevice, presentQueueFamilyIndex, 0, &vkQueue);
     RFX_CHECK_STATE(vkQueue != VK_NULL_HANDLE, "Failed to get presentation queue");
-    const auto presentQueue = make_shared<Queue>(vkQueue, presentQueueFamilyIndex);
+    const auto presentQueue = make_shared<Queue>(vkQueue, presentQueueFamilyIndex, logicalDevice);
 
     const auto& it = deviceDescs.find(physicalDevice);
     RFX_CHECK_STATE(it != deviceDescs.end(), "Internal error");

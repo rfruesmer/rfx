@@ -6,9 +6,10 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-Queue::Queue(VkQueue queue, uint32_t familyIndex)
+Queue::Queue(VkQueue queue, uint32_t familyIndex, VkDevice device)
     : queue(queue),
-      familyIndex(familyIndex) {}
+      familyIndex(familyIndex),
+      device(device) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -53,6 +54,33 @@ void Queue::submit(const VkSubmitInfo& submitInfo, VkFence fence) const
         1,
         &submitInfo,
         fence));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Queue::flush(const shared_ptr<CommandBuffer>& commandBuffer) const
+{
+    VkFence fence;
+    VkFenceCreateInfo fenceCreateInfo {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO
+    };
+
+    ThrowIfFailed(vkCreateFence(
+        device,
+        &fenceCreateInfo,
+        nullptr,
+        &fence));
+
+    submit(commandBuffer, fence);
+
+    ThrowIfFailed(vkWaitForFences(
+        device,
+        1,
+        &fence,
+        VK_TRUE,
+        DEFAULT_FENCE_TIMEOUT));
+
+    vkDestroyFence(device, fence, nullptr);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

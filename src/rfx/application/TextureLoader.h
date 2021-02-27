@@ -7,10 +7,10 @@
 
 namespace rfx {
 
-class Texture2DLoader
+class TextureLoader
 {
 public:
-    explicit Texture2DLoader(std::shared_ptr<GraphicsDevice> graphicsDevice);
+    explicit TextureLoader(std::shared_ptr<GraphicsDevice> graphicsDevice);
 
     [[nodiscard]]
     std::shared_ptr<Texture2D> load(const std::filesystem::path& filePath) const;

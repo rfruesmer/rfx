@@ -19,6 +19,7 @@ public:
     [[nodiscard]] const std::shared_ptr<Image>& getImage() const;
     [[nodiscard]] VkImageView getImageView() const;
     [[nodiscard]] VkSampler getSampler() const;
+    [[nodiscard]] VkDescriptorSet* getSamplerDescriptorSet();
 
 private:
     VkDevice device;
@@ -26,6 +27,7 @@ private:
     VkImageView imageView;
     VkImageLayout imageLayout;
     VkSampler sampler;
+    VkDescriptorSet samplerDescriptorSet;
 };
 
 } // namespace rfx

@@ -15,11 +15,20 @@ public:
     void begin(VkCommandBufferUsageFlags usage) const;
     void beginRenderPass(const VkRenderPassBeginInfo& beginInfo) const;
     void bindPipeline(const VkPipelineBindPoint& bindPoint, VkPipeline pipeline) const;
-    void bindDescriptorSet(VkPipelineBindPoint bindPoint, VkPipelineLayout layout, VkDescriptorSet descriptorSet) const;
+    void bindDescriptorSet(
+        VkPipelineBindPoint bindPoint,
+        VkPipelineLayout layout,
+        uint32_t firstSet,
+        VkDescriptorSet descriptorSet) const;
+    void bindDescriptorSets(VkPipelineBindPoint bindPoint, VkPipelineLayout layout, std::vector<VkDescriptorSet> descriptorSets) const;
+    void bindVertexBuffer(const std::shared_ptr<VertexBuffer>& vertexBuffer) const;
     void bindVertexBuffers(const std::vector<std::shared_ptr<VertexBuffer>>& vertexBuffers) const;
     void bindIndexBuffer(const std::shared_ptr<IndexBuffer>& indexBuffer) const;
+    void setViewport(const VkViewport& viewport);
+    void setScissor(const VkRect2D& scissor);
     void draw(uint32_t vertexCount) const;
     void drawIndexed(uint32_t indexCount) const;
+    void drawIndexed(uint32_t indexCount, uint32_t firstIndex) const;
     void endRenderPass() const;
     void end() const;
 
@@ -40,6 +49,13 @@ public:
         VkImageLayout newLayout,
         VkPipelineStageFlags srcStageMask,
         VkPipelineStageFlags dstStageMask) const;
+
+    void pushConstants(
+        VkPipelineLayout layout,
+        VkShaderStageFlags stageFlags,
+        uint32_t offset,
+        uint32_t size,
+        const void* values);
 
     [[nodiscard]] const VkCommandBuffer& getHandle() const;
 

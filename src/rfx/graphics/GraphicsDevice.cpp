@@ -575,10 +575,10 @@ shared_ptr<IndexBuffer> GraphicsDevice::createIndexBuffer(uint32_t indexCount, V
 
     switch (indexType) {
         case VK_INDEX_TYPE_UINT16:
-            bufferSize = indexCount * 2;
+            bufferSize = indexCount * sizeof(uint16_t);
             break;
         case VK_INDEX_TYPE_UINT32:
-            bufferSize = indexCount * 4;
+            bufferSize = indexCount * sizeof(uint32_t);
             break;
         case VK_INDEX_TYPE_UINT8_EXT:
             bufferSize = indexCount;
@@ -693,8 +693,15 @@ shared_ptr<Texture2D> GraphicsDevice::createTexture2D(
     const vector<byte>& imageData,
     bool isGenerateMipmaps) const
 {
+    ImageDesc finalImageDesc = imageDesc;
+    if (isGenerateMipmaps) {
+        finalImageDesc.mipOffsets = { 0 };
+        finalImageDesc.mipLevels =
+            static_cast<uint32_t>(floor(log2(max(imageDesc.width, imageDesc.height)))) + 1;
+    }
+
     shared_ptr<Image> textureImage = createImage(
-        imageDesc,
+        finalImageDesc,
         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
         VK_IMAGE_TILING_OPTIMAL,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -704,7 +711,7 @@ shared_ptr<Texture2D> GraphicsDevice::createTexture2D(
             textureImage->getHandle(),
             VK_IMAGE_LAYOUT_UNDEFINED,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            imageDesc.mipLevels);
+            finalImageDesc.mipLevels);
     }
 
     updateImage(textureImage, imageData, isGenerateMipmaps);
@@ -713,18 +720,18 @@ shared_ptr<Texture2D> GraphicsDevice::createTexture2D(
         generateMipmaps(
             textureImage->getHandle(),
             VK_FORMAT_R8G8B8A8_SRGB,
-            imageDesc.width,
-            imageDesc.height,
-            imageDesc.mipLevels);
+            finalImageDesc.width,
+            finalImageDesc.height,
+            finalImageDesc.mipLevels);
     }
 
     VkImageView textureImageView = createImageView(
         textureImage,
-        imageDesc.format,
+        finalImageDesc.format,
         VK_IMAGE_ASPECT_COLOR_BIT,
-        imageDesc.mipLevels);
+        finalImageDesc.mipLevels);
 
-    VkSampler textureSampler = createTextureSampler(imageDesc.mipLevels);
+    VkSampler textureSampler = createTextureSampler(finalImageDesc.mipLevels);
 
     return make_shared<Texture2D>(
         device,
@@ -1049,10 +1056,10 @@ VkImageView GraphicsDevice::createImageView(
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
         .format = format,
         .components = {
-            VK_COMPONENT_SWIZZLE_IDENTITY,
-            VK_COMPONENT_SWIZZLE_IDENTITY,
-            VK_COMPONENT_SWIZZLE_IDENTITY,
-            VK_COMPONENT_SWIZZLE_IDENTITY
+            VK_COMPONENT_SWIZZLE_R,
+            VK_COMPONENT_SWIZZLE_G,
+            VK_COMPONENT_SWIZZLE_B,
+            VK_COMPONENT_SWIZZLE_A
         },
         .subresourceRange = {
             .aspectMask = imageAspect,
@@ -1088,11 +1095,11 @@ VkSampler GraphicsDevice::createTextureSampler(uint32_t mipLevels) const
         .anisotropyEnable = VK_FALSE,
         .maxAnisotropy = 1.0f,
         .compareEnable = VK_FALSE,
-        .compareOp = VK_COMPARE_OP_ALWAYS,
+        .compareOp = VK_COMPARE_OP_NEVER,
         .minLod = 0.0f,
-        .maxLod = static_cast<float>(mipLevels),
+        .maxLod = static_cast<float>(mipLevels)/*,
         .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
-        .unnormalizedCoordinates = VK_FALSE
+        .unnormalizedCoordinates = VK_FALSE*/
     };
 
     if (desc.features.samplerAnisotropy) {

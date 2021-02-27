@@ -30,11 +30,10 @@ void ColoredQuadTest::initGraphics()
 {
     Application::initGraphics();
 
+    // TODO: extract to virtual initScene (or similar)
     createRenderPass();
     createDescriptorSetLayout();
-
     buildScene();
-
     createGraphicsPipeline();
     createFrameBuffers();
     createCommandBuffers();
@@ -153,9 +152,9 @@ void ColoredQuadTest::createRenderPass()
 
 void ColoredQuadTest::buildScene()
 {
-    const path assetsPath = getAssetsDirectory();
-    const path vertexShaderPath = assetsPath / "shaders/color.vert";
-    const path fragmentShaderPath = assetsPath / "shaders/color.frag";
+    const path assetsDirectory = getAssetsDirectory();
+    const path vertexShaderPath = assetsDirectory / "shaders/color.vert";
+    const path fragmentShaderPath = assetsDirectory / "shaders/color.frag";
 
     const ShaderLoader shaderLoader(graphicsDevice);
     vertexShader = shaderLoader.loadVertexShader(
@@ -541,7 +540,7 @@ void ColoredQuadTest::createCommandBuffers()
         commandBuffer->begin();
         commandBuffer->beginRenderPass(renderPassBeginInfo);
         commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
-        commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, descriptorSets[i]);
+        commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, descriptorSets[i]);
         commandBuffer->bindVertexBuffers(vertexBuffers);
         commandBuffer->bindIndexBuffer(indexBuffer);
         commandBuffer->drawIndexed(indexBuffer->getIndexCount());
@@ -592,7 +591,6 @@ void ColoredQuadTest::cleanup()
 void ColoredQuadTest::cleanupSwapChain()
 {
     uniformBuffers.clear();
-    vkDestroyDescriptorPool(graphicsDevice->getLogicalDevice(), descriptorPool, nullptr);
 
     Application::cleanupSwapChain();
 }

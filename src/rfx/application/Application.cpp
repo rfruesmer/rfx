@@ -389,6 +389,8 @@ void Application::cleanupSwapChain()
 {
     VkDevice vkDevice = graphicsDevice->getLogicalDevice();
 
+    vkDestroyDescriptorPool(vkDevice, descriptorPool, nullptr);
+
     auto commandBufferHandles = commandBuffers
             | views::transform([](const shared_ptr<CommandBuffer>& commandBuffer)
                 { return commandBuffer->getHandle(); })

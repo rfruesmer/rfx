@@ -34,7 +34,7 @@ void VertexShader::createVertexInputState()
     VkVertexInputAttributeDescription attributeDescription = {
         .location = location++,
         .binding = VERTEX_BUFFER_BIND_ID,
-        .format = VK_FORMAT_R32G32_SFLOAT,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
         .offset = offset
     };
     vertexAttributeDescriptions.push_back(attributeDescription);

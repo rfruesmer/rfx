@@ -46,4 +46,10 @@ include_directories(${STB_INCLUDE_DIRS})
 find_package(imgui CONFIG REQUIRED)
 link_libraries(imgui::imgui)
 
+find_path(TINYGLTF_INCLUDE_DIRS "tiny_gltf.h")
+include_directories(${TINYGLTF_INCLUDE_DIRS})
+
+find_package(nlohmann_json CONFIG REQUIRED)
+link_libraries(nlohmann_json nlohmann_json::nlohmann_json)
+
 add_subdirectory(test)

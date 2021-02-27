@@ -21,7 +21,6 @@ public:
     static const VkFormat DEFAULT_SWAPCHAIN_FORMAT = VK_FORMAT_B8G8R8A8_SRGB;
     static const VkColorSpaceKHR DEFAULT_COLORSPACE = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
     static const VkFormat DEFAULT_DEPTHBUFFER_FORMAT = VK_FORMAT_D16_UNORM;
-    static const uint64_t DEFAULT_FENCE_TIMEOUT = 100000000000; // in nanoseconds
 
     GraphicsDevice(
         GraphicsDeviceDesc desc,

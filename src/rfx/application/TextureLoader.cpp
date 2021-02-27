@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "rfx/application/Texture2DLoader.h"
+#include "rfx/application/TextureLoader.h"
 #include "ImageLoader.h"
 
 
@@ -13,12 +13,12 @@ static const string KTX_FILE_EXTENSION = ".ktx";
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-Texture2DLoader::Texture2DLoader(shared_ptr<GraphicsDevice> graphicsDevice)
+TextureLoader::TextureLoader(shared_ptr<GraphicsDevice> graphicsDevice)
     : graphicsDevice(move(graphicsDevice)) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-shared_ptr<Texture2D> Texture2DLoader::load(const filesystem::path& filePath) const
+shared_ptr<Texture2D> TextureLoader::load(const filesystem::path& filePath) const
 {
     const path absoluteImagePath =
         filePath.is_absolute() ? filePath : current_path() / filePath;
@@ -26,7 +26,7 @@ shared_ptr<Texture2D> Texture2DLoader::load(const filesystem::path& filePath) co
 
     RFX_CHECK_STATE(exists(absoluteImagePath), "File not found: " + absoluteImagePath.string());
 
-    ImageDesc imageDesc = {};
+    ImageDesc imageDesc {};
     vector<byte> imageData;
     bool createMipmaps = false;
 
@@ -43,7 +43,7 @@ shared_ptr<Texture2D> Texture2DLoader::load(const filesystem::path& filePath) co
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Texture2DLoader::loadFromKTXFile(
+void TextureLoader::loadFromKTXFile(
     const path& path,
     ImageDesc& outImageDesc,
     vector<byte>& outImageData) const
@@ -94,7 +94,7 @@ void Texture2DLoader::loadFromKTXFile(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-Texture2DLoader::KTXHeader Texture2DLoader::readKTXHeader(const path& path) const
+TextureLoader::KTXHeader TextureLoader::readKTXHeader(const path& path) const
 {
     static const uint8_t expectedIdentifier[] = { 0xAB, 0x4B, 0x54, 0x58, 0x20, 0x31, 0x31, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A };
 
@@ -112,17 +112,13 @@ Texture2DLoader::KTXHeader Texture2DLoader::readKTXHeader(const path& path) cons
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Texture2DLoader::loadFromImageFile(
+void TextureLoader::loadFromImageFile(
     const path& path,
     ImageDesc& outImageDesc,
     vector<byte>& outImageData) const
 {
     ImageLoader imageLoader;
     imageLoader.load(path, &outImageDesc, &outImageData);
-
-    outImageDesc.mipOffsets = { 0 };
-    outImageDesc.mipLevels = static_cast<uint32_t>(
-        floor(log2(max(outImageDesc.width, outImageDesc.height)))) + 1;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -7,7 +7,9 @@ namespace rfx {
 class FragmentShader : public Shader
 {
 public:
-    FragmentShader(VkDevice vkDevice, const VkPipelineShaderStageCreateInfo& createInfo);
+    FragmentShader(
+        VkDevice vkDevice,
+        const VkPipelineShaderStageCreateInfo& createInfo);
 };
 
 } // namespace rfx

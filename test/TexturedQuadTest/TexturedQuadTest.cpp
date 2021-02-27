@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
 #include "TexturedQuadTest.h"
-#include "rfx/application/Texture2DLoader.h"
+#include "rfx/application/TextureLoader.h"
 #include "rfx/application/ShaderLoader.h"
 #include "rfx/common/Logger.h"
 
@@ -32,11 +32,10 @@ void TexturedQuadTest::initGraphics()
 {
     Application::initGraphics();
 
+    // TODO: extract to virtual initScene (or similar)
     createRenderPass();
     createDescriptorSetLayout();
-
     buildScene();
-
     createGraphicsPipeline();
     createFrameBuffers();
     createCommandBuffers();
@@ -155,9 +154,9 @@ void TexturedQuadTest::createRenderPass()
 
 void TexturedQuadTest::buildScene()
 {
-    const path assetsPath = getAssetsDirectory();
-    const path vertexShaderPath = assetsPath / "shaders/texture.vert";
-    const path fragmentShaderPath = assetsPath / "shaders/texture.frag";
+    const path assetsDirectory = getAssetsDirectory();
+    const path vertexShaderPath = assetsDirectory / "shaders/texture.vert";
+    const path fragmentShaderPath = assetsDirectory / "shaders/texture.frag";
 
     const ShaderLoader shaderLoader(graphicsDevice);
     vertexShader = shaderLoader.loadVertexShader(
@@ -583,7 +582,7 @@ void TexturedQuadTest::createCommandBuffers()
         commandBuffer->begin();
         commandBuffer->beginRenderPass(renderPassBeginInfo);
         commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
-        commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, descriptorSets[i]);
+        commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, descriptorSets[i]);
         commandBuffer->bindVertexBuffers(vertexBuffers);
         commandBuffer->bindIndexBuffer(indexBuffer);
         commandBuffer->drawIndexed(indexBuffer->getIndexCount());
@@ -598,8 +597,8 @@ void TexturedQuadTest::update()
 {
     const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
 
-    ubo.model = glm::identity<mat4>(),
-    ubo.view = lookAt(vec3(1.0f, 1.0f, 1.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    ubo.model = glm::identity<mat4>();
+    ubo.view = lookAt(vec3(0.0f, 0.0f, 3.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
     ubo.proj = perspective(radians(45.0f), swapChainDesc.extent.width / (float) swapChainDesc.extent.height, 0.1f, 1000.0f);
     ubo.proj[1][1] *= -1;
 
@@ -628,7 +627,6 @@ void TexturedQuadTest::cleanup()
 void TexturedQuadTest::cleanupSwapChain()
 {
     uniformBuffers.clear();
-    vkDestroyDescriptorPool(graphicsDevice->getLogicalDevice(), descriptorPool, nullptr);
 
     Application::cleanupSwapChain();
 }
@@ -658,7 +656,7 @@ void TexturedQuadTest::createTexture()
     const path texturePath =
         getAssetsDirectory() / "textures/ttex_v01/metal08.jpg";
 
-    Texture2DLoader textureLoader(graphicsDevice);
+    TextureLoader textureLoader(graphicsDevice);
     texture = textureLoader.load(texturePath);
 }
 

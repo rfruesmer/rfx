@@ -51,9 +51,27 @@ void CommandBuffer::bindPipeline(const VkPipelineBindPoint& bindPoint, VkPipelin
 void CommandBuffer::bindDescriptorSet(
     VkPipelineBindPoint bindPoint,
     VkPipelineLayout layout,
+    uint32_t firstSet,
     VkDescriptorSet descriptorSet) const
 {
-    vkCmdBindDescriptorSets(commandBuffer, bindPoint, layout, 0, 1, &descriptorSet, 0, nullptr);
+    vkCmdBindDescriptorSets(commandBuffer, bindPoint, layout, firstSet, 1, &descriptorSet, 0, nullptr);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CommandBuffer::bindDescriptorSets(
+    VkPipelineBindPoint bindPoint,
+    VkPipelineLayout layout,
+    vector<VkDescriptorSet> descriptorSets) const
+{
+    vkCmdBindDescriptorSets(commandBuffer, bindPoint, layout, 0, descriptorSets.size(), descriptorSets.data(), 0, nullptr);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CommandBuffer::bindVertexBuffer(const shared_ptr<VertexBuffer>& vertexBuffer) const
+{
+    bindVertexBuffers({vertexBuffer});
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -97,6 +115,13 @@ void CommandBuffer::draw(uint32_t vertexCount) const
 void CommandBuffer::drawIndexed(uint32_t indexCount) const
 {
     vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CommandBuffer::drawIndexed(uint32_t indexCount, uint32_t firstIndex) const
+{
+    vkCmdDrawIndexed(commandBuffer, indexCount, 1, firstIndex, 0, 0);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -192,6 +217,32 @@ void CommandBuffer::setImageMemoryBarrier(
         1,
         &barrier
     );
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CommandBuffer::pushConstants(
+    VkPipelineLayout layout,
+    VkShaderStageFlags stageFlags,
+    uint32_t offset,
+    uint32_t size,
+    const void* values)
+{
+    vkCmdPushConstants(commandBuffer, layout, stageFlags, offset, size, values);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CommandBuffer::setViewport(const VkViewport& viewport)
+{
+    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CommandBuffer::setScissor(const VkRect2D& scissor)
+{
+    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
