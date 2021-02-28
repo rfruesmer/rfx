@@ -13,7 +13,9 @@ class SceneLoader
 public:
     explicit SceneLoader(std::shared_ptr<GraphicsDevice> graphicsDevice);
 
-    const std::shared_ptr<Scene>& load(const std::filesystem::path& scenePath);
+    const std::shared_ptr<Scene>& load(
+        const std::filesystem::path& scenePath,
+        const VertexFormat& vertexFormat);
 
 private:
     class SceneLoaderImpl;

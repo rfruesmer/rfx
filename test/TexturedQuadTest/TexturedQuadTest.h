@@ -28,7 +28,7 @@ private:
     void createCommandBuffers();
     void createTexture();
 
-    void update() override;
+    void update(float deltaTime) override;
     void updateDevTools() override;
 
     void cleanup() override;

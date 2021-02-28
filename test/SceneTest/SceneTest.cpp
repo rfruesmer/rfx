@@ -47,6 +47,38 @@ void SceneTest::initGraphics()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void SceneTest::loadScene()
+{
+    const path assetsPath = getAssetsDirectory();getAssetsDirectory();
+//    const path scenePath = assetsPath / "samples/vulkan_asset_pack_gltf/data/models/FlightHelmet/glTF/FlightHelmet.gltf";
+    const path scenePath = assetsPath / "models/quad/quad.gltf";
+
+    SceneLoader sceneLoader(graphicsDevice);
+    scene = sceneLoader.load(scenePath, vertexFormat);
+
+    camera.setPosition(vec3(0.0f, 1.0f, 2.0f));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SceneTest::loadShaders()
+{
+    const path assetsDirectory = getAssetsDirectory();
+//    const path vertexShaderPath = assetsDirectory / "shaders/default.vert";
+//    const path fragmentShaderPath = assetsDirectory / "shaders/default.frag";
+    const path vertexShaderPath = assetsDirectory / "shaders/quad.vert";
+    const path fragmentShaderPath = assetsDirectory / "shaders/quad.frag";
+
+    const ShaderLoader shaderLoader(graphicsDevice);
+    vertexShader = shaderLoader.loadVertexShader(
+        vertexShaderPath,
+        "main",
+        vertexFormat);
+    fragmentShader = shaderLoader.loadFragmentShader(fragmentShaderPath, "main");
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void SceneTest::initGraphicsResources()
 {
     createUniformBuffer();
@@ -58,38 +90,6 @@ void SceneTest::initGraphicsResources()
     createPipeline();
     createFrameBuffers();
     createCommandBuffers();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void SceneTest::loadScene()
-{
-    const path assetsPath = getAssetsDirectory();getAssetsDirectory();
-    const path scenePath = assetsPath / "samples/vulkan_asset_pack_gltf/data/models/FlightHelmet/glTF/FlightHelmet.gltf";
-
-    SceneLoader sceneLoader(graphicsDevice);
-    scene = sceneLoader.load(scenePath);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void SceneTest::loadShaders()
-{
-    const path assetsDirectory = getAssetsDirectory();
-    const path vertexShaderPath = assetsDirectory / "shaders/default.vert";
-    const path fragmentShaderPath = assetsDirectory / "shaders/default.frag";
-    const VertexFormat vertexFormat(
-        VertexFormat::COORDINATES
-        | VertexFormat::COLORS_3
-        | VertexFormat::NORMALS
-        | VertexFormat::TEXCOORDS);
-
-    const ShaderLoader shaderLoader(graphicsDevice);
-    vertexShader = shaderLoader.loadVertexShader(
-        vertexShaderPath,
-        "main",
-        vertexFormat);
-    fragmentShader = shaderLoader.loadFragmentShader(fragmentShaderPath, "main");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -114,12 +114,15 @@ void SceneTest::createDescriptorPool()
         {
             .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
             .descriptorCount = 1
-        },
-        {
-            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .descriptorCount = textureCount
         }
     };
+    if (vertexFormat.containsTexCoords()) {
+        poolSizes.emplace_back(
+            VkDescriptorPoolSize {
+                .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                .descriptorCount = textureCount
+            });
+    }
 
     const uint32_t maxSets = textureCount + 1;
 
@@ -507,7 +510,7 @@ void SceneTest::createPipeline()
         .pDynamicStates = dynamicStateEnables.data()
     };
 
-    const array<VkPipelineShaderStageCreateInfo, 2> shaderStages = {
+    const array<VkPipelineShaderStageCreateInfo, 2> shaderStages {
         vertexShader->getStageCreateInfo(),
         fragmentShader->getStageCreateInfo()
     };
@@ -537,7 +540,17 @@ void SceneTest::createPipeline()
         1,
         &pipelineCreateInfo,
         nullptr,
-        &graphicsPipeline));
+        &defaultPipeline));
+
+
+    rasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_LINE;
+    ThrowIfFailed(vkCreateGraphicsPipelines(
+        graphicsDevice->getLogicalDevice(),
+        VK_NULL_HANDLE,
+        1,
+        &pipelineCreateInfo,
+        nullptr,
+        &wireframePipeline));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -598,7 +611,7 @@ void SceneTest::createCommandBuffers()
         commandBuffer->beginRenderPass(renderPassBeginInfo);
         commandBuffer->setViewport(viewport);
         commandBuffer->setScissor(scissor);
-        commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+        commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, wireframe ? wireframePipeline : defaultPipeline);
         commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, uniformBufferDescriptorSet);
         commandBuffer->bindVertexBuffer(scene->getVertexBuffer());
         commandBuffer->bindIndexBuffer(scene->getIndexBuffer());
@@ -642,14 +655,16 @@ void SceneTest::drawSceneNode(
                 continue;
             }
 
-            const shared_ptr<Material>& material = scene->getMaterial(subMesh.materialIndex);
-            const shared_ptr<Texture2D>& baseColorTexture = material->getBaseColorTexture();
+            if (vertexFormat.containsTexCoords()) {
+                const shared_ptr<Material>& material = scene->getMaterial(subMesh.materialIndex);
+                const shared_ptr<Texture2D>& baseColorTexture = material->getBaseColorTexture();
 
-            commandBuffer->bindDescriptorSet(
-                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                pipelineLayout,
-                1,
-                *baseColorTexture->getSamplerDescriptorSet());
+                commandBuffer->bindDescriptorSet(
+                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    pipelineLayout,
+                    1,
+                    *baseColorTexture->getSamplerDescriptorSet());
+            }
 
             commandBuffer->drawIndexed(subMesh.indexCount, subMesh.firstIndex);
         }
@@ -662,16 +677,84 @@ void SceneTest::drawSceneNode(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneTest::update()
+void SceneTest::beginMainLoop()
 {
-    Application::update();
+    Application::beginMainLoop();
 
+    lockMouseCursor();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SceneTest::update(float deltaTime)
+{
+    Application::update(deltaTime);
+
+    updateCamera(deltaTime);
+    updateUniformBuffer();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SceneTest::updateCamera(float deltaTime)
+{
+    const float movementSpeed = 0.005f;
+    GLFWwindow* glfwWindow = window_->getGlfwWindow();
+
+    vec3 velocity {};
+
+    if (glfwGetKey(glfwWindow, GLFW_KEY_A) == GLFW_PRESS) {
+        velocity.x = -movementSpeed;
+    }
+    if (glfwGetKey(glfwWindow, GLFW_KEY_D) == GLFW_PRESS) {
+        velocity.x = movementSpeed;
+    }
+
+    if (glfwGetKey(glfwWindow, GLFW_KEY_UP) == GLFW_PRESS) {
+        velocity.y = movementSpeed;
+    }
+    if (glfwGetKey(glfwWindow, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        velocity.y = -movementSpeed;
+    }
+
+    if (glfwGetKey(glfwWindow, GLFW_KEY_W) == GLFW_PRESS) {
+        velocity.z = -movementSpeed;
+    }
+    if (glfwGetKey(glfwWindow, GLFW_KEY_S) == GLFW_PRESS) {
+        velocity.z = movementSpeed;
+    }
+
+    camera.setVelocity(velocity);
+
+    if (mouseCursorLocked) {
+        double x, y;
+        glfwGetCursorPos(window_->getGlfwWindow(), &x, &y);
+
+        vec2 offset = {
+            x - lastMousePos.x,
+            y - lastMousePos.y
+        };
+        lastMousePos = { x, y };
+
+        const float sensitivity = 0.1f;
+        offset *= sensitivity;
+
+        camera.addYaw(offset.x);
+        camera.addPitch(offset.y);
+    }
+
+    camera.update(deltaTime);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SceneTest::updateUniformBuffer()
+{
     const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
 
-    ubo.view = lookAt(vec3(-0.2f, 0.0f, 0.2f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
-    ubo.proj = perspective(radians(60.0f), swapChainDesc.extent.width / (float) swapChainDesc.extent.height, 0.1f, 1000.0f);
+    ubo.view = camera.getViewMatrix();
+    ubo.proj = perspective(radians(45.0f), swapChainDesc.extent.width / (float) swapChainDesc.extent.height, 0.1f, 1000.0f);
     ubo.proj[1][1] *= -1;
-    ubo.lightPos = vec4(5.0f, 5.0f, -5.0f, 1.0f);
 
     void* mappedMemory = nullptr;
     graphicsDevice->map(uniformBuffer, &mappedMemory);
@@ -681,11 +764,18 @@ void SceneTest::update()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void SceneTest::updateDevTools()
+{
+    if (devTools->checkBox("Wireframe", &wireframe)) {
+        createCommandBuffers();
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void SceneTest::cleanup()
 {
     uniformBuffer.reset();
-    vkDestroyDescriptorSetLayout(graphicsDevice->getLogicalDevice(), uniformBufferDSL, nullptr);
-    vkDestroyDescriptorSetLayout(graphicsDevice->getLogicalDevice(), imageSamplerDSL, nullptr);
     scene.reset();
     vertexShader.reset();
     fragmentShader.reset();
@@ -695,14 +785,61 @@ void SceneTest::cleanup()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void SceneTest::cleanupSwapChain()
+{
+    vkDestroyDescriptorSetLayout(graphicsDevice->getLogicalDevice(), uniformBufferDSL, nullptr);
+    vkDestroyDescriptorSetLayout(graphicsDevice->getLogicalDevice(), imageSamplerDSL, nullptr);
+    vkDestroyPipeline(graphicsDevice->getLogicalDevice(), wireframePipeline, nullptr);
+
+    Application::cleanupSwapChain();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void SceneTest::recreateSwapChain()
 {
     Application::recreateSwapChain();
 
-    vkDestroyDescriptorSetLayout(graphicsDevice->getLogicalDevice(), uniformBufferDSL, nullptr);
-    vkDestroyDescriptorSetLayout(graphicsDevice->getLogicalDevice(), imageSamplerDSL, nullptr);
-
     initGraphicsResources();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SceneTest::onKeyEvent(
+    const Window& window,
+    int key,
+    int scancode,
+    int action,
+    int mods)
+{
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+        glfwSetWindowShouldClose(window.getGlfwWindow(), GLFW_TRUE);
+    }
+
+    if (key == GLFW_KEY_ENTER && action == GLFW_PRESS) {
+        lockMouseCursor(true);
+    }
+    else if (mods & GLFW_MOD_CONTROL
+            && mods & GLFW_MOD_ALT
+            && action == GLFW_PRESS) {
+        lockMouseCursor(false);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SceneTest::lockMouseCursor(bool lock)
+{
+    double x, y;
+    glfwGetCursorPos(window_->getGlfwWindow(), &x, &y);
+    lastMousePos = { x, y };
+
+    glfwSetInputMode(
+        window_->getGlfwWindow(),
+        GLFW_CURSOR,
+        lock ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+
+    mouseCursorLocked = lock;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

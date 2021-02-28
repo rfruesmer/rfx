@@ -212,6 +212,7 @@ void DevTools::beginDraw(uint32_t frameIndex, uint32_t lastFPS)
     ImGui::Begin("DevTools", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Text("%s", graphicsDevice_->getDesc().properties.deviceName);
     ImGui::Text("%.2f ms/frame (%.1d fps)", (1000.0f / lastFPS), lastFPS);
+    ImGui::NewLine();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -285,6 +286,13 @@ DevTools::~DevTools()
 bool DevTools::sliderFloat(const char* caption, float* value, float min, float max)
 {
     return ImGui::SliderFloat(caption, value, min, max);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+bool DevTools::checkBox(const char* caption, bool* value)
+{
+    return ImGui::Checkbox(caption, value);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -360,6 +360,7 @@ cmake-*
 lib/
 
 # 3rd party artwork
+assets/models/
 assets/samples/
 assets/textures/
 assets/**/*.ktx

@@ -533,7 +533,7 @@ void TexturedQuadTest::createGraphicsPipeline()
         1,
         &pipelineInfo,
         nullptr,
-        &graphicsPipeline));
+        &defaultPipeline));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -581,7 +581,7 @@ void TexturedQuadTest::createCommandBuffers()
         const auto& commandBuffer = commandBuffers[i];
         commandBuffer->begin();
         commandBuffer->beginRenderPass(renderPassBeginInfo);
-        commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+        commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, defaultPipeline);
         commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, descriptorSets[i]);
         commandBuffer->bindVertexBuffers(vertexBuffers);
         commandBuffer->bindIndexBuffer(indexBuffer);
@@ -593,7 +593,7 @@ void TexturedQuadTest::createCommandBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedQuadTest::update()
+void TexturedQuadTest::update(float deltaTime)
 {
     const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
 

@@ -9,7 +9,10 @@ class WindowListener
 public:
     virtual ~WindowListener() = default;
 
-    virtual void onResized(const Window& window, int width, int height) = 0;
+    virtual void onKeyEvent(const Window& window, int key, int scancode, int action, int mods) {};
+    virtual void onResized(const Window& window, int width, int height) {};
+    virtual void onCursorEntered(const Window& window, bool entered) {};
+    virtual void onCursorPos(const Window& window, float x, float y) {};
 };
 
 class Window
@@ -26,7 +29,14 @@ public:
 
 private:
     static void onResize(GLFWwindow* window, int width, int height);
+    static void onKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods);
+    static void onCursorPos(GLFWwindow* window, double x, double y);
+    static void onCursorEntered(GLFWwindow* window, int entered);
+
+    void onKeyEvent(int key, int scancode, int action, int mods);
     void onResize(int width, int height);
+    void onCursorPos(float x, float y);
+    void onCursorEntered(bool entered);
 
     GLFWwindow* window = nullptr;
     int width_ = 0;

@@ -18,13 +18,14 @@ public:
 
     void run();
 
-    void onResized(const Window& window, int width, int height) override;
-
 protected:
     static std::filesystem::path getAssetsDirectory();
 
+    void onResized(const Window& window, int width, int height) override;
+
     virtual void initGraphics();
-    virtual void update();
+    virtual void beginMainLoop();
+    virtual void update(float deltaTime);
     virtual void cleanup();
     virtual void cleanupSwapChain();
     virtual void recreateSwapChain();
@@ -32,12 +33,12 @@ protected:
     void createFrameBuffers();
     void createSyncObjects();
 
-    std::shared_ptr<Window> window;
+    std::shared_ptr<Window> window_;
     std::unique_ptr<GraphicsContext> graphicsContext;
     std::shared_ptr<GraphicsDevice> graphicsDevice;
     std::vector<std::shared_ptr<CommandBuffer>> commandBuffers;
 
-    VkPipeline graphicsPipeline = VK_NULL_HANDLE;
+    VkPipeline defaultPipeline = VK_NULL_HANDLE;
     VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
     VkRenderPass renderPass = VK_NULL_HANDLE;
     VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
@@ -59,12 +60,15 @@ private:
     void initDevTools();
     void runMainLoop();
 
+    bool isRunning() const;
     void beginFrame();
     bool acquireNextImage();
+    void updateFrameDeltaTime();
     void drawDevTools();
     virtual void updateDevTools() {};
     void submitAndPresent();
     void endFrame();
+    void endMainLoop() const;
 
     void destroySyncObjects();
 
@@ -76,7 +80,10 @@ private:
     std::vector<VkFence> imagesInFlight;
     bool windowResized = false;
     bool paused = false;
-    StopWatch stopWatch;
+
+    StopWatch frameStopWatch;
+    StopWatch frameDeltaStopWatch;
+    float deltaTime = 0.0f;
 
     uint32_t frameCounter = 0;
     uint32_t lastFPS = 0;

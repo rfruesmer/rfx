@@ -9,15 +9,6 @@ namespace ranges = ranges;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-static void onKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void Window::create(const string& title, int width, int height)
 {
     window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
@@ -29,6 +20,8 @@ void Window::create(const string& title, int width, int height)
     glfwSetWindowUserPointer(window, this);
     glfwSetKeyCallback(window, onKeyEvent);
     glfwSetFramebufferSizeCallback(window, onResize);
+    glfwSetCursorEnterCallback(window, onCursorEntered);
+    glfwSetCursorPosCallback(window, onCursorPos);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -89,6 +82,66 @@ void Window::addListener(const shared_ptr<WindowListener>& listener)
     if (!contains(listeners, listener)) {
         listeners.push_back(listener);
     }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Window::onKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    auto rfxWindow = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+    rfxWindow->onKeyEvent(key, scancode, action, mods);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Window::onKeyEvent(int key, int scancode, int action, int mods)
+{
+    ranges::for_each(listeners,
+        [this, key, scancode, action, mods](const weak_ptr<WindowListener>& weakListener) {
+            if (auto listener = weakListener.lock()) {
+                listener->onKeyEvent(*this, key, scancode, action, mods);
+            }
+        });
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Window::onCursorPos(GLFWwindow* window, double x, double y)
+{
+    auto rfxWindow = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+    rfxWindow->onCursorPos(static_cast<float>(x), static_cast<float>(y));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Window::onCursorPos(float x, float y)
+{
+    ranges::for_each(listeners,
+        [this, x, y](const weak_ptr<WindowListener>& weakListener) {
+            if (auto listener = weakListener.lock()) {
+                listener->onCursorPos(*this, x, y);
+            }
+        });
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Window::onCursorEntered(GLFWwindow* window, int entered)
+{
+    auto rfxWindow = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+    rfxWindow->onCursorEntered(entered);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Window::onCursorEntered(bool entered)
+{
+    ranges::for_each(listeners,
+        [this, entered](const weak_ptr<WindowListener>& weakListener) {
+            if (auto listener = weakListener.lock()) {
+                listener->onCursorEntered(*this, entered);
+            }
+        });
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -25,7 +25,7 @@ public:
     explicit SceneLoaderImpl(shared_ptr<GraphicsDevice>&& graphicsDevice)
         : graphicsDevice(move(graphicsDevice)) {}
 
-    const shared_ptr<Scene>& load(const path& scenePath);
+    const shared_ptr<Scene>& load(const path& scenePath, const VertexFormat& vertexFormat);
     void clear();
     void loadImages();
     static vector<byte> convertToRGBA(const tinygltf::Image& gltfImage);
@@ -46,6 +46,7 @@ public:
 
     shared_ptr<GraphicsDevice> graphicsDevice;
     tinygltf::Model gltfModel;
+    VertexFormat vertexFormat_;
     shared_ptr<Scene> scene;
     vector<Vertex> vertices;
     vector<uint32_t> indices;
@@ -53,9 +54,13 @@ public:
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const shared_ptr<Scene>& SceneLoader::SceneLoaderImpl::load(const path& scenePath)
+const shared_ptr<Scene>& SceneLoader::SceneLoaderImpl::load(
+    const path& scenePath,
+    const VertexFormat& vertexFormat)
 {
     clear();
+
+    vertexFormat_ = vertexFormat;
 
     tinygltf::TinyGLTF gltfContext;
     string error;
@@ -288,14 +293,14 @@ void SceneLoader::SceneLoaderImpl::loadVertices(const tinygltf::Primitive& glTFP
         vertexCount = accessor.count;
     }
     // Get buffer data for vertex normals
-    if (glTFPrimitive.attributes.find("NORMAL") != glTFPrimitive.attributes.end()) {
+    if (vertexFormat_.containsNormals() && glTFPrimitive.attributes.find("NORMAL") != glTFPrimitive.attributes.end()) {
         const tinygltf::Accessor& accessor = gltfModel.accessors[glTFPrimitive.attributes.find("NORMAL")->second];
         const tinygltf::BufferView& view = gltfModel.bufferViews[accessor.bufferView];
         normalsBuffer = reinterpret_cast<const float*>(&(gltfModel.buffers[view.buffer].data[accessor.byteOffset + view.byteOffset]));
     }
     // Get buffer data for vertex texture coordinates
     // glTF supports multiple sets, we only load the first one
-    if (glTFPrimitive.attributes.find("TEXCOORD_0") != glTFPrimitive.attributes.end()) {
+    if (vertexFormat_.containsTexCoords() && glTFPrimitive.attributes.find("TEXCOORD_0") != glTFPrimitive.attributes.end()) {
         const tinygltf::Accessor& accessor = gltfModel.accessors[glTFPrimitive.attributes.find("TEXCOORD_0")->second];
         const tinygltf::BufferView& view = gltfModel.bufferViews[accessor.bufferView];
         texCoordsBuffer = reinterpret_cast<const float*>(&(gltfModel.buffers[view.buffer].data[accessor.byteOffset + view.byteOffset]));
@@ -306,8 +311,8 @@ void SceneLoader::SceneLoaderImpl::loadVertices(const tinygltf::Primitive& glTFP
         Vertex vertex {
             .pos = vec4(make_vec3(&positionBuffer[v * 3]), 1.0f),
             .color = vec3(1.0f),
-            .normal = normalize(vec3(normalsBuffer ? make_vec3(&normalsBuffer[v * 3]) : vec3(0.0f))),
-            .uv = texCoordsBuffer ? make_vec2(&texCoordsBuffer[v * 2]) : vec3(0.0f)
+//            .normal = normalize(vec3(normalsBuffer ? make_vec3(&normalsBuffer[v * 3]) : vec3(0.0f))),
+//            .uv = texCoordsBuffer ? make_vec2(&texCoordsBuffer[v * 2]) : vec3(0.0f)
         };
         vertices.push_back(vertex);
     }
@@ -440,9 +445,11 @@ SceneLoader::SceneLoader(shared_ptr<GraphicsDevice> graphicsDevice)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const shared_ptr<Scene>& SceneLoader::load(const path& scenePath)
+const shared_ptr<Scene>& SceneLoader::load(
+    const path& scenePath,
+    const VertexFormat& vertexFormat)
 {
-    return pimpl_->load(scenePath);
+    return pimpl_->load(scenePath, vertexFormat);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

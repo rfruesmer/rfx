@@ -26,7 +26,7 @@ private:
     void createGraphicsPipeline();
     void createCommandBuffers();
 
-    void update() override;
+    void update(float deltaTime) override;
 
     void cleanup() override;
     void cleanupSwapChain() override;

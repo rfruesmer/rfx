@@ -70,9 +70,11 @@ void Application::initGlfw()
 
 void Application::createWindow()
 {
-    window = make_unique<Window>();
-    window->create("rfx", 800, 450);
-    window->addListener(shared_from_this());
+    window_ = make_unique<Window>();
+    window_->create("rfx", 1200, 675);
+    window_->addListener(shared_from_this());
+
+    glfwSetInputMode(window_->getGlfwWindow(), GLFW_STICKY_KEYS, GLFW_TRUE);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -91,7 +93,7 @@ void Application::initGraphics()
 
 void Application::createGraphicsContext()
 {
-    graphicsContext = make_unique<GraphicsContext>(window);
+    graphicsContext = make_unique<GraphicsContext>(window_);
     graphicsContext->initialize();
 }
 
@@ -101,6 +103,7 @@ void Application::createGraphicsDevice()
 {
     VkPhysicalDeviceFeatures features {
         .geometryShader = VK_TRUE,
+        .fillModeNonSolid = VK_TRUE,
         .samplerAnisotropy = VK_TRUE
     };
 
@@ -115,8 +118,8 @@ void Application::createGraphicsDevice()
 void Application::createSwapChain()
 {
     graphicsDevice->createSwapChain(
-        window->getClientWidth(),
-        window->getClientHeight());
+        window_->getClientWidth(),
+        window_->getClientHeight());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -139,7 +142,7 @@ void Application::initDevTools()
 {
     if (devToolsEnabled) {
         devTools = make_unique<DevTools>(
-            window,
+            window_,
             graphicsContext,
             graphicsDevice);
     }
@@ -225,7 +228,9 @@ void Application::createSyncObjects()
 
 void Application::runMainLoop()
 {
-    while (!glfwWindowShouldClose(window->getGlfwWindow()))
+    beginMainLoop();
+
+    while (isRunning())
     {
         beginFrame();
 
@@ -235,7 +240,8 @@ void Application::runMainLoop()
         }
 
         if (acquireNextImage()) {
-            update();
+            updateFrameDeltaTime();
+            update(deltaTime);
             drawDevTools();
             submitAndPresent();
         }
@@ -243,21 +249,35 @@ void Application::runMainLoop()
         endFrame();
     }
 
-    vkDeviceWaitIdle(graphicsDevice->getLogicalDevice());
+    endMainLoop();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+bool Application::isRunning() const
+{
+    return !glfwWindowShouldClose(window_->getGlfwWindow());
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Application::beginMainLoop()
+{
+    frameDeltaStopWatch.start();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void Application::beginFrame()
 {
-    stopWatch.start();
+    frameStopWatch.start();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void Application::endFrame()
 {
-    StopWatch::TimePoint stopTime = stopWatch.stop();
+    StopWatch::TimePoint stopTime = frameStopWatch.stop();
     float fpsTimer = static_cast<float>(duration<double, milli>(stopTime - lastFPSUpdateTimePoint).count());
     if (fpsTimer >= 1000.0f) {
         lastFPS = static_cast<uint32_t>((float) frameCounter * (1000.0f / fpsTimer));
@@ -361,8 +381,8 @@ void Application::cleanup()
     graphicsDevice.reset();
     graphicsContext.reset();
 
-    glfwDestroyWindow(window->getGlfwWindow());
-    window = nullptr;
+    glfwDestroyWindow(window_->getGlfwWindow());
+    window_ = nullptr;
 
     glfwTerminate();
 }
@@ -402,7 +422,7 @@ void Application::cleanupSwapChain()
         static_cast<uint32_t>(commandBufferHandles.size()),
         commandBufferHandles.data());
 
-    vkDestroyPipeline(vkDevice, graphicsPipeline, nullptr);
+    vkDestroyPipeline(vkDevice, defaultPipeline, nullptr);
     vkDestroyPipelineLayout(vkDevice, pipelineLayout, nullptr);
     vkDestroyRenderPass(vkDevice, renderPass, nullptr);
 }
@@ -414,11 +434,9 @@ void Application::recreateSwapChain()
     graphicsDevice->waitIdle();
 
     devTools.reset();
-
     destroySyncObjects();
-    createSyncObjects();
-
     cleanupSwapChain();
+    createSyncObjects();
     createSwapChain();
     createMultiSamplingBuffer();
     createDepthBuffer();
@@ -436,9 +454,27 @@ void Application::onResized(const Window&, int width, int height)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Application::update()
+void Application::update(float deltaTime)
 {
     // do nothing
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Application::endMainLoop() const
+{
+    vkDeviceWaitIdle(graphicsDevice->getLogicalDevice());
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Application::updateFrameDeltaTime()
+{
+    frameDeltaStopWatch.stop();
+
+    deltaTime = duration<float, std::milli>(frameDeltaStopWatch.getElapsedTime()).count();
+
+    frameDeltaStopWatch.start();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

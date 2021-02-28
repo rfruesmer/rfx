@@ -491,7 +491,7 @@ void ColoredQuadTest::createGraphicsPipeline()
         1,
         &pipelineInfo,
         nullptr,
-        &graphicsPipeline));
+        &defaultPipeline));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -539,7 +539,7 @@ void ColoredQuadTest::createCommandBuffers()
         const auto& commandBuffer = commandBuffers[i];
         commandBuffer->begin();
         commandBuffer->beginRenderPass(renderPassBeginInfo);
-        commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+        commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, defaultPipeline);
         commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, descriptorSets[i]);
         commandBuffer->bindVertexBuffers(vertexBuffers);
         commandBuffer->bindIndexBuffer(indexBuffer);
@@ -551,7 +551,7 @@ void ColoredQuadTest::createCommandBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ColoredQuadTest::update()
+void ColoredQuadTest::update(float deltaTime)
 {
     static auto startTime = chrono::high_resolution_clock::now();
 

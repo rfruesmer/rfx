@@ -21,6 +21,7 @@ public:
     void endDraw();
 
     bool sliderFloat(const char* caption, float* value, float min, float max);
+    bool checkBox(const char* caption, bool* value);
 
     [[nodiscard]] VkCommandBuffer getCommandBuffer(uint32_t frameIndex) const;
 

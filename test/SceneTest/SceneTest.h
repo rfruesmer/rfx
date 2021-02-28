@@ -2,6 +2,7 @@
 
 #include "rfx/application/Application.h"
 #include "rfx/scene/Scene.h"
+#include "rfx/scene/FlyCamera.h"
 
 
 namespace rfx {
@@ -11,7 +12,6 @@ class SceneTest : public Application
     struct UniformBufferObject {
         glm::mat4 proj;
         glm::mat4 view;
-        glm::vec4 lightPos = glm::vec4(5.0f, 5.0f, -5.0f, 1.0f);
     };
 
 public:
@@ -19,13 +19,20 @@ public:
 
 protected:
     void initGraphics() override;
-    void update() override;
+    void beginMainLoop() override;
+    void update(float deltaTime) override;
+    void updateUniformBuffer();
+    void updateDevTools() override;
     void cleanup() override;
+    void cleanupSwapChain() override;
     void recreateSwapChain() override;
+
+    void onKeyEvent(const Window& window, int key, int scancode, int action, int mods) override;
 
 private:
     void loadScene();
     void loadShaders();
+    void initGraphicsResources();
     void createUniformBuffer();
     void createDescriptorPool();
     void createDescriptorSetLayouts();
@@ -37,7 +44,13 @@ private:
     void drawSceneNode(
         const std::shared_ptr<SceneNode>& sceneNode,
         const std::shared_ptr<CommandBuffer>& commandBuffer);
+    void updateCamera(float deltaTime);
+    void lockMouseCursor(bool lock = true);
 
+
+    const VertexFormat vertexFormat { VertexFormat::COORDINATES | VertexFormat::COLORS_3 };
+
+    VkPipeline wireframePipeline = VK_NULL_HANDLE;
 
     std::shared_ptr<Scene> scene;
     std::shared_ptr<Buffer> uniformBuffer;
@@ -47,8 +60,11 @@ private:
     VkDescriptorSetLayout imageSamplerDSL = VK_NULL_HANDLE;
     std::shared_ptr<VertexShader> vertexShader;
     std::shared_ptr<FragmentShader> fragmentShader;
+    bool wireframe = false;
 
-    void initGraphicsResources();
+    FlyCamera camera;
+    glm::vec2 lastMousePos;
+    bool mouseCursorLocked = false;
 };
 
 } // namespace rfx
