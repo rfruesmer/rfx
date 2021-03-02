@@ -51,7 +51,8 @@ void SceneTest::loadScene()
 {
     const path assetsPath = getAssetsDirectory();getAssetsDirectory();
 //    const path scenePath = assetsPath / "samples/vulkan_asset_pack_gltf/data/models/FlightHelmet/glTF/FlightHelmet.gltf";
-    const path scenePath = assetsPath / "models/quad/quad.gltf";
+//    const path scenePath = assetsPath / "models/quad/quad.gltf";
+    const path scenePath = assetsPath / "models/sphere/sphere.gltf";
 
     SceneLoader sceneLoader(graphicsDevice);
     scene = sceneLoader.load(scenePath, vertexFormat);
@@ -66,8 +67,8 @@ void SceneTest::loadShaders()
     const path assetsDirectory = getAssetsDirectory();
 //    const path vertexShaderPath = assetsDirectory / "shaders/default.vert";
 //    const path fragmentShaderPath = assetsDirectory / "shaders/default.frag";
-    const path vertexShaderPath = assetsDirectory / "shaders/quad.vert";
-    const path fragmentShaderPath = assetsDirectory / "shaders/quad.frag";
+    const path vertexShaderPath = assetsDirectory / "shaders/diffuse.vert";
+    const path fragmentShaderPath = assetsDirectory / "shaders/diffuse.frag";
 
     const ShaderLoader shaderLoader(graphicsDevice);
     vertexShader = shaderLoader.loadVertexShader(
@@ -81,7 +82,7 @@ void SceneTest::loadShaders()
 
 void SceneTest::initGraphicsResources()
 {
-    createUniformBuffer();
+    createUniformBuffers();
     createDescriptorPool();
     createDescriptorSetLayouts();
     createDescriptorSets();
@@ -94,41 +95,48 @@ void SceneTest::initGraphicsResources()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneTest::createUniformBuffer()
+void SceneTest::createUniformBuffers()
 {
-    uniformBuffer = graphicsDevice->createBuffer(
+    sceneUniformBuffer = graphicsDevice->createBuffer(
         sizeof(UniformBufferObject),
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-    graphicsDevice->bind(uniformBuffer);
+    graphicsDevice->bind(sceneUniformBuffer);
+
+    for (const auto& mesh : scene->getMeshes()) {
+        shared_ptr<Buffer> meshUniformBuffer = graphicsDevice->createBuffer(
+            sizeof(UniformBufferObject),
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+        graphicsDevice->bind(meshUniformBuffer);
+
+        void* mappedMemory = nullptr;
+        graphicsDevice->map(meshUniformBuffer, &mappedMemory);
+        memcpy(mappedMemory, &mesh->getWorldTransform(), sizeof(mat4));
+        graphicsDevice->unmap(meshUniformBuffer);
+
+        meshUniformBuffers.push_back(meshUniformBuffer);
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void SceneTest::createDescriptorPool()
 {
-    const uint32_t textureCount = scene->getTextures().size();
+    const uint32_t meshCount = scene->getMeshCount();
 
     vector<VkDescriptorPoolSize> poolSizes {
         {
             .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = 1
+            .descriptorCount = 1 + meshCount
         }
     };
-    if (vertexFormat.containsTexCoords()) {
-        poolSizes.emplace_back(
-            VkDescriptorPoolSize {
-                .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                .descriptorCount = textureCount
-            });
-    }
-
-    const uint32_t maxSets = textureCount + 1;
 
     VkDescriptorPoolCreateInfo poolCreateInfo {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .maxSets = maxSets,
+        .maxSets = 1 + meshCount,
         .poolSizeCount = static_cast<uint32_t>(poolSizes.size()),
         .pPoolSizes = poolSizes.data()
     };
@@ -144,45 +152,45 @@ void SceneTest::createDescriptorPool()
 
 void SceneTest::createDescriptorSetLayouts()
 {
-    VkDescriptorSetLayoutBinding uniformBufferBinding {
+    VkDescriptorSetLayoutBinding sceneDescSetLayoutBinding {
         .binding = 0,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .descriptorCount = 1,
-        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-        .pImmutableSamplers = nullptr // Optional
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT
     };
 
-    VkDescriptorSetLayoutCreateInfo uniformBufferCreateInfo {
+    VkDescriptorSetLayoutCreateInfo sceneDescSetLayoutCreateInfo {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .bindingCount = 1,
-        .pBindings = &uniformBufferBinding
+        .pBindings = &sceneDescSetLayoutBinding
     };
 
     ThrowIfFailed(vkCreateDescriptorSetLayout(
         graphicsDevice->getLogicalDevice(),
-        &uniformBufferCreateInfo,
+        &sceneDescSetLayoutCreateInfo,
         nullptr,
-        &uniformBufferDSL));
+        &sceneDescSetLayout));
 
-    VkDescriptorSetLayoutBinding imageSamplerBinding {
+    // ---
+
+    VkDescriptorSetLayoutBinding meshDescSetLayoutBinding {
         .binding = 0,
-        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .descriptorCount = 1,
-        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-        .pImmutableSamplers = nullptr
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT
     };
 
-    VkDescriptorSetLayoutCreateInfo imageSamplerCreateInfo {
+    VkDescriptorSetLayoutCreateInfo meshDescSetLayoutCreateInfo {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .bindingCount = 1,
-        .pBindings = &imageSamplerBinding
+        .pBindings = &meshDescSetLayoutBinding
     };
 
     ThrowIfFailed(vkCreateDescriptorSetLayout(
         graphicsDevice->getLogicalDevice(),
-        &imageSamplerCreateInfo,
+        &meshDescSetLayoutCreateInfo,
         nullptr,
-        &imageSamplerDSL));
+        &meshDescSetLayout));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -194,23 +202,23 @@ void SceneTest::createDescriptorSets()
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
             .descriptorPool = descriptorPool,
             .descriptorSetCount = 1,
-            .pSetLayouts = &uniformBufferDSL
+            .pSetLayouts = &sceneDescSetLayout
         };
 
         ThrowIfFailed(vkAllocateDescriptorSets(
             graphicsDevice->getLogicalDevice(),
             &allocInfo,
-            &uniformBufferDescriptorSet));
+            &sceneDescSet));
 
         VkDescriptorBufferInfo bufferInfo {
-            .buffer = uniformBuffer->getHandle(),
+            .buffer = sceneUniformBuffer->getHandle(),
             .offset = 0,
             .range = VK_WHOLE_SIZE,
         };
 
         VkWriteDescriptorSet writeDescriptorSet {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .dstSet = uniformBufferDescriptorSet,
+            .dstSet = sceneDescSet,
             .dstBinding = 0,
             .dstArrayElement = 0,
             .descriptorCount = 1,
@@ -226,38 +234,36 @@ void SceneTest::createDescriptorSets()
             nullptr);
     }
 
-    const auto textureSamplerDescriptorSetCount = static_cast<uint32_t>(scene->getTextures().size());
+    meshDescSets.resize(scene->getMeshCount());
 
-    const VkDescriptorSetAllocateInfo allocInfo {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .descriptorPool = descriptorPool,
-        .descriptorSetCount = 1,
-        .pSetLayouts = &imageSamplerDSL
-    };
+    for (uint32_t i = 0, count = scene->getMeshCount(); i < count; ++i) {
 
-    for (uint32_t i = 0; i < textureSamplerDescriptorSetCount; ++i) {
-
-        VkDescriptorSet* samplerDescriptorSet = scene->getTexture(i)->getSamplerDescriptorSet();
+        VkDescriptorSetAllocateInfo allocInfo {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+            .descriptorPool = descriptorPool,
+            .descriptorSetCount = 1,
+            .pSetLayouts = &meshDescSetLayout
+        };
 
         ThrowIfFailed(vkAllocateDescriptorSets(
             graphicsDevice->getLogicalDevice(),
             &allocInfo,
-            samplerDescriptorSet));
+            &meshDescSets[i]));
 
-        VkDescriptorImageInfo imageInfo {
-            .sampler = scene->getTextures().at(i)->getSampler(),
-            .imageView = scene->getTextures().at(i)->getImageView(),
-            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        VkDescriptorBufferInfo bufferInfo {
+            .buffer = meshUniformBuffers[i]->getHandle(),
+            .offset = 0,
+            .range = VK_WHOLE_SIZE,
         };
 
         VkWriteDescriptorSet writeDescriptorSet {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .dstSet = *samplerDescriptorSet,
+            .dstSet = meshDescSets[i],
             .dstBinding = 0,
             .dstArrayElement = 0,
             .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .pImageInfo = &imageInfo
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .pBufferInfo = &bufferInfo
         };
 
         vkUpdateDescriptorSets(
@@ -267,6 +273,7 @@ void SceneTest::createDescriptorSets()
             0,
             nullptr);
     }
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -391,9 +398,9 @@ void SceneTest::createRenderPass()
 
 void SceneTest::createPipelineLayout()
 {
-    array<VkDescriptorSetLayout, 2> descriptorSetLayouts = {
-        uniformBufferDSL,
-        imageSamplerDSL
+    vector<VkDescriptorSetLayout> descriptorSetLayouts = {
+        sceneDescSetLayout,
+        meshDescSetLayout
     };
 
     VkPushConstantRange pushConstantRange {
@@ -404,7 +411,7 @@ void SceneTest::createPipelineLayout()
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .setLayoutCount = descriptorSetLayouts.size(),
+        .setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size()),
         .pSetLayouts = descriptorSetLayouts.data(),
         .pushConstantRangeCount = 1,
         .pPushConstantRanges = &pushConstantRange
@@ -612,11 +619,11 @@ void SceneTest::createCommandBuffers()
         commandBuffer->setViewport(viewport);
         commandBuffer->setScissor(scissor);
         commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, wireframe ? wireframePipeline : defaultPipeline);
-        commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, uniformBufferDescriptorSet);
+//        commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, sceneDescSet);
         commandBuffer->bindVertexBuffer(scene->getVertexBuffer());
         commandBuffer->bindIndexBuffer(scene->getIndexBuffer());
 
-        drawSceneNode(scene->getRootNode(), commandBuffer);
+        drawScene(commandBuffer);
 
         commandBuffer->endRenderPass();
         commandBuffer->end();
@@ -625,38 +632,42 @@ void SceneTest::createCommandBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneTest::drawSceneNode(
-    const shared_ptr<SceneNode>& sceneNode,
-    const shared_ptr<CommandBuffer>& commandBuffer)
+void SceneTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
 {
+    for (size_t i = 0, count = scene->getMeshes().size(); i < count; ++i) {
 
-    mat4 localTransform = sceneNode->getLocalTransform();
-    weak_ptr<SceneNode> currentParentNodeWeak = sceneNode->getParent();
-    while (!currentParentNodeWeak.expired()) {
-        const auto currentParentNode = currentParentNodeWeak.lock();
-        if (currentParentNode == nullptr) {
-            break;
-        }
-        localTransform = currentParentNode->getLocalTransform() * localTransform;
-        currentParentNodeWeak = currentParentNode->getParent();
-    }
+        const vector<VkDescriptorSet> descriptorSets {
+            sceneDescSet,
+            meshDescSets[i]
+        };
 
-    commandBuffer->pushConstants(
-        pipelineLayout,
-        VK_SHADER_STAGE_VERTEX_BIT,
-        0,
-        sizeof(mat4),
-        &localTransform);
+        commandBuffer->bindDescriptorSets(
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            pipelineLayout,
+            descriptorSets);
 
-    for (const auto& mesh : sceneNode->getMeshes()) {
+
+        const auto& mesh = scene->getMesh(i);
         for (const auto& subMesh : mesh->getSubMeshes()) {
 
             if (subMesh.indexCount == 0) {
                 continue;
             }
 
+            const shared_ptr<Material>& material = scene->getMaterial(subMesh.materialIndex);
+            PushConstant pushConstant {
+                .Ld = { 1.0f, 1.0f, 1.0f, 1.0f },
+                .Kd = material->getBaseColorFactor()
+            };
+
+            commandBuffer->pushConstants(
+                pipelineLayout,
+                VK_SHADER_STAGE_VERTEX_BIT,
+                0,
+                sizeof(PushConstant),
+                &pushConstant);
+
             if (vertexFormat.containsTexCoords()) {
-                const shared_ptr<Material>& material = scene->getMaterial(subMesh.materialIndex);
                 const shared_ptr<Texture2D>& baseColorTexture = material->getBaseColorTexture();
 
                 commandBuffer->bindDescriptorSet(
@@ -668,10 +679,6 @@ void SceneTest::drawSceneNode(
 
             commandBuffer->drawIndexed(subMesh.indexCount, subMesh.firstIndex);
         }
-    }
-
-    for (const auto& childNode : sceneNode->getChildren()) {
-        drawSceneNode(childNode, commandBuffer);
     }
 }
 
@@ -752,14 +759,21 @@ void SceneTest::updateUniformBuffer()
 {
     const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
 
-    ubo.view = camera.getViewMatrix();
-    ubo.proj = perspective(radians(45.0f), swapChainDesc.extent.width / (float) swapChainDesc.extent.height, 0.1f, 1000.0f);
-    ubo.proj[1][1] *= -1;
+    mat4 proj = perspective(
+        radians(45.0f),
+        static_cast<float>(swapChainDesc.extent.width) / static_cast<float>(swapChainDesc.extent.height),
+        0.1f,
+        1000.0f);
+    proj[1][1] *= -1;
+
+    sceneUBO.viewMatrix = camera.getViewMatrix();
+    sceneUBO.projMatrix = proj;
+    sceneUBO.lightPos = sceneUBO.viewMatrix * vec4(5.0f, 5.0f, 2.0f, 1.0f); // TODO: move to light class
 
     void* mappedMemory = nullptr;
-    graphicsDevice->map(uniformBuffer, &mappedMemory);
-    memcpy(mappedMemory, &ubo, sizeof(ubo));
-    graphicsDevice->unmap(uniformBuffer);
+    graphicsDevice->map(sceneUniformBuffer, &mappedMemory);
+    memcpy(mappedMemory, &sceneUBO, sizeof(sceneUBO));
+    graphicsDevice->unmap(sceneUniformBuffer);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -775,7 +789,11 @@ void SceneTest::updateDevTools()
 
 void SceneTest::cleanup()
 {
-    uniformBuffer.reset();
+    sceneUniformBuffer.reset();
+    for (auto& meshUniformBuffer : meshUniformBuffers) {
+        meshUniformBuffer.reset();
+    }
+
     scene.reset();
     vertexShader.reset();
     fragmentShader.reset();
@@ -787,8 +805,8 @@ void SceneTest::cleanup()
 
 void SceneTest::cleanupSwapChain()
 {
-    vkDestroyDescriptorSetLayout(graphicsDevice->getLogicalDevice(), uniformBufferDSL, nullptr);
-    vkDestroyDescriptorSetLayout(graphicsDevice->getLogicalDevice(), imageSamplerDSL, nullptr);
+    vkDestroyDescriptorSetLayout(graphicsDevice->getLogicalDevice(), sceneDescSetLayout, nullptr);
+    vkDestroyDescriptorSetLayout(graphicsDevice->getLogicalDevice(), meshDescSetLayout, nullptr);
     vkDestroyPipeline(graphicsDevice->getLogicalDevice(), wireframePipeline, nullptr);
 
     Application::cleanupSwapChain();

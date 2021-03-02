@@ -6,20 +6,6 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Scene::setRootNode(shared_ptr<SceneNode> rootNode)
-{
-    rootNode_ = move(rootNode);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-const shared_ptr<SceneNode>& Scene::getRootNode() const
-{
-    return rootNode_;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void Scene::setVertexBuffer(shared_ptr<VertexBuffer> vertexBuffer)
 {
     vertexBuffer_ = move(vertexBuffer);
@@ -48,44 +34,72 @@ const shared_ptr<IndexBuffer>& Scene::getIndexBuffer() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void Scene::addMesh(unique_ptr<Mesh> mesh)
+{
+    meshes_.push_back(move(mesh));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const unique_ptr<Mesh>& Scene::getMesh(size_t index) const
+{
+    return meshes_[index];
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const vector<unique_ptr<Mesh>>& Scene::getMeshes() const
+{
+    return meshes_;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+uint32_t Scene::getMeshCount() const
+{
+    return meshes_.size();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void Scene::addMaterial(std::shared_ptr<Material> material)
 {
-    materials.push_back(move(material));
+    materials_.push_back(move(material));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 const shared_ptr<Material>& Scene::getMaterial(size_t index) const
 {
-    return materials[index];
+    return materials_[index];
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 const vector<shared_ptr<Material>>& Scene::getMaterials() const
 {
-    return materials;
+    return materials_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void Scene::addTexture(shared_ptr<Texture2D> texture)
 {
-    textures.push_back(move(texture));
+    textures_.push_back(move(texture));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 const shared_ptr<Texture2D>& Scene::getTexture(size_t index) const
 {
-    return textures[index];
+    return textures_[index];
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 const vector<shared_ptr<Texture2D>>& Scene::getTextures() const
 {
-    return textures;
+    return textures_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

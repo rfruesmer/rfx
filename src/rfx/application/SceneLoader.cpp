@@ -35,9 +35,9 @@ public:
     void loadNodes();
     void loadNode(
         const tinygltf::Node& node,
-        const shared_ptr<SceneNode>& parent);
-    static mat4 getLocalTransformFor(const tinygltf::Node& gltfNode) ;
-    unique_ptr<Mesh> loadMesh(const tinygltf::Mesh& gltfMesh);
+        const mat4& parentNodeWorldTransform);
+    static mat4 getLocalTransformOf(const tinygltf::Node& gltfNode) ;
+    unique_ptr<Mesh> loadMesh(const tinygltf::Mesh& gltfMesh, const mat4& worldTransform);
     void loadVertices(const tinygltf::Primitive& glTFPrimitive);
     uint32_t loadIndices(const tinygltf::Primitive& glTFPrimitive, uint32_t vertexStart);
 
@@ -195,9 +195,9 @@ void SceneLoader::SceneLoaderImpl::loadMaterial(size_t index)
 void SceneLoader::SceneLoaderImpl::loadNodes()
 {
     const tinygltf::Scene& gltfScene = gltfModel.scenes[0];
-    for (size_t i = 0; i < gltfScene.nodes.size(); i++) {
+    for (size_t i = 0; i < gltfScene.nodes.size(); ++i) {
         const tinygltf::Node& node = gltfModel.nodes[gltfScene.nodes[i]];
-        loadNode(node, nullptr);
+        loadNode(node, mat4 { 1.0f });
     }
 }
 
@@ -205,57 +205,58 @@ void SceneLoader::SceneLoaderImpl::loadNodes()
 
 void SceneLoader::SceneLoaderImpl::loadNode(
     const tinygltf::Node& gltfNode,
-    const shared_ptr<SceneNode>& parentNode)
+    const mat4& parentNodeWorldTransform)
 {
-    auto sceneNode = make_shared<SceneNode>(parentNode);
-
-    mat4 localTransform = getLocalTransformFor(gltfNode);
-    sceneNode->setLocalTransform(localTransform);
+    const mat4 localTransform = getLocalTransformOf(gltfNode);
+    const mat4 worldTransform = parentNodeWorldTransform * localTransform;
 
     for (size_t i = 0; i < gltfNode.children.size(); ++i) {
-        loadNode(gltfModel.nodes[gltfNode.children[i]], sceneNode);
+        loadNode(gltfModel.nodes[gltfNode.children[i]], worldTransform);
     }
 
     if (gltfNode.mesh > -1) {
-        sceneNode->addMesh(move(loadMesh(gltfModel.meshes[gltfNode.mesh])));
-    }
-
-    if (parentNode) {
-        parentNode->addChild(sceneNode);
-    }
-    else {
-        RFX_CHECK_STATE(scene->getRootNode() == nullptr, "");
-        scene->setRootNode(sceneNode);
+        scene->addMesh(move(loadMesh(gltfModel.meshes[gltfNode.mesh], worldTransform)));
     }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-mat4 SceneLoader::SceneLoaderImpl::getLocalTransformFor(const tinygltf::Node& gltfNode)
+mat4 SceneLoader::SceneLoaderImpl::getLocalTransformOf(const tinygltf::Node& gltfNode)
 {
-    mat4 localTransform {1.0f };
+    mat4 translation { 1.0f };
+    mat4 scale { 1.0f };
+    mat4 rotation { 1.0f };
+    mat4 matrix { 1.0f };
 
-    if (gltfNode.translation.size() == 3) {
-        localTransform = translate(localTransform, vec3(make_vec3(gltfNode.translation.data())));
+    if (!gltfNode.translation.empty()) {
+        translation = translate(translation, vec3(make_vec3(gltfNode.translation.data())));
     }
-    if (gltfNode.rotation.size() == 4) {
+
+    if (!gltfNode.scale.empty()) {
+        scale = glm::scale(scale, vec3(make_vec3(gltfNode.scale.data())));
+    }
+
+    if (!gltfNode.rotation.empty()) {
         quat q = make_quat(gltfNode.rotation.data());
-        localTransform *= mat4(q);
+        rotation *= mat4(q);
     }
-    if (gltfNode.scale.size() == 3) {
-        localTransform = scale(localTransform, vec3(make_vec3(gltfNode.scale.data())));
+
+    if (!gltfNode.matrix.empty()) {
+        matrix = make_mat4x4(gltfNode.matrix.data());
     }
-    if (gltfNode.matrix.size() == 16) {
-        localTransform = make_mat4x4(gltfNode.matrix.data());
-    }
-    return localTransform;
+
+    return translation * rotation * scale * matrix;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-unique_ptr<Mesh> SceneLoader::SceneLoaderImpl::loadMesh(const tinygltf::Mesh& gltfMesh)
+unique_ptr<Mesh> SceneLoader::SceneLoaderImpl::loadMesh(
+    const tinygltf::Mesh& gltfMesh,
+    const mat4& worldTransform)
 {
     auto mesh = make_unique<Mesh>();
+    mesh->setWorldTransform(worldTransform);
+
 
     for (size_t i = 0; i < gltfMesh.primitives.size(); ++i) {
         const tinygltf::Primitive& glTFPrimitive = gltfMesh.primitives[i];
@@ -310,8 +311,8 @@ void SceneLoader::SceneLoaderImpl::loadVertices(const tinygltf::Primitive& glTFP
     for (size_t v = 0; v < vertexCount; v++) {
         Vertex vertex {
             .pos = vec4(make_vec3(&positionBuffer[v * 3]), 1.0f),
-            .color = vec3(1.0f),
-//            .normal = normalize(vec3(normalsBuffer ? make_vec3(&normalsBuffer[v * 3]) : vec3(0.0f))),
+//            .color = vec3(1.0f),
+            .normal = normalize(vec3(normalsBuffer ? make_vec3(&normalsBuffer[v * 3]) : vec3(0.0f))),
 //            .uv = texCoordsBuffer ? make_vec2(&texCoordsBuffer[v * 2]) : vec3(0.0f)
         };
         vertices.push_back(vertex);

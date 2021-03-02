@@ -10,8 +10,22 @@ namespace rfx {
 class SceneTest : public Application
 {
     struct UniformBufferObject {
-        glm::mat4 proj;
-        glm::mat4 view;
+        glm::mat4 viewMatrix;
+        glm::mat4 projMatrix;
+        glm::vec4 lightPos;          // light position in eye coords
+    };
+
+    struct MeshUniformBufferObject {
+        glm::mat4 modelMatrix;
+    };
+
+    struct PushConstant {
+        glm::vec4 Ld;                // diffuse light intensity
+        glm::vec4 Kd;                // diffuse reflectivity (material property)
+    };
+
+    const VertexFormat vertexFormat {
+        VertexFormat::COORDINATES | VertexFormat::NORMALS
     };
 
 public:
@@ -33,7 +47,7 @@ private:
     void loadScene();
     void loadShaders();
     void initGraphicsResources();
-    void createUniformBuffer();
+    void createUniformBuffers();
     void createDescriptorPool();
     void createDescriptorSetLayouts();
     void createDescriptorSets();
@@ -41,30 +55,31 @@ private:
     void createPipelineLayout();
     void createPipeline();
     void createCommandBuffers();
-    void drawSceneNode(
-        const std::shared_ptr<SceneNode>& sceneNode,
-        const std::shared_ptr<CommandBuffer>& commandBuffer);
+    void drawScene(const std::shared_ptr<CommandBuffer>& commandBuffer);
     void updateCamera(float deltaTime);
     void lockMouseCursor(bool lock = true);
 
 
-    const VertexFormat vertexFormat { VertexFormat::COORDINATES | VertexFormat::COLORS_3 };
-
     VkPipeline wireframePipeline = VK_NULL_HANDLE;
+    bool wireframe = false;
 
     std::shared_ptr<Scene> scene;
-    std::shared_ptr<Buffer> uniformBuffer;
-    UniformBufferObject ubo {};
-    VkDescriptorSetLayout uniformBufferDSL = VK_NULL_HANDLE;
-    VkDescriptorSet uniformBufferDescriptorSet = VK_NULL_HANDLE;
-    VkDescriptorSetLayout imageSamplerDSL = VK_NULL_HANDLE;
     std::shared_ptr<VertexShader> vertexShader;
     std::shared_ptr<FragmentShader> fragmentShader;
-    bool wireframe = false;
 
     FlyCamera camera;
     glm::vec2 lastMousePos;
     bool mouseCursorLocked = false;
+
+    std::shared_ptr<Buffer> sceneUniformBuffer;
+    UniformBufferObject sceneUBO {};
+
+    VkDescriptorSetLayout sceneDescSetLayout;
+    VkDescriptorSet sceneDescSet {};
+
+    VkDescriptorSetLayout meshDescSetLayout;
+    std::vector<VkDescriptorSet> meshDescSets;
+    std::vector<std::shared_ptr<Buffer>> meshUniformBuffers; // TODO: refactor to sub-buffers
 };
 
 } // namespace rfx
