@@ -83,6 +83,13 @@ const vector<shared_ptr<Material>>& Scene::getMaterials() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+uint32_t Scene::getMaterialCount() const
+{
+    return materials_.size();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void Scene::addTexture(shared_ptr<Texture2D> texture)
 {
     textures_.push_back(move(texture));

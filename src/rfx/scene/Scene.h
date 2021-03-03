@@ -21,11 +21,12 @@ public:
     void addMesh(std::unique_ptr<Mesh> mesh);
     [[nodiscard]] const std::unique_ptr<Mesh>& getMesh(size_t index) const;
     [[nodiscard]] const std::vector<std::unique_ptr<Mesh>>& getMeshes() const;
-    uint32_t getMeshCount() const;
+    [[nodiscard]] uint32_t getMeshCount() const;
 
     void addMaterial(std::shared_ptr<Material> material);
     [[nodiscard]] const std::shared_ptr<Material>& getMaterial(size_t index) const;
     [[nodiscard]] const std::vector<std::shared_ptr<Material>>& getMaterials() const;
+    [[nodiscard]] uint32_t getMaterialCount() const;
 
     void addTexture(std::shared_ptr<Texture2D> texture);
     [[nodiscard]] const std::shared_ptr<Texture2D>& getTexture(size_t index) const;

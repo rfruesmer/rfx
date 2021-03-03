@@ -3,26 +3,14 @@
 #include "rfx/application/Application.h"
 #include "rfx/scene/Scene.h"
 #include "rfx/scene/FlyCamera.h"
+#include "effects/VertexDiffuseEffect.h"
 
 
 namespace rfx {
 
 class SceneTest : public Application
 {
-    struct UniformBufferObject {
-        glm::mat4 viewMatrix;
-        glm::mat4 projMatrix;
-        glm::vec4 lightPos;          // light position in eye coords
-    };
 
-    struct MeshUniformBufferObject {
-        glm::mat4 modelMatrix;
-    };
-
-    struct PushConstant {
-        glm::vec4 Ld;                // diffuse light intensity
-        glm::vec4 Kd;                // diffuse reflectivity (material property)
-    };
 
     const VertexFormat vertexFormat {
         VertexFormat::COORDINATES | VertexFormat::NORMALS
@@ -63,6 +51,8 @@ private:
     VkPipeline wireframePipeline = VK_NULL_HANDLE;
     bool wireframe = false;
 
+    std::unique_ptr<VertexDiffuseEffect> effect;
+
     std::shared_ptr<Scene> scene;
     std::shared_ptr<VertexShader> vertexShader;
     std::shared_ptr<FragmentShader> fragmentShader;
@@ -71,15 +61,8 @@ private:
     glm::vec2 lastMousePos;
     bool mouseCursorLocked = false;
 
-    std::shared_ptr<Buffer> sceneUniformBuffer;
-    UniformBufferObject sceneUBO {};
 
-    VkDescriptorSetLayout sceneDescSetLayout;
-    VkDescriptorSet sceneDescSet {};
 
-    VkDescriptorSetLayout meshDescSetLayout;
-    std::vector<VkDescriptorSet> meshDescSets;
-    std::vector<std::shared_ptr<Buffer>> meshUniformBuffers; // TODO: refactor to sub-buffers
 };
 
 } // namespace rfx
