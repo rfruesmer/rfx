@@ -4,6 +4,8 @@ link_libraries(glfw)
 function(buildTest TEST_NAME)
     SET(TEST_FOLDER ${CMAKE_CURRENT_SOURCE_DIR}/${TEST_NAME})
     file(GLOB SOURCE
+        ${TEST_FOLDER}/../*.cpp
+        ${TEST_FOLDER}/../*.h
         ${TEST_FOLDER}/*.cpp
         ${TEST_FOLDER}/**/*.cpp
         ${TEST_FOLDER}/**/*.h)
@@ -19,7 +21,7 @@ endfunction()
 set(TESTS
     ColoredQuadTest
     TexturedQuadTest
-    SceneTest
+        VertexDiffuseTest
 )
 
 buildTests()

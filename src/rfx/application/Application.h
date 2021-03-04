@@ -15,11 +15,12 @@ class Application : public std::enable_shared_from_this<Application>,
 {
 public:
     Application();
+    virtual ~Application() = default;
 
     void run();
 
 protected:
-    static std::filesystem::path getAssetsDirectory();
+    [[nodiscard]] static std::filesystem::path getAssetsDirectory();
 
     void onResized(const Window& window, int width, int height) override;
 

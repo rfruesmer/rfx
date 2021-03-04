@@ -346,7 +346,7 @@ void Application::submitAndPresent()
     };
     graphicsDevice->getGraphicsQueue()->submit(submitInfo, fencesInFlight[currentFrame]);
 
-    VkSwapchainKHR swapChains[] = {graphicsDevice->getSwapChain()->getHandle() };
+    VkSwapchainKHR swapChains[] = { graphicsDevice->getSwapChain()->getHandle() };
 
     VkPresentInfoKHR presentInfo = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,

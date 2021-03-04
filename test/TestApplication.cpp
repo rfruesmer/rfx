@@ -1,8 +1,6 @@
 #include "rfx/pch.h"
-#include "SceneTest.h"
-#include "rfx/application/SceneLoader.h"
+#include "TestApplication.h"
 #include "rfx/application/ShaderLoader.h"
-#include "rfx/common/Logger.h"
 
 
 using namespace rfx;
@@ -10,79 +8,28 @@ using namespace glm;
 using namespace std;
 using namespace std::filesystem;
 
-// ---------------------------------------------------------------------------------------------------------------------
-
-int main()
-{
-    try {
-        auto theApp = make_shared<SceneTest>();
-        theApp->run();
-    }
-    catch (const exception& ex) {
-        RFX_LOG_ERROR << ex.what() << endl;
-        return EXIT_FAILURE;
-    }
-
-    return EXIT_SUCCESS;
-}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-SceneTest::SceneTest()
+void TestApplication::loadShaders()
 {
-    devToolsEnabled = true;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void SceneTest::initGraphics()
-{
-    Application::initGraphics();
-
-    loadScene();
-    loadShaders();
-
-    initGraphicsResources();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void SceneTest::loadScene()
-{
-    const path assetsPath = getAssetsDirectory();getAssetsDirectory();
-//    const path scenePath = assetsPath / "samples/vulkan_asset_pack_gltf/data/models/FlightHelmet/glTF/FlightHelmet.gltf";
-//    const path scenePath = assetsPath / "models/quad/quad.gltf";
-    const path scenePath = assetsPath / "models/sphere/sphere.gltf";
-
-    SceneLoader sceneLoader(graphicsDevice);
-    scene = sceneLoader.load(scenePath, vertexFormat);
-
-    camera.setPosition(vec3(0.0f, 1.0f, 2.0f));
-
-    effect = make_unique<VertexDiffuseEffect>(graphicsDevice, scene);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void SceneTest::loadShaders()
-{
-    const path assetsDirectory = getAssetsDirectory();
-//    const path vertexShaderPath = assetsDirectory / "shaders/default.vert";
-//    const path fragmentShaderPath = assetsDirectory / "shaders/default.frag";
-    const path vertexShaderPath = assetsDirectory / "shaders/vertex_diffuse.vert";
-    const path fragmentShaderPath = assetsDirectory / "shaders/vertex_diffuse.frag";
+    const path shadersDirectory = getAssetsDirectory() / "shaders";
+    const path vertexShaderPath = shadersDirectory / effect->getVertexShaderFileName();
+    const path fragmentShaderPath = shadersDirectory / effect->getFragmentShaderFileName();
 
     const ShaderLoader shaderLoader(graphicsDevice);
     vertexShader = shaderLoader.loadVertexShader(
         vertexShaderPath,
         "main",
-        vertexFormat);
-    fragmentShader = shaderLoader.loadFragmentShader(fragmentShaderPath, "main");
+        effect->getVertexFormat());
+    fragmentShader = shaderLoader.loadFragmentShader(
+        fragmentShaderPath,
+        "main");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneTest::initGraphicsResources()
+void TestApplication::initGraphicsResources()
 {
     createUniformBuffers();
     createDescriptorPool();
@@ -97,58 +44,35 @@ void SceneTest::initGraphicsResources()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneTest::createUniformBuffers()
+void TestApplication::createUniformBuffers()
 {
     effect->createUniformBuffers();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneTest::createDescriptorPool()
+void TestApplication::createDescriptorPool()
 {
-    const uint32_t meshCount = scene->getMeshCount();
-    const uint32_t materialCount = scene->getMaterialCount();
-
-    vector<VkDescriptorPoolSize> poolSizes {
-        {
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = 1 + materialCount + meshCount
-        }
-    };
-
-    VkDescriptorPoolCreateInfo poolCreateInfo {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .maxSets = 1 + materialCount + meshCount,
-        .poolSizeCount = static_cast<uint32_t>(poolSizes.size()),
-        .pPoolSizes = poolSizes.data()
-    };
-
-    ThrowIfFailed(vkCreateDescriptorPool(
-        graphicsDevice->getLogicalDevice(),
-        &poolCreateInfo,
-        nullptr,
-        &descriptorPool));
-
-    effect->setDescriptorPool(descriptorPool);
+    effect->createDescriptorPool();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneTest::createDescriptorSetLayouts()
+void TestApplication::createDescriptorSetLayouts()
 {
     effect->createDescriptorSetLayouts();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneTest::createDescriptorSets()
+void TestApplication::createDescriptorSets()
 {
     effect->createDescriptorSets();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneTest::createRenderPass()
+void TestApplication::createRenderPass()
 {
     const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
@@ -266,7 +190,7 @@ void SceneTest::createRenderPass()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneTest::createPipelineLayout()
+void TestApplication::createPipelineLayout()
 {
     vector<VkDescriptorSetLayout> descriptorSetLayouts = effect->getDescriptorSetLayouts();
 
@@ -293,7 +217,7 @@ void SceneTest::createPipelineLayout()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneTest::createPipeline()
+void TestApplication::createPipeline()
 {
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
@@ -429,132 +353,7 @@ void SceneTest::createPipeline()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneTest::createCommandBuffers()
-{
-    const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
-    const SwapChainDesc& swapChainDesc = swapChain->getDesc();
-    const vector<VkFramebuffer>& swapChainFramebuffers = swapChain->getFramebuffers();
-    const unique_ptr<DepthBuffer>& depthBuffer = graphicsDevice->getDepthBuffer();
-
-
-    vector<VkClearValue> clearValues(1);
-    clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-    if (graphicsDevice->getMultiSampleCount() > VK_SAMPLE_COUNT_1_BIT) {
-        clearValues.resize(clearValues.size() + 1);
-        clearValues[clearValues.size() - 1].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-    }
-    if (depthBuffer) {
-        clearValues.resize(clearValues.size() + 1);
-        clearValues[clearValues.size() - 1].depthStencil = { 1.0f, 0 };
-    }
-
-    VkRenderPassBeginInfo renderPassBeginInfo = {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .renderPass = renderPass,
-        .renderArea = {
-            .offset = { 0, 0 },
-            .extent = swapChainDesc.extent
-        },
-        .clearValueCount = static_cast<uint32_t>(clearValues.size()),
-        .pClearValues = clearValues.data()
-    };
-
-    VkViewport viewport = {
-        .x = 0.0f,
-        .y = 0.0f,
-        .width = static_cast<float>(swapChainDesc.extent.width),
-        .height = static_cast<float>(swapChainDesc.extent.height),
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f
-    };
-
-    VkRect2D scissor = {
-        .offset = {0, 0},
-        .extent = swapChainDesc.extent
-    };
-
-    VkCommandPool graphicsCommandPool = graphicsDevice->getGraphicsCommandPool();
-    commandBuffers = graphicsDevice->createCommandBuffers(graphicsCommandPool, swapChainFramebuffers.size());
-
-    for (size_t i = 0; i < commandBuffers.size(); ++i) {
-
-        renderPassBeginInfo.framebuffer = swapChainFramebuffers[i];
-
-        const auto& commandBuffer = commandBuffers[i];
-        commandBuffer->begin();
-        commandBuffer->beginRenderPass(renderPassBeginInfo);
-        commandBuffer->setViewport(viewport);
-        commandBuffer->setScissor(scissor);
-        commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, wireframe ? wireframePipeline : defaultPipeline);
-        commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, effect->getSceneDescSet());
-        commandBuffer->bindVertexBuffer(scene->getVertexBuffer());
-        commandBuffer->bindIndexBuffer(scene->getIndexBuffer());
-
-        drawScene(commandBuffer);
-
-        commandBuffer->endRenderPass();
-        commandBuffer->end();
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void SceneTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
-{
-    const vector<VkDescriptorSet>& meshDescSets = effect->getMeshDescSets();
-    const vector<VkDescriptorSet>& materialDescSets = effect->getMaterialDescSets();
-    
-    for (size_t i = 0, count = scene->getMeshes().size(); i < count; ++i) {
-
-        commandBuffer->bindDescriptorSet(
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            pipelineLayout,
-            1,
-            meshDescSets[i]);
-
-        const auto& mesh = scene->getMesh(i);
-        for (const auto& subMesh : mesh->getSubMeshes()) {
-
-            if (subMesh.indexCount == 0) {
-                continue;
-            }
-
-            const shared_ptr<Material>& material = scene->getMaterial(subMesh.materialIndex);
-//            PushConstant pushConstant {
-//                .Kd = material->getBaseColorFactor()
-//            };
-//
-//            commandBuffer->pushConstants(
-//                pipelineLayout,
-//                VK_SHADER_STAGE_VERTEX_BIT,
-//                0,
-//                sizeof(PushConstant),
-//                &pushConstant);
-
-            commandBuffer->bindDescriptorSet(
-                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                pipelineLayout,
-                2,
-                materialDescSets[subMesh.materialIndex]);
-
-            if (vertexFormat.containsTexCoords()) {
-                const shared_ptr<Texture2D>& baseColorTexture = material->getBaseColorTexture();
-
-                commandBuffer->bindDescriptorSet(
-                    VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    pipelineLayout,
-                    1,
-                    *baseColorTexture->getSamplerDescriptorSet());
-            }
-
-            commandBuffer->drawIndexed(subMesh.indexCount, subMesh.firstIndex);
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void SceneTest::beginMainLoop()
+void TestApplication::beginMainLoop()
 {
     Application::beginMainLoop();
 
@@ -563,17 +362,33 @@ void SceneTest::beginMainLoop()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneTest::update(float deltaTime)
+void TestApplication::lockMouseCursor(bool lock)
 {
-    Application::update(deltaTime);
+    double x, y;
+    glfwGetCursorPos(window_->getGlfwWindow(), &x, &y);
+    lastMousePos = { x, y };
 
-    updateCamera(deltaTime);
-    updateUniformBuffer();
+    glfwSetInputMode(
+        window_->getGlfwWindow(),
+        GLFW_CURSOR,
+        lock ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+
+    mouseCursorLocked = lock;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneTest::updateCamera(float deltaTime)
+void TestApplication::update(float deltaTime)
+{
+    Application::update(deltaTime);
+
+    updateCamera(deltaTime);
+    updateSceneData();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::updateCamera(float deltaTime)
 {
     const float movementSpeed = 0.005f;
     GLFWwindow* glfwWindow = window_->getGlfwWindow();
@@ -625,30 +440,15 @@ void SceneTest::updateCamera(float deltaTime)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneTest::updateUniformBuffer()
+void TestApplication::updateSceneData()
 {
-    const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
-
-    mat4 proj = perspective(
-        radians(45.0f),
-        static_cast<float>(swapChainDesc.extent.width) / static_cast<float>(swapChainDesc.extent.height),
-        0.1f,
-        1000.0f);
-    proj[1][1] *= -1;
-
-    effect->setProjection(proj); // TODO: only set on resize
     effect->setViewMatrix(camera.getViewMatrix());
-
-    // TODO: set only once
-    effect->setLightPosition(vec3(5.0f, 5.0f, 2.0f)); // TODO: move to light class
-    effect->setLightDiffuseColor({ 1.0f, 1.0f, 1.0f });
-
-    effect->updateSceneDataMemory();
+    effect->updateSceneDataBuffer();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneTest::updateDevTools()
+void TestApplication::updateDevTools()
 {
     if (devTools->checkBox("Wireframe", &wireframe)) {
         createCommandBuffers();
@@ -657,7 +457,7 @@ void SceneTest::updateDevTools()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneTest::cleanup()
+void TestApplication::cleanup()
 {
     effect.reset();
     scene.reset();
@@ -669,7 +469,7 @@ void SceneTest::cleanup()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneTest::cleanupSwapChain()
+void TestApplication::cleanupSwapChain()
 {
     if (effect) {
         effect->cleanupSwapChain();
@@ -682,16 +482,17 @@ void SceneTest::cleanupSwapChain()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneTest::recreateSwapChain()
+void TestApplication::recreateSwapChain()
 {
     Application::recreateSwapChain();
 
     initGraphicsResources();
+    updateProjection();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneTest::onKeyEvent(
+void TestApplication::onKeyEvent(
     const Window& window,
     int key,
     int scancode,
@@ -706,27 +507,26 @@ void SceneTest::onKeyEvent(
         lockMouseCursor(true);
     }
     else if (mods & GLFW_MOD_CONTROL
-            && mods & GLFW_MOD_ALT
-            && action == GLFW_PRESS) {
+             && mods & GLFW_MOD_ALT
+             && action == GLFW_PRESS) {
         lockMouseCursor(false);
     }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneTest::lockMouseCursor(bool lock)
+void TestApplication::updateProjection()
 {
-    double x, y;
-    glfwGetCursorPos(window_->getGlfwWindow(), &x, &y);
-    lastMousePos = { x, y };
+    const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
 
-    glfwSetInputMode(
-        window_->getGlfwWindow(),
-        GLFW_CURSOR,
-        lock ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+    mat4 proj = perspective(
+        radians(45.0f),
+        static_cast<float>(swapChainDesc.extent.width) / static_cast<float>(swapChainDesc.extent.height),
+        0.1f,
+        1000.0f);
+    proj[1][1] *= -1;
 
-    mouseCursorLocked = lock;
+    effect->setProjectionMatrix(proj);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-

@@ -30,6 +30,21 @@ void VertexDiffuseEffect::cleanupSwapChain()
     vkDestroyDescriptorSetLayout(device, sceneDescSetLayout_, nullptr);
     vkDestroyDescriptorSetLayout(device, meshDescSetLayout_, nullptr);
     vkDestroyDescriptorSetLayout(device, materialDescSetLayout_, nullptr);
+    vkDestroyDescriptorPool(device, descriptorPool_, nullptr);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+string VertexDiffuseEffect::getVertexShaderFileName() const
+{
+    return "vertex_diffuse.vert";
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+string VertexDiffuseEffect::getFragmentShaderFileName() const
+{
+    return "vertex_diffuse.frag";
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -64,12 +79,7 @@ void VertexDiffuseEffect::createMeshDataBuffers()
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
         graphicsDevice_->bind(meshDataBuffer);
-
-        void* mappedMemory = nullptr;
-        graphicsDevice_->map(meshDataBuffer, &mappedMemory);
-        memcpy(mappedMemory, &mesh->getWorldTransform(), sizeof(mat4));
-        graphicsDevice_->unmap(meshDataBuffer);
-
+        meshDataBuffer->load(sizeof(mat4), &mesh->getWorldTransform());
         meshDataBuffers_.push_back(meshDataBuffer);
     }
 }
@@ -85,21 +95,37 @@ void VertexDiffuseEffect::createMaterialDataBuffers()
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
         graphicsDevice_->bind(materialUniformBuffer);
-
-        void* mappedMemory = nullptr;
-        graphicsDevice_->map(materialUniformBuffer, &mappedMemory);
-        memcpy(mappedMemory, &material->getBaseColorFactor(), sizeof(vec4));
-        graphicsDevice_->unmap(materialUniformBuffer);
-
+        materialUniformBuffer->load(sizeof(vec4), &material->getBaseColorFactor());
         materialDataBuffers_.push_back(materialUniformBuffer);
     }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseEffect::setDescriptorPool(VkDescriptorPool descriptorPool)
+void VertexDiffuseEffect::createDescriptorPool()
 {
-    descriptorPool_ = descriptorPool;
+    const uint32_t meshCount = scene_->getMeshCount();
+    const uint32_t materialCount = scene_->getMaterialCount();
+
+    vector<VkDescriptorPoolSize> poolSizes {
+        {
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = 1 + materialCount + meshCount
+        }
+    };
+
+    VkDescriptorPoolCreateInfo poolCreateInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .maxSets = 1 + materialCount + meshCount,
+        .poolSizeCount = static_cast<uint32_t>(poolSizes.size()),
+        .pPoolSizes = poolSizes.data()
+    };
+
+    ThrowIfFailed(vkCreateDescriptorPool(
+        graphicsDevice_->getLogicalDevice(),
+        &poolCreateInfo,
+        nullptr,
+        &descriptorPool_));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -335,28 +361,28 @@ vector<VkDescriptorSetLayout> VertexDiffuseEffect::getDescriptorSetLayouts()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VkDescriptorSet VertexDiffuseEffect::getSceneDescSet() const
+VkDescriptorSet VertexDiffuseEffect::getSceneDescriptorSet() const
 {
     return sceneDescSet_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const vector<VkDescriptorSet>& VertexDiffuseEffect::getMaterialDescSets() const
+const vector<VkDescriptorSet>& VertexDiffuseEffect::getMaterialDescriptorSets() const
 {
     return materialDescSets_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const vector<VkDescriptorSet>& VertexDiffuseEffect::getMeshDescSets() const
+const vector<VkDescriptorSet>& VertexDiffuseEffect::getMeshDescriptorSets() const
 {
     return meshDescSets_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseEffect::setProjection(const mat4& projection)
+void VertexDiffuseEffect::setProjectionMatrix(const glm::mat4& projection)
 {
     sceneData_.projMatrix = projection;
 }
@@ -386,12 +412,9 @@ void VertexDiffuseEffect::setLightDiffuseColor(const vec3& diffuseColor)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseEffect::updateSceneDataMemory()
+void VertexDiffuseEffect::updateSceneDataBuffer()
 {
-    void* mappedMemory = nullptr;
-    graphicsDevice_->map(sceneDataBuffer_, &mappedMemory);
-    memcpy(mappedMemory, &sceneData_, sizeof(SceneData));
-    graphicsDevice_->unmap(sceneDataBuffer_);
+    sceneDataBuffer_->load(sizeof(SceneData), &sceneData_);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
