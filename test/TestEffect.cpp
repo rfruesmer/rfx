@@ -28,7 +28,7 @@ void TestEffect::createUniformBuffers()
 void TestEffect::createSceneDataBuffer()
 {
     sceneDataBuffer_ = graphicsDevice_->createBuffer(
-        sizeof(SceneData),
+        getSceneDataSize(),
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
@@ -351,40 +351,6 @@ const vector<VkDescriptorSet>& TestEffect::getMaterialDescriptorSets() const
 const vector<VkDescriptorSet>& TestEffect::getMeshDescriptorSets() const
 {
     return meshDescSets_;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TestEffect::setProjectionMatrix(const glm::mat4& projection)
-{
-    sceneData_.projMatrix = projection;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TestEffect::setViewMatrix(const mat4& viewMatrix)
-{
-    sceneData_.viewMatrix = viewMatrix;
-    sceneData_.lightPos = viewMatrix * vec4(light_.getPosition(), 1.0f);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TestEffect::setLight(const PointLight& light)
-{
-    light_ = light;
-
-    sceneData_.lightPos = sceneData_.viewMatrix * vec4(light.getPosition(), 1.0f);
-    sceneData_.La = vec4(light.getAmbient(), 1.0f);
-    sceneData_.Ld = vec4(light.getDiffuse(), 1.0f);
-    sceneData_.Ls = vec4(light.getSpecular(), 1.0f);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TestEffect::updateSceneDataBuffer()
-{
-    sceneDataBuffer_->load(sizeof(SceneData), &sceneData_);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

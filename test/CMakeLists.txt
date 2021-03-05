@@ -23,6 +23,7 @@ set(TESTS
     TexturedQuadTest
     VertexDiffuseTest
     FragmentPhongTest
+    SpotLightTest
 )
 
 buildTests()

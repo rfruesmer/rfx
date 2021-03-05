@@ -1,20 +1,21 @@
 #pragma once
 
 #include "TestApplication.h"
-#include "FragmentPhongEffect.h"
+#include "SpotLightEffect.h"
 
 
 namespace rfx {
 
-class FragmentPhongTest : public TestApplication
+class SpotLightTest : public TestApplication
 {
-    static const inline VertexFormat VERTEX_FORMAT = FragmentPhongEffect::VERTEX_FORMAT;
+    static const inline VertexFormat VERTEX_FORMAT = SpotLightEffect::VERTEX_FORMAT;
 
 public:
-    FragmentPhongTest();
+    SpotLightTest();
 
 protected:
     void initGraphics() override;
+
     void updateProjection() override;
     void updateSceneData() override;
 
@@ -23,8 +24,8 @@ private:
     void createCommandBuffers() override;
     void drawScene(const std::shared_ptr<CommandBuffer>& commandBuffer);
 
-    PointLight light;
-    FragmentPhongEffect* effectImpl = nullptr;
+    SpotLight light;
+    SpotLightEffect* effectImpl = nullptr;
 };
 
 } // namespace rfx

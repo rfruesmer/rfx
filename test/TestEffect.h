@@ -2,7 +2,7 @@
 
 #include "rfx/scene/Effect.h"
 #include "rfx/scene/Scene.h"
-#include "rfx/scene/PointLight.h"
+//#include "rfx/scene/PointLight.h"
 #include "rfx/graphics/GraphicsDevice.h"
 
 
@@ -15,16 +15,12 @@ public:
         std::shared_ptr<GraphicsDevice> graphicsDevice,
         std::shared_ptr<Scene> scene);
 
+    [[nodiscard]] virtual size_t getSceneDataSize() const = 0;
+
     void createUniformBuffers() override;
     void createDescriptorPool() override;
     void createDescriptorSetLayouts() override;
     void createDescriptorSets() override;
-
-    void setProjectionMatrix(const glm::mat4& projection) override;
-    void setViewMatrix(const glm::mat4& viewMatrix) override;
-    void setLight(const PointLight& light);
-
-    void updateSceneDataBuffer() override;
 
     void cleanupSwapChain() override;
 
@@ -34,14 +30,14 @@ public:
     [[nodiscard]] const std::vector<VkDescriptorSet>& getMeshDescriptorSets() const override;
 
 protected:
-    struct SceneData {
-        glm::mat4 viewMatrix;
-        glm::mat4 projMatrix;
-        glm::vec4 lightPos;          // light position in eye coords
-        glm::vec4 La;                // Ambient light intensity
-        glm::vec4 Ld;                // Diffuse light intensity
-        glm::vec4 Ls;                // Specular light intensity
-    };
+//    struct SceneData {
+//        glm::mat4 viewMatrix;
+//        glm::mat4 projMatrix;
+//        glm::vec4 lightPos;          // light position in eye coords
+//        glm::vec4 La;                // Ambient light intensity
+//        glm::vec4 Ld;                // Diffuse light intensity
+//        glm::vec4 Ls;                // Specular light intensity
+//    };
 
     struct MeshData {
         glm::mat4 modelMatrix;
@@ -67,8 +63,8 @@ protected:
     VkDescriptorPool descriptorPool_ = nullptr;
 
     std::shared_ptr<Scene> scene_;
-    SceneData sceneData_ {};
-    PointLight light_;
+//    SceneData sceneData_ {};
+//    PointLight light_;
 
     VkDescriptorSetLayout sceneDescSetLayout_ = nullptr;
     VkDescriptorSet sceneDescSet_ {};

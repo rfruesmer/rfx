@@ -440,14 +440,6 @@ void TestApplication::updateCamera(float deltaTime)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestApplication::updateSceneData()
-{
-    effect->setViewMatrix(camera.getViewMatrix());
-    effect->updateSceneDataBuffer();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void TestApplication::updateDevTools()
 {
     if (devTools->checkBox("Wireframe", &wireframe)) {
@@ -516,7 +508,7 @@ void TestApplication::onKeyEvent(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestApplication::updateProjection()
+mat4 TestApplication::calcDefaultProjection()
 {
     const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
 
@@ -527,7 +519,7 @@ void TestApplication::updateProjection()
         1000.0f);
     proj[1][1] *= -1;
 
-    effect->setProjectionMatrix(proj);
+    return proj;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

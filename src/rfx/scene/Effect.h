@@ -14,11 +14,6 @@ public:
     virtual void createDescriptorSetLayouts() = 0;
     virtual void createDescriptorSets() = 0;
 
-    virtual void setProjectionMatrix(const glm::mat4& projection) = 0;
-    virtual void setViewMatrix(const glm::mat4& viewMatrix) = 0;
-
-    virtual void updateSceneDataBuffer() = 0;
-
     virtual void cleanupSwapChain() = 0;
 
     [[nodiscard]] virtual VertexFormat getVertexFormat() const = 0;

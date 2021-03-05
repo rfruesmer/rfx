@@ -2,25 +2,25 @@
 
 #include "TestEffect.h"
 #include "rfx/scene/Scene.h"
-#include "rfx/scene/PointLight.h"
+#include "rfx/scene/SpotLight.h"
 
 
 namespace rfx {
 
-class FragmentPhongEffect : public TestEffect
+class SpotLightEffect : public TestEffect
 {
 public:
     static inline const VertexFormat VERTEX_FORMAT {
         VertexFormat::COORDINATES | VertexFormat::NORMALS
     };
 
-    FragmentPhongEffect(
+    SpotLightEffect(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,
         const std::shared_ptr<Scene>& scene);
 
     void setProjectionMatrix(const glm::mat4& projection);
     void setViewMatrix(const glm::mat4& viewMatrix);
-    void setLight(const PointLight& light);
+    void setLight(const SpotLight& light);
 
     [[nodiscard]] size_t getSceneDataSize() const override;
     void updateSceneDataBuffer();
@@ -37,10 +37,13 @@ private:
         glm::vec4 La;                // Ambient light intensity
         glm::vec4 Ld;                // Diffuse light intensity
         glm::vec4 Ls;                // Specular light intensity
+        glm::vec3 spotDirection;     // Direction of the spotlight in eye coords
+        float spotExponent = 0.0f;   // Angular attenuation exponent
+        float spotCutoff = 0.0f;     // Cutoff angle (0-90 in radians)
     };
 
     SceneData sceneData_ {};
-    PointLight light_;
+    SpotLight light_;
 };
 
 } // namespace rfx
