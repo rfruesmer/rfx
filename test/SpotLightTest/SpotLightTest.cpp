@@ -55,9 +55,7 @@ void SpotLightTest::loadScene()
     scene = sceneLoader.load(scenePath, VERTEX_FORMAT);
     camera.setPosition({0.0f, 1.0f, 2.0f});
     light.setPosition({0.0f, 20.0f, 0.0f});
-    light.setAmbient({0.01f, 0.00f, 0.00f});
-    light.setDiffuse({0.0f, 0.0f, 1.0f});
-//    light.setSpecular({1.5f, 1.5f, 1.5f});
+    light.setColor({0.0f, 0.0f, 1.0f});
     light.setDirection({0.0f, -1.0f, 0.0f});
     light.setExponent(50.0f);
     light.setCutoff(radians(15.0f));

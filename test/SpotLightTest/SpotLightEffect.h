@@ -33,10 +33,10 @@ private:
     struct SceneData {
         glm::mat4 viewMatrix;
         glm::mat4 projMatrix;
-        glm::vec4 lightPos;          // light position in eye coords
-        glm::vec4 La;                // Ambient light intensity
-        glm::vec4 Ld;                // Diffuse light intensity
-        glm::vec4 Ls;                // Specular light intensity
+        glm::vec3 lightPos;          // light position in eye coords
+        [[maybe_unused]] float pad1;
+        glm::vec3 lightColor;
+        [[maybe_unused]] float pad2;
         glm::vec3 spotDirection;     // Direction of the spotlight in eye coords
         float spotExponent = 0.0f;   // Angular attenuation exponent
         float spotCutoff = 0.0f;     // Cutoff angle (0-90 in radians)

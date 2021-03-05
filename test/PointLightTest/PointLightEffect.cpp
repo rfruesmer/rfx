@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "FragmentPhongEffect.h"
+#include "PointLightEffect.h"
 
 
 using namespace rfx;
@@ -9,35 +9,35 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-FragmentPhongEffect::FragmentPhongEffect(
+PointLightEffect::PointLightEffect(
     const std::shared_ptr<GraphicsDevice>& graphicsDevice,
     const std::shared_ptr<Scene>& scene)
         : TestEffect(graphicsDevice, scene) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-string FragmentPhongEffect::getVertexShaderFileName() const
+string PointLightEffect::getVertexShaderFileName() const
 {
-    return "fragment_phong.vert";
+    return "pointlight.vert";
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-string FragmentPhongEffect::getFragmentShaderFileName() const
+string PointLightEffect::getFragmentShaderFileName() const
 {
-    return "fragment_phong.frag";
+    return "pointlight.frag";
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void FragmentPhongEffect::setProjectionMatrix(const glm::mat4& projection)
+void PointLightEffect::setProjectionMatrix(const glm::mat4& projection)
 {
     sceneData_.projMatrix = projection;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void FragmentPhongEffect::setViewMatrix(const mat4& viewMatrix)
+void PointLightEffect::setViewMatrix(const mat4& viewMatrix)
 {
     sceneData_.viewMatrix = viewMatrix;
     sceneData_.lightPos = viewMatrix * vec4(light_.getPosition(), 1.0f);
@@ -45,26 +45,24 @@ void FragmentPhongEffect::setViewMatrix(const mat4& viewMatrix)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void FragmentPhongEffect::setLight(const PointLight& light)
+void PointLightEffect::setLight(const PointLight& light)
 {
     light_ = light;
 
     sceneData_.lightPos = sceneData_.viewMatrix * vec4(light.getPosition(), 1.0f);
-    sceneData_.La = vec4(light.getAmbient(), 1.0f);
-    sceneData_.Ld = vec4(light.getDiffuse(), 1.0f);
-    sceneData_.Ls = vec4(light.getSpecular(), 1.0f);
+    sceneData_.lightColor = vec4(light.getColor(), 1.0f);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-size_t FragmentPhongEffect::getSceneDataSize() const
+size_t PointLightEffect::getSceneDataSize() const
 {
     return sizeof(SceneData);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void FragmentPhongEffect::updateSceneDataBuffer()
+void PointLightEffect::updateSceneDataBuffer()
 {
     sceneDataBuffer_->load(sizeof(SceneData), &sceneData_);
 }

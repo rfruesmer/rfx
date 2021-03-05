@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "FragmentPhongTest.h"
+#include "PointLightTest.h"
 #include "rfx/application/SceneLoader.h"
 #include "rfx/common/Logger.h"
 
@@ -14,7 +14,7 @@ using namespace std::filesystem;
 int main()
 {
     try {
-        auto theApp = make_shared<FragmentPhongTest>();
+        auto theApp = make_shared<PointLightTest>();
         theApp->run();
     }
     catch (const exception& ex) {
@@ -27,14 +27,14 @@ int main()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-FragmentPhongTest::FragmentPhongTest()
+PointLightTest::PointLightTest()
 {
     devToolsEnabled = true;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void FragmentPhongTest::initGraphics()
+void PointLightTest::initGraphics()
 {
     Application::initGraphics();
 
@@ -47,7 +47,7 @@ void FragmentPhongTest::initGraphics()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void FragmentPhongTest::loadScene()
+void PointLightTest::loadScene()
 {
     const path scenePath = getAssetsDirectory() / "models/spheres/spheres.gltf";
 
@@ -56,17 +56,16 @@ void FragmentPhongTest::loadScene()
     scene = sceneLoader.load(scenePath, VERTEX_FORMAT);
     camera.setPosition({ 0.0f, 1.0f, 10.0f });
     light.setPosition({ 0.0f, .1f, 0.0f });
-    light.setDiffuse({ 1.0f, 1.0f, 1.0f });
-    light.setSpecular({ 1.0f, 1.0f, 1.0f });
+    light.setColor({1.0f, 1.0f, 1.0f});
 
-    effect = make_unique<FragmentPhongEffect>(graphicsDevice, scene);
-    effectImpl = dynamic_cast<FragmentPhongEffect*>(effect.get());
+    effect = make_unique<PointLightEffect>(graphicsDevice, scene);
+    effectImpl = dynamic_cast<PointLightEffect*>(effect.get());
     effectImpl->setLight(light);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void FragmentPhongTest::createCommandBuffers()
+void PointLightTest::createCommandBuffers()
 {
     const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
@@ -136,7 +135,7 @@ void FragmentPhongTest::createCommandBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void FragmentPhongTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
+void PointLightTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
 {
     const vector<VkDescriptorSet>& meshDescSets = effect->getMeshDescriptorSets();
     const vector<VkDescriptorSet>& materialDescSets = effect->getMaterialDescriptorSets();
@@ -180,14 +179,14 @@ void FragmentPhongTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void FragmentPhongTest::updateProjection()
+void PointLightTest::updateProjection()
 {
     effectImpl->setProjectionMatrix(calcDefaultProjection());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void FragmentPhongTest::updateSceneData()
+void PointLightTest::updateSceneData()
 {
     effectImpl->setViewMatrix(camera.getViewMatrix());
     effectImpl->updateSceneDataBuffer();

@@ -50,9 +50,7 @@ void SpotLightEffect::setLight(const SpotLight& light)
     light_ = light;
 
     sceneData_.lightPos = sceneData_.viewMatrix * vec4(light.getPosition(), 1.0f);
-    sceneData_.La = vec4(light.getAmbient(), 1.0f);
-    sceneData_.Ld = vec4(light.getDiffuse(), 1.0f);
-    sceneData_.Ls = vec4(light.getSpecular(), 1.0f);
+    sceneData_.lightColor = vec4(light.getColor(), 1.0f);
     sceneData_.spotDirection = light.getDirection();
     sceneData_.spotExponent = light.getExponent();
     sceneData_.spotCutoff = light.getCutoff();

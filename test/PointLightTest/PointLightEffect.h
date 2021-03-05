@@ -7,14 +7,14 @@
 
 namespace rfx {
 
-class FragmentPhongEffect : public TestEffect
+class PointLightEffect : public TestEffect
 {
 public:
     static inline const VertexFormat VERTEX_FORMAT {
         VertexFormat::COORDINATES | VertexFormat::NORMALS
     };
 
-    FragmentPhongEffect(
+    PointLightEffect(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,
         const std::shared_ptr<Scene>& scene);
 
@@ -33,10 +33,9 @@ private:
     struct SceneData {
         glm::mat4 viewMatrix;
         glm::mat4 projMatrix;
-        glm::vec4 lightPos;          // light position in eye coords
-        glm::vec4 La;                // Ambient light intensity
-        glm::vec4 Ld;                // Diffuse light intensity
-        glm::vec4 Ls;                // Specular light intensity
+        glm::vec3 lightPos;          // light position in eye coords
+        [[maybe_unused]] float pad;
+        glm::vec3 lightColor;
     };
 
     SceneData sceneData_ {};

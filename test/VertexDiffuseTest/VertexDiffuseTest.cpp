@@ -56,7 +56,7 @@ void VertexDiffuseTest::loadScene()
     scene = sceneLoader.load(scenePath, VERTEX_FORMAT);
     camera.setPosition({0.0f, 1.0f, 2.0f});
     light.setPosition({5.0f, 5.0f, 2.0f});
-    light.setDiffuse({1.0f, 1.0f, 1.0f});
+    light.setColor({1.0f, 1.0f, 1.0f});
 
     effect = make_unique<VertexDiffuseEffect>(graphicsDevice, scene);
     effectImpl = dynamic_cast<VertexDiffuseEffect*>(effect.get());

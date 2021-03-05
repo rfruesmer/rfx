@@ -1,17 +1,17 @@
 #pragma once
 
 #include "TestApplication.h"
-#include "FragmentPhongEffect.h"
+#include "PointLightEffect.h"
 
 
 namespace rfx {
 
-class FragmentPhongTest : public TestApplication
+class PointLightTest : public TestApplication
 {
-    static const inline VertexFormat VERTEX_FORMAT = FragmentPhongEffect::VERTEX_FORMAT;
+    static const inline VertexFormat VERTEX_FORMAT = PointLightEffect::VERTEX_FORMAT;
 
 public:
-    FragmentPhongTest();
+    PointLightTest();
 
 protected:
     void initGraphics() override;
@@ -24,7 +24,7 @@ private:
     void drawScene(const std::shared_ptr<CommandBuffer>& commandBuffer);
 
     PointLight light;
-    FragmentPhongEffect* effectImpl = nullptr;
+    PointLightEffect* effectImpl = nullptr;
 };
 
 } // namespace rfx

@@ -22,7 +22,7 @@ set(TESTS
     ColoredQuadTest
     TexturedQuadTest
     VertexDiffuseTest
-    FragmentPhongTest
+        PointLightTest
     SpotLightTest
 )
 

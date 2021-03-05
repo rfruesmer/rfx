@@ -7,10 +7,10 @@ uniform SceneData {
     mat4 projMatrix;
 
     // Light
-    vec4 lightPos;              // light position in eye coords
-    vec4 La;                    // Ambient light intensity
-    vec4 Ld;                    // Diffuse light intensity
-    vec4 Ls;                    // Specular light intensity
+    vec3 lightPos;              // light position in eye coords
+    float pad1;
+    vec3 lightColor;
+    float pad2;
     vec3 spotDirection;         // Direction of the spotlight in eye coords
     float spotExponent;         // Angular attenuation exponent
     float spotCutoff;           // Cutoff angle (0-90 in radians)

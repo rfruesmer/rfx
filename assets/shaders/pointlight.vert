@@ -7,10 +7,9 @@ uniform SceneData {
     mat4 projMatrix;
 
     // Light
-    vec4 lightPos;          // light position in eye coords
-    vec4 La;                // Ambient light intensity
-    vec4 Ld;                // Diffuse light intensity
-    vec4 Ls;                // Specular light intensity
+    vec3 lightPos;          // light position in eye coords
+    float pad;
+    vec3 lightColor;
 } scene;
 
 layout(set = 1, binding = 0)

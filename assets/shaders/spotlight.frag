@@ -8,10 +8,10 @@ uniform SceneData {
     mat4 projMatrix;
 
     // Light
-    vec4 lightPos;              // light position in eye coords
-    vec4 La;                    // Ambient light intensity
-    vec4 Ld;                    // Diffuse light intensity
-    vec4 Ls;                    // Specular light intensity
+    vec3 lightPos;              // light position in eye coords
+    float pad1;
+    vec3 lightColor;
+    float pad2;
     vec3 spotDirection;         // Direction of the spotlight in eye coords
     float spotExponent;         // Angular attenuation exponent
     float spotCutoff;           // Cutoff angle (0-90 in radians)
@@ -33,55 +33,35 @@ layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
 layout(location = 2) in vec3 inSpotDirection;
 
-layout(location = 0) out vec4 outColor;
+layout(location = 0) out vec3 outColor;
 
 
-//vec4 phong(vec3 eyePos, vec3 eyeNormal) {
-//
-//    vec3 ambient = vec3(scene.La * material.baseColor);
-//
-//    vec3 s = normalize(vec3(scene.lightPos) - eyePos);
-//    float sDotN = max(dot(s, eyeNormal), 0.0);
-//
-//    vec3 diffuse = vec3(scene.Ld * material.baseColor) * sDotN;
-//
-//    vec3 specular = vec3(0.0);
-//    if (sDotN > 0.0) {
-//        vec3 v = normalize(-eyePos.xyz);
-//        vec3 r = reflect(-s, eyeNormal);
-//        specular = vec3(scene.Ls * material.baseColor) * pow(max(dot(r, v), 0.0), material.shininess);
-//    }
-//
-//    return vec4(ambient + diffuse + specular, 1.0);
-//}
+vec3 spotLight(vec3 eyePos, vec3 eyeNormal) {
 
-vec3 blinnPhongSpot(vec3 eyePos, vec3 eyeNormal) {
-
-    vec3 ambient = vec3(scene.La * material.baseColor);
     vec3 diffuse = vec3(0);
     vec3 specular = vec3(0);
 
-    vec3 s = normalize(vec3(scene.lightPos) - eyePos);
-    float cosAngle = dot(-s, normalize(inSpotDirection.xyz));
+    vec3 lightDirection = normalize(scene.lightPos - eyePos);
+    float cosAngle = dot(-lightDirection, normalize(inSpotDirection));
     float angle = acos(cosAngle);
-    float spotScale = 0.0;
+    float attenuation = 0.0;
 
     if (angle < scene.spotCutoff) {
-        spotScale = pow(cosAngle, scene.spotExponent);
-        float sDotN = max(dot(s, eyeNormal), 0.0);
-        diffuse = (material.baseColor * scene.Ld * sDotN).xyz;
+        attenuation = pow(cosAngle, scene.spotExponent);
+        float sDotN = max(dot(lightDirection, eyeNormal), 0.0);
+        diffuse = vec3(material.baseColor) * sDotN;
         if (sDotN > 0.0) {
-            vec3 v = normalize(-eyePos.xyz);
-            vec3 h = normalize(v + s);
-            specular = (material.baseColor * scene.Ls * pow(max(dot(h, eyeNormal), 0.0), material.shininess)).xyz;
+            vec3 v = normalize(-eyePos);
+            vec3 h = normalize(v + lightDirection);
+            specular = vec3(material.baseColor) * pow(max(dot(h, eyeNormal), 0.0), material.shininess);
         }
     }
 
-    return ambient + spotScale * (diffuse + specular);
+    return attenuation * (diffuse + specular);
 }
 
 
 void main() {
 
-    outColor = vec4(blinnPhongSpot(inPosition, normalize(inNormal)), 1.0);
+    outColor = spotLight(inPosition, normalize(inNormal));
 }
