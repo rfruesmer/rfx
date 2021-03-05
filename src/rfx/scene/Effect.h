@@ -29,6 +29,9 @@ public:
     [[nodiscard]] virtual VkDescriptorSet getSceneDescriptorSet() const = 0;
     [[nodiscard]] virtual const std::vector<VkDescriptorSet>& getMaterialDescriptorSets() const = 0;
     [[nodiscard]] virtual const std::vector<VkDescriptorSet>& getMeshDescriptorSets() const = 0;
+
+protected:
+    Effect() = default;
 };
 
 } // namespace rfx

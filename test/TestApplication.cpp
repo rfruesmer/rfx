@@ -459,6 +459,7 @@ void TestApplication::updateDevTools()
 
 void TestApplication::cleanup()
 {
+    effect->cleanupSwapChain();
     effect.reset();
     scene.reset();
     vertexShader.reset();

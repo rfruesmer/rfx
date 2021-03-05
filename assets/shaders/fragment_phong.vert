@@ -28,22 +28,18 @@ uniform MaterialData {
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
 
-layout(location = 0) out vec3 outLightIntensity;
+layout(location = 0) out vec3 outPosition;
+layout(location = 1) out vec3 outNormal;
 
 
 void main() {
     mat4 modelViewMatrix = scene.viewMatrix * mesh.modelMatrix;
     mat4 modelViewProjMatrix = scene.projMatrix * modelViewMatrix;
     mat3 normalMatrix = mat3(vec3(modelViewMatrix[0]), vec3(modelViewMatrix[1]), vec3(modelViewMatrix[2]));
-
     vec3 normal = normalize(normalMatrix * inNormal);
-    vec4 eyeCoords = modelViewMatrix * vec4(inPosition, 1.0);
-    vec3 s = normalize(vec3(scene.lightPos - eyeCoords));
-
-    float sDotN = max(dot(s, normal), 0.0);
-    vec3 diffuse = vec3(scene.Ld * material.baseColor) * sDotN;
-
-    outLightIntensity = diffuse;
 
     gl_Position =  modelViewProjMatrix * vec4(inPosition, 1.0);
+
+    outPosition = (modelViewMatrix * vec4(inPosition, 1.0)).xyz;
+    outNormal = normal;
 }

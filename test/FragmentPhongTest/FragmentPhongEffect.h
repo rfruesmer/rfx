@@ -1,19 +1,19 @@
 #pragma once
 
 #include "TestEffect.h"
-#include "rfx/scene/PointLight.h"
+#include "rfx/scene/Scene.h"
 
 
 namespace rfx {
 
-class VertexDiffuseEffect : public TestEffect
+class FragmentPhongEffect : public TestEffect
 {
 public:
     static inline const VertexFormat VERTEX_FORMAT {
         VertexFormat::COORDINATES | VertexFormat::NORMALS
     };
 
-    VertexDiffuseEffect(
+    FragmentPhongEffect(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,
         const std::shared_ptr<Scene>& scene);
 

@@ -21,7 +21,8 @@ endfunction()
 set(TESTS
     ColoredQuadTest
     TexturedQuadTest
-        VertexDiffuseTest
+    VertexDiffuseTest
+    FragmentPhongTest
 )
 
 buildTests()

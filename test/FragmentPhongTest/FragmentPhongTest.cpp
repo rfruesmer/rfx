@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "VertexDiffuseTest.h"
+#include "FragmentPhongTest.h"
 #include "rfx/application/SceneLoader.h"
 #include "rfx/common/Logger.h"
 
@@ -14,7 +14,7 @@ using namespace std::filesystem;
 int main()
 {
     try {
-        auto theApp = make_shared<VertexDiffuseTest>();
+        auto theApp = make_shared<FragmentPhongTest>();
         theApp->run();
     }
     catch (const exception& ex) {
@@ -27,14 +27,14 @@ int main()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VertexDiffuseTest::VertexDiffuseTest()
+FragmentPhongTest::FragmentPhongTest()
 {
     devToolsEnabled = true;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseTest::initGraphics()
+void FragmentPhongTest::initGraphics()
 {
     Application::initGraphics();
 
@@ -47,25 +47,26 @@ void VertexDiffuseTest::initGraphics()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseTest::loadScene()
+void FragmentPhongTest::loadScene()
 {
-    const path scenePath = getAssetsDirectory() / "models/cubes/cubes.gltf";
+    const path scenePath = getAssetsDirectory() / "models/spheres/spheres.gltf";
 
 
     SceneLoader sceneLoader(graphicsDevice);
     scene = sceneLoader.load(scenePath, VERTEX_FORMAT);
     camera.setPosition({0.0f, 1.0f, 2.0f});
-    light.setPosition({5.0f, 5.0f, 2.0f});
+    light.setPosition({0.0f, .1f, 0.0f});
     light.setDiffuse({1.0f, 1.0f, 1.0f});
+    light.setSpecular({0.5f, 0.5f, 0.5f});
 
-    effect = make_unique<VertexDiffuseEffect>(graphicsDevice, scene);
-    effectImpl = dynamic_cast<VertexDiffuseEffect*>(effect.get());
+    effect = make_unique<FragmentPhongEffect>(graphicsDevice, scene);
+    effectImpl = dynamic_cast<FragmentPhongEffect*>(effect.get());
     effectImpl->setLight(light);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseTest::createCommandBuffers()
+void FragmentPhongTest::createCommandBuffers()
 {
     const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
@@ -135,7 +136,7 @@ void VertexDiffuseTest::createCommandBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
+void FragmentPhongTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
 {
     const vector<VkDescriptorSet>& meshDescSets = effect->getMeshDescriptorSets();
     const vector<VkDescriptorSet>& materialDescSets = effect->getMaterialDescriptorSets();

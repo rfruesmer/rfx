@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "VertexDiffuseEffect.h"
+#include "FragmentPhongEffect.h"
 
 
 using namespace rfx;
@@ -9,23 +9,23 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VertexDiffuseEffect::VertexDiffuseEffect(
+FragmentPhongEffect::FragmentPhongEffect(
     const std::shared_ptr<GraphicsDevice>& graphicsDevice,
     const std::shared_ptr<Scene>& scene)
         : TestEffect(graphicsDevice, scene) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-string VertexDiffuseEffect::getVertexShaderFileName() const
+string FragmentPhongEffect::getVertexShaderFileName() const
 {
-    return "vertex_diffuse.vert";
+    return "fragment_phong.vert";
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-string VertexDiffuseEffect::getFragmentShaderFileName() const
+string FragmentPhongEffect::getFragmentShaderFileName() const
 {
-    return "vertex_diffuse.frag";
+    return "fragment_phong.frag";
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

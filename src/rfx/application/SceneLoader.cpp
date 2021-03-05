@@ -309,6 +309,9 @@ void SceneLoader::SceneLoaderImpl::loadVertices(const tinygltf::Primitive& glTFP
 
     // Append data to model's vertex buffer
     for (size_t v = 0; v < vertexCount; v++) {
+
+        // TODO: make format flexible
+
         Vertex vertex {
             .pos = vec4(make_vec3(&positionBuffer[v * 3]), 1.0f),
 //            .color = vec3(1.0f),
@@ -368,13 +371,7 @@ uint32_t SceneLoader::SceneLoaderImpl::loadIndices(
 
 void SceneLoader::SceneLoaderImpl::buildVertexBuffer()
 {
-    VertexFormat vertexFormat(
-        VertexFormat::COORDINATES
-        | VertexFormat::COLORS_3
-        | VertexFormat::NORMALS
-        | VertexFormat::TEXCOORDS);
-
-    const size_t vertexBufferSize = vertices.size() * vertexFormat.getVertexSize();
+    const size_t vertexBufferSize = vertices.size() * vertexFormat_.getVertexSize();
 
     shared_ptr<Buffer> stagingBuffer = graphicsDevice->createBuffer(
         vertexBufferSize,
@@ -387,7 +384,7 @@ void SceneLoader::SceneLoaderImpl::buildVertexBuffer()
     memcpy(mappedMemory, vertices.data(), stagingBuffer->getSize());
     graphicsDevice->unmap(stagingBuffer);
 
-    shared_ptr<VertexBuffer> vertexBuffer = graphicsDevice->createVertexBuffer(vertices.size(), vertexFormat);
+    shared_ptr<VertexBuffer> vertexBuffer = graphicsDevice->createVertexBuffer(vertices.size(), vertexFormat_);
     scene->setVertexBuffer(vertexBuffer);
 
 
