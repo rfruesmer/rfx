@@ -22,8 +22,9 @@ set(TESTS
     ColoredQuadTest
     TexturedQuadTest
     VertexDiffuseTest
-        PointLightTest
+    PointLightTest
     SpotLightTest
+    MultiLightTest
 )
 
 buildTests()

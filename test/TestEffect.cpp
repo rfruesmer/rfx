@@ -55,9 +55,6 @@ void TestEffect::createMeshDataBuffers()
 
 void TestEffect::createMaterialDataBuffers()
 {
-    MaterialData materialData {
-        .shininess = 100.0f
-    };
 
     for (const auto& material : scene_->getMaterials()) {
         shared_ptr<Buffer> materialUniformBuffer = graphicsDevice_->createBuffer(
@@ -65,7 +62,10 @@ void TestEffect::createMaterialDataBuffers()
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-        materialData.baseColor = material->getBaseColorFactor();
+        MaterialData materialData {
+            .baseColor = material->getBaseColorFactor(),
+            .shininess = material->getShininess()
+        };
 
         graphicsDevice_->bind(materialUniformBuffer);
         materialUniformBuffer->load(sizeof(MaterialData), &materialData);
