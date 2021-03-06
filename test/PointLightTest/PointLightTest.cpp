@@ -54,6 +54,10 @@ void PointLightTest::loadScene()
 
     SceneLoader sceneLoader(graphicsDevice);
     scene = sceneLoader.load(scenePath, VERTEX_FORMAT);
+    for (const auto& material : scene->getMaterials()) {
+        material->setShininess(100.0f);
+    }
+
     camera.setPosition({ 0.0f, 1.0f, 10.0f });
     light.setPosition({ 0.0f, .1f, 0.0f });
     light.setColor({1.0f, 1.0f, 1.0f});

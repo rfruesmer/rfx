@@ -333,7 +333,7 @@ void SceneLoader::SceneLoaderImpl::loadVertices(const tinygltf::Primitive& glTFP
     }
 
     // Append data to model's vertex buffer
-    uint32_t floatCount = 0;
+    uint32_t floatCount = vertexCount_ * (vertexFormat_.getVertexSize() / sizeof(float));
     vec3 normal;
 
     for (uint32_t i = 0; i < vertexCount; i++) {
