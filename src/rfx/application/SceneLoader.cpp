@@ -23,7 +23,7 @@ class SceneLoader::SceneLoaderImpl
 {
 public:
     explicit SceneLoaderImpl(shared_ptr<GraphicsDevice>&& graphicsDevice)
-        : graphicsDevice(move(graphicsDevice)) {}
+        : graphicsDevice_(move(graphicsDevice)) {}
 
     const shared_ptr<Scene>& load(const path& scenePath, const VertexFormat& vertexFormat);
     void clear();
@@ -44,12 +44,13 @@ public:
     void buildVertexBuffer();
     void buildIndexBuffer();
 
-    shared_ptr<GraphicsDevice> graphicsDevice;
-    tinygltf::Model gltfModel;
+    shared_ptr<GraphicsDevice> graphicsDevice_;
+    tinygltf::Model gltfModel_;
     VertexFormat vertexFormat_;
-    shared_ptr<Scene> scene;
-    vector<Vertex> vertices;
-    vector<uint32_t> indices;
+    shared_ptr<Scene> scene_;
+    uint32_t vertexCount_ = 0;
+    vector<float> vertexData_;
+    vector<uint32_t> indices_;
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -66,7 +67,7 @@ const shared_ptr<Scene>& SceneLoader::SceneLoaderImpl::load(
     string error;
     string warning;
 
-    bool result = gltfContext.LoadASCIIFromFile(&gltfModel, &error, &warning, scenePath.string());
+    bool result = gltfContext.LoadASCIIFromFile(&gltfModel_, &error, &warning, scenePath.string());
     RFX_CHECK_STATE(result,
         "Failed to load glTF file: " + scenePath.string() + "\n"
         + "Errors: " + error
@@ -79,26 +80,27 @@ const shared_ptr<Scene>& SceneLoader::SceneLoaderImpl::load(
     buildVertexBuffer();
     buildIndexBuffer();
 
-    return scene;
+    return scene_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void SceneLoader::SceneLoaderImpl::clear()
 {
-    gltfModel = {};
+    gltfModel_ = {};
 
-    scene.reset();
-    scene = make_shared<Scene>();
-    vertices.clear();
-    indices.clear();
+    scene_.reset();
+    scene_ = make_shared<Scene>();
+    vertexCount_ = 0;
+    vertexData_.clear();
+    indices_.clear();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void SceneLoader::SceneLoaderImpl::loadImages()
 {
-    for (const auto& gltfImage : gltfModel.images) {
+    for (const auto& gltfImage : gltfModel_.images) {
         vector<byte> imageData;
 
         if (gltfImage.component == 3) {
@@ -119,7 +121,7 @@ void SceneLoader::SceneLoaderImpl::loadImages()
             .mipOffsets = { 0 }
         };
 
-        scene->addTexture(graphicsDevice->createTexture2D(imageDesc, imageData, false));
+        scene_->addTexture(graphicsDevice_->createTexture2D(imageDesc, imageData, false));
     }
 }
 
@@ -152,18 +154,18 @@ vector<byte> SceneLoader::SceneLoaderImpl::convertToRGBA(const tinygltf::Image& 
 
 void SceneLoader::SceneLoaderImpl::loadTextures()
 {
-    for (size_t i = 0; i < gltfModel.textures.size(); i++) {
-        RFX_CHECK_STATE(gltfModel.textures[i].source == i, "Indexed images not implemented yet");
+    for (size_t i = 0; i < gltfModel_.textures.size(); i++) {
+        RFX_CHECK_STATE(gltfModel_.textures[i].source == i, "Indexed images not implemented yet");
     }
 
-    RFX_CHECK_STATE(gltfModel.textures.size() == scene->getTextures().size(), "Indexed images not implemented yet");
+    RFX_CHECK_STATE(gltfModel_.textures.size() == scene_->getTextures().size(), "Indexed images not implemented yet");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void SceneLoader::SceneLoaderImpl::loadMaterials()
 {
-    for (size_t i = 0; i < gltfModel.materials.size(); i++) {
+    for (size_t i = 0; i < gltfModel_.materials.size(); i++) {
         loadMaterial(i);
     }
 }
@@ -172,7 +174,7 @@ void SceneLoader::SceneLoaderImpl::loadMaterials()
 
 void SceneLoader::SceneLoaderImpl::loadMaterial(size_t index)
 {
-    const tinygltf::Material& glTFMaterial = gltfModel.materials[index];
+    const tinygltf::Material& glTFMaterial = gltfModel_.materials[index];
 
     const auto material = make_shared<Material>();
 
@@ -183,20 +185,43 @@ void SceneLoader::SceneLoaderImpl::loadMaterial(size_t index)
 
     if (const auto& it = glTFMaterial.values.find("baseColorTexture");
             it != glTFMaterial.values.end()) {
-        const shared_ptr<Texture2D>& baseColorTexture = scene->getTexture(it->second.TextureIndex());
+        const shared_ptr<Texture2D>& baseColorTexture = scene_->getTexture(it->second.TextureIndex());
         material->setBaseColorTexture(baseColorTexture);
     }
 
-    scene->addMaterial(material);
+    scene_->addMaterial(material);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void SceneLoader::SceneLoaderImpl::loadNodes()
 {
-    const tinygltf::Scene& gltfScene = gltfModel.scenes[0];
+    uint32_t vertexCount = 0;
+    uint32_t indexCount = 0;
+
+    for (const auto& gltfMesh : gltfModel_.meshes) {
+        for (const auto& gltfPrimitive : gltfMesh.primitives) {
+            RFX_CHECK_STATE(gltfPrimitive.mode == TINYGLTF_MODE_TRIANGLES, "");
+
+            const auto& accessor = gltfModel_.accessors[gltfPrimitive.attributes.find("POSITION")->second];
+            vertexCount += static_cast<uint32_t>(accessor.count);
+
+            if (gltfPrimitive.indices > -1) {
+                const auto& indexAccessor = gltfModel_.accessors[gltfPrimitive.indices];
+                indexCount += static_cast<uint32_t>(indexAccessor.count);
+            }
+            else {
+                indexCount += static_cast<uint32_t>(accessor.count);
+            }
+        }
+    }
+
+    vertexData_.resize(vertexCount * (vertexFormat_.getVertexSize() / sizeof(float)));
+    indices_.reserve(indexCount);
+
+    const tinygltf::Scene& gltfScene = gltfModel_.scenes[0];
     for (size_t i = 0; i < gltfScene.nodes.size(); ++i) {
-        const tinygltf::Node& node = gltfModel.nodes[gltfScene.nodes[i]];
+        const tinygltf::Node& node = gltfModel_.nodes[gltfScene.nodes[i]];
         loadNode(node, mat4 { 1.0f });
     }
 }
@@ -211,11 +236,11 @@ void SceneLoader::SceneLoaderImpl::loadNode(
     const mat4 worldTransform = parentNodeWorldTransform * localTransform;
 
     for (size_t i = 0; i < gltfNode.children.size(); ++i) {
-        loadNode(gltfModel.nodes[gltfNode.children[i]], worldTransform);
+        loadNode(gltfModel_.nodes[gltfNode.children[i]], worldTransform);
     }
 
     if (gltfNode.mesh > -1) {
-        scene->addMesh(move(loadMesh(gltfModel.meshes[gltfNode.mesh], worldTransform)));
+        scene_->addMesh(move(loadMesh(gltfModel_.meshes[gltfNode.mesh], worldTransform)));
     }
 }
 
@@ -261,8 +286,8 @@ unique_ptr<Mesh> SceneLoader::SceneLoaderImpl::loadMesh(
     for (size_t i = 0; i < gltfMesh.primitives.size(); ++i) {
         const tinygltf::Primitive& glTFPrimitive = gltfMesh.primitives[i];
 
-        auto firstIndex = static_cast<uint32_t>(indices.size());
-        auto vertexStart = static_cast<uint32_t>(vertices.size());
+        auto firstIndex = static_cast<uint32_t>(indices_.size());
+        auto vertexStart = vertexCount_;
 
         loadVertices(glTFPrimitive);
         uint32_t indexCount = loadIndices(glTFPrimitive, vertexStart);
@@ -288,38 +313,54 @@ void SceneLoader::SceneLoaderImpl::loadVertices(const tinygltf::Primitive& glTFP
 
     // Get buffer data for vertex normals
     if (glTFPrimitive.attributes.find("POSITION") != glTFPrimitive.attributes.end()) {
-        const tinygltf::Accessor& accessor = gltfModel.accessors[glTFPrimitive.attributes.find("POSITION")->second];
-        const tinygltf::BufferView& view = gltfModel.bufferViews[accessor.bufferView];
-        positionBuffer = reinterpret_cast<const float*>(&(gltfModel.buffers[view.buffer].data[accessor.byteOffset + view.byteOffset]));
+        const tinygltf::Accessor& accessor = gltfModel_.accessors[glTFPrimitive.attributes.find("POSITION")->second];
+        const tinygltf::BufferView& view = gltfModel_.bufferViews[accessor.bufferView];
+        positionBuffer = reinterpret_cast<const float*>(&(gltfModel_.buffers[view.buffer].data[accessor.byteOffset + view.byteOffset]));
         vertexCount = accessor.count;
     }
     // Get buffer data for vertex normals
     if (vertexFormat_.containsNormals() && glTFPrimitive.attributes.find("NORMAL") != glTFPrimitive.attributes.end()) {
-        const tinygltf::Accessor& accessor = gltfModel.accessors[glTFPrimitive.attributes.find("NORMAL")->second];
-        const tinygltf::BufferView& view = gltfModel.bufferViews[accessor.bufferView];
-        normalsBuffer = reinterpret_cast<const float*>(&(gltfModel.buffers[view.buffer].data[accessor.byteOffset + view.byteOffset]));
+        const tinygltf::Accessor& accessor = gltfModel_.accessors[glTFPrimitive.attributes.find("NORMAL")->second];
+        const tinygltf::BufferView& view = gltfModel_.bufferViews[accessor.bufferView];
+        normalsBuffer = reinterpret_cast<const float*>(&(gltfModel_.buffers[view.buffer].data[accessor.byteOffset + view.byteOffset]));
     }
     // Get buffer data for vertex texture coordinates
     // glTF supports multiple sets, we only load the first one
     if (vertexFormat_.containsTexCoords() && glTFPrimitive.attributes.find("TEXCOORD_0") != glTFPrimitive.attributes.end()) {
-        const tinygltf::Accessor& accessor = gltfModel.accessors[glTFPrimitive.attributes.find("TEXCOORD_0")->second];
-        const tinygltf::BufferView& view = gltfModel.bufferViews[accessor.bufferView];
-        texCoordsBuffer = reinterpret_cast<const float*>(&(gltfModel.buffers[view.buffer].data[accessor.byteOffset + view.byteOffset]));
+        const tinygltf::Accessor& accessor = gltfModel_.accessors[glTFPrimitive.attributes.find("TEXCOORD_0")->second];
+        const tinygltf::BufferView& view = gltfModel_.bufferViews[accessor.bufferView];
+        texCoordsBuffer = reinterpret_cast<const float*>(&(gltfModel_.buffers[view.buffer].data[accessor.byteOffset + view.byteOffset]));
     }
 
     // Append data to model's vertex buffer
-    for (size_t v = 0; v < vertexCount; v++) {
+    uint32_t floatCount = 0;
+    vec3 normal;
 
-        // TODO: make format flexible
+    for (uint32_t i = 0; i < vertexCount; i++) {
 
-        Vertex vertex {
-            .pos = vec4(make_vec3(&positionBuffer[v * 3]), 1.0f),
-//            .color = vec3(1.0f),
-            .normal = normalize(vec3(normalsBuffer ? make_vec3(&normalsBuffer[v * 3]) : vec3(0.0f))),
-//            .uv = texCoordsBuffer ? make_vec2(&texCoordsBuffer[v * 2]) : vec3(0.0f)
-        };
-        vertices.push_back(vertex);
+        memcpy(&vertexData_[floatCount], &positionBuffer[i * 3], 3 * sizeof(float));
+        floatCount += 3;
+
+        if (vertexFormat_.containsNormals()) {
+            if (normalsBuffer) {
+                normal = normalize(make_vec3(&normalsBuffer[i * 3]));
+                memcpy(&vertexData_[floatCount], &normal, 3 * sizeof(float));
+            }
+            else {
+                RFX_THROW_NOT_IMPLEMENTED(); // generation of normals not implemented yet
+            }
+            floatCount += 3;
+        }
+
+        if (vertexFormat_.containsTexCoords()) {
+            RFX_CHECK_STATE(texCoordsBuffer != nullptr, "Texture coordinates are missing in input file");
+
+            memcpy(&vertexData_[floatCount], &texCoordsBuffer[i * 2], 2 * sizeof(float));
+            floatCount += 2;
+        }
     }
+
+    vertexCount_ += vertexCount;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -328,19 +369,19 @@ uint32_t SceneLoader::SceneLoaderImpl::loadIndices(
     const tinygltf::Primitive& glTFPrimitive,
     uint32_t vertexStart)
 {
-    const tinygltf::Accessor& accessor = gltfModel.accessors[glTFPrimitive.indices];
-    const tinygltf::BufferView& bufferView = gltfModel.bufferViews[accessor.bufferView];
-    const tinygltf::Buffer& buffer = gltfModel.buffers[bufferView.buffer];
+    const tinygltf::Accessor& accessor = gltfModel_.accessors[glTFPrimitive.indices];
+    const tinygltf::BufferView& bufferView = gltfModel_.bufferViews[accessor.bufferView];
+    const tinygltf::Buffer& buffer = gltfModel_.buffers[bufferView.buffer];
 
     auto indexCount = static_cast<uint32_t>(accessor.count);
 
-    // glTF supports different component types of indices
+    // glTF supports different component types of indices_
     switch (accessor.componentType) {
         case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT: {
             vector<uint32_t> buf(accessor.count);
             memcpy(&buf[0], &buffer.data[accessor.byteOffset + bufferView.byteOffset], accessor.count * sizeof(uint32_t));
             for (size_t index = 0; index < accessor.count; index++) {
-                indices.push_back(buf[index] + vertexStart);
+                indices_.push_back(buf[index] + vertexStart);
             }
             break;
         }
@@ -348,7 +389,7 @@ uint32_t SceneLoader::SceneLoaderImpl::loadIndices(
             vector<uint16_t> buf(accessor.count);
             memcpy(&buf[0], &buffer.data[accessor.byteOffset + bufferView.byteOffset], accessor.count * sizeof(uint16_t));
             for (size_t index = 0; index < accessor.count; index++) {
-                indices.push_back(buf[index] + vertexStart);
+                indices_.push_back(buf[index] + vertexStart);
             }
             break;
         }
@@ -356,7 +397,7 @@ uint32_t SceneLoader::SceneLoaderImpl::loadIndices(
             vector<uint8_t> buf(accessor.count);
             memcpy(&buf[0], &buffer.data[accessor.byteOffset + bufferView.byteOffset], accessor.count * sizeof(uint8_t));
             for (size_t index = 0; index < accessor.count; index++) {
-                indices.push_back(buf[index] + vertexStart);
+                indices_.push_back(buf[index] + vertexStart);
             }
             break;
         }
@@ -371,66 +412,66 @@ uint32_t SceneLoader::SceneLoaderImpl::loadIndices(
 
 void SceneLoader::SceneLoaderImpl::buildVertexBuffer()
 {
-    const size_t vertexBufferSize = vertices.size() * vertexFormat_.getVertexSize();
+    const size_t vertexBufferSize = vertexData_.size() * sizeof(float);
 
-    shared_ptr<Buffer> stagingBuffer = graphicsDevice->createBuffer(
+    shared_ptr<Buffer> stagingBuffer = graphicsDevice_->createBuffer(
         vertexBufferSize,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
     void* mappedMemory = nullptr;
-    graphicsDevice->bind(stagingBuffer);
-    graphicsDevice->map(stagingBuffer, &mappedMemory);
-    memcpy(mappedMemory, vertices.data(), stagingBuffer->getSize());
-    graphicsDevice->unmap(stagingBuffer);
+    graphicsDevice_->bind(stagingBuffer);
+    graphicsDevice_->map(stagingBuffer, &mappedMemory);
+    memcpy(mappedMemory, vertexData_.data(), stagingBuffer->getSize());
+    graphicsDevice_->unmap(stagingBuffer);
 
-    shared_ptr<VertexBuffer> vertexBuffer = graphicsDevice->createVertexBuffer(vertices.size(), vertexFormat_);
-    scene->setVertexBuffer(vertexBuffer);
+    shared_ptr<VertexBuffer> vertexBuffer = graphicsDevice_->createVertexBuffer(vertexCount_, vertexFormat_);
+    scene_->setVertexBuffer(vertexBuffer);
 
 
-    graphicsDevice->bind(vertexBuffer);
+    graphicsDevice_->bind(vertexBuffer);
 
-    VkCommandPool graphicsCommandPool = graphicsDevice->getGraphicsCommandPool();
-    shared_ptr<CommandBuffer> commandBuffer = graphicsDevice->createCommandBuffer(graphicsCommandPool);
+    VkCommandPool graphicsCommandPool = graphicsDevice_->getGraphicsCommandPool();
+    shared_ptr<CommandBuffer> commandBuffer = graphicsDevice_->createCommandBuffer(graphicsCommandPool);
     commandBuffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
     commandBuffer->copyBuffer(stagingBuffer, vertexBuffer);
     commandBuffer->end();
 
-    graphicsDevice->getGraphicsQueue()->flush(commandBuffer);
+    graphicsDevice_->getGraphicsQueue()->flush(commandBuffer);
 
-    graphicsDevice->destroyCommandBuffer(commandBuffer, graphicsCommandPool);
+    graphicsDevice_->destroyCommandBuffer(commandBuffer, graphicsCommandPool);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void SceneLoader::SceneLoaderImpl::buildIndexBuffer()
 {
-    const VkDeviceSize bufferSize = indices.size() * sizeof(uint32_t);
-    shared_ptr<Buffer> stagingBuffer = graphicsDevice->createBuffer(
+    const VkDeviceSize bufferSize = indices_.size() * sizeof(uint32_t);
+    shared_ptr<Buffer> stagingBuffer = graphicsDevice_->createBuffer(
         bufferSize,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
     void* mappedMemory = nullptr;
-    graphicsDevice->bind(stagingBuffer);
-    graphicsDevice->map(stagingBuffer, &mappedMemory);
-    memcpy(mappedMemory, indices.data(), stagingBuffer->getSize());
-    graphicsDevice->unmap(stagingBuffer);
+    graphicsDevice_->bind(stagingBuffer);
+    graphicsDevice_->map(stagingBuffer, &mappedMemory);
+    memcpy(mappedMemory, indices_.data(), stagingBuffer->getSize());
+    graphicsDevice_->unmap(stagingBuffer);
 
-    shared_ptr<IndexBuffer> indexBuffer = graphicsDevice->createIndexBuffer(indices.size(), VK_INDEX_TYPE_UINT32);
-    scene->setIndexBuffer(indexBuffer);
+    shared_ptr<IndexBuffer> indexBuffer = graphicsDevice_->createIndexBuffer(indices_.size(), VK_INDEX_TYPE_UINT32);
+    scene_->setIndexBuffer(indexBuffer);
 
-    graphicsDevice->bind(indexBuffer);
+    graphicsDevice_->bind(indexBuffer);
 
-    VkCommandPool graphicsCommandPool = graphicsDevice->getGraphicsCommandPool();
-    shared_ptr<CommandBuffer> commandBuffer = graphicsDevice->createCommandBuffer(graphicsCommandPool);
+    VkCommandPool graphicsCommandPool = graphicsDevice_->getGraphicsCommandPool();
+    shared_ptr<CommandBuffer> commandBuffer = graphicsDevice_->createCommandBuffer(graphicsCommandPool);
     commandBuffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
     commandBuffer->copyBuffer(stagingBuffer, indexBuffer);
     commandBuffer->end();
 
-    graphicsDevice->getGraphicsQueue()->flush(commandBuffer);
+    graphicsDevice_->getGraphicsQueue()->flush(commandBuffer);
 
-    graphicsDevice->destroyCommandBuffer(commandBuffer, graphicsCommandPool);
+    graphicsDevice_->destroyCommandBuffer(commandBuffer, graphicsCommandPool);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

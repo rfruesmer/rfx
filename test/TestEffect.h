@@ -62,21 +62,21 @@ protected:
     std::shared_ptr<GraphicsDevice> graphicsDevice_;
     VkDescriptorPool descriptorPool_ = nullptr;
 
-    std::shared_ptr<Scene> scene_;
-//    SceneData sceneData_ {};
-//    PointLight light_;
+    std::shared_ptr<Buffer> sceneDataBuffer_;
+    std::vector<std::shared_ptr<Buffer>> materialDataBuffers_; // TODO: refactor to push constants
+    std::vector<std::shared_ptr<Buffer>> meshDataBuffers_; // TODO: refactor to sub-buffers
 
+    std::shared_ptr<Scene> scene_;
+
+private:
     VkDescriptorSetLayout sceneDescSetLayout_ = nullptr;
     VkDescriptorSet sceneDescSet_ {};
-    std::shared_ptr<Buffer> sceneDataBuffer_;
 
     VkDescriptorSetLayout materialDescSetLayout_ = nullptr;
     std::vector<VkDescriptorSet> materialDescSets_;
-    std::vector<std::shared_ptr<Buffer>> materialDataBuffers_; // TODO: refactor to push constants
 
     VkDescriptorSetLayout meshDescSetLayout_ = nullptr;
     std::vector<VkDescriptorSet> meshDescSets_;
-    std::vector<std::shared_ptr<Buffer>> meshDataBuffers_; // TODO: refactor to sub-buffers
 };
 
 } // namespace rfx
