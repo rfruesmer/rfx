@@ -15,6 +15,8 @@ public:
 
 protected:
     void initGraphics() override;
+    void updateProjection() override;
+    void updateSceneData() override;
 
 private:
     void loadScene();

@@ -179,3 +179,17 @@ void VertexDiffuseTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void VertexDiffuseTest::updateProjection()
+{
+    effectImpl->setProjectionMatrix(calcDefaultProjection());
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void VertexDiffuseTest::updateSceneData()
+{
+    effectImpl->setViewMatrix(camera.getViewMatrix());
+    effectImpl->updateSceneDataBuffer();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
