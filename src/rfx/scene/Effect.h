@@ -10,7 +10,7 @@ public:
     virtual ~Effect() = default;
 
     virtual void createUniformBuffers() = 0;
-    virtual void createDescriptorPool() = 0;
+    virtual void createDescriptorPools() = 0;
     virtual void createDescriptorSetLayouts() = 0;
     virtual void createDescriptorSets() = 0;
 

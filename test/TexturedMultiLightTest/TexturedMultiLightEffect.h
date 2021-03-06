@@ -21,10 +21,6 @@ public:
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,
         const std::shared_ptr<Scene>& scene);
 
-    void createDescriptorPool() override;
-    void createDescriptorSetLayouts() override;
-    void createDescriptorSets() override;
-
     void setProjectionMatrix(const glm::mat4& projection);
     void setViewMatrix(const glm::mat4& viewMatrix);
     void setLight(int index, const std::shared_ptr<PointLight>& light);
@@ -36,11 +32,6 @@ public:
     [[nodiscard]] VertexFormat getVertexFormat() const override { return VERTEX_FORMAT; };
     [[nodiscard]] std::string getVertexShaderFileName() const override;
     [[nodiscard]] std::string getFragmentShaderFileName() const override;
-
-    [[nodiscard]] const std::vector<VkDescriptorSet>& getDescriptorSets();
-    [[nodiscard]] std::vector<VkDescriptorSetLayout> getDescriptorSetLayouts() override;
-
-    void cleanupSwapChain() override;
 
 private:
     struct LightData {
@@ -61,9 +52,6 @@ private:
         glm::mat4 projMatrix;
         LightData lights[MAX_LIGHTS];
     };
-
-    VkDescriptorSetLayout descSetLayout_ = nullptr;
-    std::vector<VkDescriptorSet> descSets_;
 
     SceneData sceneData_ {};
     std::shared_ptr<PointLight> lights_[MAX_LIGHTS];

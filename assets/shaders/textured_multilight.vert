@@ -23,12 +23,12 @@ uniform SceneData {
     Light lights[4];
 } scene;
 
-layout(set = 0, binding = 1)
+layout(set = 1, binding = 0)
 uniform MeshData {
     mat4 modelMatrix;
 } mesh;
 
-layout(set = 0, binding = 2)
+layout(set = 2, binding = 0)
 uniform MaterialData {
     vec4 baseColor;
     float shininess;

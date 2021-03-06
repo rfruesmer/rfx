@@ -163,17 +163,6 @@ void SpotLightTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
                 2,
                 materialDescSets[subMesh.materialIndex]);
 
-            if (VERTEX_FORMAT.containsTexCoords()) {
-                const shared_ptr<Material>& material = scene->getMaterial(subMesh.materialIndex);
-                const shared_ptr<Texture2D>& baseColorTexture = material->getBaseColorTexture();
-
-                commandBuffer->bindDescriptorSet(
-                    VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    pipelineLayout,
-                    1,
-                    *baseColorTexture->getSamplerDescriptorSet());
-            }
-
             commandBuffer->drawIndexed(subMesh.indexCount, subMesh.firstIndex);
         }
     }

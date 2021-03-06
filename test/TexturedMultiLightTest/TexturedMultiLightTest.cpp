@@ -136,7 +136,7 @@ void TexturedMultiLightTest::createCommandBuffers()
         commandBuffer->setViewport(viewport);
         commandBuffer->setScissor(scissor);
         commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, wireframe ? wireframePipeline : defaultPipeline);
-//        commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, effect->getSceneDescriptorSet());
+        commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, effect->getSceneDescriptorSet());
         commandBuffer->bindVertexBuffer(scene->getVertexBuffer());
         commandBuffer->bindIndexBuffer(scene->getIndexBuffer());
 
@@ -151,23 +151,17 @@ void TexturedMultiLightTest::createCommandBuffers()
 
 void TexturedMultiLightTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
 {
-//    const vector<VkDescriptorSet>& meshDescSets = effect->getMeshDescriptorSets();
-//    const vector<VkDescriptorSet>& materialDescSets = effect->getMaterialDescriptorSets();
-    const vector<VkDescriptorSet>& descSets = effectImpl->getDescriptorSets();
+    const vector<VkDescriptorSet>& meshDescSets = effect->getMeshDescriptorSets();
+    const vector<VkDescriptorSet>& materialDescSets = effect->getMaterialDescriptorSets();
+
 
     for (size_t i = 0, count = scene->getMeshes().size(); i < count; ++i) {
-
-//        commandBuffer->bindDescriptorSet(
-//            VK_PIPELINE_BIND_POINT_GRAPHICS,
-//            pipelineLayout,
-//            1,
-//            meshDescSets[i]);
 
         commandBuffer->bindDescriptorSet(
             VK_PIPELINE_BIND_POINT_GRAPHICS,
             pipelineLayout,
-            0,
-            descSets[i]);
+            1,
+            meshDescSets[i]);
 
         const auto& mesh = scene->getMesh(i);
         for (const auto& subMesh : mesh->getSubMeshes()) {
@@ -176,11 +170,11 @@ void TexturedMultiLightTest::drawScene(const shared_ptr<CommandBuffer>& commandB
                 continue;
             }
 
-//            commandBuffer->bindDescriptorSet(
-//                VK_PIPELINE_BIND_POINT_GRAPHICS,
-//                pipelineLayout,
-//                2,
-//                materialDescSets[subMesh.materialIndex]);
+            commandBuffer->bindDescriptorSet(
+                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                pipelineLayout,
+                2,
+                materialDescSets[subMesh.materialIndex]);
 
             commandBuffer->drawIndexed(subMesh.indexCount, subMesh.firstIndex);
         }

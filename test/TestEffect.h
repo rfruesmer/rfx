@@ -18,7 +18,7 @@ public:
     [[nodiscard]] virtual size_t getSceneDataSize() const = 0;
 
     void createUniformBuffers() override;
-    void createDescriptorPool() override;
+    void createDescriptorPools() override;
     void createDescriptorSetLayouts() override;
     void createDescriptorSets() override;
 
@@ -30,15 +30,6 @@ public:
     [[nodiscard]] const std::vector<VkDescriptorSet>& getMeshDescriptorSets() const override;
 
 protected:
-//    struct SceneData {
-//        glm::mat4 viewMatrix;
-//        glm::mat4 projMatrix;
-//        glm::vec4 lightPos;          // light position in eye coords
-//        glm::vec4 La;                // Ambient light intensity
-//        glm::vec4 Ld;                // Diffuse light intensity
-//        glm::vec4 Ls;                // Specular light intensity
-//    };
-
     struct MeshData {
         glm::mat4 modelMatrix;
     };
@@ -60,7 +51,6 @@ protected:
     void createMeshDescriptorSets();
 
     std::shared_ptr<GraphicsDevice> graphicsDevice_;
-    VkDescriptorPool descriptorPool_ = nullptr;
 
     std::shared_ptr<Buffer> sceneDataBuffer_;
     std::vector<std::shared_ptr<Buffer>> materialDataBuffers_; // TODO: refactor to push constants
@@ -69,14 +59,21 @@ protected:
     std::shared_ptr<Scene> scene_;
 
 private:
-    VkDescriptorSetLayout sceneDescSetLayout_ = nullptr;
-    VkDescriptorSet sceneDescSet_ {};
+    enum DescriptorType {
+        SCENE,
+        MESH,
+        MATERIAL,
+        QUANTITY
+    };
 
-    VkDescriptorSetLayout materialDescSetLayout_ = nullptr;
-    std::vector<VkDescriptorSet> materialDescSets_;
+    VkDescriptorPool createDescriptorPool(const std::vector<VkDescriptorPoolSize>& poolSizes, uint32_t maxSets);
 
-    VkDescriptorSetLayout meshDescSetLayout_ = nullptr;
-    std::vector<VkDescriptorSet> meshDescSets_;
+    std::vector<VkDescriptorPool> descriptorPools_ { DescriptorType::QUANTITY };
+    std::vector<VkDescriptorSetLayout> descriptorSetLayouts_ { DescriptorType::QUANTITY };
+
+    VkDescriptorSet sceneDescriptorSet_ {};
+    std::vector<VkDescriptorSet> materialDescriptorSets_;
+    std::vector<VkDescriptorSet> meshDescriptorSets_;
 };
 
 } // namespace rfx

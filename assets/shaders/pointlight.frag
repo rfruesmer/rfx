@@ -48,5 +48,6 @@ vec3 pointLight(vec3 eyePos, vec3 eyeNormal) {
 
 void main() {
 
+    // outColor = pointLight(inPosition, normalize(inNormal));
     outColor = pointLight(inPosition, normalize(inNormal));
 }

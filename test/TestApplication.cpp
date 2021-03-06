@@ -53,7 +53,7 @@ void TestApplication::createUniformBuffers()
 
 void TestApplication::createDescriptorPool()
 {
-    effect->createDescriptorPool();
+    effect->createDescriptorPools();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
