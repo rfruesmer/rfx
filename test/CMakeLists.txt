@@ -26,6 +26,7 @@ set(TESTS
     SpotLightTest
     MultiLightTest
     TexturedMultiLightTest
+    PBRTest
 )
 
 buildTests()

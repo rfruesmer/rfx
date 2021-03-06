@@ -39,14 +39,14 @@ void TestEffect::createSceneDataBuffer()
 
 void TestEffect::createMeshDataBuffers()
 {
-    for (const auto& mesh : scene_->getMeshes()) {
+    for (const auto& node : scene_->getGeometryNodes()) {
         shared_ptr<Buffer> meshDataBuffer = graphicsDevice_->createBuffer(
             sizeof(MeshData),
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
         graphicsDevice_->bind(meshDataBuffer);
-        meshDataBuffer->load(sizeof(mat4), &mesh->getWorldTransform());
+        meshDataBuffer->load(sizeof(mat4), &node->getWorldTransform());
         meshDataBuffers_.push_back(meshDataBuffer);
     }
 }
@@ -55,7 +55,6 @@ void TestEffect::createMeshDataBuffers()
 
 void TestEffect::createMaterialDataBuffers()
 {
-
     for (const auto& material : scene_->getMaterials()) {
         shared_ptr<Buffer> materialUniformBuffer = graphicsDevice_->createBuffer(
             sizeof(MaterialData),
@@ -77,13 +76,13 @@ void TestEffect::createMaterialDataBuffers()
 
 void TestEffect::createDescriptorPools()
 {
-    const uint32_t meshCount = scene_->getMeshCount();
+    const uint32_t geometryNodesCount = scene_->getGeometryNodeCount();
     const uint32_t materialCount = scene_->getMaterialCount();
 
     descriptorPools_[DescriptorType::SCENE] = createDescriptorPool(
         {{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}}, 1);
     descriptorPools_[DescriptorType::MESH] = createDescriptorPool(
-        {{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, meshCount}}, meshCount);
+        {{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, geometryNodesCount}}, geometryNodesCount);
 
     vector<VkDescriptorPoolSize> materialPoolSizes = {
         {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, materialCount}
@@ -333,9 +332,9 @@ void TestEffect::createMaterialDescriptorSets()
 
 void TestEffect::createMeshDescriptorSets()
 {
-    meshDescriptorSets_.resize(scene_->getMeshCount());
+    meshDescriptorSets_.resize(scene_->getGeometryNodeCount());
 
-    for (uint32_t i = 0, count = scene_->getMeshCount(); i < count; ++i) {
+    for (uint32_t i = 0, count = scene_->getGeometryNodeCount(); i < count; ++i) {
 
         VkDescriptorSetAllocateInfo allocInfo {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,

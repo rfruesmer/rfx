@@ -1,17 +1,17 @@
 #pragma once
 
 #include "TestApplication.h"
-#include "VertexDiffuseEffect.h"
+#include "PBREffect.h"
 
 
 namespace rfx {
 
-class VertexDiffuseTest : public TestApplication
+class PBRTest : public TestApplication
 {
-    static const inline VertexFormat VERTEX_FORMAT = VertexDiffuseEffect::VERTEX_FORMAT;
+    static const inline VertexFormat VERTEX_FORMAT = PBREffect::VERTEX_FORMAT;
 
 public:
-    VertexDiffuseTest();
+    PBRTest();
 
 protected:
     void initGraphics() override;
@@ -25,8 +25,10 @@ private:
         uint32_t index,
         const std::shared_ptr<CommandBuffer>& commandBuffer);
 
-    PointLight light;
-    VertexDiffuseEffect* effectImpl = nullptr;
+
+    std::shared_ptr<PointLight> pointLight;
+    std::shared_ptr<SpotLight> spotLight;
+    PBREffect* effectImpl = nullptr;
 };
 
 } // namespace rfx

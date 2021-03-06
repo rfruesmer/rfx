@@ -54,7 +54,10 @@ protected:
 
     std::shared_ptr<Buffer> sceneDataBuffer_;
     std::vector<std::shared_ptr<Buffer>> materialDataBuffers_; // TODO: refactor to push constants
-    std::vector<std::shared_ptr<Buffer>> meshDataBuffers_; // TODO: refactor to sub-buffers
+
+    // TODO: rename to nodeDataBuffers ??
+    // TODO: refactor to sub-buffers
+    std::vector<std::shared_ptr<Buffer>> meshDataBuffers_;
 
     std::shared_ptr<Scene> scene_;
 

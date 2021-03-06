@@ -32,12 +32,14 @@ public:
     void loadTextures();
     void loadMaterials();
     void loadMaterial(size_t index);
+    void loadMeshes();
+    void prepareGeometryBuffers();
     void loadNodes();
     void loadNode(
         const tinygltf::Node& node,
-        const mat4& parentNodeWorldTransform);
+        const shared_ptr<SceneNode>& parentNode);
     static mat4 getLocalTransformOf(const tinygltf::Node& gltfNode) ;
-    unique_ptr<Mesh> loadMesh(const tinygltf::Mesh& gltfMesh, const mat4& worldTransform);
+    void loadMesh(const tinygltf::Mesh& gltfMesh);
     void loadVertices(const tinygltf::Primitive& glTFPrimitive);
     uint32_t loadIndices(const tinygltf::Primitive& glTFPrimitive, uint32_t vertexStart);
 
@@ -76,9 +78,12 @@ const shared_ptr<Scene>& SceneLoader::SceneLoaderImpl::load(
     loadImages();
     loadTextures();
     loadMaterials();
+    loadMeshes();
     loadNodes();
     buildVertexBuffer();
     buildIndexBuffer();
+
+    scene_->compile();
 
     return scene_;
 }
@@ -194,7 +199,18 @@ void SceneLoader::SceneLoaderImpl::loadMaterial(size_t index)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneLoader::SceneLoaderImpl::loadNodes()
+void SceneLoader::SceneLoaderImpl::loadMeshes()
+{
+    prepareGeometryBuffers();
+
+    for (const auto& gltfMesh : gltfModel_.meshes) {
+        loadMesh(gltfMesh);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SceneLoader::SceneLoaderImpl::prepareGeometryBuffers()
 {
     uint32_t vertexCount = 0;
     uint32_t indexCount = 0;
@@ -218,70 +234,13 @@ void SceneLoader::SceneLoaderImpl::loadNodes()
 
     vertexData_.resize(vertexCount * (vertexFormat_.getVertexSize() / sizeof(float)));
     indices_.reserve(indexCount);
-
-    const tinygltf::Scene& gltfScene = gltfModel_.scenes[0];
-    for (size_t i = 0; i < gltfScene.nodes.size(); ++i) {
-        const tinygltf::Node& node = gltfModel_.nodes[gltfScene.nodes[i]];
-        loadNode(node, mat4 { 1.0f });
-    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneLoader::SceneLoaderImpl::loadNode(
-    const tinygltf::Node& gltfNode,
-    const mat4& parentNodeWorldTransform)
-{
-    const mat4 localTransform = getLocalTransformOf(gltfNode);
-    const mat4 worldTransform = parentNodeWorldTransform * localTransform;
-
-    for (size_t i = 0; i < gltfNode.children.size(); ++i) {
-        loadNode(gltfModel_.nodes[gltfNode.children[i]], worldTransform);
-    }
-
-    if (gltfNode.mesh > -1) {
-        scene_->addMesh(move(loadMesh(gltfModel_.meshes[gltfNode.mesh], worldTransform)));
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-mat4 SceneLoader::SceneLoaderImpl::getLocalTransformOf(const tinygltf::Node& gltfNode)
-{
-    mat4 translation { 1.0f };
-    mat4 scale { 1.0f };
-    mat4 rotation { 1.0f };
-    mat4 matrix { 1.0f };
-
-    if (!gltfNode.translation.empty()) {
-        translation = translate(translation, vec3(make_vec3(gltfNode.translation.data())));
-    }
-
-    if (!gltfNode.scale.empty()) {
-        scale = glm::scale(scale, vec3(make_vec3(gltfNode.scale.data())));
-    }
-
-    if (!gltfNode.rotation.empty()) {
-        quat q = make_quat(gltfNode.rotation.data());
-        rotation *= mat4(q);
-    }
-
-    if (!gltfNode.matrix.empty()) {
-        matrix = make_mat4x4(gltfNode.matrix.data());
-    }
-
-    return translation * rotation * scale * matrix;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-unique_ptr<Mesh> SceneLoader::SceneLoaderImpl::loadMesh(
-    const tinygltf::Mesh& gltfMesh,
-    const mat4& worldTransform)
+void SceneLoader::SceneLoaderImpl::loadMesh(const tinygltf::Mesh& gltfMesh)
 {
     auto mesh = make_unique<Mesh>();
-    mesh->setWorldTransform(worldTransform);
-
 
     for (size_t i = 0; i < gltfMesh.primitives.size(); ++i) {
         const tinygltf::Primitive& glTFPrimitive = gltfMesh.primitives[i];
@@ -299,7 +258,7 @@ unique_ptr<Mesh> SceneLoader::SceneLoaderImpl::loadMesh(
         });
     }
 
-    return mesh;
+    scene_->addMesh(move(mesh));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -406,6 +365,66 @@ uint32_t SceneLoader::SceneLoaderImpl::loadIndices(
     }
 
     return indexCount;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SceneLoader::SceneLoaderImpl::loadNodes()
+{
+    RFX_CHECK_STATE(gltfModel_.scenes.size() == 1, "Multiple scenes not supported yet");
+
+    const tinygltf::Scene& gltfScene = gltfModel_.scenes[0];
+    for (size_t i = 0; i < gltfScene.nodes.size(); ++i) {
+        const tinygltf::Node& node = gltfModel_.nodes[gltfScene.nodes[i]];
+        loadNode(node, scene_->getRootNode());
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SceneLoader::SceneLoaderImpl::loadNode(
+    const tinygltf::Node& gltfNode,
+    const shared_ptr<SceneNode>& parentNode)
+{
+    auto node = make_shared<SceneNode>(parentNode);
+    node->setLocalTransform(getLocalTransformOf(gltfNode));
+    if (gltfNode.mesh > -1) {
+        node->addMesh(scene_->getMesh(gltfNode.mesh));
+    }
+    parentNode->addChild(node);
+
+    for (size_t i = 0; i < gltfNode.children.size(); ++i) {
+        loadNode(gltfModel_.nodes[gltfNode.children[i]], node);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+mat4 SceneLoader::SceneLoaderImpl::getLocalTransformOf(const tinygltf::Node& gltfNode)
+{
+    mat4 translation { 1.0f };
+    mat4 scale { 1.0f };
+    mat4 rotation { 1.0f };
+    mat4 matrix { 1.0f };
+
+    if (!gltfNode.translation.empty()) {
+        translation = translate(translation, vec3(make_vec3(gltfNode.translation.data())));
+    }
+
+    if (!gltfNode.scale.empty()) {
+        scale = glm::scale(scale, vec3(make_vec3(gltfNode.scale.data())));
+    }
+
+    if (!gltfNode.rotation.empty()) {
+        quat q = make_quat(gltfNode.rotation.data());
+        rotation *= mat4(q);
+    }
+
+    if (!gltfNode.matrix.empty()) {
+        matrix = make_mat4x4(gltfNode.matrix.data());
+    }
+
+    return translation * rotation * scale * matrix;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

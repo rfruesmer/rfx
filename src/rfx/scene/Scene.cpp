@@ -6,6 +6,62 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+Scene::Scene()
+    : rootNode_(make_shared<SceneNode>(nullptr)) {}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Scene::compile()
+{
+    rootNode_->compile();
+
+    geometryNodes.clear();
+    compile(rootNode_);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Scene::compile(const shared_ptr<SceneNode>& sceneNode)
+{
+    if (sceneNode->getMeshCount() > 0) {
+        geometryNodes.push_back(sceneNode);
+    }
+
+    for (const auto& childNode : sceneNode->getChildren()) {
+        compile(childNode);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const shared_ptr<SceneNode>& Scene::getRootNode() const
+{
+    return rootNode_;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const shared_ptr<SceneNode>& Scene::getGeometryNode(uint32_t index) const
+{
+    return geometryNodes[index];
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const vector<shared_ptr<SceneNode>>& Scene::getGeometryNodes() const
+{
+    return geometryNodes;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+uint32_t Scene::getGeometryNodeCount() const
+{
+    return geometryNodes.size();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void Scene::setVertexBuffer(shared_ptr<VertexBuffer> vertexBuffer)
 {
     vertexBuffer_ = move(vertexBuffer);
@@ -34,21 +90,21 @@ const shared_ptr<IndexBuffer>& Scene::getIndexBuffer() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Scene::addMesh(unique_ptr<Mesh> mesh)
+void Scene::addMesh(shared_ptr<Mesh> mesh)
 {
     meshes_.push_back(move(mesh));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const unique_ptr<Mesh>& Scene::getMesh(size_t index) const
+const shared_ptr<Mesh>& Scene::getMesh(size_t index) const
 {
     return meshes_[index];
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const vector<unique_ptr<Mesh>>& Scene::getMeshes() const
+const vector<shared_ptr<Mesh>>& Scene::getMeshes() const
 {
     return meshes_;
 }
@@ -62,7 +118,7 @@ uint32_t Scene::getMeshCount() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Scene::addMaterial(std::shared_ptr<Material> material)
+void Scene::addMaterial(shared_ptr<Material> material)
 {
     materials_.push_back(move(material));
 }

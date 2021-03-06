@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "VertexDiffuseTest.h"
+#include "PBRTest.h"
 #include "rfx/application/SceneLoader.h"
 #include "rfx/common/Logger.h"
 
@@ -14,7 +14,7 @@ using namespace std::filesystem;
 int main()
 {
     try {
-        auto theApp = make_shared<VertexDiffuseTest>();
+        auto theApp = make_shared<PBRTest>();
         theApp->run();
     }
     catch (const exception& ex) {
@@ -27,14 +27,14 @@ int main()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VertexDiffuseTest::VertexDiffuseTest()
+PBRTest::PBRTest()
 {
     devToolsEnabled = true;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseTest::initGraphics()
+void PBRTest::initGraphics()
 {
     Application::initGraphics();
 
@@ -47,25 +47,39 @@ void VertexDiffuseTest::initGraphics()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseTest::loadScene()
+void PBRTest::loadScene()
 {
-    const path scenePath = getAssetsDirectory() / "models/cubes/cubes.gltf";
+    const path scenePath = getAssetsDirectory() / "models/sci-fi-corridors/Unity2Skfb.gltf";
 
 
     SceneLoader sceneLoader(graphicsDevice);
     scene = sceneLoader.load(scenePath, VERTEX_FORMAT);
-    camera.setPosition({0.0f, 1.0f, 2.0f});
-    light.setPosition({5.0f, 5.0f, 2.0f});
-    light.setColor({1.0f, 1.0f, 1.0f});
+    for (const auto& material : scene->getMaterials()) {
+        material->setShininess(128.0f);
+    }
 
-    effect = make_unique<VertexDiffuseEffect>(graphicsDevice, scene);
-    effectImpl = dynamic_cast<VertexDiffuseEffect*>(effect.get());
-    effectImpl->setLight(light);
+    camera.setPosition({ 0.0f, 2.0f, 10.0f });
+
+    pointLight = make_shared<PointLight>();
+    pointLight->setPosition({5.0f, .5f, 5.0f });
+    pointLight->setColor({1.0f, 1.0f, 1.0f});
+
+    spotLight = make_shared<SpotLight>();
+    spotLight->setPosition({0.0f, 10.0f, 0.0f});
+    spotLight->setColor({0.0f, 0.0f, 1.0f});
+    spotLight->setDirection({0.0f, -1.0f, 0.0f});
+    spotLight->setExponent(50.0f);
+    spotLight->setCutoff(radians(15.0f));
+
+    effect = make_unique<PBREffect>(graphicsDevice, scene);
+    effectImpl = dynamic_cast<PBREffect*>(effect.get());
+    effectImpl->setLight(0, pointLight);
+    effectImpl->setLight(1, spotLight);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseTest::createCommandBuffers()
+void PBRTest::createCommandBuffers()
 {
     const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
@@ -137,7 +151,7 @@ void VertexDiffuseTest::createCommandBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseTest::drawGeometryNode(
+void PBRTest::drawGeometryNode(
     uint32_t index,
     const shared_ptr<CommandBuffer>& commandBuffer)
 {
@@ -153,6 +167,7 @@ void VertexDiffuseTest::drawGeometryNode(
 
     for (const auto& mesh : geometryNode->getMeshes()) {
         for (const auto& subMesh : mesh->getSubMeshes()) {
+
             if (subMesh.indexCount == 0) {
                 continue;
             }
@@ -170,14 +185,14 @@ void VertexDiffuseTest::drawGeometryNode(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseTest::updateProjection()
+void PBRTest::updateProjection()
 {
     effectImpl->setProjectionMatrix(calcDefaultProjection());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseTest::updateSceneData()
+void PBRTest::updateSceneData()
 {
     effectImpl->setViewMatrix(camera.getViewMatrix());
     effectImpl->updateSceneDataBuffer();
