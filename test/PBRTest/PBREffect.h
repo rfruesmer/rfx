@@ -14,7 +14,10 @@ public:
     static const int MAX_LIGHTS = 4;
 
     static inline const VertexFormat VERTEX_FORMAT {
-        VertexFormat::COORDINATES | VertexFormat::NORMALS | VertexFormat::TEXCOORDS
+        VertexFormat::COORDINATES
+            | VertexFormat::NORMALS
+            | VertexFormat::TEXCOORDS
+            | VertexFormat::TANGENTS
     };
 
     PBREffect(
@@ -23,6 +26,7 @@ public:
 
     void setProjectionMatrix(const glm::mat4& projection);
     void setViewMatrix(const glm::mat4& viewMatrix);
+    void setAmbientLight(const glm::vec3& color);
     void setLight(int index, const std::shared_ptr<PointLight>& light);
     void setLight(int index, const std::shared_ptr<SpotLight>& light);
 
@@ -50,6 +54,7 @@ private:
     struct SceneData {
         glm::mat4 viewMatrix;
         glm::mat4 projMatrix;
+        glm::vec4 ambientLight;
         LightData lights[MAX_LIGHTS];
     };
 

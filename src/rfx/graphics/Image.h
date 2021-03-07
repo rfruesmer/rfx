@@ -8,6 +8,7 @@ class Image
 {
 public:
     Image(
+        std::string id,
         ImageDesc desc,
         VkDevice device,
         VkImage image,
@@ -19,6 +20,7 @@ public:
     [[nodiscard]] const ImageDesc& getDesc() const;
 
 private:
+    std::string id;
     ImageDesc desc;
     VkImage image;
     VkDevice device;

@@ -20,6 +20,8 @@ class Window
 public:
     void create(const std::string& title, int width, int height);
 
+    void show();
+
     [[nodiscard]] GLFWwindow* getGlfwWindow() const;
     [[nodiscard]] void* getHandle() const;
     [[nodiscard]] uint32_t getClientWidth() const;

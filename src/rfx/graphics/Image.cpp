@@ -8,11 +8,13 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 
 Image::Image(
+    string id,
     ImageDesc desc,
     VkDevice device,
     VkImage image,
     VkDeviceMemory deviceMemory)
-        : desc(move(desc)),
+        : id(move(id)),
+          desc(move(desc)),
           device(device),
           image(image),
           deviceMemory(deviceMemory) {}

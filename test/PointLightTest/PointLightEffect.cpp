@@ -40,17 +40,17 @@ void PointLightEffect::setProjectionMatrix(const glm::mat4& projection)
 void PointLightEffect::setViewMatrix(const mat4& viewMatrix)
 {
     sceneData_.viewMatrix = viewMatrix;
-    sceneData_.lightPos = viewMatrix * vec4(light_.getPosition(), 1.0f);
+    sceneData_.lightPos = viewMatrix * vec4(light_->getPosition(), 1.0f);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PointLightEffect::setLight(const PointLight& light)
+void PointLightEffect::setLight(const shared_ptr<PointLight>& light)
 {
     light_ = light;
 
-    sceneData_.lightPos = sceneData_.viewMatrix * vec4(light.getPosition(), 1.0f);
-    sceneData_.lightColor = vec4(light.getColor(), 1.0f);
+    sceneData_.lightPos = sceneData_.viewMatrix * vec4(light->getPosition(), 1.0f);
+    sceneData_.lightColor = vec4(light->getColor(), 1.0f);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

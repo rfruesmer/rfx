@@ -83,6 +83,17 @@ void VertexShader::createVertexInputState()
         offset += 8;
     }
 
+    if (vertexFormat.containsTangents()) {
+        attributeDescription = {
+            .location = location++,
+            .binding = VERTEX_BUFFER_BIND_ID,
+            .format = VK_FORMAT_R32G32B32A32_SFLOAT,
+            .offset = offset
+        };
+        vertexAttributeDescriptions.push_back(attributeDescription);
+        offset += 16;
+    }
+
     vertexInputStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .pNext = nullptr,

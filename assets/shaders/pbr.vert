@@ -20,6 +20,7 @@ uniform SceneData {
     mat4 projMatrix;
 
     // Light
+    vec4 ambientLight;
     Light lights[4];
 } scene;
 
@@ -38,12 +39,13 @@ uniform MaterialData {
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
 layout(location = 2) in vec2 inTexCoord;
+layout(location = 3) in vec4 inTangent;
 
 layout(location = 0) out vec3 outPosition;
 layout(location = 1) out vec2 outTexCoord;
 layout(location = 2) out vec3 outNormal;
 layout(location = 3) out mat3 outNormalMatrix;
-
+layout(location = 6) out vec4 outTangent;
 
 void main() {
     mat4 modelViewMatrix = scene.viewMatrix * mesh.modelMatrix;
@@ -57,4 +59,5 @@ void main() {
     outTexCoord = inTexCoord;
     outNormal = normal;
     outNormalMatrix = normalMatrix;
+    outTangent = vec4(mat3(mesh.modelMatrix) * inTangent.xyz, inTangent.w);
 }

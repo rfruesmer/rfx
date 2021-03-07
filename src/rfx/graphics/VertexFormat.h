@@ -10,6 +10,7 @@ public:
     static const int COLORS_4 = 4;
     static const int NORMALS = 8;
     static const int TEXCOORDS = 16;
+    static const int TANGENTS = 32;
 
     VertexFormat();
     explicit VertexFormat(unsigned int formatMask);
@@ -33,6 +34,9 @@ public:
     [[nodiscard]]
     bool containsTexCoords() const;
 
+    [[nodiscard]]
+    bool containsTangents() const;
+
 private:
     uint32_t vertexSize = 0;
     bool coordinates = false;
@@ -40,6 +44,7 @@ private:
     bool colors4 = false;
     bool normals = false;
     bool texCoords = false;
+    bool tangents = false;
 };
 
 } // namespace rfx

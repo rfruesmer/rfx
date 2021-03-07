@@ -49,7 +49,8 @@ void PBRTest::initGraphics()
 
 void PBRTest::loadScene()
 {
-    const path scenePath = getAssetsDirectory() / "models/sci-fi-corridors/Unity2Skfb.gltf";
+//    const path scenePath = getAssetsDirectory() / "models/sci-fi-corridors/Unity2Skfb.gltf";
+    const path scenePath = getAssetsDirectory() / "models/cubes/ice.gltf";
 
 
     SceneLoader sceneLoader(graphicsDevice);
@@ -61,7 +62,7 @@ void PBRTest::loadScene()
     camera.setPosition({ 0.0f, 2.0f, 10.0f });
 
     pointLight = make_shared<PointLight>();
-    pointLight->setPosition({5.0f, .5f, 5.0f });
+    pointLight->setPosition({2.5f, 2.5f, 0.0f });
     pointLight->setColor({1.0f, 1.0f, 1.0f});
 
     spotLight = make_shared<SpotLight>();
@@ -73,8 +74,9 @@ void PBRTest::loadScene()
 
     effect = make_unique<PBREffect>(graphicsDevice, scene);
     effectImpl = dynamic_cast<PBREffect*>(effect.get());
+//    effectImpl->setAmbientLight({ 0.1f, 0.1f, 0.1f });
     effectImpl->setLight(0, pointLight);
-    effectImpl->setLight(1, spotLight);
+//    effectImpl->setLight(1, spotLight);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

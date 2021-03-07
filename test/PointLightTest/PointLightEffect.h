@@ -20,7 +20,7 @@ public:
 
     void setProjectionMatrix(const glm::mat4& projection);
     void setViewMatrix(const glm::mat4& viewMatrix);
-    void setLight(const PointLight& light);
+    void setLight(const std::shared_ptr<PointLight>& light);
 
     [[nodiscard]] size_t getSceneDataSize() const override;
     void updateSceneDataBuffer();
@@ -39,7 +39,7 @@ private:
     };
 
     SceneData sceneData_ {};
-    PointLight light_;
+    std::shared_ptr<PointLight> light_;
 };
 
 } // namespace rfx

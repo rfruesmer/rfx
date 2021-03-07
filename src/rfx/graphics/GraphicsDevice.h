@@ -82,12 +82,14 @@ public:
 
     [[nodiscard]]
     std::shared_ptr<Texture2D> createTexture2D(
+        const std::string& id,
         const ImageDesc& imageDesc,
         const std::vector<std::byte>& imageData,
         bool isGenerateMipmaps) const;
 
     [[nodiscard]]
     std::shared_ptr<Image> createImage(
+        const std::string& id,
         VkFormat format,
         uint32_t width,
         uint32_t height,
@@ -161,6 +163,7 @@ private:
 
     [[nodiscard]]
     std::shared_ptr<Image> createImage(
+        const std::string& id,
         const ImageDesc& imageDesc,
         VkImageUsageFlags usage,
         VkImageTiling tiling,

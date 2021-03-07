@@ -402,6 +402,7 @@ shared_ptr<Image> GraphicsDevice::createDepthBufferImage(VkFormat format)
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
 
     return createImage(
+        "depth_buffer",
         format,
         swapChainDesc.extent.width,
         swapChainDesc.extent.height,
@@ -433,6 +434,7 @@ void GraphicsDevice::createMultiSamplingBuffer(VkSampleCountFlagBits sampleCount
 
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
     multiSampleImage = createImage(
+        "multisampling_buffer",
         swapChainDesc.format,
         swapChainDesc.extent.width,
         swapChainDesc.extent.height,
@@ -669,7 +671,7 @@ vector<shared_ptr<CommandBuffer>> GraphicsDevice::createCommandBuffers(VkCommand
 // ---------------------------------------------------------------------------------------------------------------------
 
 void GraphicsDevice::flush(
-    const std::shared_ptr<CommandBuffer>& commandBuffer) const
+    const shared_ptr<CommandBuffer>& commandBuffer) const
 {
     VkFence fence = createFence();
     graphicsQueue->submit(commandBuffer, fence);
@@ -689,6 +691,7 @@ void GraphicsDevice::destroyCommandBuffer(
 // ---------------------------------------------------------------------------------------------------------------------
 
 shared_ptr<Texture2D> GraphicsDevice::createTexture2D(
+    const string& id,
     const ImageDesc& imageDesc,
     const vector<byte>& imageData,
     bool isGenerateMipmaps) const
@@ -701,6 +704,7 @@ shared_ptr<Texture2D> GraphicsDevice::createTexture2D(
     }
 
     shared_ptr<Image> textureImage = createImage(
+        id,
         finalImageDesc,
         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
         VK_IMAGE_TILING_OPTIMAL,
@@ -744,12 +748,14 @@ shared_ptr<Texture2D> GraphicsDevice::createTexture2D(
 // ---------------------------------------------------------------------------------------------------------------------
 
 shared_ptr<Image> GraphicsDevice::createImage(
+    const string& id,
     const ImageDesc& imageDesc,
     VkImageUsageFlags usage,
     VkImageTiling tiling,
     VkMemoryPropertyFlags properties) const
 {
     return createImage(
+        id,
         imageDesc.format,
         imageDesc.width,
         imageDesc.height,
@@ -763,12 +769,13 @@ shared_ptr<Image> GraphicsDevice::createImage(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-std::shared_ptr<Image> GraphicsDevice::createImage(
+shared_ptr<Image> GraphicsDevice::createImage(
+    const string& id,
     VkFormat format,
     uint32_t width,
     uint32_t height,
     uint32_t mipLevels,
-    const std::vector<VkDeviceSize>& mipOffsets,
+    const vector<VkDeviceSize>& mipOffsets,
     VkSampleCountFlagBits sampleCount,
     VkImageUsageFlags usage,
     VkImageTiling tiling,
@@ -831,6 +838,7 @@ std::shared_ptr<Image> GraphicsDevice::createImage(
     };
 
     return make_shared<Image>(
+        id,
         imageDesc,
         device,
         image,

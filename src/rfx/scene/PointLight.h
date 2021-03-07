@@ -7,13 +7,13 @@ namespace rfx {
 class PointLight : public Light
 {
 public:
-    PointLight() : Light(LightType::POINT) {}
+    explicit PointLight(const std::string& id) : Light(LightType::POINT, id) {}
 
     void setPosition(const glm::vec3& position);
     [[nodiscard]] const glm::vec3& getPosition() const;
 
 protected:
-    explicit PointLight(LightType type) : Light(type) {}
+    explicit PointLight(LightType type, const std::string& id) : Light(type, id) {}
 
 private:
     glm::vec3 position { 0.0f };

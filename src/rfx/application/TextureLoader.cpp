@@ -38,7 +38,7 @@ shared_ptr<Texture2D> TextureLoader::load(const filesystem::path& filePath) cons
         createMipmaps = true;
     }
 
-    return graphicsDevice->createTexture2D(imageDesc, imageData, createMipmaps);
+    return graphicsDevice->createTexture2D(filePath.filename().string(), imageDesc, imageData, createMipmaps);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

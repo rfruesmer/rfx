@@ -1,8 +1,6 @@
 #include "rfx/pch.h"
 #include "rfx/application/SceneLoader.h"
-#include "rfx/scene/Material.h"
-#include "rfx/scene/Vertex.h"
-#include "rfx/common/Logger.h"
+#include "rfx/scene/PointLight.h"
 
 #include <nlohmann/json.hpp>
 #define TINYGLTF_IMPLEMENTATION
@@ -16,6 +14,9 @@ using namespace glm;
 using namespace std;
 using namespace filesystem;
 
+static const string GLTF_DIRECTIONAL_LIGHT_TYPE = "directional";
+static const string GLTF_POINT_LIGHT_TYPE = "point";
+static const string GLTF_SPOT_LIGHT_TYPE = "spot";
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -34,14 +35,24 @@ public:
     void loadMaterial(size_t index);
     void loadMeshes();
     void prepareGeometryBuffers();
+    void loadMesh(const tinygltf::Mesh& gltfMesh);
+    void loadVertices(const tinygltf::Primitive& glTFPrimitive);
+    const float* getBufferData(const tinygltf::Primitive& glTFPrimitive, const string& attribute);
+    void appendVertexData(
+        uint32_t vertexCount,
+        const float* positionBuffer,
+        const float* normalsBuffer,
+        const float* texCoordsBuffer,
+        const float* tangentsBuffer);
+    uint32_t loadIndices(const tinygltf::Primitive& glTFPrimitive, uint32_t vertexStart);
+    void loadLights();
+    void loadLight(const tinygltf::Value::Object& gltfLight);
+    shared_ptr<Light> loadPointLight(const tinygltf::Value::Object& gltfLight);
     void loadNodes();
     void loadNode(
         const tinygltf::Node& node,
         const shared_ptr<SceneNode>& parentNode);
     static mat4 getLocalTransformOf(const tinygltf::Node& gltfNode) ;
-    void loadMesh(const tinygltf::Mesh& gltfMesh);
-    void loadVertices(const tinygltf::Primitive& glTFPrimitive);
-    uint32_t loadIndices(const tinygltf::Primitive& glTFPrimitive, uint32_t vertexStart);
 
     void buildVertexBuffer();
     void buildIndexBuffer();
@@ -61,6 +72,8 @@ const shared_ptr<Scene>& SceneLoader::SceneLoaderImpl::load(
     const path& scenePath,
     const VertexFormat& vertexFormat)
 {
+    RFX_CHECK_STATE(exists(scenePath), "File not found: " + scenePath.string());
+
     clear();
 
     vertexFormat_ = vertexFormat;
@@ -79,6 +92,7 @@ const shared_ptr<Scene>& SceneLoader::SceneLoaderImpl::load(
     loadTextures();
     loadMaterials();
     loadMeshes();
+    loadLights();
     loadNodes();
     buildVertexBuffer();
     buildIndexBuffer();
@@ -126,7 +140,7 @@ void SceneLoader::SceneLoaderImpl::loadImages()
             .mipOffsets = { 0 }
         };
 
-        scene_->addTexture(graphicsDevice_->createTexture2D(imageDesc, imageData, false));
+        scene_->addTexture(graphicsDevice_->createTexture2D(gltfImage.name, imageDesc, imageData, false));
     }
 }
 
@@ -192,6 +206,11 @@ void SceneLoader::SceneLoaderImpl::loadMaterial(size_t index)
             it != glTFMaterial.values.end()) {
         const shared_ptr<Texture2D>& baseColorTexture = scene_->getTexture(it->second.TextureIndex());
         material->setBaseColorTexture(baseColorTexture);
+    }
+
+    if (glTFMaterial.normalTexture.index > -1) {
+        const shared_ptr<Texture2D>& normalTexture = scene_->getTexture(glTFMaterial.normalTexture.index);
+        material->setNormalTexture(normalTexture);
     }
 
     scene_->addMaterial(material);
@@ -265,57 +284,92 @@ void SceneLoader::SceneLoaderImpl::loadMesh(const tinygltf::Mesh& gltfMesh)
 
 void SceneLoader::SceneLoaderImpl::loadVertices(const tinygltf::Primitive& glTFPrimitive)
 {
-    const float* positionBuffer = nullptr;
+    const tinygltf::Accessor& accessor = gltfModel_.accessors[glTFPrimitive.attributes.find("POSITION")->second];
+    const uint32_t vertexCount = accessor.count;
+
+    // POSITION
+    const float* positionBuffer = getBufferData(glTFPrimitive, "POSITION");
+
+    // COLOR_0
+    const float* colorsBuffer = getBufferData(glTFPrimitive, "COLOR_0");
+    RFX_CHECK_STATE(colorsBuffer == nullptr, "Colors not implemented yet!");
+
+    // NORMAL
     const float* normalsBuffer = nullptr;
+    if (vertexFormat_.containsNormals()) {
+        normalsBuffer = getBufferData(glTFPrimitive, "NORMAL");
+        RFX_CHECK_STATE(normalsBuffer != nullptr, "Tangents generation not implemented yet!");
+    }
+
+    // TEXCOORD_0
     const float* texCoordsBuffer = nullptr;
-    uint32_t vertexCount = 0;
-
-    // Get buffer data for vertex normals
-    if (glTFPrimitive.attributes.find("POSITION") != glTFPrimitive.attributes.end()) {
-        const tinygltf::Accessor& accessor = gltfModel_.accessors[glTFPrimitive.attributes.find("POSITION")->second];
-        const tinygltf::BufferView& view = gltfModel_.bufferViews[accessor.bufferView];
-        positionBuffer = reinterpret_cast<const float*>(&(gltfModel_.buffers[view.buffer].data[accessor.byteOffset + view.byteOffset]));
-        vertexCount = accessor.count;
-    }
-    // Get buffer data for vertex normals
-    if (vertexFormat_.containsNormals() && glTFPrimitive.attributes.find("NORMAL") != glTFPrimitive.attributes.end()) {
-        const tinygltf::Accessor& accessor = gltfModel_.accessors[glTFPrimitive.attributes.find("NORMAL")->second];
-        const tinygltf::BufferView& view = gltfModel_.bufferViews[accessor.bufferView];
-        normalsBuffer = reinterpret_cast<const float*>(&(gltfModel_.buffers[view.buffer].data[accessor.byteOffset + view.byteOffset]));
-    }
-    // Get buffer data for vertex texture coordinates
-    // glTF supports multiple sets, we only load the first one
-    if (vertexFormat_.containsTexCoords() && glTFPrimitive.attributes.find("TEXCOORD_0") != glTFPrimitive.attributes.end()) {
-        const tinygltf::Accessor& accessor = gltfModel_.accessors[glTFPrimitive.attributes.find("TEXCOORD_0")->second];
-        const tinygltf::BufferView& view = gltfModel_.bufferViews[accessor.bufferView];
-        texCoordsBuffer = reinterpret_cast<const float*>(&(gltfModel_.buffers[view.buffer].data[accessor.byteOffset + view.byteOffset]));
+    if (vertexFormat_.containsTexCoords()) {
+        texCoordsBuffer = getBufferData(glTFPrimitive, "TEXCOORD_0");
+        RFX_CHECK_STATE(texCoordsBuffer != nullptr, "Texture coordinates are missing in input file!");
     }
 
-    // Append data to model's vertex buffer
-    uint32_t floatCount = vertexCount_ * (vertexFormat_.getVertexSize() / sizeof(float));
+    // TANGENT
+    const float* tangentsBuffer = nullptr;
+    if (vertexFormat_.containsTangents()) {
+        tangentsBuffer = getBufferData(glTFPrimitive, "TANGENT");
+        RFX_CHECK_STATE(tangentsBuffer != nullptr, "Tangents generation not implemented yet!");
+    }
+
+    appendVertexData(
+        vertexCount,
+        positionBuffer,
+        normalsBuffer,
+        texCoordsBuffer,
+        tangentsBuffer);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const float* SceneLoader::SceneLoaderImpl::getBufferData(
+    const tinygltf::Primitive& glTFPrimitive,
+    const string& attribute)
+{
+    if (!glTFPrimitive.attributes.contains(attribute)) {
+        return nullptr;
+    };
+
+    const tinygltf::Accessor& accessor = gltfModel_.accessors[glTFPrimitive.attributes.find(attribute)->second];
+    const tinygltf::BufferView& view = gltfModel_.bufferViews[accessor.bufferView];
+
+    return reinterpret_cast<const float*>(&(gltfModel_.buffers[view.buffer].data[accessor.byteOffset + view.byteOffset]));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SceneLoader::SceneLoaderImpl::appendVertexData(
+    uint32_t vertexCount,
+    const float* positionBuffer,
+    const float* normalsBuffer,
+    const float* texCoordsBuffer,
+    const float* tangentsBuffer)
+{
+    uint32_t destIndex = vertexCount_ * (vertexFormat_.getVertexSize() / sizeof(float));
     vec3 normal;
 
-    for (uint32_t i = 0; i < vertexCount; i++) {
+    for (uint32_t vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
 
-        memcpy(&vertexData_[floatCount], &positionBuffer[i * 3], 3 * sizeof(float));
-        floatCount += 3;
+        memcpy(&vertexData_[destIndex], &positionBuffer[vertexIndex * 3], sizeof(vec3));
+        destIndex += 3;
 
-        if (vertexFormat_.containsNormals()) {
-            if (normalsBuffer) {
-                normal = normalize(make_vec3(&normalsBuffer[i * 3]));
-                memcpy(&vertexData_[floatCount], &normal, 3 * sizeof(float));
-            }
-            else {
-                RFX_THROW_NOT_IMPLEMENTED(); // generation of normals not implemented yet
-            }
-            floatCount += 3;
+        if (normalsBuffer) {
+            normal = normalize(make_vec3(&normalsBuffer[vertexIndex * 3]));
+            memcpy(&vertexData_[destIndex], &normal, sizeof(vec3));
+            destIndex += 3;
         }
 
-        if (vertexFormat_.containsTexCoords()) {
-            RFX_CHECK_STATE(texCoordsBuffer != nullptr, "Texture coordinates are missing in input file");
+        if (texCoordsBuffer) {
+            memcpy(&vertexData_[destIndex], &texCoordsBuffer[vertexIndex * 2], sizeof(vec2));
+            destIndex += 2;
+        }
 
-            memcpy(&vertexData_[floatCount], &texCoordsBuffer[i * 2], 2 * sizeof(float));
-            floatCount += 2;
+        if (tangentsBuffer) {
+            memcpy(&vertexData_[destIndex], &tangentsBuffer[vertexIndex * 4], sizeof(vec4));
+            destIndex += 4;
         }
     }
 
@@ -369,13 +423,78 @@ uint32_t SceneLoader::SceneLoaderImpl::loadIndices(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void SceneLoader::SceneLoaderImpl::loadLights()
+{
+    if (!gltfModel_.extensions.contains("KHR_lights_punctual")) {
+        return;
+    }
+
+    tinygltf::Value lightsExtension = gltfModel_.extensions["KHR_lights_punctual"];
+    auto& gltfLights = lightsExtension.Get<tinygltf::Value::Object>()["lights"].Get<tinygltf::Value::Array>();
+    for (const auto& gltfLight : gltfLights) {
+        loadLight(gltfLight.Get<tinygltf::Value::Object>());
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SceneLoader::SceneLoaderImpl::loadLight(const tinygltf::Value::Object& gltfLight)
+{
+    shared_ptr<Light> light;
+
+    const string type = gltfLight.find("type")->second.Get<string>();
+    if (type == GLTF_POINT_LIGHT_TYPE) {
+        light = loadPointLight(gltfLight);
+    }
+    else  {
+        RFX_THROW_NOT_IMPLEMENTED();
+    }
+
+    scene_->addLight(light);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+shared_ptr<Light> SceneLoader::SceneLoaderImpl::loadPointLight(const tinygltf::Value::Object& gltfLight)
+{
+    string id;
+    if (gltfLight.contains("name")) {
+        id = gltfLight.find("name")->second.Get<string>();
+    }
+
+    vec3 color { 1.0f };
+    if (gltfLight.contains("color")) {
+        const auto& gltfColor = gltfLight.find("color")->second.Get<tinygltf::Value::Array>();
+        color = vec3(
+            gltfColor[0].GetNumberAsDouble(),
+            gltfColor[1].GetNumberAsDouble(),
+            gltfColor[2].GetNumberAsDouble()
+        );
+    }
+
+    if (gltfLight.contains("range")) {
+        RFX_THROW_NOT_IMPLEMENTED();
+    }
+
+    if (gltfLight.contains("intensity")) {
+        // TODO: consider intensity
+    }
+
+    auto pointLight = make_shared<PointLight>(id);
+    pointLight->setColor(color);
+
+    return pointLight;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void SceneLoader::SceneLoaderImpl::loadNodes()
 {
     RFX_CHECK_STATE(gltfModel_.scenes.size() == 1, "Multiple scenes not supported yet");
 
     const tinygltf::Scene& gltfScene = gltfModel_.scenes[0];
-    for (size_t i = 0; i < gltfScene.nodes.size(); ++i) {
-        const tinygltf::Node& node = gltfModel_.nodes[gltfScene.nodes[i]];
+    for (const auto nodeIndex : gltfScene.nodes) {
+        const tinygltf::Node& node = gltfModel_.nodes[nodeIndex];
         loadNode(node, scene_->getRootNode());
     }
 }
@@ -390,6 +509,11 @@ void SceneLoader::SceneLoaderImpl::loadNode(
     node->setLocalTransform(getLocalTransformOf(gltfNode));
     if (gltfNode.mesh > -1) {
         node->addMesh(scene_->getMesh(gltfNode.mesh));
+    }
+    if (gltfNode.extensions.contains("KHR_lights_punctual")) {
+        const auto& lightExtension = gltfNode.extensions.find("KHR_lights_punctual")->second.Get<tinygltf::Value::Object>();
+        int lightIndex = lightExtension.find("light")->second.GetNumberAsInt();
+        node->addLight(scene_->getLight(lightIndex));
     }
     parentNode->addChild(node);
 

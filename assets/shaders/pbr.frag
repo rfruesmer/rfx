@@ -20,6 +20,7 @@ uniform SceneData {
     mat4 projMatrix;
 
     // Light
+    vec4 ambientLight;
     Light lights[4];
 } scene;
 
@@ -37,10 +38,14 @@ uniform MaterialData {
 layout(set = 2, binding = 1)
 uniform sampler2D texSampler;
 
+layout(set = 2, binding = 2)
+uniform sampler2D normalSampler;
+
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec2 inTexCoord;
 layout(location = 2) in vec3 inNormal;
 layout(location = 3) in mat3 inNormalMatrix;
+layout(location = 6) in vec4 inTangent;
 
 layout(location = 0) out vec3 outColor;
 
@@ -89,8 +94,16 @@ vec3 spotLight(int index, vec3 eyePos, vec3 eyeNormal) {
 }
 
 void main() {
-    vec3 color = vec3(0.0);
-    vec3 normal = normalize(inNormal);
+//    vec3 normal = normalize(inNormal);
+    vec3 tangentNormal = texture(normalSampler, inTexCoord).xyz * 2.0 - 1.0;
+
+    vec3 N = normalize(inNormal);
+    vec3 T = normalize(inTangent.xyz);
+    vec3 B = normalize(cross(N, T));
+    mat3 TBN = mat3(T, B, N);
+    vec3 normal = normalize(TBN * tangentNormal);
+
+    vec3 color = scene.ambientLight.xyz;
 
     for (int i = 0; i < 4; ++i) {
         if (!scene.lights[i].enabled) {
@@ -106,4 +119,6 @@ void main() {
     }
 
     outColor = color;
+
+//    outColor = texture(texSampler, inTexCoord).rgb;
 }

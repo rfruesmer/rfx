@@ -1,5 +1,6 @@
 #include "rfx/pch.h"
 #include "rfx/scene/SceneNode.h"
+#include "rfx/scene/PointLight.h"
 
 using namespace rfx;
 using namespace glm;
@@ -97,14 +98,41 @@ uint32_t SceneNode::getMeshCount() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void SceneNode::addLight(std::shared_ptr<Light> light)
+{
+    lights_.push_back(move(light));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void SceneNode::compile()
 {
     if (parent_) {
         worldTransform_ = parent_->getWorldTransform() * localTransform_;
     }
 
+    if (!lights_.empty()) {
+        updateLights();
+    }
+
     for (const auto& child : children_) {
         child->compile();
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SceneNode::updateLights()
+{
+    const vec3 worldPosition = vec3(worldTransform_[3]);
+
+    for (const auto& light : lights_) {
+        switch (light->getType()) {
+        case Light::POINT:
+        case Light::SPOT:
+            static_pointer_cast<PointLight>(light)->setPosition(worldPosition);
+            break;
+        }
     }
 }
 

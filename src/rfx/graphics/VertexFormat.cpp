@@ -39,6 +39,11 @@ VertexFormat::VertexFormat(unsigned int formatMask)
         texCoords = true;
         vertexSize += 8;
     }
+
+    if (formatMask & TANGENTS) {
+        tangents = true;
+        vertexSize += 16;
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -49,7 +54,8 @@ VertexFormat::VertexFormat(const VertexFormat& theOther)
       normals(theOther.normals),
       colors3(theOther.colors3),
       colors4(theOther.colors4),
-      texCoords(theOther.texCoords) {}
+      texCoords(theOther.texCoords),
+      tangents(theOther.tangents) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -91,6 +97,13 @@ bool VertexFormat::containsColors4() const
 bool VertexFormat::containsTexCoords() const
 {
     return texCoords;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+bool VertexFormat::containsTangents() const
+{
+    return tangents;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

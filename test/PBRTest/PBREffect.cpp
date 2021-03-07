@@ -30,7 +30,7 @@ string PBREffect::getFragmentShaderFileName() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PBREffect::setProjectionMatrix(const glm::mat4& projection)
+void PBREffect::setProjectionMatrix(const mat4& projection)
 {
     sceneData_.projMatrix = projection;
 }
@@ -46,6 +46,13 @@ void PBREffect::setViewMatrix(const mat4& viewMatrix)
             sceneData_.lights[i].position = viewMatrix * vec4(lights_[i]->getPosition(), 1.0f);
         }
     }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PBREffect::setAmbientLight(const vec3& color)
+{
+    sceneData_.ambientLight = vec4(color.x, color.y, color.z, 1.0f);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

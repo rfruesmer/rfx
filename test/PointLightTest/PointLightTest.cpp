@@ -57,10 +57,10 @@ void PointLightTest::loadScene()
     for (const auto& material : scene->getMaterials()) {
         material->setShininess(100.0f);
     }
+    shared_ptr<PointLight> light = dynamic_pointer_cast<PointLight>(scene->getLight(0));
+    RFX_CHECK_STATE(light != nullptr, "");
 
     camera.setPosition({ 0.0f, 1.0f, 10.0f });
-    light.setPosition({ 0.0f, .1f, 0.0f });
-    light.setColor({1.0f, 1.0f, 1.0f});
 
     effect = make_unique<PointLightEffect>(graphicsDevice, scene);
     effectImpl = dynamic_cast<PointLightEffect*>(effect.get());

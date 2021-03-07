@@ -90,6 +90,10 @@ void TestEffect::createDescriptorPools()
     if (getVertexFormat().containsTexCoords()) {
         materialPoolSizes.push_back({VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, materialCount});
     }
+    if (getVertexFormat().containsTangents()) {
+        materialPoolSizes.push_back({VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, materialCount});
+    }
+
     descriptorPools_[DescriptorType::MATERIAL] = createDescriptorPool(
         materialPoolSizes, materialCount);
 }
@@ -166,6 +170,15 @@ void TestEffect::createMaterialDescriptorSetLayout()
     if (getVertexFormat().containsTexCoords()) {
         materialDescSetLayoutBindings.push_back({
             .binding = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+        });
+    }
+
+    if (getVertexFormat().containsTangents()) {
+        materialDescSetLayoutBindings.push_back({
+            .binding = 2,
             .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
             .descriptorCount = 1,
             .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
@@ -284,17 +297,6 @@ void TestEffect::createMaterialDescriptorSets()
             .range = VK_WHOLE_SIZE,
         };
 
-        VkDescriptorImageInfo textureImageInfo {};
-        if (getVertexFormat().containsTexCoords()) {
-            const shared_ptr<Texture2D>& baseColorTexture =
-                scene_->getMaterial(i)->getBaseColorTexture();
-            textureImageInfo = {
-                .sampler = baseColorTexture->getSampler(),
-                .imageView = baseColorTexture->getImageView(),
-                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-            };
-        }
-
         vector<VkWriteDescriptorSet> writeDescriptorSets {
             {
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -308,10 +310,42 @@ void TestEffect::createMaterialDescriptorSets()
         };
 
         if (getVertexFormat().containsTexCoords()) {
+
+            const shared_ptr<Texture2D>& baseColorTexture =
+                scene_->getMaterial(i)->getBaseColorTexture();
+
+            VkDescriptorImageInfo textureImageInfo = {
+                .sampler = baseColorTexture->getSampler(),
+                .imageView = baseColorTexture->getImageView(),
+                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+            };
+
             writeDescriptorSets.push_back({
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .dstSet = materialDescriptorSets_[i],
                 .dstBinding = 1,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                .pImageInfo = &textureImageInfo
+            });
+        }
+
+        if (getVertexFormat().containsTangents()) {
+
+            const shared_ptr<Texture2D>& normalTexture =
+                scene_->getMaterial(i)->getNormalTexture();
+
+            VkDescriptorImageInfo textureImageInfo = {
+                .sampler = normalTexture->getSampler(),
+                .imageView = normalTexture->getImageView(),
+                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+            };
+
+            writeDescriptorSets.push_back({
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .dstSet = materialDescriptorSets_[i],
+                .dstBinding = 2,
                 .dstArrayElement = 0,
                 .descriptorCount = 1,
                 .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,

@@ -15,13 +15,16 @@ public:
     void setBaseColorTexture(std::shared_ptr<Texture2D> texture);
     [[nodiscard]] const std::shared_ptr<Texture2D>& getBaseColorTexture() const;
 
-    float getShininess() const;
+    void setNormalTexture(const std::shared_ptr<Texture2D>& texture);
+    [[nodiscard]] const std::shared_ptr<Texture2D>& getNormalTexture() const;
 
     void setShininess(float shininess);
+    [[nodiscard]] float getShininess() const;
 
 private:
     glm::vec4 baseColorFactor = glm::vec4(1.0f);
     std::shared_ptr<Texture2D> baseColorTexture;
+    std::shared_ptr<Texture2D> normalTexture;
 
     float shininess = 0.0f; // 0-128
 };

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "rfx/scene/Mesh.h"
+#include "rfx/scene/Light.h"
 
 namespace rfx {
 
@@ -26,15 +27,21 @@ public:
     [[nodiscard]] const std::vector<std::shared_ptr<Mesh>>& getMeshes() const;
     [[nodiscard]] uint32_t getMeshCount() const;
 
+    void addLight(std::shared_ptr<Light> light);
+
     void compile();
 
 private:
+    void updateLights();
+
     SceneNode* parent_ = nullptr;  // TODO: use weak_ptr?
     std::vector<std::shared_ptr<SceneNode>> children_;
 
     glm::mat4 localTransform_ { 1.0f };
     glm::mat4 worldTransform_ { 1.0f };
+
     std::vector<std::shared_ptr<Mesh>> meshes_;
+    std::vector<std::shared_ptr<Light>> lights_;
 };
 
 }

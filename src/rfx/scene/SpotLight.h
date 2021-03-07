@@ -8,7 +8,7 @@ namespace rfx {
 class SpotLight : public PointLight
 {
 public:
-    SpotLight() : PointLight(LightType::SPOT) {}
+    explicit SpotLight(const std::string& id) : PointLight(LightType::SPOT, id) {}
 
     void setDirection(const glm::vec3& direction);
     [[nodiscard]] const glm::vec3& getDirection() const;

@@ -23,7 +23,6 @@ private:
     void createCommandBuffers() override;
     void drawScene(const std::shared_ptr<CommandBuffer>& commandBuffer);
 
-    PointLight light;
     PointLightEffect* effectImpl = nullptr;
 };
 

@@ -11,6 +11,8 @@ namespace ranges = ranges;
 
 void Window::create(const string& title, int width, int height)
 {
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+
     window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
     if (!window) {
         RFX_THROW("Failed to create window");
@@ -22,6 +24,13 @@ void Window::create(const string& title, int width, int height)
     glfwSetFramebufferSizeCallback(window, onResize);
     glfwSetCursorEnterCallback(window, onCursorEntered);
     glfwSetCursorPosCallback(window, onCursorPos);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Window::show()
+{
+    glfwShowWindow(window);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
