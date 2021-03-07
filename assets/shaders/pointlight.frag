@@ -20,6 +20,7 @@ uniform MeshData {
 layout(set = 2, binding = 0)
 uniform MaterialData {
     vec4 baseColor;
+    vec3 specularFactor;
     float shininess;
 } material;
 
@@ -40,7 +41,7 @@ vec3 pointLight(vec3 eyePos, vec3 eyeNormal) {
     if (sDotN > 0.0) {
         vec3 v = normalize(-eyePos);
         vec3 h = normalize(v + lightDirection);
-        specular = material.baseColor.xyz * pow(max(dot(h, eyeNormal), 0.0), material.shininess);
+        specular = material.specularFactor * pow(max(dot(h, eyeNormal), 0.0), material.shininess);
     }
 
     return scene.lightColor * (diffuse + specular);

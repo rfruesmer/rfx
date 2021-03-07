@@ -13,16 +13,17 @@ public:
     void setDirection(const glm::vec3& direction);
     [[nodiscard]] const glm::vec3& getDirection() const;
 
-    void setExponent(float exponent);
-    [[nodiscard]] float getExponent() const;
+    void setInnerConeAngle(float angle);
+    [[nodiscard]] float getInnerConeAngle() const;
 
-    void setCutoff(float cutoff);
-    [[nodiscard]] float getCutoff() const;
+    void setOuterConeAngle(float angle);
+    [[nodiscard]] float getOuterConeAngle() const;
 
 private:
-    glm::vec3 direction_;
-    float exponent_ = 0.0f; // 0-128
-    float cutoff_ = 0.0f; // 0-90
+    glm::vec3 direction_ { 0.0f, -1.0f, 0.0f };
+
+    float innerConeAngle = 0.0f;
+    float outerConeAngle = glm::radians(90.0f);
 };
 
 } // namespace rfx

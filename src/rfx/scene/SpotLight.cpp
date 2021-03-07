@@ -21,30 +21,30 @@ const vec3& SpotLight::getDirection() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SpotLight::setExponent(float exponent)
+void SpotLight::setInnerConeAngle(float angle)
 {
-    exponent_ = exponent;
+    innerConeAngle = angle;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-float SpotLight::getExponent() const
+float SpotLight::getInnerConeAngle() const
 {
-    return exponent_;
+    return innerConeAngle;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SpotLight::setCutoff(float cutoff)
+void SpotLight::setOuterConeAngle(float angle)
 {
-    cutoff_ = cutoff;
+    outerConeAngle = angle;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-float SpotLight::getCutoff() const
+float SpotLight::getOuterConeAngle() const
 {
-    return cutoff_;
+    return outerConeAngle;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

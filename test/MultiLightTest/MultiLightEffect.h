@@ -41,8 +41,8 @@ private:
         float pad2;
         glm::vec3 direction;
         float pad3;
-        float exponent;
-        float cutoff;
+        float spotInnerConeAngle = 0.0f;
+        float spotOuterConeAngle = 0.0f;
         int type = Light::LightType::POINT;
         bool enabled = false;
     };

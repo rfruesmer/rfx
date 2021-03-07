@@ -13,8 +13,9 @@ uniform SceneData {
     vec3 lightColor;
     float pad2;
     vec3 spotDirection;         // Direction of the spotlight in eye coords
-    float spotExponent;         // Angular attenuation exponent
-    float spotCutoff;           // Cutoff angle (0-90 in radians)
+    float pad3;
+    float innerConeAngle;
+    float outerConeAngle;
 } scene;
 
 layout(set = 1, binding = 0)
@@ -25,6 +26,7 @@ uniform MeshData {
 layout(set = 2, binding = 0)
 uniform MaterialData {
     vec4 baseColor;
+    vec3 specularFactor;
     float shininess;
 } material;
 
@@ -43,17 +45,19 @@ vec3 spotLight(vec3 eyePos, vec3 eyeNormal) {
 
     vec3 lightDirection = normalize(scene.lightPos - eyePos);
     float cosAngle = dot(-lightDirection, normalize(inSpotDirection));
-    float angle = acos(cosAngle);
     float attenuation = 0.0;
 
-    if (angle < scene.spotCutoff) {
-        attenuation = pow(cosAngle, scene.spotExponent);
+    if (cosAngle > scene.outerConeAngle) {
+        float epsilon = scene.innerConeAngle - scene.outerConeAngle;
+        attenuation = clamp((cosAngle - scene.outerConeAngle) / epsilon, 0.0, 1.0);
+
         float sDotN = max(dot(lightDirection, eyeNormal), 0.0);
-        diffuse = vec3(material.baseColor) * sDotN;
+        diffuse = vec3(material.baseColor) * scene.lightColor * sDotN;
+
         if (sDotN > 0.0) {
             vec3 v = normalize(-eyePos);
             vec3 h = normalize(v + lightDirection);
-            specular = vec3(material.baseColor) * pow(max(dot(h, eyeNormal), 0.0), material.shininess);
+            specular = material.specularFactor * scene.lightColor * pow(max(dot(h, eyeNormal), 0.0), material.shininess);
         }
     }
 

@@ -12,8 +12,9 @@ uniform SceneData {
     vec3 lightColor;
     float pad2;
     vec3 spotDirection;         // Direction of the spotlight in eye coords
-    float spotExponent;         // Angular attenuation exponent
-    float spotCutoff;           // Cutoff angle (0-90 in radians)
+    float pad3;
+    float innerConeAngle;
+    float outerConeAngle;
 } scene;
 
 layout(set = 1, binding = 0)
@@ -24,6 +25,7 @@ uniform MeshData {
 layout(set = 2, binding = 0)
 uniform MaterialData {
     vec4 baseColor;
+    vec3 specularFactor;
     float shininess;
 } material;
 

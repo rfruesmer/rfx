@@ -55,9 +55,12 @@ void PointLightTest::loadScene()
     SceneLoader sceneLoader(graphicsDevice);
     scene = sceneLoader.load(scenePath, VERTEX_FORMAT);
     for (const auto& material : scene->getMaterials()) {
+        material->setSpecularFactor({1.0f, 1.0f, 1.0f});
         material->setShininess(100.0f);
     }
-    shared_ptr<PointLight> light = dynamic_pointer_cast<PointLight>(scene->getLight(0));
+
+    RFX_CHECK_STATE(scene->getLightCount() > 0, "");
+    auto light = dynamic_pointer_cast<PointLight>(scene->getLight(0));
     RFX_CHECK_STATE(light != nullptr, "");
 
     camera.setPosition({ 0.0f, 1.0f, 10.0f });

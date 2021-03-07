@@ -12,7 +12,8 @@ using namespace std;
 VertexDiffuseEffect::VertexDiffuseEffect(
     const std::shared_ptr<GraphicsDevice>& graphicsDevice,
     const std::shared_ptr<Scene>& scene)
-        : TestEffect(graphicsDevice, scene) {}
+        : TestEffect(graphicsDevice, scene),
+          light_("point") {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 

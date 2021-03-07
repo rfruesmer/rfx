@@ -40,20 +40,20 @@ void SpotLightEffect::setProjectionMatrix(const glm::mat4& projection)
 void SpotLightEffect::setViewMatrix(const mat4& viewMatrix)
 {
     sceneData_.viewMatrix = viewMatrix;
-    sceneData_.lightPos = viewMatrix * vec4(light_.getPosition(), 1.0f);
+    sceneData_.lightPos = viewMatrix * vec4(light_->getPosition(), 1.0f);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SpotLightEffect::setLight(const SpotLight& light)
+void SpotLightEffect::setLight(const shared_ptr<SpotLight>& light)
 {
     light_ = light;
 
-    sceneData_.lightPos = sceneData_.viewMatrix * vec4(light.getPosition(), 1.0f);
-    sceneData_.lightColor = vec4(light.getColor(), 1.0f);
-    sceneData_.spotDirection = light.getDirection();
-    sceneData_.spotExponent = light.getExponent();
-    sceneData_.spotCutoff = light.getCutoff();
+    sceneData_.lightPos = sceneData_.viewMatrix * vec4(light->getPosition(), 1.0f);
+    sceneData_.lightColor = vec4(light->getColor(), 1.0f);
+    sceneData_.spotDirection = light->getDirection();
+    sceneData_.spotInnerConeAngle = glm::cos(glm::radians(light->getInnerConeAngle()));
+    sceneData_.spotOuterConeAngle = glm::cos(glm::radians(light->getOuterConeAngle()));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -71,3 +71,4 @@ void SpotLightEffect::updateSceneDataBuffer()
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+

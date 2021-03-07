@@ -49,16 +49,18 @@ void SpotLightTest::initGraphics()
 
 void SpotLightTest::loadScene()
 {
-    const path scenePath = getAssetsDirectory() / "models/plane/plane.gltf";
+    const path scenePath = getAssetsDirectory() / "models/plane/plane_with_spotlight.gltf";
 
     SceneLoader sceneLoader(graphicsDevice);
     scene = sceneLoader.load(scenePath, VERTEX_FORMAT);
+//    for (const auto& material : scene->getMaterials()) {
+//        material->setSpecularFactor({1.0f, 0.0f, 0.0f});
+//    }
     camera.setPosition({0.0f, 1.0f, 2.0f});
-    light.setPosition({0.0f, 20.0f, 0.0f});
-    light.setColor({0.0f, 0.0f, 1.0f});
-    light.setDirection({0.0f, -1.0f, 0.0f});
-    light.setExponent(50.0f);
-    light.setCutoff(radians(15.0f));
+
+    RFX_CHECK_STATE(scene->getLightCount() > 0, "");
+    auto light = dynamic_pointer_cast<SpotLight>(scene->getLight(0));
+    RFX_CHECK_STATE(light != nullptr, "");
 
     effect = make_unique<SpotLightEffect>(graphicsDevice, scene);
     effectImpl = dynamic_cast<SpotLightEffect*>(effect.get());

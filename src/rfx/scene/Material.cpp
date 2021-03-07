@@ -2,63 +2,78 @@
 #include "rfx/scene/Material.h"
 
 using namespace rfx;
+using namespace glm;
 using namespace std;
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Material::setBaseColorFactor(const glm::vec4& baseColorFactor)
+void Material::setBaseColorFactor(const vec4& baseColorFactor)
 {
-    this->baseColorFactor = baseColorFactor;
+    baseColorFactor_ = baseColorFactor;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const glm::vec4& Material::getBaseColorFactor() const
+const vec4& Material::getBaseColorFactor() const
 {
-    return baseColorFactor;
+    return baseColorFactor_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void Material::setBaseColorTexture(std::shared_ptr<Texture2D> texture)
 {
-    baseColorTexture = move(texture);
+    baseColorTexture_ = move(texture);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 const shared_ptr<Texture2D>& Material::getBaseColorTexture() const
 {
-    return baseColorTexture;
+    return baseColorTexture_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void Material::setShininess(float shininess)
 {
-    Material::shininess = shininess;
+    shininess_ = shininess;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 float Material::getShininess() const
 {
-    return shininess;
+    return shininess_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void Material::setNormalTexture(const shared_ptr<Texture2D>& texture)
 {
-    normalTexture = texture;
+    normalTexture_ = texture;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 const shared_ptr<Texture2D>& Material::getNormalTexture() const
 {
-    return normalTexture;
+    return normalTexture_;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Material::setSpecularFactor(const vec3& specularFactor)
+{
+    specularFactor_ = specularFactor;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const vec3& Material::getSpecularFactor() const
+{
+    return specularFactor_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

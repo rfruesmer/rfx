@@ -27,13 +27,6 @@ int main()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-TexturedMultiLightTest::TexturedMultiLightTest()
-{
-    devToolsEnabled = true;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void TexturedMultiLightTest::initGraphics()
 {
     Application::initGraphics();
@@ -54,22 +47,23 @@ void TexturedMultiLightTest::loadScene()
 
     SceneLoader sceneLoader(graphicsDevice);
     scene = sceneLoader.load(scenePath, VERTEX_FORMAT);
-    for (const auto& material : scene->getMaterials()) {
-        material->setShininess(128.0f);
-    }
+//    for (const auto& material : scene->getMaterials()) {
+//        material->setSpecularFactor({1.0f, 0.0f, 0.0f});
+//        material->setShininess(128.0f);
+//    }
 
     camera.setPosition({ 0.0f, 2.0f, 10.0f });
 
-    pointLight = make_shared<PointLight>();
+    pointLight = make_shared<PointLight>("point");
     pointLight->setPosition({5.0f, .5f, 5.0f });
-    pointLight->setColor({1.0f, 1.0f, 1.0f});
+    pointLight->setColor({0.0f, 1.0f, 0.0f});
 
-    spotLight = make_shared<SpotLight>();
+    spotLight = make_shared<SpotLight>("spot");
     spotLight->setPosition({0.0f, 10.0f, 0.0f});
     spotLight->setColor({0.0f, 0.0f, 1.0f});
     spotLight->setDirection({0.0f, -1.0f, 0.0f});
-    spotLight->setExponent(50.0f);
-    spotLight->setCutoff(radians(15.0f));
+    spotLight->setInnerConeAngle(20.0f);
+    spotLight->setOuterConeAngle(30.0f);
 
     effect = make_unique<TexturedMultiLightEffect>(graphicsDevice, scene);
     effectImpl = dynamic_cast<TexturedMultiLightEffect*>(effect.get());

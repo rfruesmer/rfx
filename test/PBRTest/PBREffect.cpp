@@ -83,8 +83,8 @@ void PBREffect::setLight(int index, const shared_ptr<SpotLight>& light)
 
     auto& sceneDataLight = sceneData_.lights[index];
     sceneDataLight.direction = light->getDirection();
-    sceneDataLight.exponent = light->getExponent();
-    sceneDataLight.cutoff = light->getCutoff();
+    sceneDataLight.spotInnerConeAngle = glm::cos(glm::radians(light->getInnerConeAngle()));
+    sceneDataLight.spotOuterConeAngle = glm::cos(glm::radians(light->getOuterConeAngle()));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

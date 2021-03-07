@@ -61,16 +61,16 @@ void PBRTest::loadScene()
 
     camera.setPosition({ 0.0f, 2.0f, 10.0f });
 
-    pointLight = make_shared<PointLight>();
-    pointLight->setPosition({2.5f, 2.5f, 0.0f });
-    pointLight->setColor({1.0f, 1.0f, 1.0f});
-
-    spotLight = make_shared<SpotLight>();
-    spotLight->setPosition({0.0f, 10.0f, 0.0f});
-    spotLight->setColor({0.0f, 0.0f, 1.0f});
-    spotLight->setDirection({0.0f, -1.0f, 0.0f});
-    spotLight->setExponent(50.0f);
-    spotLight->setCutoff(radians(15.0f));
+//    pointLight = make_shared<PointLight>("point");
+//    pointLight->setPosition({2.5f, 2.5f, 0.0f });
+//    pointLight->setColor({1.0f, 1.0f, 1.0f});
+//
+//    spotLight = make_shared<SpotLight>("spot");
+//    spotLight->setPosition({0.0f, 10.0f, 0.0f});
+//    spotLight->setColor({0.0f, 0.0f, 1.0f});
+//    spotLight->setDirection({0.0f, -1.0f, 0.0f});
+//    spotLight->setExponent(50.0f);
+//    spotLight->setCutoff(radians(15.0f));
 
     effect = make_unique<PBREffect>(graphicsDevice, scene);
     effectImpl = dynamic_cast<PBREffect*>(effect.get());

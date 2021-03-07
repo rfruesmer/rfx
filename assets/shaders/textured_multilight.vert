@@ -7,8 +7,8 @@ struct Light {
     float pad2;
     vec3 direction;
     float pad3;
-    float exponent;
-    float cutoff;
+    float spotInnerConeAngle;
+    float spotOuterConeAngle;
     int type;
     bool enabled;
 };
@@ -31,6 +31,7 @@ uniform MeshData {
 layout(set = 2, binding = 0)
 uniform MaterialData {
     vec4 baseColor;
+    vec3 specularFactor;
     float shininess;
 } material;
 

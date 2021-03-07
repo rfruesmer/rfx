@@ -20,7 +20,7 @@ public:
 
     void setProjectionMatrix(const glm::mat4& projection);
     void setViewMatrix(const glm::mat4& viewMatrix);
-    void setLight(const SpotLight& light);
+    void setLight(const std::shared_ptr<SpotLight>& light);
 
     [[nodiscard]] size_t getSceneDataSize() const override;
     void updateSceneDataBuffer();
@@ -38,12 +38,13 @@ private:
         glm::vec3 lightColor;
         [[maybe_unused]] float pad2;
         glm::vec3 spotDirection;     // Direction of the spotlight in eye coords
-        float spotExponent = 0.0f;   // Angular attenuation exponent
-        float spotCutoff = 0.0f;     // Cutoff angle (0-90 in radians)
+        [[maybe_unused]] float pad3;
+        float spotInnerConeAngle = 0.0f;
+        float spotOuterConeAngle = glm::radians(90.0f);
     };
 
     SceneData sceneData_ {};
-    SpotLight light_;
+    std::shared_ptr<SpotLight> light_;
 };
 
 } // namespace rfx

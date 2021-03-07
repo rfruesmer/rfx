@@ -1,6 +1,7 @@
 #include "rfx/pch.h"
 #include "rfx/application/SceneLoader.h"
 #include "rfx/scene/PointLight.h"
+#include "rfx/scene/SpotLight.h"
 
 #include <nlohmann/json.hpp>
 #define TINYGLTF_IMPLEMENTATION
@@ -17,6 +18,18 @@ using namespace filesystem;
 static const string GLTF_DIRECTIONAL_LIGHT_TYPE = "directional";
 static const string GLTF_POINT_LIGHT_TYPE = "point";
 static const string GLTF_SPOT_LIGHT_TYPE = "spot";
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+struct GLTFLightProperties {
+    string type;
+    string name;
+    vec3 color { 1.0f };
+    int intensity = 1;
+    float range;
+    float innerConeAngle = 0.0f;
+    float outerConeAngle = radians(90.0f);
+};
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -48,6 +61,8 @@ public:
     void loadLights();
     void loadLight(const tinygltf::Value::Object& gltfLight);
     shared_ptr<Light> loadPointLight(const tinygltf::Value::Object& gltfLight);
+    GLTFLightProperties getLightProperties(const tinygltf::Value::Object& gltfLight);
+    shared_ptr<Light> loadSpotLight(const tinygltf::Value::Object& gltfLight);
     void loadNodes();
     void loadNode(
         const tinygltf::Node& node,
@@ -446,6 +461,9 @@ void SceneLoader::SceneLoaderImpl::loadLight(const tinygltf::Value::Object& gltf
     if (type == GLTF_POINT_LIGHT_TYPE) {
         light = loadPointLight(gltfLight);
     }
+    else if (type == GLTF_SPOT_LIGHT_TYPE) {
+        light = loadSpotLight(gltfLight);
+    }
     else  {
         RFX_THROW_NOT_IMPLEMENTED();
     }
@@ -457,15 +475,29 @@ void SceneLoader::SceneLoaderImpl::loadLight(const tinygltf::Value::Object& gltf
 
 shared_ptr<Light> SceneLoader::SceneLoaderImpl::loadPointLight(const tinygltf::Value::Object& gltfLight)
 {
-    string id;
+    const GLTFLightProperties lightProperties = getLightProperties(gltfLight);
+
+    auto pointLight = make_shared<PointLight>(lightProperties.name);
+    pointLight->setColor(lightProperties.color);
+    // TODO: consider intensity
+
+
+    return pointLight;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+GLTFLightProperties SceneLoader::SceneLoaderImpl::getLightProperties(const tinygltf::Value::Object& gltfLight)
+{
+    GLTFLightProperties lightProperties;
+
     if (gltfLight.contains("name")) {
-        id = gltfLight.find("name")->second.Get<string>();
+        lightProperties.name = gltfLight.at("name").Get<string>();
     }
 
-    vec3 color { 1.0f };
     if (gltfLight.contains("color")) {
-        const auto& gltfColor = gltfLight.find("color")->second.Get<tinygltf::Value::Array>();
-        color = vec3(
+        const auto& gltfColor = gltfLight.at("color").Get<tinygltf::Value::Array>();
+        lightProperties.color = vec3(
             gltfColor[0].GetNumberAsDouble(),
             gltfColor[1].GetNumberAsDouble(),
             gltfColor[2].GetNumberAsDouble()
@@ -477,13 +509,31 @@ shared_ptr<Light> SceneLoader::SceneLoaderImpl::loadPointLight(const tinygltf::V
     }
 
     if (gltfLight.contains("intensity")) {
-        // TODO: consider intensity
+        lightProperties.intensity = gltfLight.at("intensity").GetNumberAsInt();
     }
 
-    auto pointLight = make_shared<PointLight>(id);
-    pointLight->setColor(color);
+    if (gltfLight.contains("spot")) {
+        auto& gltfSpot = gltfLight.find("spot")->second.Get<tinygltf::Value::Object>();
+        lightProperties.innerConeAngle = gltfSpot.at("innerConeAngle").GetNumberAsDouble();
+        lightProperties.outerConeAngle = gltfSpot.at("outerConeAngle").GetNumberAsDouble();
+    }
 
-    return pointLight;
+    return lightProperties;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+shared_ptr<Light> SceneLoader::SceneLoaderImpl::loadSpotLight(const tinygltf::Value::Object& gltfLight)
+{
+    const GLTFLightProperties lightProperties = getLightProperties(gltfLight);
+
+    auto spotLight = make_shared<SpotLight>(lightProperties.name);
+    spotLight->setColor(lightProperties.color);
+    // TODO: consider intensity
+    spotLight->setInnerConeAngle(glm::degrees(lightProperties.innerConeAngle));
+    spotLight->setOuterConeAngle(glm::degrees(lightProperties.outerConeAngle));
+
+    return spotLight;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

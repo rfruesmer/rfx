@@ -24,7 +24,6 @@ private:
     void createCommandBuffers() override;
     void drawScene(const std::shared_ptr<CommandBuffer>& commandBuffer);
 
-    SpotLight light;
     SpotLightEffect* effectImpl = nullptr;
 };
 

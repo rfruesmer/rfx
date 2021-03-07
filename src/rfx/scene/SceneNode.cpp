@@ -1,6 +1,7 @@
 #include "rfx/pch.h"
 #include "rfx/scene/SceneNode.h"
 #include "rfx/scene/PointLight.h"
+#include "rfx/scene/SpotLight.h"
 
 using namespace rfx;
 using namespace glm;
@@ -42,28 +43,28 @@ const vector<shared_ptr<SceneNode>>& SceneNode::getChildren() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneNode::setLocalTransform(const glm::mat4& localTransform)
+void SceneNode::setLocalTransform(const mat4& localTransform)
 {
     localTransform_ = localTransform;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const glm::mat4& SceneNode::getLocalTransform() const
+const mat4& SceneNode::getLocalTransform() const
 {
     return localTransform_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneNode::setWorldTransform(const glm::mat4& worldTransform)
+void SceneNode::setWorldTransform(const mat4& worldTransform)
 {
     worldTransform_ = worldTransform;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const glm::mat4& SceneNode::getWorldTransform() const
+const mat4& SceneNode::getWorldTransform() const
 {
     return worldTransform_;
 }
@@ -124,13 +125,24 @@ void SceneNode::compile()
 
 void SceneNode::updateLights()
 {
-    const vec3 worldPosition = vec3(worldTransform_[3]);
+//    const vec3 worldPosition = vec3(worldTransform_[3]);
+
+    quat orientation;
+    vec3 position;
+    vec3 unused;
+    vec4 unused2;
+    decompose(worldTransform_, unused, orientation, position, unused, unused2);
+
+    vec3 direction = normalize(orientation * vec3(0.0f, 0.0f, -1.0f));
 
     for (const auto& light : lights_) {
         switch (light->getType()) {
         case Light::POINT:
+            static_pointer_cast<PointLight>(light)->setPosition(position);
+            break;
         case Light::SPOT:
-            static_pointer_cast<PointLight>(light)->setPosition(worldPosition);
+            static_pointer_cast<SpotLight>(light)->setPosition(position);
+            static_pointer_cast<SpotLight>(light)->setDirection(direction);
             break;
         }
     }

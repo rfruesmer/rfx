@@ -10,8 +10,6 @@ class TexturedMultiLightTest : public TestApplication
 {
     static const inline VertexFormat VERTEX_FORMAT = TexturedMultiLightEffect::VERTEX_FORMAT;
 
-public:
-    TexturedMultiLightTest();
 
 protected:
     void initGraphics() override;

@@ -15,6 +15,7 @@
 #include <regex>
 #include <algorithm>
 #include <ranges>
+#include <numbers>
 
 #ifdef _WINDOWS
 #define WIN32_LEAN_AND_MEAN

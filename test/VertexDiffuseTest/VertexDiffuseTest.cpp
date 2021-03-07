@@ -28,6 +28,7 @@ int main()
 // ---------------------------------------------------------------------------------------------------------------------
 
 VertexDiffuseTest::VertexDiffuseTest()
+    : light("point")
 {
     devToolsEnabled = true;
 }

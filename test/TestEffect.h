@@ -34,8 +34,10 @@ protected:
         glm::mat4 modelMatrix;
     };
 
+    // TODO: move out of base class
     struct MaterialData {
         glm::vec4 baseColor;
+        glm::vec3 specularFactor;
         float shininess;
     };
 

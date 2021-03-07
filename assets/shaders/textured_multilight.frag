@@ -7,8 +7,8 @@ struct Light {
     float pad2;
     vec3 direction;
     float pad3;
-    float exponent;
-    float cutoff;
+    float spotCosInnerConeAngle;
+    float spotCosOuterConeAngle;
     int type;
     bool enabled;
 };
@@ -31,6 +31,7 @@ uniform MeshData {
 layout(set = 2, binding = 0)
 uniform MaterialData {
     vec4 baseColor;
+    vec3 specularFactor;
     float shininess;
 } material;
 
@@ -53,10 +54,12 @@ vec3 pointLight(int index, vec3 eyePos, vec3 eyeNormal) {
     vec3 diffuse = texColor * sDotN;
     vec3 specular = vec3(0.0);
 
-    if (sDotN > 0.0) {
+    if (material.shininess > 0.0 && sDotN > 0.0) {
         vec3 v = normalize(-eyePos);
         vec3 h = normalize(v + lightDirection);
-        specular = vec3(0.0, 0.0, 0.0) * material.baseColor.xyz * pow(max(dot(h, eyeNormal), 0.0), material.shininess);
+        specular = scene.lights[index].color
+            * material.specularFactor
+            * pow(max(dot(h, eyeNormal), 0.0), material.shininess);
     }
 
     return scene.lights[index].color * (diffuse + specular);
@@ -64,24 +67,34 @@ vec3 pointLight(int index, vec3 eyePos, vec3 eyeNormal) {
 
 vec3 spotLight(int index, vec3 eyePos, vec3 eyeNormal) {
 
-    vec3 texColor = texture(texSampler, inTexCoord).rgb;
     vec3 diffuse = vec3(0);
     vec3 specular = vec3(0);
 
     vec3 lightDirection = normalize(scene.lights[index].position - eyePos);
-    vec3 spotDirection = inNormalMatrix * scene.lights[index].direction;
-    float cosAngle = dot(-lightDirection, normalize(spotDirection));
-    float angle = acos(cosAngle);
+    vec3 spotDirection = normalize(inNormalMatrix * scene.lights[index].direction);
+    float spotCos = dot(lightDirection, -spotDirection);
     float attenuation = 0.0;
 
-    if (angle < scene.lights[index].cutoff) {
-        attenuation = pow(cosAngle, scene.lights[index].exponent);
-        float sDotN = max(dot(lightDirection, eyeNormal), 0.0);
-        diffuse = texColor * sDotN;
-        if (sDotN > 0.0) {
+    if (spotCos > scene.lights[index].spotCosOuterConeAngle) {
+#if 0
+        float lightAngleScale = 1.0f /
+            max(0.001f, scene.lights[index].spotCosInnerConeAngle - scene.lights[index].spotCosOuterConeAngle);
+        float lightAngleOffset = -scene.lights[index].spotCosOuterConeAngle * lightAngleScale;
+        attenuation = clamp(spotCos * lightAngleScale + lightAngleOffset, 0.0, 1.0);
+        attenuation *= attenuation;
+#else
+        float epsilon = scene.lights[index].spotCosInnerConeAngle - scene.lights[index].spotCosOuterConeAngle;
+        attenuation = clamp((spotCos - scene.lights[index].spotCosOuterConeAngle) / epsilon, 0.0, 1.0);
+#endif
+        float sDotN = max(0.0, dot(eyeNormal, lightDirection));
+        diffuse = scene.lights[index].color * vec3(material.baseColor) * sDotN;
+
+        if (material.shininess > 0.0 && sDotN > 0.0) {
             vec3 v = normalize(-eyePos);
             vec3 h = normalize(v + lightDirection);
-            specular = texColor * pow(max(dot(h, eyeNormal), 0.0), material.shininess);
+            specular = scene.lights[index].color
+                * material.specularFactor
+                * pow(max(dot(h, eyeNormal), 0.0), material.shininess);
         }
     }
 

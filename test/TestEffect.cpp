@@ -61,8 +61,10 @@ void TestEffect::createMaterialDataBuffers()
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
+        // TODO: move out of base class
         MaterialData materialData {
             .baseColor = material->getBaseColorFactor(),
+            .specularFactor = material->getSpecularFactor(),
             .shininess = material->getShininess()
         };
 
