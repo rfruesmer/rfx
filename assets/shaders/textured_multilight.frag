@@ -1,16 +1,24 @@
 #version 450
 
 struct Light {
-    vec3 position;          // light position in eye coords
-    float pad1;
-    vec3 color;
-    float pad2;
-    vec3 direction;
-    float pad3;
-    float spotCosInnerConeAngle;
-    float spotCosOuterConeAngle;
     int type;
     bool enabled;
+    float pad1;
+    float pad2;
+
+    vec3 position;
+    float pad3;
+
+    vec3 color;
+    float pad4;
+
+    vec3 direction;
+    float pad5;
+
+    float spotCosInnerConeAngle;
+    float spotCosOuterConeAngle;
+    float range;
+    float pad6;
 };
 
 layout(set = 0, binding = 0)
@@ -49,23 +57,33 @@ layout(location = 0) out vec3 outColor;
 vec3 pointLight(int index, vec3 eyePos, vec3 eyeNormal) {
 
     vec3 texColor = texture(texSampler, inTexCoord).rgb;
-    vec3 lightDirection = normalize(scene.lights[index].position - eyePos);
-    float sDotN = max(dot(lightDirection, eyeNormal), 0.0);
+
+    vec3 lightDirection = scene.lights[index].position - eyePos;
+    float distance = length(lightDirection);
+    lightDirection /= distance;
+
+    float attenuation = 1.0;
+    if (scene.lights[index].range > 0.0) {
+        attenuation = max(min(1.0f - (distance / scene.lights[index].range), 1), 0) / distance;
+    }
+
+    float sDotN = max(0.0, dot(lightDirection, eyeNormal));
     vec3 diffuse = texColor * sDotN;
     vec3 specular = vec3(0.0);
 
     if (material.shininess > 0.0 && sDotN > 0.0) {
         vec3 v = normalize(-eyePos);
         vec3 h = normalize(v + lightDirection);
-        specular = scene.lights[index].color
-            * material.specularFactor
+        specular = material.specularFactor
             * pow(max(dot(h, eyeNormal), 0.0), material.shininess);
     }
 
-    return scene.lights[index].color * (diffuse + specular);
+    return scene.lights[index].color * (diffuse + specular) * attenuation;
 }
 
 vec3 spotLight(int index, vec3 eyePos, vec3 eyeNormal) {
+
+    vec3 texColor = texture(texSampler, inTexCoord).rgb;
 
     vec3 diffuse = vec3(0);
     vec3 specular = vec3(0);
@@ -87,18 +105,17 @@ vec3 spotLight(int index, vec3 eyePos, vec3 eyeNormal) {
         attenuation = clamp((spotCos - scene.lights[index].spotCosOuterConeAngle) / epsilon, 0.0, 1.0);
 #endif
         float sDotN = max(0.0, dot(eyeNormal, lightDirection));
-        diffuse = scene.lights[index].color * vec3(material.baseColor) * sDotN;
+        diffuse = texColor * sDotN;
 
         if (material.shininess > 0.0 && sDotN > 0.0) {
             vec3 v = normalize(-eyePos);
             vec3 h = normalize(v + lightDirection);
-            specular = scene.lights[index].color
-                * material.specularFactor
+            specular = texColor * material.specularFactor
                 * pow(max(dot(h, eyeNormal), 0.0), material.shininess);
         }
     }
 
-    return attenuation * (diffuse + specular);
+    return scene.lights[index].color * (diffuse + specular) * attenuation;
 }
 
 void main() {

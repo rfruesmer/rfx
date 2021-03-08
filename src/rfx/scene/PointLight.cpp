@@ -10,14 +10,28 @@ using namespace std;
 
 void PointLight::setPosition(const vec3& position)
 {
-    PointLight::position = position;
+    position_ = position;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 const vec3& PointLight::getPosition() const
 {
-    return position;
+    return position_;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PointLight::setRange(float range)
+{
+    range_ = range;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+float PointLight::getRange() const
+{
+    return range_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

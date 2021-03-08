@@ -64,6 +64,7 @@ void MultiLightTest::loadScene()
     pointLight = make_shared<PointLight>("point");
     pointLight->setPosition({5.0f, .5f, 5.0f });
     pointLight->setColor({1.0f, 1.0f, 1.0f});
+    pointLight->setRange(6.0f);
 
     spotLight = make_shared<SpotLight>("spot");
     spotLight->setPosition({0.0f, 10.0f, 0.0f});
@@ -155,6 +156,7 @@ void MultiLightTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
     const vector<VkDescriptorSet>& meshDescSets = effect->getMeshDescriptorSets();
     const vector<VkDescriptorSet>& materialDescSets = effect->getMaterialDescriptorSets();
     
+
     for (size_t i = 0, count = scene->getMeshes().size(); i < count; ++i) {
 
         commandBuffer->bindDescriptorSet(
@@ -175,17 +177,6 @@ void MultiLightTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
                 pipelineLayout,
                 2,
                 materialDescSets[subMesh.materialIndex]);
-
-            if (VERTEX_FORMAT.containsTexCoords()) {
-                const shared_ptr<Material>& material = scene->getMaterial(subMesh.materialIndex);
-                const shared_ptr<Texture2D>& baseColorTexture = material->getBaseColorTexture();
-
-                commandBuffer->bindDescriptorSet(
-                    VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    pipelineLayout,
-                    1,
-                    *baseColorTexture->getSamplerDescriptorSet());
-            }
 
             commandBuffer->drawIndexed(subMesh.indexCount, subMesh.firstIndex);
         }

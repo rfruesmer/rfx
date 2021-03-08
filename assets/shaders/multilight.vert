@@ -1,16 +1,24 @@
 #version 450
 
 struct Light {
-    vec3 position;          // light position in eye coords
-    float pad1;
-    vec3 color;
-    float pad2;
-    vec3 direction;
-    float pad3;
-    float spotInnerConeAngle;
-    float spotOuterConeAngle;
     int type;
     bool enabled;
+    float pad1;
+    float pad2;
+
+    vec3 position;
+    float pad3;
+
+    vec3 color;
+    float pad4;
+
+    vec3 direction;
+    float pad5;
+
+    float spotCosInnerConeAngle;
+    float spotCosOuterConeAngle;
+    float range;
+    float pad6;
 };
 
 layout(set = 0, binding = 0)

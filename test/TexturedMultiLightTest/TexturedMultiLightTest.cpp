@@ -57,6 +57,7 @@ void TexturedMultiLightTest::loadScene()
     pointLight = make_shared<PointLight>("point");
     pointLight->setPosition({5.0f, .5f, 5.0f });
     pointLight->setColor({0.0f, 1.0f, 0.0f});
+    pointLight->setRange(6.0f);
 
     spotLight = make_shared<SpotLight>("spot");
     spotLight->setPosition({0.0f, 10.0f, 0.0f});

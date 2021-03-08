@@ -61,8 +61,9 @@ void MultiLightEffect::setLight(int index, const shared_ptr<PointLight>& light)
     auto& sceneDataLight = sceneData_.lights[index];
     sceneDataLight.type = light->getType();
     sceneDataLight.enabled = true;
-    sceneDataLight.position = sceneData_.viewMatrix * vec4(light->getPosition(), 1.0f);
     sceneDataLight.color = vec4(light->getColor(), 1.0f);
+    sceneDataLight.position = sceneData_.viewMatrix * vec4(light->getPosition(), 1.0f);
+    sceneDataLight.range = light->getRange();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

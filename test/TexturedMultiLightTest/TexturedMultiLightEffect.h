@@ -35,16 +35,24 @@ public:
 
 private:
     struct LightData {
-        glm::vec3 position;          // light position in eye coords
-        float pad1;
-        glm::vec3 color;
-        float pad2;
-        glm::vec3 direction;
-        float pad3;
-        float spotInnerConeAngle = 0.0f;
-        float spotOuterConeAngle = 0.0f;
         int type = Light::LightType::POINT;
         bool enabled = false;
+        float pad1;
+        float pad2;
+
+        glm::vec3 position;
+        float pad3;
+
+        glm::vec3 color;
+        float pad4;
+
+        glm::vec3 direction;
+        float pad5;
+
+        float spotInnerConeAngle = 0.0f;
+        float spotOuterConeAngle = 0.0f;
+        float range = 0.0f;
+        float pad6;
     };
 
     struct SceneData {

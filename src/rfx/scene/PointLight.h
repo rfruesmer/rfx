@@ -12,11 +12,15 @@ public:
     void setPosition(const glm::vec3& position);
     [[nodiscard]] const glm::vec3& getPosition() const;
 
+    void setRange(float range);
+    [[nodiscard]] float getRange() const;
+
 protected:
     explicit PointLight(LightType type, const std::string& id) : Light(type, id) {}
 
 private:
-    glm::vec3 position { 0.0f };
+    glm::vec3 position_ { 0.0f };
+    float range_ = 0.0f;
 };
 
 } // namespace rfx
