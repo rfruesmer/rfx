@@ -37,8 +37,8 @@ protected:
     // TODO: move out of base class
     struct MaterialData {
         glm::vec4 baseColor;
-        glm::vec3 specularFactor;
-        float shininess;
+        glm::vec3 specular;
+        float shininess = 0.0f;
     };
 
     void createSceneDataBuffer();

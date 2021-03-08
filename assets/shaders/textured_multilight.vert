@@ -39,7 +39,7 @@ uniform MeshData {
 layout(set = 2, binding = 0)
 uniform MaterialData {
     vec4 baseColor;
-    vec3 specularFactor;
+    vec3 specular;
     float shininess;
 } material;
 

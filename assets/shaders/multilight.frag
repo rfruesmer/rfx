@@ -39,7 +39,7 @@ uniform MeshData {
 layout(set = 2, binding = 0)
 uniform MaterialData {
     vec4 baseColor;
-    vec3 specularFactor;
+    vec3 specular;
     float shininess;
 } material;
 
@@ -51,67 +51,68 @@ layout(location = 2) in mat3 inNormalMatrix;
 layout(location = 0) out vec3 outColor;
 
 
-vec3 pointLight(int index, vec3 eyePos, vec3 eyeNormal) {
-
-    vec3 lightDirection = scene.lights[index].position - eyePos;
-    float distance = length(lightDirection);
-    lightDirection /= distance;
+vec3 pointLight(int index, vec3 position, vec3 normal)
+{
+    vec3 lightDirection = scene.lights[index].position - position;
+    float lightDistance = length(lightDirection);
+    lightDirection /= lightDistance;
 
     float attenuation = 1.0;
     if (scene.lights[index].range > 0.0) {
-        attenuation = max(min(1.0f - (distance / scene.lights[index].range), 1), 0) / distance;
+        attenuation = max(min(1.0f - (lightDistance / scene.lights[index].range), 1), 0) / lightDistance;
     }
 
-    float sDotN = max(0.0, dot(eyeNormal, lightDirection));
-    vec3 diffuse =  material.baseColor.xyz * sDotN;
-    vec3 specular = vec3(0.0);
+    float nDotL = max(0.0, dot(normal, lightDirection));
+    vec3 diffuse =  material.baseColor.xyz * nDotL;
 
-    if (material.shininess > 0.0 && sDotN > 0.0) {
-        vec3 v = normalize(-eyePos);
-        vec3 h = normalize(v + lightDirection);
-        specular = material.specularFactor
-            * pow(max(dot(h, eyeNormal), 0.0), material.shininess);
+    vec3 specular = vec3(0.0);
+    if (nDotL > 0.0 && material.shininess > 0.0) {
+        vec3 eyeDirection = normalize(-position);
+        vec3 halfVector = normalize(eyeDirection + lightDirection);
+        float nDotH = max(0.0, dot(normal, halfVector));
+        specular = material.specular * pow(nDotH, material.shininess);
     }
 
     return scene.lights[index].color * (diffuse + specular) * attenuation;
 }
 
-vec3 spotLight(int index, vec3 eyePos, vec3 eyeNormal) {
-
-    vec3 diffuse = vec3(0);
-    vec3 specular = vec3(0);
-
-    vec3 lightDirection = normalize(scene.lights[index].position - eyePos);
+vec3 spotLight(int index, vec3 position, vec3 normal)
+{
+    vec3 lightDirection = normalize(scene.lights[index].position - position);
     vec3 spotDirection = normalize(inNormalMatrix * scene.lights[index].direction);
     float spotCos = dot(lightDirection, -spotDirection);
+    if (spotCos <= scene.lights[index].spotCosOuterConeAngle) {
+        return vec3(0.0);
+    }
+
     float attenuation = 0.0;
-
-    if (spotCos > scene.lights[index].spotCosOuterConeAngle) {
 #if 0
-        float lightAngleScale = 1.0f /
-            max(0.001f, scene.lights[index].spotCosInnerConeAngle - scene.lights[index].spotCosOuterConeAngle);
-        float lightAngleOffset = -scene.lights[index].spotCosOuterConeAngle * lightAngleScale;
-        attenuation = clamp(spotCos * lightAngleScale + lightAngleOffset, 0.0, 1.0);
-        attenuation *= attenuation;
+    float lightAngleScale = 1.0f /
+        max(0.001f, scene.lights[index].spotCosInnerConeAngle - scene.lights[index].spotCosOuterConeAngle);
+    float lightAngleOffset = -scene.lights[index].spotCosOuterConeAngle * lightAngleScale;
+    attenuation = clamp(spotCos * lightAngleScale + lightAngleOffset, 0.0, 1.0);
+    attenuation *= attenuation;
 #else
-        float epsilon = scene.lights[index].spotCosInnerConeAngle - scene.lights[index].spotCosOuterConeAngle;
-        attenuation = clamp((spotCos - scene.lights[index].spotCosOuterConeAngle) / epsilon, 0.0, 1.0);
+    float epsilon = scene.lights[index].spotCosInnerConeAngle - scene.lights[index].spotCosOuterConeAngle;
+    attenuation = clamp((spotCos - scene.lights[index].spotCosOuterConeAngle) / epsilon, 0.0, 1.0);
 #endif
-        float sDotN = max(0.0, dot(eyeNormal, lightDirection));
-        diffuse = material.baseColor.xyz * sDotN;
 
-        if (material.shininess > 0.0 && sDotN > 0.0) {
-            vec3 v = normalize(-eyePos);
-            vec3 h = normalize(v + lightDirection);
-            specular = material.specularFactor
-                * pow(max(dot(h, eyeNormal), 0.0), material.shininess);
-        }
+    float nDotL = max(0.0, dot(normal, lightDirection));
+    vec3 diffuse = material.baseColor.xyz * nDotL;
+
+    vec3 specular = vec3(0);
+    if (nDotL > 0.0 && material.shininess > 0.0) {
+        vec3 eyeDirection = normalize(-position);
+        vec3 halfVector = normalize(eyeDirection + lightDirection);
+        float nDotH = max(0.0, dot(normal, halfVector));
+        specular = material.specular * pow(nDotH, material.shininess);
     }
 
     return scene.lights[index].color * (diffuse + specular) * attenuation;
 }
 
-void main() {
+void main()
+{
     vec3 color = vec3(0.0);
     vec3 normal = normalize(inNormal);
 
@@ -128,5 +129,5 @@ void main() {
         }
     }
 
-    outColor = color;
+    outColor = min(color, 1.0);
 }

@@ -64,7 +64,7 @@ void TestEffect::createMaterialDataBuffers()
         // TODO: move out of base class
         MaterialData materialData {
             .baseColor = material->getBaseColorFactor(),
-            .specularFactor = material->getSpecularFactor(),
+            .specular = material->getSpecularFactor(),
             .shininess = material->getShininess()
         };
 
