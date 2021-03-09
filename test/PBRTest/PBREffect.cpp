@@ -50,9 +50,9 @@ void PBREffect::setViewMatrix(const mat4& viewMatrix)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PBREffect::setAmbientLight(const vec3& color)
+void PBREffect::setCameraPosition(const vec3& position)
 {
-    sceneData_.ambientLight = vec4(color.x, color.y, color.z, 1.0f);
+    sceneData_.cameraPos = position;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -66,25 +66,86 @@ void PBREffect::setLight(int index, const shared_ptr<PointLight>& light)
     }
 
     auto& sceneDataLight = sceneData_.lights[index];
-    sceneDataLight.type = light->getType();
     sceneDataLight.enabled = true;
     sceneDataLight.position = sceneData_.viewMatrix * vec4(light->getPosition(), 1.0f);
-    sceneDataLight.color = vec4(light->getColor(), 1.0f);
+
+    const vec3& lightColor = light->getColor();
+    sceneDataLight.color = vec4(lightColor * 255.0f, 1.0f);
+}
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PBREffect::setMetallicFactor(float factor)
+{
+    materialData_.metallic = factor;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PBREffect::setLight(int index, const shared_ptr<SpotLight>& light)
+float PBREffect::getMetallicFactor() const
 {
-    setLight(index, static_pointer_cast<PointLight>(light));
-    if (light == nullptr) {
-        return;
-    }
+    return materialData_.metallic;
+}
 
-    auto& sceneDataLight = sceneData_.lights[index];
-    sceneDataLight.direction = light->getDirection();
-    sceneDataLight.spotInnerConeAngle = glm::cos(glm::radians(light->getInnerConeAngle()));
-    sceneDataLight.spotOuterConeAngle = glm::cos(glm::radians(light->getOuterConeAngle()));
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PBREffect::setRoughnessFactor(float factor)
+{
+    materialData_.roughness = factor;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+float PBREffect::getRoughnessFactor() const
+{
+    return materialData_.roughness;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PBREffect::setAlbedo(const vec3& value)
+{
+    materialData_.baseColor = value;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+vec3 PBREffect::getAlbedo() const
+{
+    return materialData_.baseColor;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PBREffect::setAmbientOcclusion(float value)
+{
+    materialData_.ao = value;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+float PBREffect::getAmbientOcclusion()
+{
+    return materialData_.ao;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PBREffect::createMaterialDataBuffers()
+{
+    for (const auto& material : scene_->getMaterials()) {
+        shared_ptr<Buffer> materialUniformBuffer = graphicsDevice_->createBuffer(
+            sizeof(MaterialData),
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+        MaterialData materialData {
+            .pad0 = 0.0f
+        };
+
+        graphicsDevice_->bind(materialUniformBuffer);
+        materialUniformBuffer->load(sizeof(MaterialData), &materialData);
+        materialDataBuffers_.push_back(materialUniformBuffer);
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -99,6 +160,13 @@ size_t PBREffect::getSceneDataSize() const
 void PBREffect::updateSceneDataBuffer()
 {
     sceneDataBuffer_->load(sizeof(SceneData), &sceneData_);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PBREffect::updateMaterialDataBuffer()
+{
+    materialDataBuffers_[0]->load(sizeof(MaterialData), &materialData_);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

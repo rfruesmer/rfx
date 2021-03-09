@@ -10,13 +10,11 @@ class PBRTest : public TestApplication
 {
     static const inline VertexFormat VERTEX_FORMAT = PBREffect::VERTEX_FORMAT;
 
-public:
-    PBRTest();
-
 protected:
     void initGraphics() override;
     void updateProjection() override;
     void updateSceneData() override;
+    void updateDevTools() override;
 
 private:
     void loadScene();

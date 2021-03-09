@@ -1,7 +1,7 @@
 #include "rfx/pch.h"
 #include "TestApplication.h"
 #include "rfx/application/ShaderLoader.h"
-
+#include "rfx/common/Logger.h"
 
 using namespace rfx;
 using namespace glm;
@@ -18,10 +18,12 @@ void TestApplication::loadShaders()
     const path fragmentShaderPath = shadersDirectory / effect->getFragmentShaderFileName();
 
     const ShaderLoader shaderLoader(graphicsDevice);
+    RFX_LOG_INFO << "Loading vertex shader ...";
     vertexShader = shaderLoader.loadVertexShader(
         vertexShaderPath,
         "main",
         effect->getVertexFormat());
+    RFX_LOG_INFO << "Loading fragment shader ...";
     fragmentShader = shaderLoader.loadFragmentShader(
         fragmentShaderPath,
         "main");

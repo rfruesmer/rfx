@@ -27,13 +27,6 @@ int main()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-PBRTest::PBRTest()
-{
-    devToolsEnabled = true;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void PBRTest::initGraphics()
 {
     Application::initGraphics();
@@ -50,33 +43,29 @@ void PBRTest::initGraphics()
 void PBRTest::loadScene()
 {
 //    const path scenePath = getAssetsDirectory() / "models/sci-fi-corridors/Unity2Skfb.gltf";
-    const path scenePath = getAssetsDirectory() / "models/cubes/ice.gltf";
-
+//    const path scenePath = getAssetsDirectory() / "models/cubes/cubes.gltf";
+//    const path scenePath = getAssetsDirectory() / "samples/NormalTangentMirrorTest/glTF/NormalTangentMirrorTest.gltf";
+    const path scenePath = getAssetsDirectory() / "models/teapot/teapot.gltf";
 
     SceneLoader sceneLoader(graphicsDevice);
     scene = sceneLoader.load(scenePath, VERTEX_FORMAT);
-    for (const auto& material : scene->getMaterials()) {
-        material->setShininess(128.0f);
-    }
+//    for (const auto& material : scene->getMaterials()) {
+//        material->setSpecularFactor({1.0f, 0.0f, 0.0f});
+//        material->setShininess(128.0f);
+//    }
 
     camera.setPosition({ 0.0f, 2.0f, 10.0f });
 
-//    pointLight = make_shared<PointLight>("point");
-//    pointLight->setPosition({2.5f, 2.5f, 0.0f });
-//    pointLight->setColor({1.0f, 1.0f, 1.0f});
-//
-//    spotLight = make_shared<SpotLight>("spot");
-//    spotLight->setPosition({0.0f, 10.0f, 0.0f});
-//    spotLight->setColor({0.0f, 0.0f, 1.0f});
-//    spotLight->setDirection({0.0f, -1.0f, 0.0f});
-//    spotLight->setExponent(50.0f);
-//    spotLight->setCutoff(radians(15.0f));
+    RFX_CHECK_STATE(scene->getLightCount() > 0, "");
+    auto pointLight = dynamic_pointer_cast<PointLight>(scene->getLight(0));
+    RFX_CHECK_STATE(pointLight != nullptr, "");
+
+    pointLight->setPosition({0.0f, 15.0f, 5.0f });
+    pointLight->setColor({1.0f, 1.0f, 1.0f});
 
     effect = make_unique<PBREffect>(graphicsDevice, scene);
     effectImpl = dynamic_cast<PBREffect*>(effect.get());
-//    effectImpl->setAmbientLight({ 0.1f, 0.1f, 0.1f });
     effectImpl->setLight(0, pointLight);
-//    effectImpl->setLight(1, spotLight);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -197,7 +186,49 @@ void PBRTest::updateProjection()
 void PBRTest::updateSceneData()
 {
     effectImpl->setViewMatrix(camera.getViewMatrix());
+    effectImpl->setCameraPosition(camera.getPosition());
     effectImpl->updateSceneDataBuffer();
+    effectImpl->updateMaterialDataBuffer();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PBRTest::updateDevTools()
+{
+    TestApplication::updateDevTools();
+
+    float value = effectImpl->getMetallicFactor();
+    if (devTools->sliderFloat("metallic", &value, 0.0f, 1.0f)) {
+        effectImpl->setMetallicFactor(value);
+    }
+
+    value = effectImpl->getRoughnessFactor();
+    if (devTools->sliderFloat("roughness", &value, 0.0f, 1.0f)) {
+        effectImpl->setRoughnessFactor(value);
+    }
+
+    vec3 color = effectImpl->getAlbedo();
+    if (devTools->colorEdit3("albedo", &color.x)) {
+        effectImpl->setAlbedo(color);
+    }
+
+    value = effectImpl->getAmbientOcclusion();
+    if (devTools->sliderFloat("ambient", &value, 0.0f, 1.0f)) {
+        effectImpl->setAmbientOcclusion(value);
+    }
+
+    const auto& light = static_pointer_cast<PointLight>(scene->getLight(0));
+    color = light->getColor();
+    if (devTools->colorEdit3("light#0 color", &color.x)) {
+        light->setColor(color);
+        effectImpl->setLight(0, light);
+    }
+
+    vec3 lightPos = light->getPosition();
+    if (devTools->sliderFloat3("light#0 position", &lightPos.x, -100.0f, 100.0f)) {
+        light->setPosition(lightPos);
+        effectImpl->setLight(0, static_pointer_cast<PointLight>(light));
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

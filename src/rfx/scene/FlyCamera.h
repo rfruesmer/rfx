@@ -19,6 +19,7 @@ public:
     void update(float deltaTime);
 
     [[nodiscard]] const glm::mat4& getViewMatrix() const;
+    [[nodiscard]] const glm::vec3& getPosition() const;
 
 private:
     float pitch_ = 0.0f;

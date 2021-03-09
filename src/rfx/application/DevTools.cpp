@@ -283,16 +283,30 @@ DevTools::~DevTools()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-bool DevTools::sliderFloat(const char* caption, float* value, float min, float max)
+bool DevTools::sliderFloat(const char* label, float* value, float min, float max)
 {
-    return ImGui::SliderFloat(caption, value, min, max);
+    return ImGui::SliderFloat(label, value, min, max);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-bool DevTools::checkBox(const char* caption, bool* value)
+bool DevTools::sliderFloat3(const char* label, float* value, float min, float max)
 {
-    return ImGui::Checkbox(caption, value);
+    return ImGui::SliderFloat3(label, value, min, max);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+bool DevTools::checkBox(const char* label, bool* value)
+{
+    return ImGui::Checkbox(label, value);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+bool DevTools::colorEdit3(const char* label, float* color)
+{
+    return ImGui::ColorEdit3(label, color);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

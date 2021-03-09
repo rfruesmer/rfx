@@ -20,8 +20,10 @@ public:
     void beginDraw(uint32_t frameIndex, uint32_t lastFPS);
     void endDraw();
 
-    bool sliderFloat(const char* caption, float* value, float min, float max);
-    bool checkBox(const char* caption, bool* value);
+    bool sliderFloat(const char* label, float* value, float min, float max);
+    bool sliderFloat3(const char* label, float* value, float min, float max);
+    bool checkBox(const char* label, bool* value);
+    bool colorEdit3(const char* label, float* color);
 
     [[nodiscard]] VkCommandBuffer getCommandBuffer(uint32_t frameIndex) const;
 

@@ -15,7 +15,6 @@ public:
         std::shared_ptr<GraphicsDevice> graphicsDevice,
         std::shared_ptr<Scene> scene);
 
-    [[nodiscard]] virtual size_t getSceneDataSize() const = 0;
 
     void createUniformBuffers() override;
     void createDescriptorPools() override;
@@ -34,16 +33,9 @@ protected:
         glm::mat4 modelMatrix;
     };
 
-    // TODO: move out of base class
-    struct MaterialData {
-        glm::vec4 baseColor;
-        glm::vec3 specular;
-        float shininess = 0.0f;
-    };
-
     void createSceneDataBuffer();
     void createMeshDataBuffers();
-    void createMaterialDataBuffers();
+    virtual void createMaterialDataBuffers();
 
     void createSceneDescriptorSetLayout();
     void createSceneDescriptorSet();
@@ -51,6 +43,8 @@ protected:
     void createMaterialDescriptorSets();
     void createMeshDescriptorSetLayout();
     void createMeshDescriptorSets();
+
+    [[nodiscard]] virtual size_t getSceneDataSize() const = 0;
 
     std::shared_ptr<GraphicsDevice> graphicsDevice_;
 
@@ -64,6 +58,12 @@ protected:
     std::shared_ptr<Scene> scene_;
 
 private:
+    struct MaterialData {
+        glm::vec4 baseColor;
+        glm::vec3 specular;
+        float shininess = 0.0f;
+    };
+
     enum DescriptorType {
         SCENE,
         MESH,

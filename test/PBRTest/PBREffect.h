@@ -16,8 +16,6 @@ public:
     static inline const VertexFormat VERTEX_FORMAT {
         VertexFormat::COORDINATES
             | VertexFormat::NORMALS
-            | VertexFormat::TEXCOORDS
-            | VertexFormat::TANGENTS
     };
 
     PBREffect(
@@ -26,39 +24,70 @@ public:
 
     void setProjectionMatrix(const glm::mat4& projection);
     void setViewMatrix(const glm::mat4& viewMatrix);
-    void setAmbientLight(const glm::vec3& color);
+    void setCameraPosition(const glm::vec3& position);
     void setLight(int index, const std::shared_ptr<PointLight>& light);
-    void setLight(int index, const std::shared_ptr<SpotLight>& light);
 
-    [[nodiscard]] size_t getSceneDataSize() const override;
+    void setMetallicFactor(float factor);
+    [[nodiscard]] float getMetallicFactor() const;
+
+    void setRoughnessFactor(float factor);
+    [[nodiscard]] float getRoughnessFactor() const;
+
+    void setAlbedo(const glm::vec3& value);
+    [[nodiscard]] glm::vec3 getAlbedo() const;
+
+    void setAmbientOcclusion(float value);
+    [[nodiscard]] float getAmbientOcclusion();
+
     void updateSceneDataBuffer();
 
     [[nodiscard]] VertexFormat getVertexFormat() const override { return VERTEX_FORMAT; };
     [[nodiscard]] std::string getVertexShaderFileName() const override;
     [[nodiscard]] std::string getFragmentShaderFileName() const override;
 
+
+    void updateMaterialDataBuffer();
+
+protected:
+    void createMaterialDataBuffers() override;
+    [[nodiscard]] size_t getSceneDataSize() const override;
+
 private:
     struct LightData {
-        glm::vec3 position;          // light position in eye coords
+        glm::vec3 position { 0.0f };
+        float pad0;
+
+        glm::vec3 color { 1.0f };
         float pad1;
-        glm::vec3 color;
-        float pad2;
-        glm::vec3 direction;
-        float pad3;
-        float spotInnerConeAngle = 0.0f;
-        float spotOuterConeAngle = glm::radians(90.0f);
-        int type = Light::LightType::POINT;
+
         bool enabled = false;
+        float pad2;
+        float pad3;
+        float pad4;
     };
 
     struct SceneData {
-        glm::mat4 viewMatrix;
-        glm::mat4 projMatrix;
-        glm::vec4 ambientLight;
-        LightData lights[MAX_LIGHTS];
+        glm::mat4 viewMatrix { 1.0f };
+        glm::mat4 projMatrix { 1.0f };
+
+        glm::vec3 cameraPos { 0.0f };
+        float pad0;
+
+        LightData lights[4];
+    };
+
+    struct MaterialData {
+        glm::vec3 baseColor { 0.0f };
+        float pad0;
+
+        float metallic = 0.5f;
+        float roughness = 0.2f;
+        float ao = 0.0f;
+        float pad1;
     };
 
     SceneData sceneData_ {};
+    MaterialData materialData_ {};
     std::shared_ptr<PointLight> lights_[MAX_LIGHTS];
 };
 
