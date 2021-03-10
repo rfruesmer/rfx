@@ -60,12 +60,13 @@ void PBRTest::loadScene()
     auto pointLight = dynamic_pointer_cast<PointLight>(scene->getLight(0));
     RFX_CHECK_STATE(pointLight != nullptr, "");
 
-    pointLight->setPosition({0.0f, 15.0f, 5.0f });
+    pointLight->setPosition({5.0f, 5.0f, 0.0f });
     pointLight->setColor({1.0f, 1.0f, 1.0f});
 
     effect = make_unique<PBREffect>(graphicsDevice, scene);
     effectImpl = dynamic_cast<PBREffect*>(effect.get());
     effectImpl->setLight(0, pointLight);
+    effectImpl->setAlbedo({1.0f, 1.0f, 1.0f});
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -186,9 +187,8 @@ void PBRTest::updateProjection()
 void PBRTest::updateSceneData()
 {
     effectImpl->setViewMatrix(camera.getViewMatrix());
-    effectImpl->setCameraPosition(camera.getPosition());
     effectImpl->updateSceneDataBuffer();
-    effectImpl->updateMaterialDataBuffer();
+    effectImpl->updateMaterialDataBuffers();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

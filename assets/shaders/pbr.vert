@@ -18,9 +18,6 @@ uniform SceneData {
     mat4 viewMatrix;
     mat4 projMatrix;
 
-    vec3 cameraPos;
-    float pad0;
-
     Light lights[4];
 } scene;
 
@@ -47,8 +44,10 @@ layout(location = 0) out vec3 outPosition;
 layout(location = 1) out vec3 outNormal;
 
 void main() {
-    outPosition = (mesh.modelMatrix * vec4(inPosition, 1.0)).xyz;
-    outNormal = mat3(mesh.modelMatrix) * inNormal;
+    mat4 modelViewMatrix = scene.viewMatrix * mesh.modelMatrix;
 
-    gl_Position = scene.projMatrix * scene.viewMatrix * vec4(outPosition, 1.0);
+    outPosition = (modelViewMatrix * vec4(inPosition, 1.0)).xyz;
+    outNormal =  mat3(modelViewMatrix) * inNormal;
+
+    gl_Position = scene.projMatrix * modelViewMatrix * vec4(inPosition, 1.0);
 }

@@ -24,7 +24,6 @@ public:
 
     void setProjectionMatrix(const glm::mat4& projection);
     void setViewMatrix(const glm::mat4& viewMatrix);
-    void setCameraPosition(const glm::vec3& position);
     void setLight(int index, const std::shared_ptr<PointLight>& light);
 
     void setMetallicFactor(float factor);
@@ -46,7 +45,7 @@ public:
     [[nodiscard]] std::string getFragmentShaderFileName() const override;
 
 
-    void updateMaterialDataBuffer();
+    void updateMaterialDataBuffers();
 
 protected:
     void createMaterialDataBuffers() override;
@@ -69,9 +68,6 @@ private:
     struct SceneData {
         glm::mat4 viewMatrix { 1.0f };
         glm::mat4 projMatrix { 1.0f };
-
-        glm::vec3 cameraPos { 0.0f };
-        float pad0;
 
         LightData lights[4];
     };

@@ -50,13 +50,6 @@ void PBREffect::setViewMatrix(const mat4& viewMatrix)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PBREffect::setCameraPosition(const vec3& position)
-{
-    sceneData_.cameraPos = position;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void PBREffect::setLight(int index, const shared_ptr<PointLight>& light)
 {
     lights_[index] = light;
@@ -164,9 +157,11 @@ void PBREffect::updateSceneDataBuffer()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PBREffect::updateMaterialDataBuffer()
+void PBREffect::updateMaterialDataBuffers()
 {
-    materialDataBuffers_[0]->load(sizeof(MaterialData), &materialData_);
+    for (auto& materialDataBuffer : materialDataBuffers_) {
+        materialDataBuffer->load(sizeof(MaterialData), &materialData_);
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
