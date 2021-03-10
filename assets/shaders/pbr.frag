@@ -46,6 +46,31 @@ layout(location = 0) out vec3 outColor;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+float ggxDistribution(float nDotH, float roughness)
+{
+    float alpha = roughness * roughness;
+    float alpha2 = alpha * alpha;
+    float denom = (nDotH * nDotH * (alpha2 - 1.0) + 1.0);
+    denom = PI * denom * denom;
+
+    return alpha2 / denom;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+float geometrySmith(float nDotV, float nDotL, float roughness)
+{
+    float r = (roughness + 1.0);
+    float k = (r * r) / 8.0;
+
+    float ggxL  = nDotL / (nDotL * (1.0 - k) + k);
+    float ggxV  = nDotV / (nDotV * (1.0 - k) + k);
+
+    return ggxL * ggxV;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 vec3 fresnelSchlick(float cosTheta)
 {
     vec3 F0 = mix(vec3(0.04), material.baseColor, material.metallic);
@@ -54,43 +79,13 @@ vec3 fresnelSchlick(float cosTheta)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-float DistributionGGX(float nDotH, float roughness)
-{
-    float a = roughness * roughness;
-    float a2 = a * a;
-    float denom = (nDotH * nDotH * (a2 - 1.0) + 1.0);
-    denom = PI * denom * denom;
-
-    return a2 / denom;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-float GeometrySchlickGGX(float nDotV, float roughness)
-{
-    float r = (roughness + 1.0);
-    float k = (r * r) / 8.0;
-
-    float num   = nDotV;
-    float denom = nDotV * (1.0 - k) + k;
-
-    return num / denom;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-float GeometrySmith(float nDotV, float nDotL, float roughness)
-{
-    float ggx2  = GeometrySchlickGGX(nDotV, roughness);
-    float ggx1  = GeometrySchlickGGX(nDotL, roughness);
-
-    return ggx1 * ggx2;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 vec3 BRDF(int lightIndex, vec3 V, vec3 N)
 {
+    float nDotV = clamp(dot(N, V), 0.0, 1.0);
+    if (nDotV <= 0.0) {
+        return vec3(0.0);
+    }
+
     vec3 L = scene.lights[lightIndex].position - V;
     float distance = length(L);
     L = normalize(L);
@@ -98,27 +93,23 @@ vec3 BRDF(int lightIndex, vec3 V, vec3 N)
     float attenuation = 1.0 / (distance * distance);
     vec3 radiance = scene.lights[lightIndex].color * attenuation;
 
-
     vec3 H = normalize(V + L);
     float nDotH = clamp(dot(N, H), 0.0, 1.0);
     float lDotH = clamp(dot(L, H), 0.0, 1.0);
     float nDotL = clamp(dot(N, L), 0.0, 1.0);
-    float nDotV = clamp(dot(N, V), 0.0, 1.0);
-//    float hDotV = clamp(dot(H, V), 0.0, 1.0);
 
-    float D = DistributionGGX(nDotH, material.roughness);
-    float G = GeometrySmith(nDotV, nDotL, material.roughness);
+    float D = ggxDistribution(nDotH, material.roughness);
+    float G = geometrySmith(nDotV, nDotL, material.roughness);
     vec3  F = fresnelSchlick(nDotV);
 
-    vec3 kS = F;
-    vec3 kD = vec3(1.0) - kS;
-    kD *= 1.0 - material.metallic;
+    vec3 diffuse = vec3(1.0) - F;
+    diffuse *= (1.0 - material.metallic) * material.baseColor;
 
     vec3 numerator    = D * G * F;
-    float denominator = 4.0 * max(nDotV, 0.0) * nDotL;
+    float denominator = 4.0 * nDotV * nDotL;
     vec3 specular     = numerator / max(denominator, 0.001);
 
-    return (kD * material.baseColor / PI + specular) * radiance * nDotL;
+    return (diffuse / PI + specular) * radiance * nDotL;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -138,8 +129,6 @@ void main() {
 
     vec3 ambient = vec3(0.02) * material.baseColor * material.ao;
     vec3 color = ambient + Lo;
-//    color = color / (color + vec3(1.0));
-//    color = pow(color, vec3(0.4545)); // Gamma
 
     outColor = color;
 }
