@@ -1,0 +1,58 @@
+#version 450
+
+struct Light {
+    vec3 position;
+    float pad0;
+
+    vec3 color;
+    float pad1;
+
+    bool enabled;
+    float pad2;
+    float pad3;
+    float pad4;
+};
+
+layout(set = 0, binding = 0)
+uniform SceneData {
+    mat4 viewMatrix;
+    mat4 projMatrix;
+
+    vec3 camPos;
+    float padding;
+
+    Light lights[4];
+} scene;
+
+layout(set = 1, binding = 0)
+uniform MeshData {
+    mat4 modelMatrix;
+} mesh;
+
+layout(set = 2, binding = 0)
+uniform MaterialData {
+   float metallic;
+    float roughness;
+    float ao;
+    float pad1;
+} material;
+
+layout(location = 0) in vec3 inPosition;
+layout(location = 1) in vec3 inNormal;
+layout(location = 2) in vec2 inTexCoord;
+
+layout(location = 0) out vec3 outPosition;
+layout(location = 1) out vec3 outNormal;
+layout(location = 2) out vec2 outTexCoord;
+
+
+void main() {
+    mat4 modelMatrix = mesh.modelMatrix;
+    mat4 modelViewMatrix = scene.viewMatrix * mesh.modelMatrix;
+
+    outPosition = (modelMatrix * vec4(inPosition, 1.0)).xyz;
+    outNormal =  mat3(modelMatrix) * inNormal;
+    outTexCoord = inTexCoord;
+
+    gl_Position = scene.projMatrix * modelViewMatrix * vec4(inPosition, 1.0);
+}
