@@ -27,7 +27,7 @@ shared_ptr<Texture2D> TextureLoader::load(const filesystem::path& filePath) cons
     RFX_CHECK_STATE(exists(absoluteImagePath), "File not found: " + absoluteImagePath.string());
 
     ImageDesc imageDesc {};
-    vector<byte> imageData;
+    vector<std::byte> imageData;
     bool createMipmaps = false;
 
     if (extension == KTX_FILE_EXTENSION) {
@@ -46,7 +46,7 @@ shared_ptr<Texture2D> TextureLoader::load(const filesystem::path& filePath) cons
 void TextureLoader::loadFromKTXFile(
     const path& path,
     ImageDesc& outImageDesc,
-    vector<byte>& outImageData) const
+    vector<std::byte>& outImageData) const
 {
     KTXHeader header = readKTXHeader(path);
     if (header.gl_format == GL_RGBA) {
@@ -115,7 +115,7 @@ TextureLoader::KTXHeader TextureLoader::readKTXHeader(const path& path) const
 void TextureLoader::loadFromImageFile(
     const path& path,
     ImageDesc& outImageDesc,
-    vector<byte>& outImageData) const
+    vector<std::byte>& outImageData) const
 {
     ImageLoader imageLoader;
     imageLoader.load(path, &outImageDesc, &outImageData);

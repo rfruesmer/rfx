@@ -42,10 +42,12 @@ public:
     const shared_ptr<Scene>& load(const path& scenePath, const VertexFormat& vertexFormat);
     void clear();
     void loadImages();
-    static vector<byte> convertToRGBA(const tinygltf::Image& gltfImage);
+    static vector<std::byte> convertToRGBA(const tinygltf::Image& gltfImage);
+    void loadSamplers();
     void loadTextures();
+    void loadTexture(const tinygltf::Texture& gltfTexture);
     void loadMaterials();
-    void loadMaterial(size_t index);
+    void loadMaterial(const tinygltf::Material& glTFMaterial) const;
     void loadMeshes();
     void prepareGeometryBuffers();
     void loadMesh(const tinygltf::Mesh& gltfMesh);
@@ -79,6 +81,9 @@ public:
     uint32_t vertexCount_ = 0;
     vector<float> vertexData_;
     vector<uint32_t> indices_;
+    vector<SamplerDesc> samplers_;
+    vector<shared_ptr<Image>> images_;
+    vector<VkImageView> imageViews_;
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -104,6 +109,7 @@ const shared_ptr<Scene>& SceneLoader::SceneLoaderImpl::load(
         + "Warnings: " + warning);
 
     loadImages();
+    loadSamplers();
     loadTextures();
     loadMaterials();
     loadMeshes();
@@ -128,6 +134,9 @@ void SceneLoader::SceneLoaderImpl::clear()
     vertexCount_ = 0;
     vertexData_.clear();
     indices_.clear();
+    samplers_.clear();
+    images_.clear();
+    imageViews_.clear();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -135,7 +144,7 @@ void SceneLoader::SceneLoaderImpl::clear()
 void SceneLoader::SceneLoaderImpl::loadImages()
 {
     for (const auto& gltfImage : gltfModel_.images) {
-        vector<byte> imageData;
+        vector<std::byte> imageData;
 
         if (gltfImage.component == 3) {
             imageData = convertToRGBA(gltfImage);
@@ -155,27 +164,36 @@ void SceneLoader::SceneLoaderImpl::loadImages()
             .mipOffsets = { 0 }
         };
 
-        scene_->addTexture(graphicsDevice_->createTexture2D(gltfImage.name, imageDesc, imageData, false));
+        const shared_ptr<Image> image = graphicsDevice_->createImage(gltfImage.name, imageDesc, imageData, false);
+        const ImageDesc finalImageDesc = image->getDesc();
+        VkImageView imageView = graphicsDevice_->createImageView(
+            image,
+            finalImageDesc.format,
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            finalImageDesc.mipLevels);
+
+        images_.push_back(image);
+        imageViews_.push_back(imageView);
     }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<byte> SceneLoader::SceneLoaderImpl::convertToRGBA(const tinygltf::Image& gltfImage)
+vector<std::byte> SceneLoader::SceneLoaderImpl::convertToRGBA(const tinygltf::Image& gltfImage)
 {
     const unsigned char* rgbData = gltfImage.image.data();
 
     size_t rgbaDataSize = gltfImage.width * gltfImage.height * 4;
-    vector<byte> rgbaData(rgbaDataSize);
+    vector<std::byte> rgbaData(rgbaDataSize);
 
     size_t rgbIndex = 0;
     size_t rgbaIndex = 0;
 
     for (size_t i = 0; i < gltfImage.width * gltfImage.height; ++i) {
-        rgbaData[rgbaIndex + 0] = static_cast<byte>(rgbData[rgbIndex + 0]);
-        rgbaData[rgbaIndex + 1] = static_cast<byte>(rgbData[rgbIndex + 1]);
-        rgbaData[rgbaIndex + 2] = static_cast<byte>(rgbData[rgbIndex + 2]);
-        rgbaData[rgbaIndex + 3] = static_cast<byte>(255);
+        rgbaData[rgbaIndex + 0] = static_cast<std::byte>(rgbData[rgbIndex + 0]);
+        rgbaData[rgbaIndex + 1] = static_cast<std::byte>(rgbData[rgbIndex + 1]);
+        rgbaData[rgbaIndex + 2] = static_cast<std::byte>(rgbData[rgbIndex + 2]);
+        rgbaData[rgbaIndex + 3] = static_cast<std::byte>(255);
 
         rgbIndex += 3;
         rgbaIndex += 4;
@@ -186,46 +204,110 @@ vector<byte> SceneLoader::SceneLoaderImpl::convertToRGBA(const tinygltf::Image& 
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+VkFilter toFilter(int gl_value)
+{
+    return gl_value == GL_NEAREST
+        ? VK_FILTER_NEAREST
+        : VK_FILTER_LINEAR;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkSamplerMipmapMode toMipMapMode(int gl_value)
+{
+    switch (gl_value) {
+    case GL_NEAREST:
+    case GL_LINEAR:
+        return static_cast<VkSamplerMipmapMode>(0);
+    case GL_NEAREST_MIPMAP_NEAREST:
+    case GL_LINEAR_MIPMAP_NEAREST:
+    case GL_NEAREST_MIPMAP_LINEAR:
+        return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+    default:
+        return VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+SamplerDesc toSamplerDesc(const tinygltf::Sampler& gltfSampler)
+{
+    return {
+        .minFilter = toFilter(gltfSampler.minFilter),
+        .magFilter = toFilter(gltfSampler.magFilter),
+        .mipmapMode = toMipMapMode(gltfSampler.minFilter)
+    };
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SceneLoader::SceneLoaderImpl::loadSamplers()
+{
+    ranges::transform(gltfModel_.samplers, back_inserter(samplers_), toSamplerDesc);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void SceneLoader::SceneLoaderImpl::loadTextures()
 {
-    for (size_t i = 0; i < gltfModel_.textures.size(); i++) {
-        RFX_CHECK_STATE(gltfModel_.textures[i].source == i, "Indexed images not implemented yet");
+    for (const auto& texture : gltfModel_.textures) {
+        loadTexture(texture);
     }
+}
 
-    RFX_CHECK_STATE(gltfModel_.textures.size() == scene_->getTextures().size(), "Indexed images not implemented yet");
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SceneLoader::SceneLoaderImpl::loadTexture(const tinygltf::Texture& gltfTexture)
+{
+    const shared_ptr<Image>& image = images_[gltfTexture.source];
+    const VkImageView& imageView = imageViews_[gltfTexture.source];
+    const SamplerDesc& samplerDesc = samplers_[gltfTexture.sampler];
+
+    scene_->addTexture(graphicsDevice_->createTexture2D(image, imageView, samplerDesc));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void SceneLoader::SceneLoaderImpl::loadMaterials()
 {
-    for (size_t i = 0; i < gltfModel_.materials.size(); i++) {
-        loadMaterial(i);
+    for (const auto& gltfMaterial : gltfModel_.materials) {
+        loadMaterial(gltfMaterial);
     }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneLoader::SceneLoaderImpl::loadMaterial(size_t index)
+void SceneLoader::SceneLoaderImpl::loadMaterial(const tinygltf::Material& glTFMaterial) const
 {
-    const tinygltf::Material& glTFMaterial = gltfModel_.materials[index];
+    const tinygltf::PbrMetallicRoughness& gltfMetallicRoughness = glTFMaterial.pbrMetallicRoughness;
 
     const auto material = make_shared<Material>();
 
-    if (const auto& it = glTFMaterial.values.find("baseColorFactor");
-            it != glTFMaterial.values.end()) {
-        material->setBaseColorFactor(make_vec4(it->second.ColorFactor().data()));
+    // TODO: specular-glossiness material model
+
+    material->setBaseColorFactor(make_vec4(gltfMetallicRoughness.baseColorFactor.data()));
+    if (gltfMetallicRoughness.baseColorTexture.index > -1) {
+        material->setBaseColorTexture(
+            scene_->getTexture(gltfMetallicRoughness.baseColorTexture.index));
     }
 
-    if (const auto& it = glTFMaterial.values.find("baseColorTexture");
-            it != glTFMaterial.values.end()) {
-        const shared_ptr<Texture2D>& baseColorTexture = scene_->getTexture(it->second.TextureIndex());
-        material->setBaseColorTexture(baseColorTexture);
+    if (gltfMetallicRoughness.metallicRoughnessTexture.index > -1) {
+        material->setMetallicRoughnessTexture(
+            scene_->getTexture(gltfMetallicRoughness.metallicRoughnessTexture.index));
     }
+    material->setMetallicFactor(static_cast<float>(gltfMetallicRoughness.metallicFactor));
+    material->setRoughnessFactor(static_cast<float>(gltfMetallicRoughness.roughnessFactor));
 
     if (glTFMaterial.normalTexture.index > -1) {
-        const shared_ptr<Texture2D>& normalTexture = scene_->getTexture(glTFMaterial.normalTexture.index);
-        material->setNormalTexture(normalTexture);
+        material->setNormalTexture(scene_->getTexture(glTFMaterial.normalTexture.index));
+    }
+
+    if (glTFMaterial.occlusionTexture.index > -1) {
+        int i = 42;
+    }
+
+    if (glTFMaterial.emissiveTexture.index > -1) {
+        int i = 42;
     }
 
     scene_->addMaterial(material);
@@ -514,8 +596,8 @@ GLTFLightProperties SceneLoader::SceneLoaderImpl::getLightProperties(const tinyg
 
     if (gltfLight.contains("spot")) {
         auto& gltfSpot = gltfLight.find("spot")->second.Get<tinygltf::Value::Object>();
-        lightProperties.innerConeAngle = gltfSpot.at("innerConeAngle").GetNumberAsDouble();
-        lightProperties.outerConeAngle = gltfSpot.at("outerConeAngle").GetNumberAsDouble();
+        lightProperties.innerConeAngle = static_cast<float>(gltfSpot.at("innerConeAngle").GetNumberAsDouble());
+        lightProperties.outerConeAngle = static_cast<float>(gltfSpot.at("outerConeAngle").GetNumberAsDouble());
     }
 
     return lightProperties;

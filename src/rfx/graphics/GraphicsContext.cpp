@@ -4,7 +4,6 @@
 
 using namespace rfx;
 using namespace std;
-namespace ranges = ranges;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -794,8 +793,8 @@ void GraphicsContext::selectQueueFamilies(
             };
 
         // #1: check if capability exists in already selected queues
-        const auto it = ranges::find_if(outSelectedQueueFamilies, hasCapability);
-        if (it != outSelectedQueueFamilies.end()) {
+        if (const auto it = ranges::find_if(outSelectedQueueFamilies, hasCapability);
+                       it != outSelectedQueueFamilies.end()) {
             continue;
         }
 

@@ -17,7 +17,7 @@ using namespace filesystem;
 void ImageLoader::load(
     const path& imagePath, 
     ImageDesc* outImageDesc, 
-    vector<byte>* outImageData) const
+    vector<std::byte>* outImageData) const
 {
     int bytesPerPixelInFile = 0;
     void* imageData = stbi_load(imagePath.string().c_str(),

@@ -79,7 +79,7 @@ void TestEffect::createDescriptorPools()
 {
     const uint32_t geometryNodesCount = scene_->getGeometryNodeCount();
     const uint32_t materialCount = scene_->getMaterialCount();
-
+    
     descriptorPools_[DescriptorType::SCENE] = createDescriptorPool(
         {{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}}, 1);
     descriptorPools_[DescriptorType::MESH] = createDescriptorPool(
@@ -94,7 +94,10 @@ void TestEffect::createDescriptorPools()
     if (getVertexFormat().containsTangents()) {
         materialPoolSizes.push_back({VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, materialCount});
     }
-
+    if (scene_->getMaterial(0)->getMetallicRoughnessTexture() != nullptr) {
+        materialPoolSizes.push_back({VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, materialCount});
+    }
+    
     descriptorPools_[DescriptorType::MATERIAL] = createDescriptorPool(
         materialPoolSizes, materialCount);
 }
@@ -186,6 +189,15 @@ void TestEffect::createMaterialDescriptorSetLayout()
         });
     }
 
+    if (scene_->getMaterial(0)->getMetallicRoughnessTexture() != nullptr) {
+        materialDescSetLayoutBindings.push_back({
+            .binding = 3,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+        });
+    }
+    
     VkDescriptorSetLayoutCreateInfo materialDescSetLayoutCreateInfo {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .bindingCount = static_cast<uint32_t>(materialDescSetLayoutBindings.size()),
@@ -280,6 +292,8 @@ void TestEffect::createMaterialDescriptorSets()
 
     for (uint32_t i = 0, count = scene_->getMaterialCount(); i < count; ++i) {
 
+        const shared_ptr<Material>& material = scene_->getMaterial(i);
+
         VkDescriptorSetAllocateInfo allocInfo {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
             .descriptorPool = descriptorPools_[DescriptorType::MATERIAL],
@@ -313,7 +327,7 @@ void TestEffect::createMaterialDescriptorSets()
         if (getVertexFormat().containsTexCoords()) {
 
             const shared_ptr<Texture2D>& baseColorTexture =
-                scene_->getMaterial(i)->getBaseColorTexture();
+                material->getBaseColorTexture();
 
             VkDescriptorImageInfo textureImageInfo = {
                 .sampler = baseColorTexture->getSampler(),
@@ -335,7 +349,7 @@ void TestEffect::createMaterialDescriptorSets()
         if (getVertexFormat().containsTangents()) {
 
             const shared_ptr<Texture2D>& normalTexture =
-                scene_->getMaterial(i)->getNormalTexture();
+                material->getNormalTexture();
 
             VkDescriptorImageInfo textureImageInfo = {
                 .sampler = normalTexture->getSampler(),
@@ -354,6 +368,28 @@ void TestEffect::createMaterialDescriptorSets()
             });
         }
 
+        if (material->getMetallicRoughnessTexture() != nullptr) {
+
+            const shared_ptr<Texture2D>& metallicRoughnessTexture =
+                material->getMetallicRoughnessTexture();
+
+            VkDescriptorImageInfo textureImageInfo = {
+                .sampler = metallicRoughnessTexture->getSampler(),
+                .imageView = metallicRoughnessTexture->getImageView(),
+                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+            };
+
+            writeDescriptorSets.push_back({
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .dstSet = materialDescriptorSets_[i],
+                .dstBinding = 3,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                .pImageInfo = &textureImageInfo
+            });
+        }
+        
         vkUpdateDescriptorSets(
             graphicsDevice_->getLogicalDevice(),
             writeDescriptorSets.size(),

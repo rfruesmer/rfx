@@ -42,7 +42,7 @@ void TexturedPBRTest::initGraphics()
 
 void TexturedPBRTest::loadScene()
 {
-    const path scenePath = getAssetsDirectory() / "models/sci-fi-corridors/Unity2Skfb.gltf";
+    const path scenePath = getAssetsDirectory() / "models/sci-fi-corridors/scene.gltf";
 //    const path scenePath = getAssetsDirectory() / "samples/NormalTangentMirrorTest/glTF/NormalTangentMirrorTest.gltf";
 //    const path scenePath = getAssetsDirectory() / "models/plane/plane_pbr.gltf";
 
@@ -55,12 +55,14 @@ void TexturedPBRTest::loadScene()
 
     camera.setPosition({ 0.0f, 2.0f, 10.0f });
 
-    RFX_CHECK_STATE(scene->getLightCount() > 0, "");
-    auto pointLight = dynamic_pointer_cast<PointLight>(scene->getLight(0));
-    RFX_CHECK_STATE(pointLight != nullptr, "");
+//    RFX_CHECK_STATE(scene->getLightCount() > 0, "");
+//    auto pointLight = dynamic_pointer_cast<PointLight>(scene->getLight(0));
+//    RFX_CHECK_STATE(pointLight != nullptr, "");
 
+    pointLight = make_shared<PointLight>("point-light#0");
     pointLight->setPosition({0.0f, 5.0f, 0.0f });
     pointLight->setColor({1.0f, 1.0f, 1.0f});
+    scene->addLight(pointLight);
 
     effect = make_unique<TexturedPBREffect>(graphicsDevice, scene);
     effectImpl = dynamic_cast<TexturedPBREffect*>(effect.get());

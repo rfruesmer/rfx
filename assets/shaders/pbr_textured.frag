@@ -45,6 +45,9 @@ uniform sampler2D baseColorTexture;
 layout(set = 2, binding = 2)
 uniform sampler2D normalMap;
 
+layout(set = 2, binding = 3)
+uniform sampler2D metallicRoughnessMap;
+
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec2 inTexCoord;
 layout(location = 2) in vec3 inTangentCamPos;
@@ -95,7 +98,9 @@ vec3 BRDF(
     vec3 V,
     vec3 N,
     vec3 F0,
-    vec3 baseColor)
+    vec3 baseColor,
+    float metallic,
+    float roughness)
 {
     float nDotV = clamp(dot(N, V), 0.0, 1.0);
     if (nDotV <= 0.0) {
@@ -114,12 +119,12 @@ vec3 BRDF(
     float lDotH = clamp(dot(L, H), 0.0, 1.0);
     float nDotL = clamp(dot(N, L), 0.0, 1.0);
 
-    float D = ggxDistribution(nDotH, material.roughness);
-    float G = geometrySmith(nDotV, nDotL, material.roughness);
+    float D = ggxDistribution(nDotH, roughness);
+    float G = geometrySmith(nDotV, nDotL, roughness);
     vec3  F = fresnelSchlick(nDotV, F0);
 
     vec3 diffuse = vec3(1.0) - F;
-    diffuse *= (1.0 - material.metallic) * baseColor;
+    diffuse *= (1.0 - metallic) * baseColor;
 
     vec3 numerator    = D * G * F;
     float denominator = 4.0 * nDotV * nDotL;
@@ -135,9 +140,13 @@ void main()
     // convert sRGB => linear
     vec3 baseColor = pow(texture(baseColorTexture, inTexCoord).rgb, vec3(2.2));
 
+    vec4 mr = texture(metallicRoughnessMap, inTexCoord);
+    float metallic = material.metallic * mr.z;
+    float roughness = material.roughness * mr.y;
+
     vec3 N = texture(normalMap, inTexCoord).xyz * 2.0 - 1.0;
     vec3 V = normalize(inTangentCamPos - inTangentPosition);
-    vec3 F0 = mix(vec3(0.04), baseColor, material.metallic);
+    vec3 F0 = mix(vec3(0.04), baseColor, metallic);
     vec3 Lo = vec3(0);
 
     for(int i = 0; i < MAX_LIGHTS; ++i) {
@@ -145,7 +154,7 @@ void main()
             continue;
         }
 
-        Lo += BRDF(i, V, N, F0, baseColor);
+        Lo += BRDF(i, V, N, F0, baseColor, metallic, roughness);
     }
 
     vec3 ambient = vec3(0.02) * baseColor * material.ao;

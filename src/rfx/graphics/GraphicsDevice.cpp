@@ -16,7 +16,7 @@ GraphicsDevice::GraphicsDevice(
     shared_ptr<Queue> graphicsQueue,
     shared_ptr<Queue> presentQueue,
     VkSurfaceKHR presentSurface)
-        : desc(move(desc)),
+        : desc_(move(desc)),
           physicalDevice(physicalDevice),
           device(logicalDevice),
           graphicsQueue(move(graphicsQueue)),
@@ -693,7 +693,51 @@ void GraphicsDevice::destroyCommandBuffer(
 shared_ptr<Texture2D> GraphicsDevice::createTexture2D(
     const string& id,
     const ImageDesc& imageDesc,
-    const vector<byte>& imageData,
+    const vector<std::byte>& imageData,
+    bool isGenerateMipmaps) const
+{
+    const shared_ptr<Image> textureImage = createImage(id, imageDesc, imageData, isGenerateMipmaps);
+    const ImageDesc finalImageDesc = textureImage->getDesc();
+
+    VkImageView textureImageView = createImageView(
+        textureImage,
+        finalImageDesc.format,
+        VK_IMAGE_ASPECT_COLOR_BIT,
+        finalImageDesc.mipLevels);
+
+    SamplerDesc samplerDesc {
+        .minFilter = VK_FILTER_LINEAR,
+        .magFilter = VK_FILTER_LINEAR,
+        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+        .maxLod = static_cast<float>(finalImageDesc.mipLevels)
+    };
+
+    return createTexture2D(textureImage, textureImageView, samplerDesc);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+shared_ptr<Texture2D> GraphicsDevice::createTexture2D(
+    const shared_ptr<Image>& image,
+    VkImageView const& imageView,
+    const SamplerDesc& samplerDesc) const
+{
+    VkSampler textureSampler = createTextureSampler(samplerDesc);
+
+    return make_shared<Texture2D>(
+        device,
+        image,
+        imageView,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        textureSampler);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+shared_ptr<Image> GraphicsDevice::createImage(
+    const string& id,
+    const ImageDesc& imageDesc,
+    const vector<std::byte>& imageData,
     bool isGenerateMipmaps) const
 {
     ImageDesc finalImageDesc = imageDesc;
@@ -703,7 +747,7 @@ shared_ptr<Texture2D> GraphicsDevice::createTexture2D(
             static_cast<uint32_t>(floor(log2(max(imageDesc.width, imageDesc.height)))) + 1;
     }
 
-    shared_ptr<Image> textureImage = createImage(
+    shared_ptr<Image> image = createImage(
         id,
         finalImageDesc,
         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
@@ -712,37 +756,24 @@ shared_ptr<Texture2D> GraphicsDevice::createTexture2D(
 
     if (isGenerateMipmaps) {
         transitionImageLayout(
-            textureImage->getHandle(),
+            image->getHandle(),
             VK_IMAGE_LAYOUT_UNDEFINED,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             finalImageDesc.mipLevels);
     }
 
-    updateImage(textureImage, imageData, isGenerateMipmaps);
+    updateImage(image, imageData, isGenerateMipmaps);
 
     if (isGenerateMipmaps) {
         generateMipmaps(
-            textureImage->getHandle(),
+            image->getHandle(),
             VK_FORMAT_R8G8B8A8_SRGB,
             finalImageDesc.width,
             finalImageDesc.height,
             finalImageDesc.mipLevels);
     }
 
-    VkImageView textureImageView = createImageView(
-        textureImage,
-        finalImageDesc.format,
-        VK_IMAGE_ASPECT_COLOR_BIT,
-        finalImageDesc.mipLevels);
-
-    VkSampler textureSampler = createTextureSampler(finalImageDesc.mipLevels);
-
-    return make_shared<Texture2D>(
-        device,
-        textureImage,
-        textureImageView,
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-        textureSampler);
+    return image;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -849,10 +880,10 @@ shared_ptr<Image> GraphicsDevice::createImage(
 
 void GraphicsDevice::updateImage(
     const shared_ptr<Image>& image,
-    const vector<byte>& imageData,
+    const vector<std::byte>& imageData,
     bool isGenerateMipmaps) const
 {
-    const size_t bufferSize = imageData.size() * sizeof(byte);
+    const size_t bufferSize = imageData.size() * sizeof(std::byte);
     const shared_ptr<Buffer> stagingBuffer =
         createBuffer(
             bufferSize,
@@ -1090,13 +1121,13 @@ VkImageView GraphicsDevice::createImageView(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VkSampler GraphicsDevice::createTextureSampler(uint32_t mipLevels) const
+VkSampler GraphicsDevice::createTextureSampler(const SamplerDesc& desc) const
 {
     VkSamplerCreateInfo samplerInfo {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-        .magFilter = VK_FILTER_LINEAR,
-        .minFilter = VK_FILTER_LINEAR,
-        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+        .magFilter = desc.magFilter,
+        .minFilter = desc.minFilter,
+        .mipmapMode = desc.mipmapMode,
         .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
         .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
         .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
@@ -1105,14 +1136,12 @@ VkSampler GraphicsDevice::createTextureSampler(uint32_t mipLevels) const
         .compareEnable = VK_FALSE,
         .compareOp = VK_COMPARE_OP_NEVER,
         .minLod = 0.0f,
-        .maxLod = static_cast<float>(mipLevels)/*,
-        .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
-        .unnormalizedCoordinates = VK_FALSE*/
+        .maxLod = desc.maxLod
     };
 
-    if (desc.features.samplerAnisotropy) {
+    if (desc_.features.samplerAnisotropy) {
         samplerInfo.anisotropyEnable = VK_TRUE;
-        samplerInfo.maxAnisotropy = desc.properties.limits.maxSamplerAnisotropy;
+        samplerInfo.maxAnisotropy = desc_.properties.limits.maxSamplerAnisotropy;
     }
 
     VkSampler textureSampler = VK_NULL_HANDLE;
@@ -1247,7 +1276,7 @@ void GraphicsDevice::transitionImageLayout(
 
 const GraphicsDeviceDesc& GraphicsDevice::getDesc() const
 {
-    return desc;
+    return desc_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

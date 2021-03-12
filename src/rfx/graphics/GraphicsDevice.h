@@ -9,6 +9,7 @@
 #include "rfx/graphics/VertexFormat.h"
 #include "rfx/graphics/IndexBuffer.h"
 #include "rfx/graphics/Texture2D.h"
+#include "rfx/graphics/SamplerDesc.h"
 #include "rfx/graphics/Image.h"
 #include "rfx/graphics/ImageDesc.h"
 
@@ -32,6 +33,7 @@ public:
 
     ~GraphicsDevice();
 
+    [[nodiscard]]
     const GraphicsDeviceDesc& getDesc() const;
 
     void createSwapChain(
@@ -82,6 +84,19 @@ public:
 
     [[nodiscard]]
     std::shared_ptr<Texture2D> createTexture2D(
+        const std::string& id,
+        const ImageDesc& imageDesc,
+        const std::vector<std::byte>& imageData,
+        bool isGenerateMipmaps) const;
+
+    [[nodiscard]]
+    std::shared_ptr<Texture2D> createTexture2D(
+        const std::shared_ptr<Image>& image,
+        const VkImageView& imageView,
+        const SamplerDesc& samplerDesc) const;
+
+    [[nodiscard]]
+    std::shared_ptr<Image> createImage(
         const std::string& id,
         const ImageDesc& imageDesc,
         const std::vector<std::byte>& imageData,
@@ -187,9 +202,10 @@ private:
         int32_t texHeight,
         uint32_t mipLevels) const;
 
-    [[nodiscard]] VkSampler createTextureSampler(uint32_t mipLevels) const;
+    [[nodiscard]]
+    VkSampler createTextureSampler(const SamplerDesc& desc) const;
 
-    GraphicsDeviceDesc desc {};
+    GraphicsDeviceDesc desc_ {};
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     VkDevice device = VK_NULL_HANDLE;
     std::shared_ptr<Queue> graphicsQueue;

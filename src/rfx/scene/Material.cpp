@@ -22,7 +22,7 @@ const vec4& Material::getBaseColorFactor() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Material::setBaseColorTexture(std::shared_ptr<Texture2D> texture)
+void Material::setBaseColorTexture(shared_ptr<Texture2D> texture)
 {
     baseColorTexture_ = move(texture);
 }
@@ -32,6 +32,48 @@ void Material::setBaseColorTexture(std::shared_ptr<Texture2D> texture)
 const shared_ptr<Texture2D>& Material::getBaseColorTexture() const
 {
     return baseColorTexture_;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Material::setMetallicRoughnessTexture(shared_ptr<Texture2D> texture)
+{
+    metallicRoughnessTexture_ = move(texture);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const shared_ptr<Texture2D>& Material::getMetallicRoughnessTexture() const
+{
+    return metallicRoughnessTexture_;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Material::setMetallicFactor(float factor)
+{
+    metallicFactor_ = factor;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+float Material::getMetallicFactor() const
+{
+    return metallicFactor_;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Material::setRoughnessFactor(float factor)
+{
+    roughnessFactor_ = factor;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+float Material::getRoughnessFactor() const
+{
+    return roughnessFactor_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

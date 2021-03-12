@@ -15,6 +15,15 @@ public:
     void setBaseColorTexture(std::shared_ptr<Texture2D> texture);
     [[nodiscard]] const std::shared_ptr<Texture2D>& getBaseColorTexture() const;
 
+    void setMetallicRoughnessTexture(std::shared_ptr<Texture2D> texture);
+    [[nodiscard]] const std::shared_ptr<Texture2D>& getMetallicRoughnessTexture() const;
+
+    void setMetallicFactor(float factor);
+    [[nodiscard]] float getMetallicFactor() const;
+
+    void setRoughnessFactor(float factor);
+    [[nodiscard]] float getRoughnessFactor() const;
+
     void setNormalTexture(const std::shared_ptr<Texture2D>& texture);
     [[nodiscard]] const std::shared_ptr<Texture2D>& getNormalTexture() const;
 
@@ -27,6 +36,9 @@ public:
 private:
     glm::vec4 baseColorFactor_ { 1.0f };
     std::shared_ptr<Texture2D> baseColorTexture_;
+    std::shared_ptr<Texture2D> metallicRoughnessTexture_;
+    float metallicFactor_ = 1.0f;
+    float roughnessFactor_ = 0.0f;
     std::shared_ptr<Texture2D> normalTexture_;
 
     glm::vec3 specularFactor_ { 0.0f };

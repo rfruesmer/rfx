@@ -2,10 +2,13 @@
 #include "rfx/application/Window.h"
 #include <rfx/common/Algorithm.h>
 
+#ifdef _WINDOWS
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
+#endif // _WINDOWS
 
 using namespace rfx;
 using namespace std;
-namespace ranges = ranges;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
