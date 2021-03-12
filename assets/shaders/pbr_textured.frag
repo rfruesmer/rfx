@@ -1,6 +1,6 @@
 #version 450
 
-const float PI = 3.14159265358979323846;
+#define MAX_LIGHTS 4
 
 struct Light {
     vec3 position;
@@ -23,7 +23,7 @@ uniform SceneData {
     vec3 camPos;
     float padding;
 
-    Light lights[4];
+    Light lights[MAX_LIGHTS];
 } scene;
 
 layout(set = 1, binding = 0)
@@ -42,11 +42,19 @@ uniform MaterialData {
 layout(set = 2, binding = 1)
 uniform sampler2D baseColorTexture;
 
+layout(set = 2, binding = 2)
+uniform sampler2D normalMap;
+
 layout(location = 0) in vec3 inPosition;
-layout(location = 1) in vec3 inNormal;
-layout(location = 2) in vec2 inTexCoord;
+layout(location = 1) in vec2 inTexCoord;
+layout(location = 2) in vec3 inTangentCamPos;
+layout(location = 3) in vec3 inTangentPosition;
+layout(location = 4) in vec3 inTangentLightPos[MAX_LIGHTS];
 
 layout(location = 0) out vec3 outColor;
+
+
+const float PI = 3.14159265358979323846;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -94,7 +102,7 @@ vec3 BRDF(
         return vec3(0.0);
     }
 
-    vec3 L = scene.lights[lightIndex].position - V;
+    vec3 L = inTangentLightPos[lightIndex] - inTangentPosition;
     float distance = length(L);
     L = normalize(L);
 
@@ -124,14 +132,15 @@ vec3 BRDF(
 
 void main()
 {
-    vec3 baseColor = pow(texture(baseColorTexture, inTexCoord).rgb, vec3(2.2)); // TODO: 2.2
+    // convert sRGB => linear
+    vec3 baseColor = pow(texture(baseColorTexture, inTexCoord).rgb, vec3(2.2));
 
-    vec3 N = normalize(inNormal);
-    vec3 V = normalize(scene.camPos - inPosition);
+    vec3 N = texture(normalMap, inTexCoord).xyz * 2.0 - 1.0;
+    vec3 V = normalize(inTangentCamPos - inTangentPosition);
     vec3 F0 = mix(vec3(0.04), baseColor, material.metallic);
     vec3 Lo = vec3(0);
 
-    for(int i = 0; i < 4; ++i) {
+    for(int i = 0; i < MAX_LIGHTS; ++i) {
         if (!scene.lights[i].enabled) {
             continue;
         }
@@ -144,6 +153,7 @@ void main()
 
     // HDR tonemapping
     color = color / (color + vec3(1.0));
+
     // gamma correct
     color = pow(color, vec3(1.0/2.2));
 

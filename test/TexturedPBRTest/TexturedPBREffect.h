@@ -17,6 +17,7 @@ public:
         VertexFormat::COORDINATES
             | VertexFormat::NORMALS
             | VertexFormat::TEXCOORDS
+            | VertexFormat::TANGENTS
     };
 
     TexturedPBREffect(

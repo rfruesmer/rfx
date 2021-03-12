@@ -148,6 +148,8 @@ void TexturedPBREffect::updateMaterialDataBuffers()
     }
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+
 void TexturedPBREffect::setCameraPos(const vec3& pos)
 {
     sceneData_.camPos = pos;

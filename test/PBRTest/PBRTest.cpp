@@ -42,9 +42,6 @@ void PBRTest::initGraphics()
 
 void PBRTest::loadScene()
 {
-//    const path scenePath = getAssetsDirectory() / "models/sci-fi-corridors/Unity2Skfb.gltf";
-//    const path scenePath = getAssetsDirectory() / "models/cubes/cubes.gltf";
-//    const path scenePath = getAssetsDirectory() / "samples/NormalTangentMirrorTest/glTF/NormalTangentMirrorTest.gltf";
     const path scenePath = getAssetsDirectory() / "models/teapot/teapot.gltf";
 
     SceneLoader sceneLoader(graphicsDevice);

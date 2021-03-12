@@ -42,10 +42,9 @@ void TexturedPBRTest::initGraphics()
 
 void TexturedPBRTest::loadScene()
 {
-//    const path scenePath = getAssetsDirectory() / "models/sci-fi-corridors/Unity2Skfb.gltf";
-//    const path scenePath = getAssetsDirectory() / "models/cubes/cubes.gltf";
+    const path scenePath = getAssetsDirectory() / "models/sci-fi-corridors/Unity2Skfb.gltf";
 //    const path scenePath = getAssetsDirectory() / "samples/NormalTangentMirrorTest/glTF/NormalTangentMirrorTest.gltf";
-    const path scenePath = getAssetsDirectory() / "models/plane/plane_pbr.gltf";
+//    const path scenePath = getAssetsDirectory() / "models/plane/plane_pbr.gltf";
 
     SceneLoader sceneLoader(graphicsDevice);
     scene = sceneLoader.load(scenePath, VERTEX_FORMAT);
@@ -60,7 +59,7 @@ void TexturedPBRTest::loadScene()
     auto pointLight = dynamic_pointer_cast<PointLight>(scene->getLight(0));
     RFX_CHECK_STATE(pointLight != nullptr, "");
 
-    pointLight->setPosition({5.0f, 5.0f, 0.0f });
+    pointLight->setPosition({0.0f, 5.0f, 0.0f });
     pointLight->setColor({1.0f, 1.0f, 1.0f});
 
     effect = make_unique<TexturedPBREffect>(graphicsDevice, scene);
