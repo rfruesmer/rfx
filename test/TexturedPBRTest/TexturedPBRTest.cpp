@@ -183,7 +183,7 @@ void TexturedPBRTest::updateProjection()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedPBRTest::updateSceneData()
+void TexturedPBRTest::updateSceneData(float deltaTime)
 {
     effectImpl->setViewMatrix(camera.getViewMatrix());
     effectImpl->setCameraPos(camera.getPosition());

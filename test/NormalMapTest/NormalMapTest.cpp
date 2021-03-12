@@ -1,8 +1,8 @@
 #include "rfx/pch.h"
-#include "TexturedMultiLightTest.h"
+#include "NormalMapTest.h"
 #include "rfx/application/SceneLoader.h"
 #include "rfx/common/Logger.h"
-
+#include <cmath>
 
 using namespace rfx;
 using namespace glm;
@@ -14,7 +14,7 @@ using namespace std::filesystem;
 int main()
 {
     try {
-        auto theApp = make_shared<TexturedMultiLightTest>();
+        auto theApp = make_shared<NormalMapTest>();
         theApp->run();
     }
     catch (const exception& ex) {
@@ -27,7 +27,14 @@ int main()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedMultiLightTest::initGraphics()
+NormalMapTest::NormalMapTest()
+{
+    devToolsEnabled = true;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void NormalMapTest::initGraphics()
 {
     Application::initGraphics();
 
@@ -40,41 +47,32 @@ void TexturedMultiLightTest::initGraphics()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedMultiLightTest::loadScene()
+void NormalMapTest::loadScene()
 {
-    const path scenePath = getAssetsDirectory() / "models/plane/plane.gltf";
+    const path scenePath = getAssetsDirectory() / "models/plane/brickwall.gltf";
 
 
     SceneLoader sceneLoader(graphicsDevice);
     scene = sceneLoader.load(scenePath, VERTEX_FORMAT);
 //    for (const auto& material : scene->getMaterials()) {
-//        material->setSpecularFactor({1.0f, 0.0f, 0.0f});
-//        material->setShininess(128.0f);
+//        material->setSpecularFactor({1.0f, 1.0f, 1.0f});
+//        material->setShininess(100.0f);
 //    }
+
+    RFX_CHECK_STATE(scene->getLightCount() > 0, "");
+    auto light = dynamic_pointer_cast<PointLight>(scene->getLight(0));
+    RFX_CHECK_STATE(light != nullptr, "");
 
     camera.setPosition({ 0.0f, 2.0f, 10.0f });
 
-    pointLight = make_shared<PointLight>("point");
-    pointLight->setPosition({5.0f, .5f, 5.0f });
-    pointLight->setColor({0.0f, 1.0f, 0.0f});
-    pointLight->setRange(6.0f);
-
-    spotLight = make_shared<SpotLight>("spot");
-    spotLight->setPosition({0.0f, 10.0f, 0.0f});
-    spotLight->setColor({0.0f, 0.0f, 1.0f});
-    spotLight->setDirection({0.0f, -1.0f, 0.0f});
-    spotLight->setInnerConeAngle(20.0f);
-    spotLight->setOuterConeAngle(30.0f);
-
-    effect = make_unique<TexturedMultiLightEffect>(graphicsDevice, scene);
-    effectImpl = dynamic_cast<TexturedMultiLightEffect*>(effect.get());
-    effectImpl->setLight(0, pointLight);
-    effectImpl->setLight(1, spotLight);
+    effect = make_unique<NormalMapEffect>(graphicsDevice, scene);
+    effectImpl = dynamic_cast<NormalMapEffect*>(effect.get());
+    effectImpl->setLight(0, light);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedMultiLightTest::createCommandBuffers()
+void NormalMapTest::createCommandBuffers()
 {
     const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
@@ -144,12 +142,11 @@ void TexturedMultiLightTest::createCommandBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedMultiLightTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
+void NormalMapTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
 {
     const vector<VkDescriptorSet>& meshDescSets = effect->getMeshDescriptorSets();
     const vector<VkDescriptorSet>& materialDescSets = effect->getMaterialDescriptorSets();
-
-
+    
     for (size_t i = 0, count = scene->getMeshes().size(); i < count; ++i) {
 
         commandBuffer->bindDescriptorSet(
@@ -178,17 +175,36 @@ void TexturedMultiLightTest::drawScene(const shared_ptr<CommandBuffer>& commandB
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedMultiLightTest::updateProjection()
+void NormalMapTest::updateProjection()
 {
     effectImpl->setProjectionMatrix(calcDefaultProjection());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedMultiLightTest::updateSceneData(float deltaTime)
+void NormalMapTest::updateSceneData(float deltaTime)
 {
     effectImpl->setViewMatrix(camera.getViewMatrix());
+    effectImpl->setCameraPosition(camera.getPosition());
     effectImpl->updateSceneDataBuffer();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void NormalMapTest::updateDevTools()
+{
+    TestApplication::updateDevTools();
+
+    if (devTools->checkBox("Normal Map", &useNormalMap)) {
+        effectImpl->enableNormalMap(useNormalMap);
+    }
+
+    const auto& light = static_pointer_cast<PointLight>(scene->getLight(0));
+    vec3 lightPos = light->getPosition();
+    if (devTools->sliderFloat3("light#0 position", &lightPos.x, -10.0f, 10.0f)) {
+        light->setPosition(lightPos);
+        effectImpl->setLight(0, static_pointer_cast<PointLight>(light));
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

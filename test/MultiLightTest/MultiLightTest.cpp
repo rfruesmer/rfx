@@ -192,7 +192,7 @@ void MultiLightTest::updateProjection()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void MultiLightTest::updateSceneData()
+void MultiLightTest::updateSceneData(float deltaTime)
 {
     effectImpl->setViewMatrix(camera.getViewMatrix());
     effectImpl->updateSceneDataBuffer();

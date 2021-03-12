@@ -385,7 +385,7 @@ void TestApplication::update(float deltaTime)
     Application::update(deltaTime);
 
     updateCamera(deltaTime);
-    updateSceneData();
+    updateSceneData(deltaTime);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

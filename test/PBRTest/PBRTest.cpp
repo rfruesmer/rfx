@@ -184,7 +184,7 @@ void PBRTest::updateProjection()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PBRTest::updateSceneData()
+void PBRTest::updateSceneData(float deltaTime)
 {
     effectImpl->setViewMatrix(camera.getViewMatrix());
     effectImpl->updateSceneDataBuffer();

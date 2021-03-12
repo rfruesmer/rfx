@@ -178,7 +178,7 @@ void VertexDiffuseTest::updateProjection()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseTest::updateSceneData()
+void VertexDiffuseTest::updateSceneData(float deltaTime)
 {
     effectImpl->setViewMatrix(camera.getViewMatrix());
     effectImpl->updateSceneDataBuffer();

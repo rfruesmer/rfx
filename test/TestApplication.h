@@ -28,7 +28,7 @@ protected:
     void onKeyEvent(const Window& window, int key, int scancode, int action, int mods) override;
 
     void update(float deltaTime) override;
-    virtual void updateSceneData() = 0;
+    virtual void updateSceneData(float deltaTime) = 0;
     void updateCamera(float deltaTime);
     virtual void updateProjection() {};
     glm::mat4 calcDefaultProjection();

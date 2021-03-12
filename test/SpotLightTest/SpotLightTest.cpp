@@ -179,7 +179,7 @@ void SpotLightTest::updateProjection()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SpotLightTest::updateSceneData()
+void SpotLightTest::updateSceneData(float deltaTime)
 {
     effectImpl->setViewMatrix(camera.getViewMatrix());
     effectImpl->updateSceneDataBuffer();

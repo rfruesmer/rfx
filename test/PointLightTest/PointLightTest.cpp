@@ -182,7 +182,7 @@ void PointLightTest::updateProjection()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PointLightTest::updateSceneData()
+void PointLightTest::updateSceneData(float deltaTime)
 {
     effectImpl->setViewMatrix(camera.getViewMatrix());
     effectImpl->updateSceneDataBuffer();

@@ -16,7 +16,7 @@ public:
 protected:
     void initGraphics() override;
     void updateProjection() override;
-    void updateSceneData() override;
+    void updateSceneData(float deltaTime) override;
 
 private:
     void loadScene();
