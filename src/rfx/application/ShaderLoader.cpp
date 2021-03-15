@@ -39,16 +39,24 @@ VkPipelineShaderStageCreateInfo ShaderLoader::loadInternal(
     string shaderString;
     FileUtil::readTextFile(path, shaderString);
 
-    insertIncludedFiles(path.parent_path(), shaderString);
+    vector<uint32_t> shaderSPV;
 
-    vector<unsigned int> shaderSPV;
-    GLSLtoSPV(stage, shaderString.c_str(), shaderSPV);
+    const string extension = path.extension().string();
+    if (extension != ".spv") {
+        insertIncludedFiles(path.parent_path(), shaderString);
+        GLSLtoSPV(stage, shaderString.c_str(), shaderSPV);
+    }
+    else {
+        shaderSPV.resize(shaderString.size() / 4);
+        memcpy(shaderSPV.data(), shaderString.c_str(), shaderString.size() * sizeof(char));
+    }
+
 
     VkShaderModuleCreateInfo shaderModuleCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0,
-        .codeSize = shaderSPV.size() * sizeof(unsigned int),
+        .codeSize = shaderSPV.size() * sizeof(uint32_t),
         .pCode = shaderSPV.data()
     };
 

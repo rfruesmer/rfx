@@ -15,7 +15,15 @@ Buffer::Buffer(
         : size_(size),
           device_(device),
           buffer_(buffer),
-          deviceMemory_(deviceMemory) {}
+          deviceMemory_(deviceMemory)
+{
+    // TODO: support for sub-buffer allocation
+    descriptorBufferInfo_ = {
+        .buffer = buffer,
+        .offset = 0,
+        .range = VK_WHOLE_SIZE
+    };
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -64,6 +72,13 @@ VkDeviceMemory Buffer::getDeviceMemory() const
 VkDeviceSize Buffer::getSize() const
 {
     return size_;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const VkDescriptorBufferInfo& Buffer::getDescriptorBufferInfo() const
+{
+    return descriptorBufferInfo_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

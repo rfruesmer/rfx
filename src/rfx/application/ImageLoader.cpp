@@ -30,6 +30,8 @@ void ImageLoader::load(
 
     outImageDesc->bytesPerPixel = 4;
     outImageDesc->format = VK_FORMAT_R8G8B8A8_SRGB;
+    outImageDesc->mipLevels = 1;
+    outImageDesc->mipOffsets = { 0 };
 
     const size_t imageDataSize = outImageDesc->width * outImageDesc->height * outImageDesc->bytesPerPixel;
     outImageData->resize(imageDataSize);

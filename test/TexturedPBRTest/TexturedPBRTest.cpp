@@ -189,7 +189,6 @@ void TexturedPBRTest::updateSceneData(float deltaTime)
     effectImpl->setViewMatrix(camera.getViewMatrix());
     effectImpl->setCameraPos(camera.getPosition());
     effectImpl->updateSceneDataBuffer();
-    effectImpl->updateMaterialDataBuffers();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -197,21 +196,6 @@ void TexturedPBRTest::updateSceneData(float deltaTime)
 void TexturedPBRTest::updateDevTools()
 {
     TestApplication::updateDevTools();
-
-    float value = effectImpl->getMetallicFactor();
-    if (devTools->sliderFloat("metallic", &value, 0.0f, 1.0f)) {
-        effectImpl->setMetallicFactor(value);
-    }
-
-    value = effectImpl->getRoughnessFactor();
-    if (devTools->sliderFloat("roughness", &value, 0.0f, 1.0f)) {
-        effectImpl->setRoughnessFactor(value);
-    }
-
-    value = effectImpl->getAmbientOcclusion();
-    if (devTools->sliderFloat("ambient", &value, 0.0f, 1.0f)) {
-        effectImpl->setAmbientOcclusion(value);
-    }
 
     const auto& light = static_pointer_cast<PointLight>(scene->getLight(0));
     vec3 color = light->getColor();

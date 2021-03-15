@@ -14,7 +14,7 @@ public:
     static const int MAX_LIGHTS = 4;
 
     static inline const VertexFormat VERTEX_FORMAT {
-        VertexFormat::COORDINATES
+              VertexFormat::COORDINATES
             | VertexFormat::NORMALS
             | VertexFormat::TEXCOORDS
             | VertexFormat::TANGENTS
@@ -26,27 +26,14 @@ public:
 
     void setProjectionMatrix(const glm::mat4& projection);
     void setViewMatrix(const glm::mat4& viewMatrix);
+    void setCameraPos(const glm::vec3& pos);
     void setLight(int index, const std::shared_ptr<PointLight>& light);
-
-    void setMetallicFactor(float factor);
-    [[nodiscard]] float getMetallicFactor() const;
-
-    void setRoughnessFactor(float factor);
-    [[nodiscard]] float getRoughnessFactor() const;
-
-    void setAmbientOcclusion(float value);
-    [[nodiscard]] float getAmbientOcclusion();
 
     void updateSceneDataBuffer();
 
     [[nodiscard]] VertexFormat getVertexFormat() const override { return VERTEX_FORMAT; };
     [[nodiscard]] std::string getVertexShaderFileName() const override;
     [[nodiscard]] std::string getFragmentShaderFileName() const override;
-
-
-    void updateMaterialDataBuffers();
-
-    void setCameraPos(const glm::vec3& pos);
 
 protected:
     void createMaterialDataBuffers() override;
@@ -77,14 +64,17 @@ private:
     };
 
     struct MaterialData {
-        float metallic = 0.5f;
-        float roughness = 0.2f;
-        float ao = 0.0f;
-        float pad1;
+        glm::vec4 baseColorFactor { 0.0f };
+        glm::vec4 emissiveFactor { 0.0f };
+        float metallic = 0.0f;
+        float roughness = 0.0f;
+        uint32_t baseColorTexCoordSet = -1;
+        uint32_t metallicRoughnessTexCoordSet = -1;
+        uint32_t normalTexCoordSet = -1;
+        uint32_t emissiveTexCoordSet = -1;
     };
 
     SceneData sceneData_ {};
-    MaterialData materialData_ {};
     std::shared_ptr<PointLight> lights_[MAX_LIGHTS];
 };
 

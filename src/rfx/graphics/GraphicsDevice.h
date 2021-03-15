@@ -108,6 +108,7 @@ public:
         VkFormat format,
         uint32_t width,
         uint32_t height,
+        uint32_t bytesPerPixel,
         uint32_t mipLevels,
         const std::vector<VkDeviceSize>& mipOffsets,
         VkSampleCountFlagBits sampleCount,
@@ -169,6 +170,7 @@ private:
     void destroyMultiSamplingBuffer();
 
     void createCommandPool();
+
     void createBufferInternal(
         VkDeviceSize size,
         VkBufferUsageFlags usage,

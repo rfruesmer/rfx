@@ -67,57 +67,24 @@ void TexturedPBREffect::setLight(int index, const shared_ptr<PointLight>& light)
 }
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedPBREffect::setMetallicFactor(float factor)
-{
-    materialData_.metallic = factor;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-float TexturedPBREffect::getMetallicFactor() const
-{
-    return materialData_.metallic;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TexturedPBREffect::setRoughnessFactor(float factor)
-{
-    materialData_.roughness = factor;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-float TexturedPBREffect::getRoughnessFactor() const
-{
-    return materialData_.roughness;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TexturedPBREffect::setAmbientOcclusion(float value)
-{
-    materialData_.ao = value;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-float TexturedPBREffect::getAmbientOcclusion()
-{
-    return materialData_.ao;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void TexturedPBREffect::createMaterialDataBuffers()
 {
-    MaterialData materialData {};
-
     for (const auto& material : scene_->getMaterials()) {
         shared_ptr<Buffer> materialUniformBuffer = graphicsDevice_->createBuffer(
             sizeof(MaterialData),
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+        MaterialData materialData {
+            .baseColorFactor = material->getBaseColorFactor(),
+            .emissiveFactor = vec4(material->getEmissiveFactor(), 1.0f),
+            .metallic = material->getMetallicFactor(),
+            .roughness = material->getRoughnessFactor(),
+            .baseColorTexCoordSet = material->getBaseColorTexCoordSet(),
+            .metallicRoughnessTexCoordSet = material->getMetallicRoughnessTexCoordSet(),
+            .normalTexCoordSet = material->getNormalTexCoordSet(),
+            .emissiveTexCoordSet = material->getEmissiveTexCoordSet()
+        };
 
         graphicsDevice_->bind(materialUniformBuffer);
         materialUniformBuffer->load(sizeof(MaterialData), &materialData);
@@ -137,15 +104,6 @@ size_t TexturedPBREffect::getSceneDataSize() const
 void TexturedPBREffect::updateSceneDataBuffer()
 {
     sceneDataBuffer_->load(sizeof(SceneData), &sceneData_);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TexturedPBREffect::updateMaterialDataBuffers()
-{
-    for (auto& materialDataBuffer : materialDataBuffers_) {
-        materialDataBuffer->load(sizeof(MaterialData), &materialData_);
-    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

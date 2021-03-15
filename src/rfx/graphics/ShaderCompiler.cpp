@@ -20,7 +20,7 @@ void initResources(TBuiltInResource& Resources);
 void GLSLtoSPV(
     const VkShaderStageFlagBits shaderType,
     const char* shaderString,
-    vector<unsigned int>& spirv)
+    vector<uint32_t>& spirv)
 {
     EShLanguage language = findLanguage(shaderType);
     TShader shader(language);
@@ -32,7 +32,11 @@ void GLSLtoSPV(
     shaderStrings[0] = shaderString;
     shader.setStrings(shaderStrings, 1);
 
+#ifdef _DEBUG
+    auto messages = static_cast<EShMessages>(EShMsgDefault | EShMsgDebugInfo | EShMsgSpvRules | EShMsgVulkanRules);
+#else
     auto messages = static_cast<EShMessages>(EShMsgSpvRules | EShMsgVulkanRules);
+#endif
     if (!shader.parse(&resources, 450, false, messages)) {
         RFX_THROW(StringUtil::trimRight(string(shader.getInfoLog()))
             + "\nInfo Log: " + string(shader.getInfoDebugLog()));

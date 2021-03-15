@@ -201,7 +201,7 @@ void Application::createSyncObjects()
     renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     fencesInFlight.resize(MAX_FRAMES_IN_FLIGHT);
     imagesInFlight.resize(swapChainDesc.bufferCount, VK_NULL_HANDLE);
-    
+
     VkSemaphoreCreateInfo semaphoreCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
     };

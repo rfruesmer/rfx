@@ -6,7 +6,7 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-DepthBuffer::DepthBuffer(VkDevice device, std::shared_ptr<Image> image, VkImageView imageView)
+DepthBuffer::DepthBuffer(VkDevice device, shared_ptr<Image> image, VkImageView imageView)
     : device(device),
       image(move(image)),
       imageView(imageView) {}

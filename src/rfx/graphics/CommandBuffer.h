@@ -50,6 +50,13 @@ public:
         VkPipelineStageFlags srcStageMask,
         VkPipelineStageFlags dstStageMask) const;
 
+    void setImageMemoryBarrier(
+        const std::shared_ptr<Image>& image,
+        VkImageLayout oldLayout,
+        VkImageLayout newLayout,
+        VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+        VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT) const;
+
     void pushConstants(
         VkPipelineLayout layout,
         VkShaderStageFlags stageFlags,

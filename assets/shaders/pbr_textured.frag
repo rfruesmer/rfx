@@ -33,28 +33,35 @@ uniform MeshData {
 
 layout(set = 2, binding = 0)
 uniform MaterialData {
+    vec4 baseColorFactor;
+    vec4 emissiveFactor;
     float metallic;
     float roughness;
-    float ao;
-    float pad1;
+    uint baseColorTexCoordSet;
+    uint metallicRoughnessTexCoordSet;
+    uint normalTexCoordSet;
+    uint emissiveTexCoordSet;
 } material;
 
 layout(set = 2, binding = 1)
 uniform sampler2D baseColorTexture;
 
 layout(set = 2, binding = 2)
-uniform sampler2D normalMap;
+uniform sampler2D normalTexture;
 
 layout(set = 2, binding = 3)
-uniform sampler2D metallicRoughnessMap;
+uniform sampler2D metallicRoughnessTexture;
+
+layout(set = 2, binding = 4)
+uniform sampler2D emissiveTexture;
 
 layout(location = 0) in vec3 inPosition;
-layout(location = 1) in vec2 inTexCoord;
-layout(location = 2) in vec3 inTangentCamPos;
-layout(location = 3) in vec3 inTangentPosition;
-layout(location = 4) in vec3 inTangentLightPos[MAX_LIGHTS];
+layout(location = 1) in vec2 inTexCoord[5];
+layout(location = 6) in vec3 inTangentCamPos;
+layout(location = 7) in vec3 inTangentPosition;
+layout(location = 8) in vec3 inTangentLightPos[MAX_LIGHTS];
 
-layout(location = 0) out vec3 outColor;
+layout(location = 0) out vec4 outColor;
 
 
 const float PI = 3.14159265358979323846;
@@ -135,18 +142,33 @@ vec3 BRDF(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+vec4 sRGBtoLinear(vec4 srgb)
+{
+    vec3 linear = pow(srgb.rgb, vec3(2.2));
+    return vec4(linear, srgb.w);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void main()
 {
-    // convert sRGB => linear
-    vec3 baseColor = pow(texture(baseColorTexture, inTexCoord).rgb, vec3(2.2));
+    vec4 baseColor = material.baseColorFactor;
+    if (material.baseColorTexCoordSet > -1) {
+        baseColor *= sRGBtoLinear(texture(baseColorTexture, inTexCoord[material.baseColorTexCoordSet]));
+    }
 
-    vec4 mr = texture(metallicRoughnessMap, inTexCoord);
-    float metallic = material.metallic * mr.z;
-    float roughness = material.roughness * mr.y;
+    float metallic = material.metallic;
+    float roughness = material.roughness;
+    if (material.metallicRoughnessTexCoordSet > -1) {
+        vec4 mr = texture(metallicRoughnessTexture, inTexCoord[material.metallicRoughnessTexCoordSet]);
+        metallic *= mr.b;
+        roughness *= mr.g;
+    }
 
-    vec3 N = texture(normalMap, inTexCoord).xyz * 2.0 - 1.0;
+    // TODO: support for models without normal texture
+    vec3 N = texture(normalTexture, inTexCoord[material.normalTexCoordSet]).xyz * 2.0 - 1.0;
     vec3 V = normalize(inTangentCamPos - inTangentPosition);
-    vec3 F0 = mix(vec3(0.04), baseColor, metallic);
+    vec3 F0 = mix(vec3(0.04), baseColor.rgb, metallic);
     vec3 Lo = vec3(0);
 
     for(int i = 0; i < MAX_LIGHTS; ++i) {
@@ -154,11 +176,16 @@ void main()
             continue;
         }
 
-        Lo += BRDF(i, V, N, F0, baseColor, metallic, roughness);
+        Lo += BRDF(i, V, N, F0, baseColor.rgb, metallic, roughness);
     }
 
-    vec3 ambient = vec3(0.02) * baseColor * material.ao;
-    vec3 color = ambient + Lo;
+    vec3 ambient = vec3(0.02) * baseColor.rgb * 0.0f; // TODO: ambient occlusion map
+    vec3 emissive = vec3(0.0);
+    if (material.emissiveTexCoordSet > -1) {
+        emissive = sRGBtoLinear(texture(emissiveTexture, inTexCoord[material.emissiveTexCoordSet])).rgb * material.emissiveFactor.rgb;
+    }
+
+    vec3 color = ambient + emissive + Lo;
 
     // HDR tonemapping
     color = color / (color + vec3(1.0));
@@ -166,7 +193,7 @@ void main()
     // gamma correct
     color = pow(color, vec3(1.0/2.2));
 
-    outColor = color;
+    outColor = vec4(color, baseColor.a);
 }
 
 

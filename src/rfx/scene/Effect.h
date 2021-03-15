@@ -22,8 +22,8 @@ public:
 
     [[nodiscard]] virtual std::vector<VkDescriptorSetLayout> getDescriptorSetLayouts() = 0;
     [[nodiscard]] virtual VkDescriptorSet getSceneDescriptorSet() const = 0;
-    [[nodiscard]] virtual const std::vector<VkDescriptorSet>& getMaterialDescriptorSets() const = 0;
     [[nodiscard]] virtual const std::vector<VkDescriptorSet>& getMeshDescriptorSets() const = 0;
+    [[nodiscard]] virtual const std::vector<VkDescriptorSet>& getMaterialDescriptorSets() const = 0;
 
 protected:
     Effect() = default;

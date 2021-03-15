@@ -73,14 +73,16 @@ void VertexShader::createVertexInputState()
     }
 
     if (vertexFormat.containsTexCoords()) {
-        attributeDescription = {
-            .location = location++,
-            .binding = VERTEX_BUFFER_BIND_ID,
-            .format = VK_FORMAT_R32G32_SFLOAT,
-            .offset = offset
-        };
-        vertexAttributeDescriptions.push_back(attributeDescription);
-        offset += 8;
+        for (int i = 0; i < vertexFormat.getTexCoordSetCount(); ++i) {
+            attributeDescription = {
+                .location = location++,
+                .binding = VERTEX_BUFFER_BIND_ID,
+                .format = VK_FORMAT_R32G32_SFLOAT,
+                .offset = offset
+            };
+            vertexAttributeDescriptions.push_back(attributeDescription);
+            offset += 8;
+        }
     }
 
     if (vertexFormat.containsTangents()) {

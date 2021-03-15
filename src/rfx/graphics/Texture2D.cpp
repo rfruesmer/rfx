@@ -16,7 +16,16 @@ Texture2D::Texture2D(
           image(move(image)),
           imageView(imageView),
           imageLayout(imageLayout),
-          sampler(sampler) {}
+          sampler(sampler)
+{
+    RFX_CHECK_ARGUMENT(imageLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    descriptorImageInfo = {
+        .sampler = sampler,
+        .imageView = imageView,
+        .imageLayout = imageLayout
+    };
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -49,9 +58,9 @@ VkSampler Texture2D::getSampler() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VkDescriptorSet* Texture2D::getSamplerDescriptorSet()
+const VkDescriptorImageInfo& Texture2D::getDescriptorImageInfo() const
 {
-    return &samplerDescriptorSet;
+    return descriptorImageInfo;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

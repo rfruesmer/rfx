@@ -16,7 +16,6 @@ public:
         VkDeviceMemory deviceMemory);
 
     [[nodiscard]] uint32_t getIndexCount() const;
-
     [[nodiscard]] VkIndexType getIndexType() const;
 
 private:

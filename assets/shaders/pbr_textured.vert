@@ -33,29 +33,37 @@ uniform MeshData {
 
 layout(set = 2, binding = 0)
 uniform MaterialData {
+    vec4 baseColorFactor;
+    vec4 emissiveFactor;
     float metallic;
     float roughness;
-    float ao;
-    float pad1;
+    uint baseColorTexCoordSet;
+    uint metallicRoughnessTexCoordSet;
+    uint normalTexCoordSet;
+    uint emissiveTexCoordSet;
 } material;
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
-layout(location = 2) in vec2 inTexCoord;
-layout(location = 3) in vec4 inTangent;
+layout(location = 2) in vec2 inTexCoord[5];
+layout(location = 7) in vec4 inTangent;
 
 layout(location = 0) out vec3 outPosition;
-layout(location = 1) out vec2 outTexCoord;
-layout(location = 2) out vec3 outTangentCamPos;
-layout(location = 3) out vec3 outTangentPosition;
-layout(location = 4) out vec3 outTangentLightPos[MAX_LIGHTS];
+layout(location = 1) out vec2 outTexCoord[5];
+layout(location = 6) out vec3 outTangentCamPos;
+layout(location = 7) out vec3 outTangentPosition;
+layout(location = 8) out vec3 outTangentLightPos[MAX_LIGHTS];
 
 
 void main() {
     mat4 modelMatrix = mesh.modelMatrix;
 
     outPosition = (modelMatrix * vec4(inPosition, 1.0)).xyz;
-    outTexCoord = inTexCoord;
+    outTexCoord[0] = inTexCoord[0];
+    outTexCoord[1] = inTexCoord[1];
+    outTexCoord[2] = inTexCoord[2];
+    outTexCoord[3] = inTexCoord[3];
+    outTexCoord[4] = inTexCoord[4];
 
     mat3 normalMatrix = mat3(modelMatrix);
     vec3 T = normalize(normalMatrix * vec3(inTangent));

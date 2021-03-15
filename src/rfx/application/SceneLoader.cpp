@@ -57,8 +57,15 @@ public:
         uint32_t vertexCount,
         const float* positionBuffer,
         const float* normalsBuffer,
-        const float* texCoordsBuffer,
+        const float** texCoordsBuffers,
         const float* tangentsBuffer);
+    uint32_t appendCoordinates(const float* positionBuffer, uint32_t vertexIndex, uint32_t destIndex);
+    uint32_t appendNormals(const float* normalsBuffer, uint32_t vertexIndex, uint32_t destIndex);
+    uint32_t appendTexCoords(
+        const float** texCoordsBuffers,
+        uint32_t vertexIndex,
+        uint32_t destIndex);
+    uint32_t appendTangents(const float* tangentsBuffer, uint32_t vertexIndex, uint32_t destIndex);
     uint32_t loadIndices(const tinygltf::Primitive& glTFPrimitive, uint32_t vertexStart);
     void loadLights();
     void loadLight(const tinygltf::Value::Object& gltfLight);
@@ -83,7 +90,6 @@ public:
     vector<uint32_t> indices_;
     vector<SamplerDesc> samplers_;
     vector<shared_ptr<Image>> images_;
-    vector<VkImageView> imageViews_;
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -136,7 +142,6 @@ void SceneLoader::SceneLoaderImpl::clear()
     indices_.clear();
     samplers_.clear();
     images_.clear();
-    imageViews_.clear();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -165,15 +170,7 @@ void SceneLoader::SceneLoaderImpl::loadImages()
         };
 
         const shared_ptr<Image> image = graphicsDevice_->createImage(gltfImage.name, imageDesc, imageData, false);
-        const ImageDesc finalImageDesc = image->getDesc();
-        VkImageView imageView = graphicsDevice_->createImageView(
-            image,
-            finalImageDesc.format,
-            VK_IMAGE_ASPECT_COLOR_BIT,
-            finalImageDesc.mipLevels);
-
         images_.push_back(image);
-        imageViews_.push_back(imageView);
     }
 }
 
@@ -260,7 +257,12 @@ void SceneLoader::SceneLoaderImpl::loadTextures()
 void SceneLoader::SceneLoaderImpl::loadTexture(const tinygltf::Texture& gltfTexture)
 {
     const shared_ptr<Image>& image = images_[gltfTexture.source];
-    const VkImageView& imageView = imageViews_[gltfTexture.source];
+    const ImageDesc imageDesc = image->getDesc();
+    VkImageView imageView = graphicsDevice_->createImageView(
+        image,
+        imageDesc.format,
+        VK_IMAGE_ASPECT_COLOR_BIT,
+        imageDesc.mipLevels);
     const SamplerDesc& samplerDesc = samplers_[gltfTexture.sampler];
 
     scene_->addTexture(graphicsDevice_->createTexture2D(image, imageView, samplerDesc));
@@ -281,25 +283,28 @@ void SceneLoader::SceneLoaderImpl::loadMaterial(const tinygltf::Material& glTFMa
 {
     const tinygltf::PbrMetallicRoughness& gltfMetallicRoughness = glTFMaterial.pbrMetallicRoughness;
 
-    const auto material = make_shared<Material>();
+    const auto material = make_shared<Material>(glTFMaterial.name);
 
     // TODO: specular-glossiness material model
 
     material->setBaseColorFactor(make_vec4(gltfMetallicRoughness.baseColorFactor.data()));
     if (gltfMetallicRoughness.baseColorTexture.index > -1) {
         material->setBaseColorTexture(
-            scene_->getTexture(gltfMetallicRoughness.baseColorTexture.index));
+            scene_->getTexture(gltfMetallicRoughness.baseColorTexture.index),
+            gltfMetallicRoughness.baseColorTexture.texCoord);
     }
 
     if (gltfMetallicRoughness.metallicRoughnessTexture.index > -1) {
         material->setMetallicRoughnessTexture(
-            scene_->getTexture(gltfMetallicRoughness.metallicRoughnessTexture.index));
+            scene_->getTexture(gltfMetallicRoughness.metallicRoughnessTexture.index),
+            gltfMetallicRoughness.metallicRoughnessTexture.texCoord);
     }
     material->setMetallicFactor(static_cast<float>(gltfMetallicRoughness.metallicFactor));
     material->setRoughnessFactor(static_cast<float>(gltfMetallicRoughness.roughnessFactor));
 
     if (glTFMaterial.normalTexture.index > -1) {
-        material->setNormalTexture(scene_->getTexture(glTFMaterial.normalTexture.index));
+        material->setNormalTexture(scene_->getTexture(glTFMaterial.normalTexture.index),
+        glTFMaterial.normalTexture.texCoord);
     }
 
     if (glTFMaterial.occlusionTexture.index > -1) {
@@ -307,7 +312,10 @@ void SceneLoader::SceneLoaderImpl::loadMaterial(const tinygltf::Material& glTFMa
     }
 
     if (glTFMaterial.emissiveTexture.index > -1) {
-        int i = 42;
+        material->setEmissiveFactor(make_vec3(glTFMaterial.emissiveFactor.data()));
+        material->setEmissiveTexture(
+            scene_->getTexture(glTFMaterial.emissiveTexture.index),
+            glTFMaterial.emissiveTexture.texCoord);
     }
 
     scene_->addMaterial(material);
@@ -358,8 +366,7 @@ void SceneLoader::SceneLoaderImpl::loadMesh(const tinygltf::Mesh& gltfMesh)
 {
     auto mesh = make_unique<Mesh>();
 
-    for (size_t i = 0; i < gltfMesh.primitives.size(); ++i) {
-        const tinygltf::Primitive& glTFPrimitive = gltfMesh.primitives[i];
+    for (const tinygltf::Primitive& glTFPrimitive : gltfMesh.primitives) {
 
         auto firstIndex = static_cast<uint32_t>(indices_.size());
         auto vertexStart = vertexCount_;
@@ -398,11 +405,14 @@ void SceneLoader::SceneLoaderImpl::loadVertices(const tinygltf::Primitive& glTFP
         RFX_CHECK_STATE(normalsBuffer != nullptr, "Tangents generation not implemented yet!");
     }
 
-    // TEXCOORD_0
-    const float* texCoordsBuffer = nullptr;
+    // TEXCOORD
+    const float* texCoordsBuffers[VertexFormat::MAX_TEXCOORDSET_COUNT] {};
     if (vertexFormat_.containsTexCoords()) {
-        texCoordsBuffer = getBufferData(glTFPrimitive, "TEXCOORD_0");
-        RFX_CHECK_STATE(texCoordsBuffer != nullptr, "Texture coordinates are missing in input file!");
+        for (uint32_t i = 0; i < vertexFormat_.getTexCoordSetCount(); ++i) {
+            const string attributeName = "TEXCOORD_" + to_string(i);
+            texCoordsBuffers[i] = getBufferData(glTFPrimitive, attributeName);
+            RFX_CHECK_STATE(texCoordsBuffers[i] != nullptr, "Texture coordinates are missing in input file!");
+        }
     }
 
     // TANGENT
@@ -416,7 +426,7 @@ void SceneLoader::SceneLoaderImpl::loadVertices(const tinygltf::Primitive& glTFP
         vertexCount,
         positionBuffer,
         normalsBuffer,
-        texCoordsBuffer,
+        texCoordsBuffers,
         tangentsBuffer);
 }
 
@@ -442,35 +452,84 @@ void SceneLoader::SceneLoaderImpl::appendVertexData(
     uint32_t vertexCount,
     const float* positionBuffer,
     const float* normalsBuffer,
-    const float* texCoordsBuffer,
+    const float** texCoordsBuffers,
     const float* tangentsBuffer)
 {
     uint32_t destIndex = vertexCount_ * (vertexFormat_.getVertexSize() / sizeof(float));
-    vec3 normal;
 
     for (uint32_t vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
-
-        memcpy(&vertexData_[destIndex], &positionBuffer[vertexIndex * 3], sizeof(vec3));
-        destIndex += 3;
-
-        if (normalsBuffer) {
-            normal = normalize(make_vec3(&normalsBuffer[vertexIndex * 3]));
-            memcpy(&vertexData_[destIndex], &normal, sizeof(vec3));
-            destIndex += 3;
-        }
-
-        if (texCoordsBuffer) {
-            memcpy(&vertexData_[destIndex], &texCoordsBuffer[vertexIndex * 2], sizeof(vec2));
-            destIndex += 2;
-        }
-
-        if (tangentsBuffer) {
-            memcpy(&vertexData_[destIndex], &tangentsBuffer[vertexIndex * 4], sizeof(vec4));
-            destIndex += 4;
-        }
+        destIndex += appendCoordinates(positionBuffer, vertexIndex, destIndex);
+        destIndex += appendNormals(normalsBuffer, vertexIndex, destIndex);
+        destIndex += appendTexCoords(texCoordsBuffers, vertexIndex, destIndex);
+        destIndex += appendTangents(tangentsBuffer, vertexIndex, destIndex);
     }
 
     vertexCount_ += vertexCount;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+uint32_t SceneLoader::SceneLoaderImpl::appendCoordinates(
+    const float* positionBuffer,
+    uint32_t vertexIndex,
+    uint32_t destIndex)
+{
+    memcpy(&this->vertexData_[destIndex], &positionBuffer[vertexIndex * 3], sizeof(vec3));
+
+    return 3;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+uint32_t SceneLoader::SceneLoaderImpl::appendNormals(
+    const float* normalsBuffer,
+    uint32_t vertexIndex,
+    uint32_t destIndex)
+{
+    if (normalsBuffer) {
+        vec3 normal = normalize(make_vec3(&normalsBuffer[vertexIndex * 3]));
+        memcpy(&vertexData_[destIndex], &normal, sizeof(vec3));
+
+        return 3;
+    }
+
+    return 0;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+uint32_t SceneLoader::SceneLoaderImpl::appendTexCoords(
+    const float** texCoordsBuffers,
+    const uint32_t vertexIndex,
+    const uint32_t destIndex)
+{
+    uint32_t offset = 0;
+
+    for (uint32_t i = 0; i < VertexFormat::MAX_TEXCOORDSET_COUNT; ++i) {
+        if (texCoordsBuffers[i] == nullptr) {
+            break;
+        }
+
+        memcpy(&vertexData_[destIndex + offset], &texCoordsBuffers[i][vertexIndex * 2], sizeof(vec2));
+        offset += 2;
+    }
+
+    return offset;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+uint32_t SceneLoader::SceneLoaderImpl::appendTangents(
+    const float* tangentsBuffer,
+    uint32_t vertexIndex,
+    uint32_t destIndex)
+{
+    if (tangentsBuffer) {
+        memcpy(&vertexData_[destIndex], &tangentsBuffer[vertexIndex * 4], sizeof(vec4));
+        return 4;
+    }
+
+    return 0;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -687,24 +746,22 @@ mat4 SceneLoader::SceneLoaderImpl::getLocalTransformOf(const tinygltf::Node& glt
 
 void SceneLoader::SceneLoaderImpl::buildVertexBuffer()
 {
-    const size_t vertexBufferSize = vertexData_.size() * sizeof(float);
+    const size_t vertexDataSize = vertexData_.size() * sizeof(float);
+
+    shared_ptr<VertexBuffer> vertexBuffer = graphicsDevice_->createVertexBuffer(vertexCount_, vertexFormat_);
+    scene_->setVertexBuffer(vertexBuffer);
+    graphicsDevice_->bind(vertexBuffer);
 
     shared_ptr<Buffer> stagingBuffer = graphicsDevice_->createBuffer(
-        vertexBufferSize,
+        vertexDataSize,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
     void* mappedMemory = nullptr;
     graphicsDevice_->bind(stagingBuffer);
     graphicsDevice_->map(stagingBuffer, &mappedMemory);
-    memcpy(mappedMemory, vertexData_.data(), stagingBuffer->getSize());
+    memcpy(mappedMemory, vertexData_.data(), vertexDataSize);
     graphicsDevice_->unmap(stagingBuffer);
-
-    shared_ptr<VertexBuffer> vertexBuffer = graphicsDevice_->createVertexBuffer(vertexCount_, vertexFormat_);
-    scene_->setVertexBuffer(vertexBuffer);
-
-
-    graphicsDevice_->bind(vertexBuffer);
 
     VkCommandPool graphicsCommandPool = graphicsDevice_->getGraphicsCommandPool();
     shared_ptr<CommandBuffer> commandBuffer = graphicsDevice_->createCommandBuffer(graphicsCommandPool);

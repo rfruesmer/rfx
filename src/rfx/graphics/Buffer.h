@@ -19,11 +19,14 @@ public:
     [[nodiscard]] VkDeviceMemory getDeviceMemory() const;
     [[nodiscard]] VkDeviceSize getSize() const;
 
+    const VkDescriptorBufferInfo& getDescriptorBufferInfo() const;
+
 private:
     VkDeviceSize size_ = 0;
     VkDevice device_ = VK_NULL_HANDLE;
     VkBuffer buffer_ = VK_NULL_HANDLE;
     VkDeviceMemory deviceMemory_ = VK_NULL_HANDLE;
+    VkDescriptorBufferInfo descriptorBufferInfo_{};
 };
 
 } // namespace rfx

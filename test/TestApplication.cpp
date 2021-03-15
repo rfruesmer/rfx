@@ -155,8 +155,8 @@ void TestApplication::createRenderPass()
             .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
         },
         {
-            .srcSubpass = VK_SUBPASS_EXTERNAL,
-            .dstSubpass = 0,
+            .srcSubpass = 0,
+            .dstSubpass = VK_SUBPASS_EXTERNAL,
             .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
             .dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
             .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
@@ -196,18 +196,12 @@ void TestApplication::createPipelineLayout()
 {
     vector<VkDescriptorSetLayout> descriptorSetLayouts = effect->getDescriptorSetLayouts();
 
-    VkPushConstantRange pushConstantRange {
-        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-        .offset = 0,
-        .size = sizeof(mat4)
-    };
-
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size()),
         .pSetLayouts = descriptorSetLayouts.data(),
-        .pushConstantRangeCount = 1,
-        .pPushConstantRanges = &pushConstantRange
+        .pushConstantRangeCount = 0,
+        .pPushConstantRanges = nullptr
     };
 
     ThrowIfFailed(vkCreatePipelineLayout(

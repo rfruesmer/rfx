@@ -399,13 +399,17 @@ void GraphicsDevice::checkFormat(
 
 shared_ptr<Image> GraphicsDevice::createDepthBufferImage(VkFormat format)
 {
+    RFX_CHECK_ARGUMENT(format == VK_FORMAT_D24_UNORM_S8_UINT || format == VK_FORMAT_D16_UNORM);
+
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
+    const uint32_t bytesPerPixel = format == VK_FORMAT_D16_UNORM ? 2 : 4;
 
     return createImage(
         "depth_buffer",
         format,
         swapChainDesc.extent.width,
         swapChainDesc.extent.height,
+        bytesPerPixel,
         1,
         { 0 },
         multiSampleCount,
@@ -433,11 +437,15 @@ void GraphicsDevice::createMultiSamplingBuffer(VkSampleCountFlagBits sampleCount
     }
 
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
+    RFX_CHECK_STATE(swapChainDesc.format == VK_FORMAT_B8G8R8A8_SRGB, "");
+    const uint32_t bytesPerPixel = 4;
+
     multiSampleImage = createImage(
         "multisampling_buffer",
         swapChainDesc.format,
         swapChainDesc.extent.width,
         swapChainDesc.extent.height,
+        bytesPerPixel,
         1,
         {0},
         sampleCount,
@@ -790,6 +798,7 @@ shared_ptr<Image> GraphicsDevice::createImage(
         imageDesc.format,
         imageDesc.width,
         imageDesc.height,
+        imageDesc.bytesPerPixel,
         imageDesc.mipLevels,
         imageDesc.mipOffsets,
         imageDesc.sampleCount,
@@ -805,6 +814,7 @@ shared_ptr<Image> GraphicsDevice::createImage(
     VkFormat format,
     uint32_t width,
     uint32_t height,
+    uint32_t bytesPerPixel,
     uint32_t mipLevels,
     const vector<VkDeviceSize>& mipOffsets,
     VkSampleCountFlagBits sampleCount,
@@ -830,7 +840,7 @@ shared_ptr<Image> GraphicsDevice::createImage(
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
     };
 
-    VkImage image = nullptr;
+    VkImage image = VK_NULL_HANDLE;
     ThrowIfFailed(vkCreateImage(
         device,
         &imageCreateInfo,
@@ -847,7 +857,7 @@ shared_ptr<Image> GraphicsDevice::createImage(
         .memoryTypeIndex = getMemoryType(memoryRequirements.memoryTypeBits, properties)
     };
 
-    VkDeviceMemory imageMemory = nullptr;
+    VkDeviceMemory imageMemory = VK_NULL_HANDLE;
     ThrowIfFailed(vkAllocateMemory(
         device,
         &memoryAllocInfo,
@@ -864,6 +874,7 @@ shared_ptr<Image> GraphicsDevice::createImage(
         .format = format,
         .width = width,
         .height = height,
+        .bytesPerPixel = bytesPerPixel,
         .mipLevels = mipLevels,
         .mipOffsets = mipOffsets
     };
@@ -918,7 +929,7 @@ void GraphicsDevice::updateImage(
     }
 
     const shared_ptr<CommandBuffer> commandBuffer = createCommandBuffer(graphicsCommandPool);
-    commandBuffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+    commandBuffer->begin();
 
     if (!isGenerateMipmaps) {
         commandBuffer->setImageMemoryBarrier(
@@ -929,6 +940,10 @@ void GraphicsDevice::updateImage(
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             VK_PIPELINE_STAGE_HOST_BIT,
             VK_PIPELINE_STAGE_TRANSFER_BIT);
+//        commandBuffer->setImageMemoryBarrier(
+//            image,
+//            VK_IMAGE_LAYOUT_UNDEFINED,
+//            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     }
 
     commandBuffer->copyBufferToImage(stagingBuffer, image, copyRegions);
@@ -942,6 +957,10 @@ void GraphicsDevice::updateImage(
             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
             VK_PIPELINE_STAGE_TRANSFER_BIT,
             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+//        commandBuffer->setImageMemoryBarrier(
+//            image,
+//            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+//            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     }
 
     commandBuffer->end();
@@ -1123,7 +1142,7 @@ VkImageView GraphicsDevice::createImageView(
 
 VkSampler GraphicsDevice::createTextureSampler(const SamplerDesc& desc) const
 {
-    VkSamplerCreateInfo samplerInfo {
+    VkSamplerCreateInfo samplerCreateInfo {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
         .magFilter = desc.magFilter,
         .minFilter = desc.minFilter,
@@ -1140,14 +1159,14 @@ VkSampler GraphicsDevice::createTextureSampler(const SamplerDesc& desc) const
     };
 
     if (desc_.features.samplerAnisotropy) {
-        samplerInfo.anisotropyEnable = VK_TRUE;
-        samplerInfo.maxAnisotropy = desc_.properties.limits.maxSamplerAnisotropy;
+        samplerCreateInfo.anisotropyEnable = VK_TRUE;
+        samplerCreateInfo.maxAnisotropy = desc_.properties.limits.maxSamplerAnisotropy;
     }
 
     VkSampler textureSampler = VK_NULL_HANDLE;
     ThrowIfFailed(vkCreateSampler(
         device,
-        &samplerInfo,
+        &samplerCreateInfo,
         nullptr,
         &textureSampler));
 
@@ -1171,7 +1190,7 @@ VkFence GraphicsDevice::createFence() const
 
 VkFence GraphicsDevice::createFence(const VkFenceCreateInfo& createInfo) const
 {
-    VkFence fence = nullptr;
+    VkFence fence = VK_NULL_HANDLE;
 
     ThrowIfFailed(vkCreateFence(
         device,
@@ -1187,7 +1206,7 @@ VkFence GraphicsDevice::createFence(const VkFenceCreateInfo& createInfo) const
 void GraphicsDevice::destroyFence(VkFence& inOutFence) const
 {
     vkDestroyFence(device, inOutFence, nullptr);
-    inOutFence = nullptr;
+    inOutFence = VK_NULL_HANDLE;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

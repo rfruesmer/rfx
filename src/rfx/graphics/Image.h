@@ -16,6 +16,7 @@ public:
 
     ~Image();
 
+    [[nodiscard]] const std::string& getId() const;
     [[nodiscard]] VkImage getHandle() const;
     [[nodiscard]] const ImageDesc& getDesc() const;
 

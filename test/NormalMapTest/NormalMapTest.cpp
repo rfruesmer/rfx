@@ -146,7 +146,8 @@ void NormalMapTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
 {
     const vector<VkDescriptorSet>& meshDescSets = effect->getMeshDescriptorSets();
     const vector<VkDescriptorSet>& materialDescSets = effect->getMaterialDescriptorSets();
-    
+
+
     for (size_t i = 0, count = scene->getMeshes().size(); i < count; ++i) {
 
         commandBuffer->bindDescriptorSet(

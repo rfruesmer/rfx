@@ -77,29 +77,20 @@ void TestEffect::createMaterialDataBuffers()
 
 void TestEffect::createDescriptorPools()
 {
-    const uint32_t geometryNodesCount = scene_->getGeometryNodeCount();
+    const uint32_t meshCount = scene_->getGeometryNodeCount();
     const uint32_t materialCount = scene_->getMaterialCount();
-    
-    descriptorPools_[DescriptorType::SCENE] = createDescriptorPool(
-        {{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}}, 1);
-    descriptorPools_[DescriptorType::MESH] = createDescriptorPool(
-        {{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, geometryNodesCount}}, geometryNodesCount);
+    const uint32_t uniformBufferCount = 1 + meshCount + materialCount;
 
-    vector<VkDescriptorPoolSize> materialPoolSizes = {
-        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, materialCount}
+    uint32_t imageSamplerCount = getVertexFormat().containsTexCoords() ? 1 : 0;
+    imageSamplerCount += getVertexFormat().containsTangents() ? 1 : 0;
+    imageSamplerCount += scene_->getMaterial(0)->getMetallicRoughnessTexture() != nullptr ? 1 : 0; // TODO: extract imageSamplerCount to argument
+
+    vector<VkDescriptorPoolSize> descriptorPoolSizes = {
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, uniformBufferCount},
+        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, imageSamplerCount}
     };
-    if (getVertexFormat().containsTexCoords()) {
-        materialPoolSizes.push_back({VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, materialCount});
-    }
-    if (getVertexFormat().containsTangents()) {
-        materialPoolSizes.push_back({VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, materialCount});
-    }
-    if (scene_->getMaterial(0)->getMetallicRoughnessTexture() != nullptr) {
-        materialPoolSizes.push_back({VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, materialCount});
-    }
-    
-    descriptorPools_[DescriptorType::MATERIAL] = createDescriptorPool(
-        materialPoolSizes, materialCount);
+
+    descriptorPool_ = createDescriptorPool(descriptorPoolSizes, uniformBufferCount + imageSamplerCount);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -130,22 +121,22 @@ VkDescriptorPool TestEffect::createDescriptorPool(
 void TestEffect::createDescriptorSetLayouts()
 {
     createSceneDescriptorSetLayout();
-    createMaterialDescriptorSetLayout();
     createMeshDescriptorSetLayout();
+    createMaterialDescriptorSetLayout();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void TestEffect::createSceneDescriptorSetLayout()
 {
-    VkDescriptorSetLayoutBinding sceneDescSetLayoutBinding {
+    const VkDescriptorSetLayoutBinding sceneDescSetLayoutBinding {
         .binding = 0,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .descriptorCount = 1,
         .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT
     };
 
-    VkDescriptorSetLayoutCreateInfo sceneDescSetLayoutCreateInfo {
+    const VkDescriptorSetLayoutCreateInfo sceneDescSetLayoutCreateInfo {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .bindingCount = 1,
         .pBindings = &sceneDescSetLayoutBinding
@@ -160,69 +151,16 @@ void TestEffect::createSceneDescriptorSetLayout()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestEffect::createMaterialDescriptorSetLayout()
-{
-    vector<VkDescriptorSetLayoutBinding> materialDescSetLayoutBindings {
-        {
-            .binding = 0,
-            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = 1,
-            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT
-        }
-    };
-
-    if (getVertexFormat().containsTexCoords()) {
-        materialDescSetLayoutBindings.push_back({
-            .binding = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .descriptorCount = 1,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
-        });
-    }
-
-    if (getVertexFormat().containsTangents()) {
-        materialDescSetLayoutBindings.push_back({
-            .binding = 2,
-            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .descriptorCount = 1,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
-        });
-    }
-
-    if (scene_->getMaterial(0)->getMetallicRoughnessTexture() != nullptr) {
-        materialDescSetLayoutBindings.push_back({
-            .binding = 3,
-            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .descriptorCount = 1,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
-        });
-    }
-    
-    VkDescriptorSetLayoutCreateInfo materialDescSetLayoutCreateInfo {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .bindingCount = static_cast<uint32_t>(materialDescSetLayoutBindings.size()),
-        .pBindings = materialDescSetLayoutBindings.data()
-    };
-
-    ThrowIfFailed(vkCreateDescriptorSetLayout(
-        graphicsDevice_->getLogicalDevice(),
-        &materialDescSetLayoutCreateInfo,
-        nullptr,
-        &descriptorSetLayouts_[DescriptorType::MATERIAL]));
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void TestEffect::createMeshDescriptorSetLayout()
 {
-    VkDescriptorSetLayoutBinding meshDescSetLayoutBinding {
+    const VkDescriptorSetLayoutBinding meshDescSetLayoutBinding {
         .binding = 0,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .descriptorCount = 1,
         .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT
     };
 
-    VkDescriptorSetLayoutCreateInfo meshDescSetLayoutCreateInfo {
+    const VkDescriptorSetLayoutCreateInfo meshDescSetLayoutCreateInfo {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .bindingCount = 1,
         .pBindings = &meshDescSetLayoutBinding
@@ -237,20 +175,75 @@ void TestEffect::createMeshDescriptorSetLayout()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void TestEffect::createMaterialDescriptorSetLayout()
+{
+    vector<VkDescriptorSetLayoutBinding> materialDescSetLayoutBindings;
+    uint32_t binding = 0;
+
+
+    materialDescSetLayoutBindings.push_back({
+        .binding = binding++,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = 1,
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT
+    });
+
+    if (getVertexFormat().containsTexCoords()) {
+        materialDescSetLayoutBindings.push_back({
+            .binding = binding++,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+        });
+    }
+
+    if (getVertexFormat().containsTangents()) {
+        materialDescSetLayoutBindings.push_back({
+            .binding = binding++,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+        });
+    }
+
+    if (scene_->getMaterial(0)->getMetallicRoughnessTexture() != nullptr) { // TODO: should be defined on a per-effect basis
+        materialDescSetLayoutBindings.push_back({
+            .binding = binding++,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+        });
+    }
+
+    const VkDescriptorSetLayoutCreateInfo materialDescSetLayoutCreateInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .bindingCount = static_cast<uint32_t>(materialDescSetLayoutBindings.size()),
+        .pBindings = materialDescSetLayoutBindings.data()
+    };
+
+    ThrowIfFailed(vkCreateDescriptorSetLayout(
+        graphicsDevice_->getLogicalDevice(),
+        &materialDescSetLayoutCreateInfo,
+        nullptr,
+        &descriptorSetLayouts_[DescriptorType::MATERIAL]));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void TestEffect::createDescriptorSets()
 {
     createSceneDescriptorSet();
-    createMaterialDescriptorSets();
     createMeshDescriptorSets();
+    createMaterialDescriptorSets();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void TestEffect::createSceneDescriptorSet()
 {
-    VkDescriptorSetAllocateInfo allocInfo {
+    const VkDescriptorSetAllocateInfo allocInfo {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .descriptorPool = descriptorPools_[DescriptorType::SCENE],
+        .descriptorPool = descriptorPool_,
         .descriptorSetCount = 1,
         .pSetLayouts = &descriptorSetLayouts_[DescriptorType::SCENE]
     };
@@ -260,21 +253,8 @@ void TestEffect::createSceneDescriptorSet()
         &allocInfo,
         &sceneDescriptorSet_));
 
-    VkDescriptorBufferInfo bufferInfo {
-        .buffer = sceneDataBuffer_->getHandle(),
-        .offset = 0,
-        .range = VK_WHOLE_SIZE,
-    };
-
-    VkWriteDescriptorSet writeDescriptorSet {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .dstSet = sceneDescriptorSet_,
-        .dstBinding = 0,
-        .dstArrayElement = 0,
-        .descriptorCount = 1,
-        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .pBufferInfo = &bufferInfo
-    };
+    const VkWriteDescriptorSet writeDescriptorSet =
+        buildWriteDescriptorSet(sceneDescriptorSet_, 0, &sceneDataBuffer_->getDescriptorBufferInfo());
 
     vkUpdateDescriptorSets(
         graphicsDevice_->getLogicalDevice(),
@@ -286,110 +266,93 @@ void TestEffect::createSceneDescriptorSet()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void TestEffect::createMeshDescriptorSets()
+{
+    meshDescriptorSets_.resize(scene_->getGeometryNodeCount());
+
+    const VkDescriptorSetAllocateInfo allocInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool = descriptorPool_,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &descriptorSetLayouts_[DescriptorType::MESH]
+    };
+
+    for (uint32_t i = 0, count = scene_->getGeometryNodeCount(); i < count; ++i) {
+
+        ThrowIfFailed(vkAllocateDescriptorSets(
+            graphicsDevice_->getLogicalDevice(),
+            &allocInfo,
+            &meshDescriptorSets_[i]));
+
+        const VkWriteDescriptorSet writeDescriptorSet =
+            buildWriteDescriptorSet(
+                meshDescriptorSets_[i],
+                0,
+                &meshDataBuffers_[i]->getDescriptorBufferInfo());
+
+        vkUpdateDescriptorSets(
+            graphicsDevice_->getLogicalDevice(),
+            1,
+            &writeDescriptorSet,
+            0,
+            nullptr);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void TestEffect::createMaterialDescriptorSets()
 {
     materialDescriptorSets_.resize(scene_->getMaterialCount());
 
+    const VkDescriptorSetAllocateInfo allocInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool = descriptorPool_,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &descriptorSetLayouts_[DescriptorType::MATERIAL]
+    };
+
     for (uint32_t i = 0, count = scene_->getMaterialCount(); i < count; ++i) {
 
         const shared_ptr<Material>& material = scene_->getMaterial(i);
-
-        VkDescriptorSetAllocateInfo allocInfo {
-            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-            .descriptorPool = descriptorPools_[DescriptorType::MATERIAL],
-            .descriptorSetCount = 1,
-            .pSetLayouts = &descriptorSetLayouts_[DescriptorType::MATERIAL]
-        };
+        vector<VkWriteDescriptorSet> writeDescriptorSets;
+        uint32_t binding = 0;
 
         ThrowIfFailed(vkAllocateDescriptorSets(
             graphicsDevice_->getLogicalDevice(),
             &allocInfo,
             &materialDescriptorSets_[i]));
 
-        VkDescriptorBufferInfo bufferInfo {
-            .buffer = materialDataBuffers_[i]->getHandle(),
-            .offset = 0,
-            .range = VK_WHOLE_SIZE,
-        };
+        writeDescriptorSets.push_back(
+            buildWriteDescriptorSet(
+                materialDescriptorSets_[i],
+                binding++,
+                &materialDataBuffers_[i]->getDescriptorBufferInfo()));
 
-        vector<VkWriteDescriptorSet> writeDescriptorSets {
-            {
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .dstSet = materialDescriptorSets_[i],
-                .dstBinding = 0,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .pBufferInfo = &bufferInfo
-            }
-        };
-
-        if (getVertexFormat().containsTexCoords()) {
-
-            const shared_ptr<Texture2D>& baseColorTexture =
-                material->getBaseColorTexture();
-
-            VkDescriptorImageInfo textureImageInfo = {
-                .sampler = baseColorTexture->getSampler(),
-                .imageView = baseColorTexture->getImageView(),
-                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-            };
-
-            writeDescriptorSets.push_back({
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .dstSet = materialDescriptorSets_[i],
-                .dstBinding = 1,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                .pImageInfo = &textureImageInfo
-            });
+        if (const auto& baseColorTexture = material->getBaseColorTexture()) {
+            writeDescriptorSets.push_back(
+                buildWriteDescriptorSet(
+                    materialDescriptorSets_[i],
+                    binding++,
+                    &baseColorTexture->getDescriptorImageInfo()));
         }
 
-        if (getVertexFormat().containsTangents()) {
-
-            const shared_ptr<Texture2D>& normalTexture =
-                material->getNormalTexture();
-
-            VkDescriptorImageInfo textureImageInfo = {
-                .sampler = normalTexture->getSampler(),
-                .imageView = normalTexture->getImageView(),
-                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-            };
-
-            writeDescriptorSets.push_back({
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .dstSet = materialDescriptorSets_[i],
-                .dstBinding = 2,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                .pImageInfo = &textureImageInfo
-            });
+        if (const auto& normalTexture = material->getNormalTexture()) {
+            writeDescriptorSets.push_back(
+                buildWriteDescriptorSet(
+                    materialDescriptorSets_[i],
+                    binding++,
+                    &normalTexture->getDescriptorImageInfo()));
         }
 
-        if (material->getMetallicRoughnessTexture() != nullptr) {
-
-            const shared_ptr<Texture2D>& metallicRoughnessTexture =
-                material->getMetallicRoughnessTexture();
-
-            VkDescriptorImageInfo textureImageInfo = {
-                .sampler = metallicRoughnessTexture->getSampler(),
-                .imageView = metallicRoughnessTexture->getImageView(),
-                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-            };
-
-            writeDescriptorSets.push_back({
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .dstSet = materialDescriptorSets_[i],
-                .dstBinding = 3,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                .pImageInfo = &textureImageInfo
-            });
+        if (const auto& metallicRoughnessTexture = material->getMetallicRoughnessTexture()) {
+            writeDescriptorSets.push_back(
+                buildWriteDescriptorSet(
+                    materialDescriptorSets_[i],
+                    binding++,
+                    &metallicRoughnessTexture->getDescriptorImageInfo()));
         }
-        
+
         vkUpdateDescriptorSets(
             graphicsDevice_->getLogicalDevice(),
             writeDescriptorSets.size(),
@@ -401,47 +364,38 @@ void TestEffect::createMaterialDescriptorSets()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestEffect::createMeshDescriptorSets()
+VkWriteDescriptorSet TestEffect::buildWriteDescriptorSet(
+    VkDescriptorSet descriptorSet,
+    uint32_t binding,
+    const VkDescriptorImageInfo* descriptorImageInfo)
 {
-    meshDescriptorSets_.resize(scene_->getGeometryNodeCount());
+    return {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = descriptorSet,
+        .dstBinding = binding,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .pImageInfo = descriptorImageInfo
+    };
+}
 
-    for (uint32_t i = 0, count = scene_->getGeometryNodeCount(); i < count; ++i) {
+// ---------------------------------------------------------------------------------------------------------------------
 
-        VkDescriptorSetAllocateInfo allocInfo {
-            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-            .descriptorPool = descriptorPools_[DescriptorType::MESH],
-            .descriptorSetCount = 1,
-            .pSetLayouts = &descriptorSetLayouts_[DescriptorType::MESH]
-        };
-
-        ThrowIfFailed(vkAllocateDescriptorSets(
-            graphicsDevice_->getLogicalDevice(),
-            &allocInfo,
-            &meshDescriptorSets_[i]));
-
-        VkDescriptorBufferInfo bufferInfo {
-            .buffer = meshDataBuffers_[i]->getHandle(),
-            .offset = 0,
-            .range = VK_WHOLE_SIZE,
-        };
-
-        VkWriteDescriptorSet writeDescriptorSet {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .dstSet = meshDescriptorSets_[i],
-            .dstBinding = 0,
-            .dstArrayElement = 0,
-            .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .pBufferInfo = &bufferInfo
-        };
-
-        vkUpdateDescriptorSets(
-            graphicsDevice_->getLogicalDevice(),
-            1,
-            &writeDescriptorSet,
-            0,
-            nullptr);
-    }
+VkWriteDescriptorSet TestEffect::buildWriteDescriptorSet(
+    VkDescriptorSet descriptorSet,
+    uint32_t binding,
+    const VkDescriptorBufferInfo* descriptorBufferInfo)
+{
+    return {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = descriptorSet,
+        .dstBinding = binding,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .pBufferInfo = descriptorBufferInfo
+    };
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -460,16 +414,16 @@ VkDescriptorSet TestEffect::getSceneDescriptorSet() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const vector<VkDescriptorSet>& TestEffect::getMaterialDescriptorSets() const
+const vector<VkDescriptorSet>& TestEffect::getMeshDescriptorSets() const
 {
-    return materialDescriptorSets_;
+    return meshDescriptorSets_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const vector<VkDescriptorSet>& TestEffect::getMeshDescriptorSets() const
+const vector<VkDescriptorSet>& TestEffect::getMaterialDescriptorSets() const
 {
-    return meshDescriptorSets_;
+    return materialDescriptorSets_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -479,8 +433,8 @@ void TestEffect::cleanupSwapChain()
     VkDevice device = graphicsDevice_->getLogicalDevice();
     for (int i = 0; i < DescriptorType::QUANTITY; ++i) {
         vkDestroyDescriptorSetLayout(device, descriptorSetLayouts_[i], nullptr);
-        vkDestroyDescriptorPool(device, descriptorPools_[i], nullptr);
     }
+    vkDestroyDescriptorPool(device, descriptorPool_, nullptr);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
