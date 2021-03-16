@@ -308,7 +308,10 @@ void SceneLoader::SceneLoaderImpl::loadMaterial(const tinygltf::Material& glTFMa
     }
 
     if (glTFMaterial.occlusionTexture.index > -1) {
-        int i = 42;
+        material->setOcclusionTexture(
+            scene_->getTexture(glTFMaterial.occlusionTexture.index),
+            glTFMaterial.occlusionTexture.texCoord,
+            static_cast<float>(glTFMaterial.occlusionTexture.strength));
     }
 
     if (glTFMaterial.emissiveTexture.index > -1) {

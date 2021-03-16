@@ -37,10 +37,12 @@ uniform MaterialData {
     vec4 emissiveFactor;
     float metallic;
     float roughness;
-    uint baseColorTexCoordSet;
-    uint metallicRoughnessTexCoordSet;
-    uint normalTexCoordSet;
-    uint emissiveTexCoordSet;
+    int baseColorTexCoordSet;
+    int metallicRoughnessTexCoordSet;
+    int normalTexCoordSet;
+    int occlusionTexCoordSet;
+    float occlusionStrength;
+    int emissiveTexCoordSet;
 } material;
 
 layout(set = 2, binding = 1)
@@ -53,6 +55,9 @@ layout(set = 2, binding = 3)
 uniform sampler2D metallicRoughnessTexture;
 
 layout(set = 2, binding = 4)
+uniform sampler2D occlusionTexture;
+
+layout(set = 2, binding = 5)
 uniform sampler2D emissiveTexture;
 
 layout(location = 0) in vec3 inPosition;
@@ -155,6 +160,7 @@ void main()
     vec4 baseColor = material.baseColorFactor;
     if (material.baseColorTexCoordSet > -1) {
         baseColor *= sRGBtoLinear(texture(baseColorTexture, inTexCoord[material.baseColorTexCoordSet]));
+//        baseColor *= texture(baseColorTexture, inTexCoord[material.baseColorTexCoordSet]);
     }
 
     float metallic = material.metallic;
@@ -179,19 +185,26 @@ void main()
         Lo += BRDF(i, V, N, F0, baseColor.rgb, metallic, roughness);
     }
 
-    vec3 ambient = vec3(0.02) * baseColor.rgb * 0.0f; // TODO: ambient occlusion map
-    vec3 emissive = vec3(0.0);
-    if (material.emissiveTexCoordSet > -1) {
-        emissive = sRGBtoLinear(texture(emissiveTexture, inTexCoord[material.emissiveTexCoordSet])).rgb * material.emissiveFactor.rgb;
+    vec3 color = Lo;
+
+    if (material.occlusionTexCoordSet > -1) {
+        float ao = texture(occlusionTexture, inTexCoord[material.occlusionTexCoordSet]).r;
+        color = mix(color, color * ao, material.occlusionStrength);
     }
 
-    vec3 color = ambient + emissive + Lo;
+    if (material.emissiveTexCoordSet > -1) {
+        vec3 emissive = sRGBtoLinear(texture(emissiveTexture, inTexCoord[material.emissiveTexCoordSet])).rgb
+            * material.emissiveFactor.rgb
+            * vec3(255.0); // TODO: check linear/sRGB
+
+        color += emissive;
+    }
 
     // HDR tonemapping
-    color = color / (color + vec3(1.0));
+//    color = color / (color + vec3(1.0));
 
     // gamma correct
-    color = pow(color, vec3(1.0/2.2));
+    color = pow(color, vec3(1.0 / 2.2));
 
     outColor = vec4(color, baseColor.a);
 }

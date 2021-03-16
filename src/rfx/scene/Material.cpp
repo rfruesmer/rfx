@@ -44,7 +44,7 @@ const shared_ptr<Texture2D>& Material::getBaseColorTexture() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-uint32_t Material::getBaseColorTexCoordSet() const
+int Material::getBaseColorTexCoordSet() const
 {
     return baseColorTexCoordSet_;
 }
@@ -68,7 +68,7 @@ const shared_ptr<Texture2D>& Material::getMetallicRoughnessTexture() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-uint32_t Material::getMetallicRoughnessTexCoordSet() const
+int Material::getMetallicRoughnessTexCoordSet() const
 {
     return metallicRoughnessTexCoordSet_;
 }
@@ -120,9 +120,42 @@ const shared_ptr<Texture2D>& Material::getNormalTexture() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-uint32_t Material::getNormalTexCoordSet() const
+int Material::getNormalTexCoordSet() const
 {
     return normalTexCoordSet_;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Material::setOcclusionTexture(
+    shared_ptr<Texture2D> texture,
+    uint32_t texCoordSet,
+    float strength)
+{
+    occlusionTexture_ = move(texture);
+    occlusionTexCoordSet_ = texCoordSet;
+    occlusionStrength_ = strength;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const std::shared_ptr<Texture2D>& Material::getOcclusionTexture() const
+{
+    return occlusionTexture_;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+float Material::getOcclusionStrength() const
+{
+    return occlusionStrength_;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+int Material::getOcclusionTexCoordSet() const
+{
+    return occlusionTexCoordSet_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -144,7 +177,7 @@ const shared_ptr<Texture2D>& Material::getEmissiveTexture() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-uint32_t Material::getEmissiveTexCoordSet() const
+int Material::getEmissiveTexCoordSet() const
 {
     return emissiveTexCoordSet_;
 }

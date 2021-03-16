@@ -83,6 +83,8 @@ void TexturedPBREffect::createMaterialDataBuffers()
             .baseColorTexCoordSet = material->getBaseColorTexCoordSet(),
             .metallicRoughnessTexCoordSet = material->getMetallicRoughnessTexCoordSet(),
             .normalTexCoordSet = material->getNormalTexCoordSet(),
+            .occlusionTexCoordSet = material->getOcclusionTexCoordSet(),
+            .occlusionStrength = material->getOcclusionStrength(),
             .emissiveTexCoordSet = material->getEmissiveTexCoordSet()
         };
 

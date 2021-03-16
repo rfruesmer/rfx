@@ -84,6 +84,8 @@ void TestEffect::createDescriptorPools()
     uint32_t imageSamplerCount = getVertexFormat().containsTexCoords() ? 1 : 0;
     imageSamplerCount += getVertexFormat().containsTangents() ? 1 : 0;
     imageSamplerCount += scene_->getMaterial(0)->getMetallicRoughnessTexture() != nullptr ? 1 : 0; // TODO: extract imageSamplerCount to argument
+    imageSamplerCount += scene_->getMaterial(0)->getOcclusionTexture() != nullptr ? 1 : 0; // TODO: extract imageSamplerCount to argument
+    imageSamplerCount += scene_->getMaterial(0)->getEmissiveTexture() != nullptr ? 1 : 0; // TODO: extract imageSamplerCount to argument
 
     vector<VkDescriptorPoolSize> descriptorPoolSizes = {
         {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, uniformBufferCount},
@@ -207,6 +209,24 @@ void TestEffect::createMaterialDescriptorSetLayout()
     }
 
     if (scene_->getMaterial(0)->getMetallicRoughnessTexture() != nullptr) { // TODO: should be defined on a per-effect basis
+        materialDescSetLayoutBindings.push_back({
+            .binding = binding++,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+        });
+    }
+
+    if (scene_->getMaterial(0)->getOcclusionTexture() != nullptr) { // TODO: should be defined on a per-effect basis
+        materialDescSetLayoutBindings.push_back({
+            .binding = binding++,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+        });
+    }
+
+    if (scene_->getMaterial(0)->getEmissiveTexture() != nullptr) { // TODO: should be defined on a per-effect basis
         materialDescSetLayoutBindings.push_back({
             .binding = binding++,
             .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
@@ -351,6 +371,22 @@ void TestEffect::createMaterialDescriptorSets()
                     materialDescriptorSets_[i],
                     binding++,
                     &metallicRoughnessTexture->getDescriptorImageInfo()));
+        }
+
+        if (const auto& occlusionTexture = material->getOcclusionTexture()) {
+            writeDescriptorSets.push_back(
+                buildWriteDescriptorSet(
+                    materialDescriptorSets_[i],
+                    binding++,
+                    &occlusionTexture->getDescriptorImageInfo()));
+        }
+
+        if (const auto& emissiveTexture = material->getEmissiveTexture()) {
+            writeDescriptorSets.push_back(
+                buildWriteDescriptorSet(
+                    materialDescriptorSets_[i],
+                    binding++,
+                    &emissiveTexture->getDescriptorImageInfo()));
         }
 
         vkUpdateDescriptorSets(

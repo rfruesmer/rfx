@@ -60,8 +60,8 @@ void TexturedPBRTest::loadScene()
 //    RFX_CHECK_STATE(pointLight != nullptr, "");
 
     pointLight = make_shared<PointLight>("point-light#0");
-    pointLight->setPosition({0.0f, 5.0f, 0.0f });
-    pointLight->setColor({1.0f, 1.0f, 1.0f});
+    pointLight->setPosition({-5.3f, 2.7f, -3.3f });
+    pointLight->setColor({0.5f, 0.5f, 0.5f});
     scene->addLight(pointLight);
 
     effect = make_unique<TexturedPBREffect>(graphicsDevice, scene);

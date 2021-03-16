@@ -12,12 +12,14 @@ class TexturedPBREffect : public TestEffect
 {
 public:
     static const int MAX_LIGHTS = 4;
+    static const int TEXCOORDSET_COUNT = 5;
 
     static inline const VertexFormat VERTEX_FORMAT {
               VertexFormat::COORDINATES
             | VertexFormat::NORMALS
             | VertexFormat::TEXCOORDS
-            | VertexFormat::TANGENTS
+            | VertexFormat::TANGENTS,
+            TEXCOORDSET_COUNT
     };
 
     TexturedPBREffect(
@@ -68,10 +70,12 @@ private:
         glm::vec4 emissiveFactor { 0.0f };
         float metallic = 0.0f;
         float roughness = 0.0f;
-        uint32_t baseColorTexCoordSet = -1;
-        uint32_t metallicRoughnessTexCoordSet = -1;
-        uint32_t normalTexCoordSet = -1;
-        uint32_t emissiveTexCoordSet = -1;
+        int baseColorTexCoordSet = -1;
+        int metallicRoughnessTexCoordSet = -1;
+        int normalTexCoordSet = -1;
+        int occlusionTexCoordSet = -1;
+        float occlusionStrength = 1.0f;
+        int emissiveTexCoordSet = -1;
     };
 
     SceneData sceneData_ {};
