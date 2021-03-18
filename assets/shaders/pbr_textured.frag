@@ -1,5 +1,6 @@
 #version 450
 
+#define TEXCOORDSET_COUNT 5
 #define MAX_LIGHTS 4
 
 struct Light {
@@ -61,10 +62,11 @@ layout(set = 2, binding = 5)
 uniform sampler2D emissiveTexture;
 
 layout(location = 0) in vec3 inPosition;
-layout(location = 1) in vec2 inTexCoord[5];
+layout(location = 1) in vec2 inTexCoord[TEXCOORDSET_COUNT];
 layout(location = 6) in vec3 inTangentCamPos;
 layout(location = 7) in vec3 inTangentPosition;
 layout(location = 8) in vec3 inTangentLightPos[MAX_LIGHTS];
+layout(location = 12) in vec3 inNormal;
 
 layout(location = 0) out vec4 outColor;
 
@@ -119,7 +121,14 @@ vec3 BRDF(
         return vec3(0.0);
     }
 
-    vec3 L = inTangentLightPos[lightIndex] - inTangentPosition;
+    vec3 L;
+    if (material.normalTexCoordSet > -1) {
+        L = inTangentLightPos[lightIndex] - inTangentPosition;
+    }
+    else {
+        L = scene.lights[lightIndex].position - inPosition;
+    }
+
     float distance = length(L);
     L = normalize(L);
 
@@ -159,8 +168,8 @@ void main()
 {
     vec4 baseColor = material.baseColorFactor;
     if (material.baseColorTexCoordSet > -1) {
-        baseColor *= sRGBtoLinear(texture(baseColorTexture, inTexCoord[material.baseColorTexCoordSet]));
-//        baseColor *= texture(baseColorTexture, inTexCoord[material.baseColorTexCoordSet]);
+//        baseColor *= sRGBtoLinear(texture(baseColorTexture, inTexCoord[material.baseColorTexCoordSet]));
+        baseColor *= texture(baseColorTexture, inTexCoord[material.baseColorTexCoordSet]);
     }
 
     float metallic = material.metallic;
@@ -171,9 +180,17 @@ void main()
         roughness *= mr.g;
     }
 
-    // TODO: support for models without normal texture
-    vec3 N = texture(normalTexture, inTexCoord[material.normalTexCoordSet]).xyz * 2.0 - 1.0;
-    vec3 V = normalize(inTangentCamPos - inTangentPosition);
+    vec3 N, V;
+    if (material.normalTexCoordSet > -1) {
+        N = texture(normalTexture, inTexCoord[material.normalTexCoordSet]).xyz * 2.0 - 1.0;
+        V = normalize(inTangentCamPos - inTangentPosition);
+    }
+    else {
+        N = inNormal;
+        V = normalize(scene.camPos - inPosition);
+    }
+    N = normalize(N);
+
     vec3 F0 = mix(vec3(0.04), baseColor.rgb, metallic);
     vec3 Lo = vec3(0);
 
@@ -204,7 +221,7 @@ void main()
 //    color = color / (color + vec3(1.0));
 
     // gamma correct
-    color = pow(color, vec3(1.0 / 2.2));
+//    color = pow(color, vec3(1.0 / 2.2));
 
     outColor = vec4(color, baseColor.a);
 }

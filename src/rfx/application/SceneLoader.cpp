@@ -409,13 +409,23 @@ void SceneLoader::SceneLoaderImpl::loadVertices(const tinygltf::Primitive& glTFP
     }
 
     // TEXCOORD
-    const float* texCoordsBuffers[VertexFormat::MAX_TEXCOORDSET_COUNT] {};
-    if (vertexFormat_.containsTexCoords()) {
-        for (uint32_t i = 0; i < vertexFormat_.getTexCoordSetCount(); ++i) {
-            const string attributeName = "TEXCOORD_" + to_string(i);
-            texCoordsBuffers[i] = getBufferData(glTFPrimitive, attributeName);
-            RFX_CHECK_STATE(texCoordsBuffers[i] != nullptr, "Texture coordinates are missing in input file!");
+    uint32_t inputTexCoordSetCount = 0;
+    uint32_t outputTexCoordSetCount = vertexFormat_.getTexCoordSetCount();
+    for (uint32_t i = 0; i < outputTexCoordSetCount; ++i) {
+        const string attributeName = "TEXCOORD_" + to_string(i);
+        if (!glTFPrimitive.attributes.contains(attributeName)) {
+            break;
         }
+        inputTexCoordSetCount++;
+    }
+    RFX_CHECK_STATE(inputTexCoordSetCount <= outputTexCoordSetCount,
+        "TexCoordSet count mismatch! Input file contains " + to_string(inputTexCoordSetCount) + " sets.");
+
+    const float* texCoordsBuffers[VertexFormat::MAX_TEXCOORDSET_COUNT] {};
+    for (uint32_t i = 0; i < inputTexCoordSetCount; ++i) {
+        const string attributeName = "TEXCOORD_" + to_string(i);
+        texCoordsBuffers[i] = getBufferData(glTFPrimitive, attributeName);
+        RFX_CHECK_STATE(texCoordsBuffers[i] != nullptr, "Missing TexCoordSet in input file!");
     }
 
     // TANGENT

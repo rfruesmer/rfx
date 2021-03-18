@@ -43,6 +43,8 @@ void TexturedPBRTest::initGraphics()
 void TexturedPBRTest::loadScene()
 {
     const path scenePath = getAssetsDirectory() / "models/sci-fi-corridors/scene.gltf";
+//    const path scenePath = getAssetsDirectory() / "models/sci-fi_modular_corridor__door_ver.2_-_low_poly/scene.gltf";
+
 //    const path scenePath = getAssetsDirectory() / "samples/NormalTangentMirrorTest/glTF/NormalTangentMirrorTest.gltf";
 //    const path scenePath = getAssetsDirectory() / "models/plane/plane_pbr.gltf";
 
