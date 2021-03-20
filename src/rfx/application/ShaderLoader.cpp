@@ -2,7 +2,7 @@
 #include "rfx/application/ShaderLoader.h"
 #include "rfx/graphics/ShaderCompiler.h"
 #include "rfx/common/FileUtil.h"
-
+#include "rfx/common/Logger.h"
 
 using namespace rfx;
 using namespace std;
@@ -16,12 +16,15 @@ ShaderLoader::ShaderLoader(shared_ptr<GraphicsDevice> graphicsDevice)
 // ---------------------------------------------------------------------------------------------------------------------
 
 shared_ptr<VertexShader> ShaderLoader::loadVertexShader(
-    const path& path, 
+    const filesystem::path& path,
     const char* entryPoint,
-    const VertexFormat& vertexFormat) const
+    const VertexFormat& vertexFormat,
+    const vector<string>& defines,
+    const vector<string>& inputs,
+    const vector<string>& outputs) const
 {
-    const VkPipelineShaderStageCreateInfo shaderStageCreateInfo = 
-        loadInternal(path, VK_SHADER_STAGE_VERTEX_BIT, entryPoint);
+    const VkPipelineShaderStageCreateInfo shaderStageCreateInfo =
+        loadInternal(path, VK_SHADER_STAGE_VERTEX_BIT, entryPoint, defines, inputs, outputs);
 
     return make_shared<VertexShader>(
         graphicsDevice->getLogicalDevice(),
@@ -32,9 +35,12 @@ shared_ptr<VertexShader> ShaderLoader::loadVertexShader(
 // ---------------------------------------------------------------------------------------------------------------------
 
 VkPipelineShaderStageCreateInfo ShaderLoader::loadInternal(
-    const path& path, 
+    const path& path,
     VkShaderStageFlagBits stage,
-    const char* entryPoint) const
+    const char* entryPoint,
+    const vector<string>& defines,
+    const vector<string>& inputs,
+    const vector<string>& outputs) const
 {
     string shaderString;
     FileUtil::readTextFile(path, shaderString);
@@ -44,6 +50,7 @@ VkPipelineShaderStageCreateInfo ShaderLoader::loadInternal(
     const string extension = path.extension().string();
     if (extension != ".spv") {
         insertIncludedFiles(path.parent_path(), shaderString);
+        configure(defines, inputs, outputs, shaderString);
         GLSLtoSPV(stage, shaderString.c_str(), shaderSPV);
     }
     else {
@@ -75,6 +82,41 @@ VkPipelineShaderStageCreateInfo ShaderLoader::loadInternal(
     };
 
     return shaderStage;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void ShaderLoader::configure(
+    const vector<string>& defines,
+    const vector<string>& inputs,
+    const vector<string>& outputs,
+    string& inoutShaderString)
+{
+    smatch match;
+    const regex regex("#rfx");
+    if (!regex_search(inoutShaderString, match, regex)) {
+        return;
+    }
+
+    string insertString;
+    for (const string& define : defines) {
+        insertString.append("#define " + define + "\n");
+    }
+    insertString.append("\n");
+
+    for (const string& input : inputs) {
+        insertString.append(input + "\n");
+    }
+    insertString.append("\n");
+
+    for (const string& output : outputs) {
+        insertString.append(output + "\n");
+    }
+    insertString.append("\n");
+
+    inoutShaderString.replace(match.position(), match.length(), insertString);
+
+    RFX_LOG_INFO << inoutShaderString;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -113,10 +155,12 @@ void ShaderLoader::insertIncludedFile(
 
 shared_ptr<FragmentShader> ShaderLoader::loadFragmentShader(
     const path& path,
-    const char* entryPoint) const
+    const char* entryPoint,
+    const vector<string>& defines,
+    const vector<string>& inputs) const
 {
     const VkPipelineShaderStageCreateInfo shaderStageCreateInfo =
-        loadInternal(path, VK_SHADER_STAGE_FRAGMENT_BIT, entryPoint);
+        loadInternal(path, VK_SHADER_STAGE_FRAGMENT_BIT, entryPoint, defines, inputs, vector<string>());
 
     return make_shared<FragmentShader>(
         graphicsDevice->getLogicalDevice(),

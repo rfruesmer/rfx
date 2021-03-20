@@ -88,9 +88,12 @@ void TestEffect::createDescriptorPools()
     imageSamplerCount += scene_->getMaterial(0)->getEmissiveTexture() != nullptr ? 1 : 0; // TODO: extract imageSamplerCount to argument
 
     vector<VkDescriptorPoolSize> descriptorPoolSizes = {
-        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, uniformBufferCount},
-        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, imageSamplerCount}
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, uniformBufferCount}
     };
+
+    if (imageSamplerCount > 0) {
+        descriptorPoolSizes.push_back({ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, imageSamplerCount });
+    }
 
     descriptorPool_ = createDescriptorPool(descriptorPoolSizes, uniformBufferCount + imageSamplerCount);
 }

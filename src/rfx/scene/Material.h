@@ -1,5 +1,6 @@
 #pragma once
 
+#include <rfx/graphics/VertexFormat.h>
 #include "rfx/graphics/Texture2D.h"
 
 namespace rfx {
@@ -7,7 +8,15 @@ namespace rfx {
 class Material
 {
 public:
-    explicit Material(std::string id);
+    Material(
+        std::string id,
+        const VertexFormat& vertexFormat,
+        std::string vertexShaderId,
+        std::string fragmentShaderId);
+
+    [[nodiscard]] const VertexFormat& getVertexFormat() const;
+    [[nodiscard]] const std::string& getVertexShaderId() const;
+    [[nodiscard]] const std::string& getFragmentShaderId() const;
 
     void setBaseColorFactor(const glm::vec4& baseColorFactor);
     [[nodiscard]] const glm::vec4& getBaseColorFactor() const;
@@ -54,12 +63,16 @@ public:
 private:
     std::string id_;
 
+    const VertexFormat vertexFormat_;
+    const std::string vertexShaderId_;
+    const std::string fragmentShaderId_;
+
     glm::vec4 baseColorFactor_ { 1.0f };
     std::shared_ptr<Texture2D> baseColorTexture_;
     int baseColorTexCoordSet_ = -1;
 
     std::shared_ptr<Texture2D> metallicRoughnessTexture_;
-    int metallicRoughnessTexCoordSet_ = 0;
+    int metallicRoughnessTexCoordSet_ = -1;
     float metallicFactor_ = 1.0f;
     float roughnessFactor_ = 0.0f;
 

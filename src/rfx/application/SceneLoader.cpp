@@ -36,11 +36,18 @@ struct GLTFLightProperties {
 class SceneLoader::SceneLoaderImpl
 {
 public:
-    explicit SceneLoaderImpl(shared_ptr<GraphicsDevice>&& graphicsDevice)
-        : graphicsDevice_(move(graphicsDevice)) {}
+    explicit SceneLoaderImpl(
+        shared_ptr<GraphicsDevice>&& graphicsDevice,
+        string&& defaultVertexShaderId,
+        string&& defaultFragmentShaderId)
+            : graphicsDevice_(move(graphicsDevice)),
+              defaultVertexShaderId(move(defaultVertexShaderId)),
+              defaultFragmentShaderId(move(defaultFragmentShaderId)) {}
 
-    const shared_ptr<Scene>& load(const path& scenePath, const VertexFormat& vertexFormat);
+    const shared_ptr<Scene>& load(const path& scenePath);
     void clear();
+    VertexFormat getVertexFormatFrom(const tinygltf::Primitive& firstPrimitive);
+    void checkVertexFormatConsistency();
     void loadImages();
     static vector<std::byte> convertToRGBA(const tinygltf::Image& gltfImage);
     void loadSamplers();
@@ -90,19 +97,17 @@ public:
     vector<uint32_t> indices_;
     vector<SamplerDesc> samplers_;
     vector<shared_ptr<Image>> images_;
+    string defaultVertexShaderId;
+    string defaultFragmentShaderId;
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const shared_ptr<Scene>& SceneLoader::SceneLoaderImpl::load(
-    const path& scenePath,
-    const VertexFormat& vertexFormat)
+const shared_ptr<Scene>& SceneLoader::SceneLoaderImpl::load(const path& scenePath)
 {
     RFX_CHECK_STATE(exists(scenePath), "File not found: " + scenePath.string());
 
     clear();
-
-    vertexFormat_ = vertexFormat;
 
     tinygltf::TinyGLTF gltfContext;
     string error;
@@ -113,6 +118,12 @@ const shared_ptr<Scene>& SceneLoader::SceneLoaderImpl::load(
         "Failed to load glTF file: " + scenePath.string() + "\n"
         + "Errors: " + error
         + "Warnings: " + warning);
+
+    RFX_CHECK_STATE(!gltfModel_.meshes.empty(), "No meshes");
+    RFX_CHECK_STATE(!gltfModel_.meshes[0].primitives.empty(), "Empty mesh");
+
+    vertexFormat_ = getVertexFormatFrom(gltfModel_.meshes[0].primitives[0]);
+    checkVertexFormatConsistency();
 
     loadImages();
     loadSamplers();
@@ -142,6 +153,54 @@ void SceneLoader::SceneLoaderImpl::clear()
     indices_.clear();
     samplers_.clear();
     images_.clear();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VertexFormat SceneLoader::SceneLoaderImpl::getVertexFormatFrom(const tinygltf::Primitive& firstPrimitive)
+{
+    unsigned int formatMask = 0;
+    unsigned int texCoordSetCount = 0;
+
+    if (firstPrimitive.attributes.contains("POSITION")) {
+        formatMask |= VertexFormat::COORDINATES;
+    }
+    if (firstPrimitive.attributes.contains("NORMAL")) {
+        formatMask |= VertexFormat::NORMALS;
+    }
+    if (firstPrimitive.attributes.contains("TEXCOORD_0")) {
+        formatMask |= VertexFormat::TEXCOORDS;
+        texCoordSetCount = 1;
+    }
+    if (firstPrimitive.attributes.contains("TEXCOORD_1")) {
+        texCoordSetCount++;
+    }
+    if (firstPrimitive.attributes.contains("TEXCOORD_2")) {
+        texCoordSetCount++;
+    }
+    if (firstPrimitive.attributes.contains("TEXCOORD_3")) {
+        texCoordSetCount++;
+    }
+    if (firstPrimitive.attributes.contains("TEXCOORD_4")) {
+        texCoordSetCount++;
+    }
+    if (firstPrimitive.attributes.contains("TANGENT")) {
+        formatMask |= VertexFormat::TANGENTS;
+    }
+
+    return VertexFormat(formatMask, texCoordSetCount);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SceneLoader::SceneLoaderImpl::checkVertexFormatConsistency()
+{
+    for (const auto& mesh : gltfModel_.meshes) {
+        for (const auto& primitive : mesh.primitives) {
+            RFX_CHECK_STATE(getVertexFormatFrom(primitive) == vertexFormat_,
+                "different vertex formats aren't supported yet");
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -281,11 +340,22 @@ void SceneLoader::SceneLoaderImpl::loadMaterials()
 
 void SceneLoader::SceneLoaderImpl::loadMaterial(const tinygltf::Material& glTFMaterial) const
 {
-    const tinygltf::PbrMetallicRoughness& gltfMetallicRoughness = glTFMaterial.pbrMetallicRoughness;
+    tinygltf::Value::Object extras = glTFMaterial.extras.Get<tinygltf::Value::Object>();
+    const string vertexShaderId = extras.contains("vertexShader")
+            ? extras.at("vertexShader").Get<string>()
+            : defaultVertexShaderId;
+    const string fragmentShaderId = extras.contains("fragmentShader")
+            ? extras.at("fragmentShader").Get<string>()
+            : defaultFragmentShaderId;
 
-    const auto material = make_shared<Material>(glTFMaterial.name);
+    const auto material = make_shared<Material>(
+        glTFMaterial.name,
+        vertexFormat_,
+        vertexShaderId,
+        fragmentShaderId);
 
     // TODO: specular-glossiness material model
+    const tinygltf::PbrMetallicRoughness& gltfMetallicRoughness = glTFMaterial.pbrMetallicRoughness;
 
     material->setBaseColorFactor(make_vec4(gltfMetallicRoughness.baseColorFactor.data()));
     if (gltfMetallicRoughness.baseColorTexture.index > -1) {
@@ -721,8 +791,8 @@ void SceneLoader::SceneLoaderImpl::loadNode(
     }
     parentNode->addChild(node);
 
-    for (size_t i = 0; i < gltfNode.children.size(); ++i) {
-        loadNode(gltfModel_.nodes[gltfNode.children[i]], node);
+    for (int childIndex : gltfNode.children) {
+        loadNode(gltfModel_.nodes[childIndex], node);
     }
 }
 
@@ -823,17 +893,21 @@ void SceneLoader::SceneLoaderImpl::buildIndexBuffer()
 // #####################################################################################################################
 // ---------------------------------------------------------------------------------------------------------------------
 
-SceneLoader::SceneLoader(shared_ptr<GraphicsDevice> graphicsDevice)
-    : pimpl_(new SceneLoaderImpl(move(graphicsDevice)),
-        [](SceneLoaderImpl* pimpl) { delete pimpl; }) {}
+SceneLoader::SceneLoader(
+    shared_ptr<GraphicsDevice> graphicsDevice,
+    string defaultVertexShaderId,
+    string defaultFragmentShaderId)
+        : pimpl_(new SceneLoaderImpl(
+                move(graphicsDevice),
+                move(defaultVertexShaderId),
+                move(defaultFragmentShaderId)),
+                    [](SceneLoaderImpl* pimpl) { delete pimpl; }) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const shared_ptr<Scene>& SceneLoader::load(
-    const path& scenePath,
-    const VertexFormat& vertexFormat)
+const shared_ptr<Scene>& SceneLoader::load(const path& scenePath)
 {
-    return pimpl_->load(scenePath, vertexFormat);
+    return pimpl_->load(scenePath);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

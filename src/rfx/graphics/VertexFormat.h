@@ -15,8 +15,10 @@ public:
     static const unsigned int MAX_TEXCOORDSET_COUNT = 8;
 
     VertexFormat();
-    explicit VertexFormat(unsigned int formatMask, unsigned int texCoordSetCount = 0);
+    explicit VertexFormat(uint32_t formatMask, uint32_t texCoordSetCount = 0);
     VertexFormat(const VertexFormat& theOther);
+
+    uint32_t getFormatMask() const;
 
     [[nodiscard]]
     uint32_t getVertexSize() const;
@@ -42,7 +44,10 @@ public:
     [[nodiscard]]
     bool containsTangents() const;
 
+    bool operator==(const VertexFormat& rhs) const;
+
 private:
+    uint32_t formatMask_ = 0;
     uint32_t vertexSize_ = 0;
 
     bool coordinates_ = false;

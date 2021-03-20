@@ -52,4 +52,7 @@ include_directories(${TINYGLTF_INCLUDE_DIRS})
 find_package(nlohmann_json CONFIG REQUIRED)
 link_libraries(nlohmann_json nlohmann_json::nlohmann_json)
 
+find_package(fmt CONFIG REQUIRED)
+link_libraries(fmt::fmt)
+
 add_subdirectory(test)

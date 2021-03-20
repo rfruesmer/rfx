@@ -12,9 +12,13 @@ VertexFormat::VertexFormat()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VertexFormat::VertexFormat(unsigned int formatMask, unsigned int texCoordSetCount)
+VertexFormat::VertexFormat(
+    uint32_t formatMask,
+    uint32_t texCoordSetCount)
 {
     RFX_CHECK_ARGUMENT(formatMask & COORDINATES);
+
+    formatMask_ = formatMask;
 
     if (formatMask & COORDINATES) {
         coordinates_ = true;
@@ -54,14 +58,14 @@ VertexFormat::VertexFormat(unsigned int formatMask, unsigned int texCoordSetCoun
 // ---------------------------------------------------------------------------------------------------------------------
 
 VertexFormat::VertexFormat(const VertexFormat& theOther)
-    : vertexSize_(theOther.vertexSize_),
-      coordinates_(theOther.coordinates_),
-      normals_(theOther.normals_),
-      colors3_(theOther.colors3_),
-      colors4_(theOther.colors4_),
-      texCoords_(theOther.texCoords_),
-      texCoordSetCount_(theOther.texCoordSetCount_),
-      tangents_(theOther.tangents_) {}
+    : VertexFormat(theOther.getFormatMask(), theOther.getTexCoordSetCount()) {}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+uint32_t VertexFormat::getFormatMask() const
+{
+    return formatMask_;
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -117,6 +121,14 @@ uint32_t VertexFormat::getTexCoordSetCount() const
 bool VertexFormat::containsTangents() const
 {
     return tangents_;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+bool VertexFormat::operator==(const VertexFormat& rhs) const
+{
+    return formatMask_ == rhs.formatMask_
+        && texCoordSetCount_ == rhs.texCoordSetCount_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -8,8 +8,36 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-Material::Material(std::string id)
-    : id_(move(id)) {}
+Material::Material(
+    string id,
+    const VertexFormat& vertexFormat,
+    string vertexShaderId,
+    string fragmentShaderId)
+        : id_(move(id)),
+          vertexFormat_(vertexFormat),
+          vertexShaderId_(move(vertexShaderId)),
+          fragmentShaderId_(move(fragmentShaderId)) {}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const VertexFormat& Material::getVertexFormat() const
+{
+    return vertexFormat_;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const string& Material::getVertexShaderId() const
+{
+    return vertexShaderId_;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const string& Material::getFragmentShaderId() const
+{
+    return fragmentShaderId_;
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 

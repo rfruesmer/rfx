@@ -44,12 +44,18 @@ void TexturedPBRTest::loadScene()
 {
     const path scenePath = getAssetsDirectory() / "models/sci-fi-corridors/scene.gltf";
 //    const path scenePath = getAssetsDirectory() / "models/sci-fi_modular_corridor__door_ver.2_-_low_poly/scene.gltf";
-
 //    const path scenePath = getAssetsDirectory() / "samples/NormalTangentMirrorTest/glTF/NormalTangentMirrorTest.gltf";
 //    const path scenePath = getAssetsDirectory() / "models/plane/plane_pbr.gltf";
+//    const path scenePath = getAssetsDirectory() / "models/cubes/ice_low.gltf";
 
-    SceneLoader sceneLoader(graphicsDevice);
-    scene = sceneLoader.load(scenePath, VERTEX_FORMAT);
+    const string defaultVertexShaderId = "pbr_textured";
+    const string defaultFragmentShaderId = "pbr_textured";
+
+    SceneLoader sceneLoader(
+        graphicsDevice,
+        defaultVertexShaderId,
+        defaultFragmentShaderId);
+    scene = sceneLoader.load(scenePath);
 //    for (const auto& material : scene->getMaterials()) {
 //        material->setSpecularFactor({1.0f, 0.0f, 0.0f});
 //        material->setShininess(128.0f);
@@ -57,14 +63,16 @@ void TexturedPBRTest::loadScene()
 
     camera.setPosition({ 0.0f, 2.0f, 10.0f });
 
-//    RFX_CHECK_STATE(scene->getLightCount() > 0, "");
-//    auto pointLight = dynamic_pointer_cast<PointLight>(scene->getLight(0));
-//    RFX_CHECK_STATE(pointLight != nullptr, "");
+    if (scene->getLightCount() > 0) {
+        pointLight = dynamic_pointer_cast<PointLight>(scene->getLight(0));
+    }
 
-    pointLight = make_shared<PointLight>("point-light#0");
-    pointLight->setPosition({-5.3f, 2.7f, -3.3f });
-    pointLight->setColor({0.5f, 0.5f, 0.5f});
-    scene->addLight(pointLight);
+    if (pointLight == nullptr) {
+        pointLight = make_shared<PointLight>("point-light#0");
+        pointLight->setPosition({-5.3f, 2.7f, -3.3f });
+        pointLight->setColor({0.5f, 0.5f, 0.5f});
+        scene->addLight(pointLight);
+    }
 
     effect = make_unique<TexturedPBREffect>(graphicsDevice, scene);
     effectImpl = dynamic_cast<TexturedPBREffect*>(effect.get());

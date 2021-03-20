@@ -14,20 +14,35 @@ public:
     std::shared_ptr<VertexShader> loadVertexShader(
         const std::filesystem::path& path,
         const char* entryPoint,
-        const VertexFormat& vertexFormat) const;
+        const VertexFormat& vertexFormat,
+        const std::vector<std::string>& defines,
+        const std::vector<std::string>& inputs,
+        const std::vector<std::string>& outputs) const;
 
     std::shared_ptr<FragmentShader> loadFragmentShader(
         const std::filesystem::path& path,
-        const char* entryPoint) const;
+        const char* entryPoint,
+        const std::vector<std::string>& defines,
+        const std::vector<std::string>& inputs) const;
 
 private:
     VkPipelineShaderStageCreateInfo loadInternal(
         const std::filesystem::path& path,
         VkShaderStageFlagBits stage,
-        const char* entryPoint) const;
+        const char* entryPoint,
+        const std::vector<std::string>& defines,
+        const std::vector<std::string>& inputs,
+        const std::vector<std::string>& outputs) const;
 
-    void insertIncludedFiles(const std::filesystem::path& currentShaderDirectoryPath, 
-                             std::string& inoutShaderString) const;
+    static void configure(
+        const std::vector<std::string>& defines,
+        const std::vector<std::string>& inputs,
+        const std::vector<std::string>& outputs,
+        std::string& inoutShaderString) ;
+
+    void insertIncludedFiles(
+        const std::filesystem::path& currentShaderDirectoryPath,
+        std::string& inoutShaderString) const;
 
     void insertIncludedFile(const std::filesystem::path& currentShaderDirectoryPath, 
         const std::filesystem::path& relativeIncludedFilePath,

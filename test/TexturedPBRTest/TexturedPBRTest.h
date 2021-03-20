@@ -8,8 +8,6 @@ namespace rfx {
 
 class TexturedPBRTest : public TestApplication
 {
-    static const inline VertexFormat VERTEX_FORMAT = TexturedPBREffect::VERTEX_FORMAT;
-
 protected:
     void initGraphics() override;
     void updateProjection() override;

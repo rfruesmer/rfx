@@ -22,6 +22,7 @@ Please use [vcpkg](https://github.com/microsoft/vcpkg/releases) for installation
 - [nlohmann-json](https://github.com/nlohmann/json)
 - [stb](https://github.com/nothings/stb)
 - [TinyGLTF](https://github.com/syoyo/tinygltf)
+- [fmt](https://github.com/fmtlib/fmt)
 
 For compressed, mipmapped and cubemap texture files the [.ktx](https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/) format is used.
 

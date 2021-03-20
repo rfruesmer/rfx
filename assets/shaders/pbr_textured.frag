@@ -1,6 +1,7 @@
 #version 450
+#rfx
 
-#define TEXCOORDSET_COUNT 5
+
 #define MAX_LIGHTS 4
 
 struct Light {
@@ -62,11 +63,6 @@ layout(set = 2, binding = 5)
 uniform sampler2D emissiveTexture;
 
 layout(location = 0) in vec3 inPosition;
-layout(location = 1) in vec2 inTexCoord[TEXCOORDSET_COUNT];
-layout(location = 6) in vec3 inTangentCamPos;
-layout(location = 7) in vec3 inTangentPosition;
-layout(location = 8) in vec3 inTangentLightPos[MAX_LIGHTS];
-layout(location = 12) in vec3 inNormal;
 
 layout(location = 0) out vec4 outColor;
 
@@ -121,13 +117,11 @@ vec3 BRDF(
         return vec3(0.0);
     }
 
-    vec3 L;
-    if (material.normalTexCoordSet > -1) {
-        L = inTangentLightPos[lightIndex] - inTangentPosition;
-    }
-    else {
-        L = scene.lights[lightIndex].position - inPosition;
-    }
+#ifdef HAS_NORMAL_MAP
+    vec3 L = inTangentLightPos[lightIndex] - inTangentPosition;
+#else
+    vec3 L = scene.lights[lightIndex].position - inPosition;
+#endif
 
     float distance = length(L);
     L = normalize(L);
@@ -167,28 +161,28 @@ vec4 sRGBtoLinear(vec4 srgb)
 void main()
 {
     vec4 baseColor = material.baseColorFactor;
-    if (material.baseColorTexCoordSet > -1) {
-//        baseColor *= sRGBtoLinear(texture(baseColorTexture, inTexCoord[material.baseColorTexCoordSet]));
-        baseColor *= texture(baseColorTexture, inTexCoord[material.baseColorTexCoordSet]);
-    }
+
+#ifdef HAS_BASE_COLOR_MAP
+//    baseColor *= sRGBtoLinear(texture(baseColorTexture, inTexCoord[material.baseColorTexCoordSet]));
+    baseColor *= texture(baseColorTexture, inTexCoord[material.baseColorTexCoordSet]);
+#endif
 
     float metallic = material.metallic;
     float roughness = material.roughness;
-    if (material.metallicRoughnessTexCoordSet > -1) {
-        vec4 mr = texture(metallicRoughnessTexture, inTexCoord[material.metallicRoughnessTexCoordSet]);
-        metallic *= mr.b;
-        roughness *= mr.g;
-    }
 
-    vec3 N, V;
-    if (material.normalTexCoordSet > -1) {
-        N = texture(normalTexture, inTexCoord[material.normalTexCoordSet]).xyz * 2.0 - 1.0;
-        V = normalize(inTangentCamPos - inTangentPosition);
-    }
-    else {
-        N = inNormal;
-        V = normalize(scene.camPos - inPosition);
-    }
+#ifdef HAS_METALLIC_ROUGHNESS_MAP
+    vec4 mr = texture(metallicRoughnessTexture, inTexCoord[material.metallicRoughnessTexCoordSet]);
+    metallic *= mr.b;
+    roughness *= mr.g;
+#endif
+
+#ifdef HAS_NORMAL_MAP
+    vec3 N = texture(normalTexture, inTexCoord[material.normalTexCoordSet]).xyz * 2.0 - 1.0;
+    vec3 V = normalize(inTangentCamPos - inTangentPosition);
+#elif HAS_NORMALS
+    vec3 N = inNormal;
+    vec3 V = normalize(scene.camPos - inPosition);
+#endif
     N = normalize(N);
 
     vec3 F0 = mix(vec3(0.04), baseColor.rgb, metallic);
@@ -204,18 +198,18 @@ void main()
 
     vec3 color = Lo;
 
-    if (material.occlusionTexCoordSet > -1) {
-        float ao = texture(occlusionTexture, inTexCoord[material.occlusionTexCoordSet]).r;
-        color = mix(color, color * ao, material.occlusionStrength);
-    }
+#ifdef HAS_OCCLUSION_MAP
+    float ao = texture(occlusionTexture, inTexCoord[material.occlusionTexCoordSet]).r;
+    color = mix(color, color * ao, material.occlusionStrength);
+#endif
 
-    if (material.emissiveTexCoordSet > -1) {
-        vec3 emissive = sRGBtoLinear(texture(emissiveTexture, inTexCoord[material.emissiveTexCoordSet])).rgb
-            * material.emissiveFactor.rgb
-            * vec3(255.0); // TODO: check linear/sRGB
+#ifdef HAS_EMISSIVE_MAP
+    vec3 emissive = sRGBtoLinear(texture(emissiveTexture, inTexCoord[material.emissiveTexCoordSet])).rgb
+        * material.emissiveFactor.rgb
+        * vec3(255.0); // TODO: check linear/sRGB
 
-        color += emissive;
-    }
+    color += emissive;
+#endif
 
     // HDR tonemapping
 //    color = color / (color + vec3(1.0));

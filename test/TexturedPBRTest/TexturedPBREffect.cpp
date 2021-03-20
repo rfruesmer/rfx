@@ -116,3 +116,10 @@ void TexturedPBREffect::setCameraPos(const vec3& pos)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+
+VertexFormat TexturedPBREffect::getVertexFormat() const
+{
+    return scene_->getMaterial(0)->getVertexFormat(); // TODO: support for multiple/different vertex formats
+}
+
+// ---------------------------------------------------------------------------------------------------------------------

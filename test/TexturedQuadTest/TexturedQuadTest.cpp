@@ -162,7 +162,7 @@ void TexturedQuadTest::buildScene()
     vertexShader = shaderLoader.loadVertexShader(
         vertexShaderPath,
         "main",
-        VertexFormat(VertexFormat::COORDINATES | VertexFormat::TEXCOORDS));
+        VertexFormat(VertexFormat::COORDINATES | VertexFormat::TEXCOORDS), std::unordered_set<std::string>());
     fragmentShader = shaderLoader.loadFragmentShader(fragmentShaderPath, "main");
 
     createVertexBuffer();

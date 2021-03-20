@@ -160,7 +160,7 @@ void ColoredQuadTest::buildScene()
     vertexShader = shaderLoader.loadVertexShader(
         vertexShaderPath,
         "main",
-        VertexFormat(VertexFormat::COORDINATES | VertexFormat::COLORS_4));
+        VertexFormat(VertexFormat::COORDINATES | VertexFormat::COLORS_4), std::unordered_set<std::string>());
     fragmentShader = shaderLoader.loadFragmentShader(fragmentShaderPath, "main");
 
     createVertexBuffer();

@@ -11,11 +11,13 @@ namespace rfx {
 class SceneLoader
 {
 public:
-    explicit SceneLoader(std::shared_ptr<GraphicsDevice> graphicsDevice);
+    explicit SceneLoader(
+        std::shared_ptr<GraphicsDevice> graphicsDevice,
+        std::string defaultVertexShaderId,
+        std::string defaultFragmentShaderId);
 
     const std::shared_ptr<Scene>& load(
-        const std::filesystem::path& scenePath,
-        const VertexFormat& vertexFormat);
+        const std::filesystem::path& scenePath);
 
 private:
     class SceneLoaderImpl;

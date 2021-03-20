@@ -46,6 +46,7 @@
 #include <SPIRV/GlslangToSpv.h>
 #include <ktx.h>
 #include <imgui.h>
+#include <fmt/core.h>
 
 #include "rfx.h"
 

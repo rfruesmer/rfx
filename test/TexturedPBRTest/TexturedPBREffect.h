@@ -12,15 +12,6 @@ class TexturedPBREffect : public TestEffect
 {
 public:
     static const int MAX_LIGHTS = 4;
-    static const int TEXCOORDSET_COUNT = 5;
-
-    static inline const VertexFormat VERTEX_FORMAT {
-              VertexFormat::COORDINATES
-            | VertexFormat::NORMALS
-            | VertexFormat::TEXCOORDS
-            | VertexFormat::TANGENTS,
-            TEXCOORDSET_COUNT
-    };
 
     TexturedPBREffect(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,
@@ -33,7 +24,7 @@ public:
 
     void updateSceneDataBuffer();
 
-    [[nodiscard]] VertexFormat getVertexFormat() const override { return VERTEX_FORMAT; };
+    [[nodiscard]] VertexFormat getVertexFormat() const override;
     [[nodiscard]] std::string getVertexShaderFileName() const override;
     [[nodiscard]] std::string getFragmentShaderFileName() const override;
 
