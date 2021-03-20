@@ -12,10 +12,6 @@ class TestApplication : public Application
 {
 protected:
     void loadShaders();
-    static std::vector<std::string> buildVertexShaderInputs(const VertexFormat& vertexFormat);
-    static std::vector<std::string> buildVertexShaderOutputs(const VertexFormat& vertexFormat);
-    static std::vector<std::string> buildFragmentShaderInputs(const VertexFormat& vertexFormat);
-    static std::vector<std::string> buildDefines(const std::shared_ptr<Material>& material, const VertexFormat& vertexFormat);
 
     void initGraphicsResources();
     void createUniformBuffers();

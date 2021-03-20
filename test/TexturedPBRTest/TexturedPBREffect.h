@@ -27,6 +27,12 @@ public:
     [[nodiscard]] VertexFormat getVertexFormat() const override;
     [[nodiscard]] std::string getVertexShaderFileName() const override;
     [[nodiscard]] std::string getFragmentShaderFileName() const override;
+    [[nodiscard]] std::vector<std::string> buildShaderDefines(
+        const std::shared_ptr<Material>& material,
+        const VertexFormat& vertexFormat) override;
+    [[nodiscard]] std::vector<std::string> buildVertexShaderInputs(const VertexFormat& vertexFormat) override;
+    [[nodiscard]] std::vector<std::string> buildVertexShaderOutputs(const VertexFormat& vertexFormat) override;
+    [[nodiscard]] std::vector<std::string> buildFragmentShaderInputs(const VertexFormat& vertexFormat) override;
 
 protected:
     void createMaterialDataBuffers() override;

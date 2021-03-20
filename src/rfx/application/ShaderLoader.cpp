@@ -116,7 +116,7 @@ void ShaderLoader::configure(
 
     inoutShaderString.replace(match.position(), match.length(), insertString);
 
-    RFX_LOG_INFO << inoutShaderString;
+//    RFX_LOG_INFO << inoutShaderString;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

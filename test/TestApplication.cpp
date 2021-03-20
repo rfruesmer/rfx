@@ -21,11 +21,10 @@ void TestApplication::loadShaders()
     const path fragmentShaderFilename = material->getFragmentShaderId() + ".frag";
     const VertexFormat& vertexFormat = material->getVertexFormat();
 
-    // TODO: move defines/inputs/outputs to effect class
-    const vector<string> defines = buildDefines(material, vertexFormat);
-    const vector<string> vertexShaderInputs = buildVertexShaderInputs(vertexFormat);
-    const vector<string> vertexShaderOutputs = buildVertexShaderOutputs(vertexFormat);
-    const vector<string> fragmentShaderInputs = buildFragmentShaderInputs(vertexFormat);
+    const vector<string> defines = effect->buildShaderDefines(material, vertexFormat);
+    const vector<string> vertexShaderInputs = effect->buildVertexShaderInputs(vertexFormat);
+    const vector<string> vertexShaderOutputs = effect->buildVertexShaderOutputs(vertexFormat);
+    const vector<string> fragmentShaderInputs = effect->buildFragmentShaderInputs(vertexFormat);
 
 
     const ShaderLoader shaderLoader(graphicsDevice);
@@ -44,140 +43,6 @@ void TestApplication::loadShaders()
         "main",
         defines,
         fragmentShaderInputs);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-vector<string> TestApplication::buildDefines(
-    const shared_ptr<Material>& material,
-    const VertexFormat& vertexFormat)
-{
-    vector<string> defines;
-
-    if (material->getBaseColorTexture() != nullptr) {
-        defines.emplace_back("HAS_BASE_COLOR_MAP 1");
-    }
-
-    if (material->getMetallicRoughnessTexture() != nullptr) {
-        defines.emplace_back("HAS_METALLIC_ROUGHNESS_MAP 1");
-    }
-
-    if (material->getNormalTexture() != nullptr) {
-        defines.emplace_back("HAS_NORMAL_MAP 1");
-    }
-
-    if (material->getOcclusionTexture() != nullptr) {
-        defines.emplace_back("HAS_OCCLUSION_MAP 1");
-    }
-
-    if (material->getEmissiveTexture() != nullptr) {
-        defines.emplace_back("HAS_EMISSIVE_MAP 1");
-    }
-
-    if (vertexFormat.containsNormals()) {
-        defines.emplace_back("HAS_NORMALS 1");
-    }
-
-    const uint32_t texCoordSetCount = vertexFormat.getTexCoordSetCount();
-    if (texCoordSetCount > 0) {
-        defines.push_back(fmt::format("TEXCOORDSET_COUNT {}", texCoordSetCount));
-    }
-
-    if (vertexFormat.containsTangents()) {
-        defines.emplace_back("HAS_TANGENTS 1");
-    }
-
-    return defines;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-vector<string> TestApplication::buildVertexShaderInputs(const VertexFormat& vertexFormat)
-{
-    vector<string> inputs;
-
-    // location=0 for coordinates (must be always present)
-    uint32_t location = 1;
-
-    if (vertexFormat.containsNormals()) {
-        inputs.push_back(fmt::format("layout(location = {}) in vec3 inNormal;", location));
-        location++;
-    }
-
-    uint32_t texCoordSetCount = vertexFormat.getTexCoordSetCount();
-    if (texCoordSetCount > 0) {
-        inputs.push_back(fmt::format("layout(location = {}) in vec2 inTexCoord[{}];", location, texCoordSetCount));
-        location += texCoordSetCount;
-    }
-
-    if (vertexFormat.containsTangents()) {
-        inputs.push_back(fmt::format("layout(location = {}) in vec4 inTangent;", location));
-        location++;
-    }
-
-    return inputs;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-vector<string> TestApplication::buildVertexShaderOutputs(const VertexFormat& vertexFormat)
-{
-    vector<string> outputs;
-
-    // location=0 for coordinates (must be always present)
-    uint32_t location = 1;
-
-    if (vertexFormat.containsNormals()) {
-        outputs.push_back(fmt::format("layout(location = {}) out vec3 outNormal;", location));
-        location++;
-    }
-
-    uint32_t texCoordSetCount = vertexFormat.getTexCoordSetCount();
-    if (texCoordSetCount > 0) {
-        outputs.push_back(fmt::format("layout(location = {}) out vec2 outTexCoord[{}];", location, texCoordSetCount));
-        location += texCoordSetCount;
-    }
-
-    if (vertexFormat.containsTangents()) {
-        outputs.push_back(fmt::format("layout(location = {}) out vec3 outTangentCamPos;", location++));
-        outputs.push_back(fmt::format("layout(location = {}) out vec3 outTangentPosition;", location++));
-        outputs.push_back(fmt::format("layout(location = {}) out vec3 outTangentLightPos[{}];", location, 4));  // TODO: MAX_LIGHTS
-        location += 4; // TODO: MAX_LIGHTS
-    }
-
-    return outputs;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-std::vector<std::string> TestApplication::buildFragmentShaderInputs(const VertexFormat& vertexFormat)
-{
-    vector<string> inputs;
-
-    // location=0 for coordinates (must be always present)
-    uint32_t location = 1;
-
-    if (vertexFormat.containsNormals()) {
-        inputs.push_back(fmt::format("layout(location = {}) in vec3 inNormal;", location));
-        location++;
-    }
-
-    uint32_t texCoordSetCount = vertexFormat.getTexCoordSetCount();
-    if (texCoordSetCount > 0) {
-        inputs.push_back(fmt::format("layout(location = {}) in vec2 inTexCoord[{}];", location, texCoordSetCount));
-        location += texCoordSetCount;
-    }
-
-    if (vertexFormat.containsTangents()) {
-        inputs.push_back(fmt::format("layout(location = {}) in vec3 inTangentCamPos;", location));
-        location++;
-        inputs.push_back(fmt::format("layout(location = {}) in vec3 inTangentPosition;", location));
-        location++;
-        inputs.push_back(fmt::format("layout(location = {}) in vec3 inTangentLightPos[{}];", location, 4)); // TODO: MAX_LIGHTS
-        location += 4; // TODO: MAX_LIGHTS
-    }
-
-    return inputs;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

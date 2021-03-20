@@ -16,7 +16,7 @@
 #include <algorithm>
 #include <ranges>
 #include <numbers>
-
+#include <numeric>
 
 //#ifdef _WINDOWS
 //#define WIN32_LEAN_AND_MEAN

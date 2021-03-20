@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rfx/scene/Material.h"
 #include "rfx/graphics/VertexFormat.h"
 
 namespace rfx {
@@ -19,6 +20,12 @@ public:
     [[nodiscard]] virtual VertexFormat getVertexFormat() const = 0;
     [[nodiscard]] virtual std::string getVertexShaderFileName() const = 0;
     [[nodiscard]] virtual std::string getFragmentShaderFileName() const = 0;
+
+    [[nodiscard]] virtual std::vector<std::string> buildShaderDefines(const std::shared_ptr<Material>& material, const VertexFormat& vertexFormat);
+    [[nodiscard]] virtual std::vector<std::string> buildVertexShaderInputs(const VertexFormat& vertexFormat);
+    [[nodiscard]] virtual std::vector<std::string> buildVertexShaderOutputs(const VertexFormat& vertexFormat);
+    [[nodiscard]] virtual std::vector<std::string> buildFragmentShaderInputs(const VertexFormat& vertexFormat);
+
 
     [[nodiscard]] virtual std::vector<VkDescriptorSetLayout> getDescriptorSetLayouts() = 0;
     [[nodiscard]] virtual VkDescriptorSet getSceneDescriptorSet() const = 0;
