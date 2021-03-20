@@ -16,20 +16,6 @@ NormalMapEffect::NormalMapEffect(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-string NormalMapEffect::getVertexShaderFileName() const
-{
-    return "normalmap.vert";
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-string NormalMapEffect::getFragmentShaderFileName() const
-{
-    return "normalmap.frag";
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void NormalMapEffect::setProjectionMatrix(const glm::mat4& projection)
 {
     sceneData_.projMatrix = projection;

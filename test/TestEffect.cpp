@@ -439,7 +439,14 @@ VkWriteDescriptorSet TestEffect::buildWriteDescriptorSet(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<VkDescriptorSetLayout> TestEffect::getDescriptorSetLayouts()
+VertexFormat TestEffect::getVertexFormat() const
+{
+    return scene_->getMaterial(0)->getVertexFormat(); // TODO: support for multiple/different vertex formats
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+vector<VkDescriptorSetLayout> TestEffect::getDescriptorSetLayouts() const
 {
     return descriptorSetLayouts_;
 }

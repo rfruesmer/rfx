@@ -23,7 +23,8 @@ public:
 
     void cleanupSwapChain() override;
 
-    [[nodiscard]] std::vector<VkDescriptorSetLayout> getDescriptorSetLayouts() override;
+    [[nodiscard]] VertexFormat getVertexFormat() const override;
+    [[nodiscard]] std::vector<VkDescriptorSetLayout> getDescriptorSetLayouts() const override;
     [[nodiscard]] VkDescriptorSet getSceneDescriptorSet() const override;
     [[nodiscard]] const std::vector<VkDescriptorSet>& getMeshDescriptorSets() const override;
     [[nodiscard]] const std::vector<VkDescriptorSet>& getMaterialDescriptorSets() const override;

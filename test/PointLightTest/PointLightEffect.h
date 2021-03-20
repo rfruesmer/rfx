@@ -10,9 +10,8 @@ namespace rfx {
 class PointLightEffect : public TestEffect
 {
 public:
-    static inline const VertexFormat VERTEX_FORMAT {
-        VertexFormat::COORDINATES | VertexFormat::NORMALS
-    };
+    static inline const std::string VERTEX_SHADER_ID = "pointlight";
+    static inline const std::string FRAGMENT_SHADER_ID = "pointlight";
 
     PointLightEffect(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,
@@ -24,10 +23,6 @@ public:
 
     [[nodiscard]] size_t getSceneDataSize() const override;
     void updateSceneDataBuffer();
-
-    [[nodiscard]] VertexFormat getVertexFormat() const override { return VERTEX_FORMAT; };
-    [[nodiscard]] std::string getVertexShaderFileName() const override;
-    [[nodiscard]] std::string getFragmentShaderFileName() const override;
 
 private:
     struct SceneData {

@@ -16,20 +16,6 @@ TexturedPBREffect::TexturedPBREffect(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-string TexturedPBREffect::getVertexShaderFileName() const
-{
-    return "pbr_textured.vert";
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-string TexturedPBREffect::getFragmentShaderFileName() const
-{
-    return "pbr_textured.frag";
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void TexturedPBREffect::setProjectionMatrix(const mat4& projection)
 {
     sceneData_.projMatrix = projection;
@@ -113,13 +99,6 @@ void TexturedPBREffect::updateSceneDataBuffer()
 void TexturedPBREffect::setCameraPos(const vec3& pos)
 {
     sceneData_.camPos = pos;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-VertexFormat TexturedPBREffect::getVertexFormat() const
-{
-    return scene_->getMaterial(0)->getVertexFormat(); // TODO: support for multiple/different vertex formats
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

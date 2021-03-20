@@ -16,20 +16,6 @@ SpotLightEffect::SpotLightEffect(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-string SpotLightEffect::getVertexShaderFileName() const
-{
-    return "spotlight.vert";
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-string SpotLightEffect::getFragmentShaderFileName() const
-{
-    return "spotlight.frag";
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void SpotLightEffect::setProjectionMatrix(const glm::mat4& projection)
 {
     sceneData_.projMatrix = projection;

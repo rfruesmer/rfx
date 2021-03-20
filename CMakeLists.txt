@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.17)
 project(rfx)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+set(USE_PRECOMPILED_HEADERS ON)
 
 file(GLOB_RECURSE BASE_SOURCE
         "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
@@ -11,10 +13,6 @@ file(GLOB_RECURSE BASE_SOURCE
 file(GLOB_RECURSE BASE_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h")
-
-#target_precompile_headers(${PROJECT_NAME} PRIVATE "src/rfx/pch.h")
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 include_directories(
         "${CMAKE_CURRENT_SOURCE_DIR}/src"

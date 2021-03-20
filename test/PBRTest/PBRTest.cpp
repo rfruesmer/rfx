@@ -44,8 +44,11 @@ void PBRTest::loadScene()
 {
     const path scenePath = getAssetsDirectory() / "models/teapot/teapot.gltf";
 
-    SceneLoader sceneLoader(graphicsDevice);
-    scene = sceneLoader.load(scenePath, VERTEX_FORMAT);
+    SceneLoader sceneLoader(
+        graphicsDevice,
+        PBREffect::VERTEX_SHADER_ID,
+        PBREffect::FRAGMENT_SHADER_ID);
+    scene = sceneLoader.load(scenePath);
 //    for (const auto& material : scene->getMaterials()) {
 //        material->setSpecularFactor({1.0f, 0.0f, 0.0f});
 //        material->setShininess(128.0f);

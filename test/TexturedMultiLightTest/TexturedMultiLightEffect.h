@@ -12,10 +12,9 @@ class TexturedMultiLightEffect : public TestEffect
 {
 public:
     static const int MAX_LIGHTS = 4;
+    static inline const std::string VERTEX_SHADER_ID = "textured_multilight";
+    static inline const std::string FRAGMENT_SHADER_ID = "textured_multilight";
 
-    static inline const VertexFormat VERTEX_FORMAT {
-        VertexFormat::COORDINATES | VertexFormat::NORMALS | VertexFormat::TEXCOORDS
-    };
 
     TexturedMultiLightEffect(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,
@@ -28,10 +27,6 @@ public:
 
     [[nodiscard]] size_t getSceneDataSize() const override;
     void updateSceneDataBuffer();
-
-    [[nodiscard]] VertexFormat getVertexFormat() const override { return VERTEX_FORMAT; };
-    [[nodiscard]] std::string getVertexShaderFileName() const override;
-    [[nodiscard]] std::string getFragmentShaderFileName() const override;
 
 private:
     struct LightData {

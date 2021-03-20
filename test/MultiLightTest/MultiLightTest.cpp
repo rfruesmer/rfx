@@ -52,8 +52,11 @@ void MultiLightTest::loadScene()
     const path scenePath = getAssetsDirectory() / "models/plane/plane.gltf";
 
 
-    SceneLoader sceneLoader(graphicsDevice);
-    scene = sceneLoader.load(scenePath, VERTEX_FORMAT);
+    SceneLoader sceneLoader(
+        graphicsDevice,
+        MultiLightEffect::VERTEX_SHADER_ID,
+        MultiLightEffect::FRAGMENT_SHADER_ID);
+    scene = sceneLoader.load(scenePath);
 //    for (const auto& material : scene->getMaterials()) {
 //        material->setSpecularFactor({1.0f, 0.0f, 0.0f});
 //        material->setShininess(128.0f);

@@ -16,20 +16,6 @@ MultiLightEffect::MultiLightEffect(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-string MultiLightEffect::getVertexShaderFileName() const
-{
-    return "multilight.vert";
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-string MultiLightEffect::getFragmentShaderFileName() const
-{
-    return "multilight.frag";
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void MultiLightEffect::setProjectionMatrix(const glm::mat4& projection)
 {
     sceneData_.projMatrix = projection;

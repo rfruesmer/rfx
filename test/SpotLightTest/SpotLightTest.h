@@ -8,8 +8,6 @@ namespace rfx {
 
 class SpotLightTest : public TestApplication
 {
-    static const inline VertexFormat VERTEX_FORMAT = SpotLightEffect::VERTEX_FORMAT;
-
 public:
     SpotLightTest();
 

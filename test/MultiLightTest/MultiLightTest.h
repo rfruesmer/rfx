@@ -8,8 +8,6 @@ namespace rfx {
 
 class MultiLightTest : public TestApplication
 {
-    static const inline VertexFormat VERTEX_FORMAT = MultiLightEffect::VERTEX_FORMAT;
-
 public:
     MultiLightTest();
 

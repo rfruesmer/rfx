@@ -12,6 +12,8 @@ class TexturedPBREffect : public TestEffect
 {
 public:
     static const int MAX_LIGHTS = 4;
+    static inline const std::string VERTEX_SHADER_ID = "pbr_textured";
+    static inline const std::string FRAGMENT_SHADER_ID = "pbr_textured";
 
     TexturedPBREffect(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,
@@ -24,9 +26,6 @@ public:
 
     void updateSceneDataBuffer();
 
-    [[nodiscard]] VertexFormat getVertexFormat() const override;
-    [[nodiscard]] std::string getVertexShaderFileName() const override;
-    [[nodiscard]] std::string getFragmentShaderFileName() const override;
     [[nodiscard]] std::vector<std::string> buildShaderDefines(
         const std::shared_ptr<Material>& material,
         const VertexFormat& vertexFormat) override;

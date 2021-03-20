@@ -16,20 +16,6 @@ PointLightEffect::PointLightEffect(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-string PointLightEffect::getVertexShaderFileName() const
-{
-    return "pointlight.vert";
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-string PointLightEffect::getFragmentShaderFileName() const
-{
-    return "pointlight.frag";
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void PointLightEffect::setProjectionMatrix(const glm::mat4& projection)
 {
     sceneData_.projMatrix = projection;

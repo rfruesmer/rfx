@@ -8,9 +8,6 @@ namespace rfx {
 
 class TexturedMultiLightTest : public TestApplication
 {
-    static const inline VertexFormat VERTEX_FORMAT = TexturedMultiLightEffect::VERTEX_FORMAT;
-
-
 protected:
     void initGraphics() override;
     void updateProjection() override;

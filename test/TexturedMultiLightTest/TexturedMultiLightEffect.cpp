@@ -16,20 +16,6 @@ TexturedMultiLightEffect::TexturedMultiLightEffect(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-string TexturedMultiLightEffect::getVertexShaderFileName() const
-{
-    return "textured_multilight.vert";
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-string TexturedMultiLightEffect::getFragmentShaderFileName() const
-{
-    return "textured_multilight.frag";
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void TexturedMultiLightEffect::setProjectionMatrix(const glm::mat4& projection)
 {
     sceneData_.projMatrix = projection;

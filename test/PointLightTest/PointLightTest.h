@@ -8,8 +8,6 @@ namespace rfx {
 
 class PointLightTest : public TestApplication
 {
-    static const inline VertexFormat VERTEX_FORMAT = PointLightEffect::VERTEX_FORMAT;
-
 public:
     PointLightTest();
 

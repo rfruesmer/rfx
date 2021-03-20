@@ -8,8 +8,6 @@ namespace rfx {
 
 class NormalMapTest : public TestApplication
 {
-    static const inline VertexFormat VERTEX_FORMAT = NormalMapEffect::VERTEX_FORMAT;
-
 public:
     NormalMapTest();
 

@@ -51,8 +51,11 @@ void SpotLightTest::loadScene()
 {
     const path scenePath = getAssetsDirectory() / "models/plane/plane_with_spotlight.gltf";
 
-    SceneLoader sceneLoader(graphicsDevice);
-    scene = sceneLoader.load(scenePath, VERTEX_FORMAT);
+    SceneLoader sceneLoader(
+        graphicsDevice,
+        SpotLightEffect::VERTEX_SHADER_ID,
+        SpotLightEffect::FRAGMENT_SHADER_ID);
+    scene = sceneLoader.load(scenePath);
 //    for (const auto& material : scene->getMaterials()) {
 //        material->setSpecularFactor({1.0f, 0.0f, 0.0f});
 //    }

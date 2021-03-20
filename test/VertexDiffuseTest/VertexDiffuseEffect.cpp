@@ -17,20 +17,6 @@ VertexDiffuseEffect::VertexDiffuseEffect(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-string VertexDiffuseEffect::getVertexShaderFileName() const
-{
-    return "vertex_diffuse.vert";
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-string VertexDiffuseEffect::getFragmentShaderFileName() const
-{
-    return "vertex_diffuse.frag";
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void VertexDiffuseEffect::setProjectionMatrix(const glm::mat4& projection)
 {
     sceneData_.projMatrix = projection;

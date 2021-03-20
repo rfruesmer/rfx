@@ -9,17 +9,12 @@ namespace rfx {
 class VertexDiffuseEffect : public TestEffect
 {
 public:
-    static inline const VertexFormat VERTEX_FORMAT {
-        VertexFormat::COORDINATES | VertexFormat::NORMALS
-    };
+    static const inline std::string VERTEX_SHADER_ID = "vertex_diffuse";
+    static const inline std::string FRAGMENT_SHADER_ID = "vertex_diffuse";
 
     VertexDiffuseEffect(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,
         const std::shared_ptr<Scene>& scene);
-
-    [[nodiscard]] VertexFormat getVertexFormat() const override { return VERTEX_FORMAT; };
-    [[nodiscard]] std::string getVertexShaderFileName() const override;
-    [[nodiscard]] std::string getFragmentShaderFileName() const override;
 
     void setProjectionMatrix(const glm::mat4& projection);
     void setViewMatrix(const glm::mat4& viewMatrix);

@@ -12,11 +12,9 @@ class PBREffect : public TestEffect
 {
 public:
     static const int MAX_LIGHTS = 4;
+    static inline const std::string VERTEX_SHADER_ID = "pbr";
+    static inline const std::string FRAGMENT_SHADER_ID = "pbr";
 
-    static inline const VertexFormat VERTEX_FORMAT {
-        VertexFormat::COORDINATES
-            | VertexFormat::NORMALS
-    };
 
     PBREffect(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,
@@ -39,12 +37,6 @@ public:
     [[nodiscard]] float getAmbientOcclusion();
 
     void updateSceneDataBuffer();
-
-    [[nodiscard]] VertexFormat getVertexFormat() const override { return VERTEX_FORMAT; };
-    [[nodiscard]] std::string getVertexShaderFileName() const override;
-    [[nodiscard]] std::string getFragmentShaderFileName() const override;
-
-
     void updateMaterialDataBuffers();
 
 protected:

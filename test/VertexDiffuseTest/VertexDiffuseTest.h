@@ -8,8 +8,6 @@ namespace rfx {
 
 class VertexDiffuseTest : public TestApplication
 {
-    static const inline VertexFormat VERTEX_FORMAT = VertexDiffuseEffect::VERTEX_FORMAT;
-
 public:
     VertexDiffuseTest();
 

@@ -16,20 +16,6 @@ PBREffect::PBREffect(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-string PBREffect::getVertexShaderFileName() const
-{
-    return "pbr.vert";
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-string PBREffect::getFragmentShaderFileName() const
-{
-    return "pbr.frag";
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void PBREffect::setProjectionMatrix(const mat4& projection)
 {
     sceneData_.projMatrix = projection;

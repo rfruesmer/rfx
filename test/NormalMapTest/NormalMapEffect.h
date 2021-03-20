@@ -11,13 +11,9 @@ class NormalMapEffect : public TestEffect
 {
 public:
     static const int MAX_LIGHTS = 4;
+    static inline const std::string VERTEX_SHADER_ID = "normalmap";
+    static inline const std::string FRAGMENT_SHADER_ID = "normalmap";
 
-    static inline const VertexFormat VERTEX_FORMAT {
-        VertexFormat::COORDINATES
-            | VertexFormat::NORMALS
-            | VertexFormat::TEXCOORDS
-            | VertexFormat::TANGENTS
-    };
 
     NormalMapEffect(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,
@@ -31,10 +27,6 @@ public:
 
     [[nodiscard]] size_t getSceneDataSize() const override;
     void updateSceneDataBuffer();
-
-    [[nodiscard]] VertexFormat getVertexFormat() const override { return VERTEX_FORMAT; };
-    [[nodiscard]] std::string getVertexShaderFileName() const override;
-    [[nodiscard]] std::string getFragmentShaderFileName() const override;
 
 private:
     struct LightData {

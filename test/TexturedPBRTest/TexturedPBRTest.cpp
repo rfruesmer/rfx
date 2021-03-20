@@ -48,13 +48,10 @@ void TexturedPBRTest::loadScene()
 //    const path scenePath = getAssetsDirectory() / "models/plane/plane_pbr.gltf";
 //    const path scenePath = getAssetsDirectory() / "models/cubes/ice_low.gltf";
 
-    const string defaultVertexShaderId = "pbr_textured";
-    const string defaultFragmentShaderId = "pbr_textured";
-
     SceneLoader sceneLoader(
         graphicsDevice,
-        defaultVertexShaderId,
-        defaultFragmentShaderId);
+        TexturedPBREffect::VERTEX_SHADER_ID,
+        TexturedPBREffect::FRAGMENT_SHADER_ID);
     scene = sceneLoader.load(scenePath);
 //    for (const auto& material : scene->getMaterials()) {
 //        material->setSpecularFactor({1.0f, 0.0f, 0.0f});

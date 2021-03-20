@@ -10,6 +10,9 @@ function(buildTest TEST_NAME)
         ${TEST_FOLDER}/**/*.cpp
         ${TEST_FOLDER}/**/*.h)
     add_executable(${TEST_NAME} ${BASE_SOURCE} ${SOURCE})
+    if("${USE_PRECOMPILED_HEADERS}" STREQUAL "ON")
+        target_precompile_headers(${TEST_NAME} PRIVATE "../src/rfx/pch.h")
+    endif()
 endfunction()
 
 function(buildTests)

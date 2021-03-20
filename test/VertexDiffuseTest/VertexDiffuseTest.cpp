@@ -51,14 +51,14 @@ void VertexDiffuseTest::initGraphics()
 void VertexDiffuseTest::loadScene()
 {
     const path scenePath = getAssetsDirectory() / "models/cubes/cubes.gltf";
-    const string defaultVertexShaderId = "vertex_diffuse";
-    const string defaultFragmentShaderId = "vertex_diffuse";
 
     SceneLoader sceneLoader(
         graphicsDevice,
-        defaultVertexShaderId,
-        defaultFragmentShaderId);
+        VertexDiffuseEffect::VERTEX_SHADER_ID,
+        VertexDiffuseEffect::FRAGMENT_SHADER_ID);
+
     scene = sceneLoader.load(scenePath);
+
     camera.setPosition({0.0f, 1.0f, 2.0f});
     light.setPosition({5.0f, 5.0f, 2.0f});
     light.setColor({1.0f, 1.0f, 1.0f});

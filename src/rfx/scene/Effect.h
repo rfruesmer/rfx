@@ -18,8 +18,6 @@ public:
     virtual void cleanupSwapChain() = 0;
 
     [[nodiscard]] virtual VertexFormat getVertexFormat() const = 0;
-    [[nodiscard]] virtual std::string getVertexShaderFileName() const = 0;
-    [[nodiscard]] virtual std::string getFragmentShaderFileName() const = 0;
 
     [[nodiscard]] virtual std::vector<std::string> buildShaderDefines(const std::shared_ptr<Material>& material, const VertexFormat& vertexFormat);
     [[nodiscard]] virtual std::vector<std::string> buildVertexShaderInputs(const VertexFormat& vertexFormat);
@@ -27,7 +25,7 @@ public:
     [[nodiscard]] virtual std::vector<std::string> buildFragmentShaderInputs(const VertexFormat& vertexFormat);
 
 
-    [[nodiscard]] virtual std::vector<VkDescriptorSetLayout> getDescriptorSetLayouts() = 0;
+    [[nodiscard]] virtual std::vector<VkDescriptorSetLayout> getDescriptorSetLayouts() const = 0;
     [[nodiscard]] virtual VkDescriptorSet getSceneDescriptorSet() const = 0;
     [[nodiscard]] virtual const std::vector<VkDescriptorSet>& getMeshDescriptorSets() const = 0;
     [[nodiscard]] virtual const std::vector<VkDescriptorSet>& getMaterialDescriptorSets() const = 0;

@@ -8,8 +8,6 @@ namespace rfx {
 
 class PBRTest : public TestApplication
 {
-    static const inline VertexFormat VERTEX_FORMAT = PBREffect::VERTEX_FORMAT;
-
 protected:
     void initGraphics() override;
     void updateProjection() override;

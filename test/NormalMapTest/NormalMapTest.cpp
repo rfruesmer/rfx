@@ -52,8 +52,11 @@ void NormalMapTest::loadScene()
     const path scenePath = getAssetsDirectory() / "models/plane/brickwall.gltf";
 
 
-    SceneLoader sceneLoader(graphicsDevice);
-    scene = sceneLoader.load(scenePath, VERTEX_FORMAT);
+    SceneLoader sceneLoader(
+        graphicsDevice,
+        NormalMapEffect::VERTEX_SHADER_ID,
+        NormalMapEffect::FRAGMENT_SHADER_ID);
+    scene = sceneLoader.load(scenePath);
 //    for (const auto& material : scene->getMaterials()) {
 //        material->setSpecularFactor({1.0f, 1.0f, 1.0f});
 //        material->setShininess(100.0f);
