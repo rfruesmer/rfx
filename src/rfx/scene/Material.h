@@ -1,9 +1,9 @@
 #pragma once
 
-#include <rfx/graphics/VertexFormat.h>
+#include "rfx/graphics/GraphicsDevice.h"
+#include "rfx/graphics/VertexFormat.h"
 #include "rfx/graphics/Texture2D.h"
-#include <rfx/graphics/Buffer.h>
-#include <rfx/graphics/Buffer.h>
+#include "rfx/graphics/Buffer.h"
 
 
 namespace rfx {
@@ -15,7 +15,9 @@ public:
         std::string id,
         const VertexFormat& vertexFormat,
         std::string vertexShaderId,
-        std::string fragmentShaderId);
+        std::string fragmentShaderId,
+        std::shared_ptr<GraphicsDevice> graphicsDevice);
+    ~Material();
 
     [[nodiscard]] const VertexFormat& getVertexFormat() const;
     [[nodiscard]] const std::string& getVertexShaderId() const;     // TODO: consider replacing with effect id
@@ -67,7 +69,23 @@ public:
     void setUniformBuffer(const std::shared_ptr<Buffer>& uniformBuffer);
     [[nodiscard]] const std::shared_ptr<Buffer>& getUniformBuffer() const;
 
+    void createDescriptorSetLayout();
+    void destroyDescriptorSetLayout();
+    [[nodiscard]] VkDescriptorSetLayout getDescriptorSetLayout() const;
+
+    void createDescriptorSet(VkDescriptorPool descriptorPool);
+    [[nodiscard]] VkDescriptorSet getDescriptorSet() const;
+
 private:
+    static VkWriteDescriptorSet buildWriteDescriptorSet(
+        VkDescriptorSet descriptorSet,
+        uint32_t binding,
+        const VkDescriptorImageInfo* descriptorImageInfo);
+    static VkWriteDescriptorSet buildWriteDescriptorSet(
+        VkDescriptorSet descriptorSet,
+        uint32_t binding,
+        const VkDescriptorBufferInfo* descriptorBufferInfo);
+
     std::string id_;
 
     const VertexFormat vertexFormat_;
@@ -97,6 +115,7 @@ private:
     glm::vec3 specularFactor_ { 0.0f };
     float shininess_ = 0.0f; // 0-128
 
+    std::shared_ptr<GraphicsDevice> graphicsDevice_;
     VkDescriptorSetLayout descriptorSetLayout_ = VK_NULL_HANDLE;
     VkDescriptorSet descriptorSet_ = VK_NULL_HANDLE;
     std::shared_ptr<Buffer> uniformBuffer_; // TODO: consider refactoring to push constants

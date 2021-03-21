@@ -29,7 +29,6 @@ public:
     [[nodiscard]] virtual std::vector<VkDescriptorSetLayout> getDescriptorSetLayouts() const = 0;
     [[nodiscard]] virtual VkDescriptorSet getSceneDescriptorSet() const = 0;
     [[nodiscard]] virtual const std::vector<VkDescriptorSet>& getMeshDescriptorSets() const = 0;
-    [[nodiscard]] virtual const std::vector<VkDescriptorSet>& getMaterialDescriptorSets() const = 0;
 
 protected:
     explicit Effect(std::shared_ptr<GraphicsDevice> graphicsDevice);

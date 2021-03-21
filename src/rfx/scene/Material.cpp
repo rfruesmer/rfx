@@ -12,11 +12,20 @@ Material::Material(
     string id,
     const VertexFormat& vertexFormat,
     string vertexShaderId,
-    string fragmentShaderId)
+    string fragmentShaderId,
+    shared_ptr<GraphicsDevice> graphicsDevice)
         : id_(move(id)),
           vertexFormat_(vertexFormat),
           vertexShaderId_(move(vertexShaderId)),
-          fragmentShaderId_(move(fragmentShaderId)) {}
+          fragmentShaderId_(move(fragmentShaderId)),
+          graphicsDevice_(move(graphicsDevice)) {}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+Material::~Material()
+{
+    destroyDescriptorSetLayout();
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -274,4 +283,211 @@ const shared_ptr<Buffer>& Material::getUniformBuffer() const
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+
+void Material::createDescriptorSetLayout()
+{
+    vector<VkDescriptorSetLayoutBinding> materialDescSetLayoutBindings;
+    uint32_t binding = 0;
+
+
+    materialDescSetLayoutBindings.push_back({
+        .binding = binding++,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = 1,
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT
+    });
+
+    if (vertexFormat_.containsTexCoords()) {
+        materialDescSetLayoutBindings.push_back({
+            .binding = binding++,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+        });
+    }
+
+    if (vertexFormat_.containsTangents()) {
+        materialDescSetLayoutBindings.push_back({
+            .binding = binding++,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+        });
+    }
+
+    if (metallicRoughnessTexture_ != nullptr) {
+        materialDescSetLayoutBindings.push_back({
+            .binding = binding++,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+        });
+    }
+
+    if (occlusionTexture_ != nullptr) {
+        materialDescSetLayoutBindings.push_back({
+            .binding = binding++,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+        });
+    }
+
+    if (emissiveTexture_ != nullptr) {
+        materialDescSetLayoutBindings.push_back({
+            .binding = binding++,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+        });
+    }
+
+    const VkDescriptorSetLayoutCreateInfo materialDescSetLayoutCreateInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .bindingCount = static_cast<uint32_t>(materialDescSetLayoutBindings.size()),
+        .pBindings = materialDescSetLayoutBindings.data()
+    };
+
+    ThrowIfFailed(vkCreateDescriptorSetLayout(
+        graphicsDevice_->getLogicalDevice(),
+        &materialDescSetLayoutCreateInfo,
+        nullptr,
+        &descriptorSetLayout_));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Material::destroyDescriptorSetLayout()
+{
+    if (descriptorSetLayout_ != VK_NULL_HANDLE) {
+        vkDestroyDescriptorSetLayout(graphicsDevice_->getLogicalDevice(), descriptorSetLayout_, nullptr);
+        descriptorSetLayout_ = VK_NULL_HANDLE;
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Material::createDescriptorSet(VkDescriptorPool descriptorPool)
+{
+    const VkDescriptorSetAllocateInfo allocInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool = descriptorPool,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &descriptorSetLayout_
+    };
+
+    vector<VkWriteDescriptorSet> writeDescriptorSets;
+    uint32_t binding = 0;
+
+    ThrowIfFailed(vkAllocateDescriptorSets(
+        graphicsDevice_->getLogicalDevice(),
+        &allocInfo,
+        &descriptorSet_));
+
+    writeDescriptorSets.push_back(
+        buildWriteDescriptorSet(
+            descriptorSet_,
+            binding++,
+            &uniformBuffer_->getDescriptorBufferInfo()));
+
+    if (baseColorTexture_ != nullptr) {
+        writeDescriptorSets.push_back(
+            buildWriteDescriptorSet(
+                descriptorSet_,
+                binding++,
+                &baseColorTexture_->getDescriptorImageInfo()));
+    }
+
+    if (normalTexture_ != nullptr) {
+        writeDescriptorSets.push_back(
+            buildWriteDescriptorSet(
+                descriptorSet_,
+                binding++,
+                &normalTexture_->getDescriptorImageInfo()));
+    }
+
+    if (metallicRoughnessTexture_ != nullptr) {
+        writeDescriptorSets.push_back(
+            buildWriteDescriptorSet(
+                descriptorSet_,
+                binding++,
+                &metallicRoughnessTexture_->getDescriptorImageInfo()));
+    }
+
+    if (occlusionTexture_ != nullptr) {
+        writeDescriptorSets.push_back(
+            buildWriteDescriptorSet(
+                descriptorSet_,
+                binding++,
+                &occlusionTexture_->getDescriptorImageInfo()));
+    }
+
+    if (emissiveTexture_ != nullptr) {
+        writeDescriptorSets.push_back(
+            buildWriteDescriptorSet(
+                descriptorSet_,
+                binding++,
+                &emissiveTexture_->getDescriptorImageInfo()));
+    }
+
+    vkUpdateDescriptorSets(
+        graphicsDevice_->getLogicalDevice(),
+        writeDescriptorSets.size(),
+        writeDescriptorSets.data(),
+        0,
+        nullptr);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkWriteDescriptorSet Material::buildWriteDescriptorSet(
+    VkDescriptorSet descriptorSet,
+    uint32_t binding,
+    const VkDescriptorImageInfo* descriptorImageInfo)
+{
+    return {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = descriptorSet,
+        .dstBinding = binding,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .pImageInfo = descriptorImageInfo
+    };
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkWriteDescriptorSet Material::buildWriteDescriptorSet(
+    VkDescriptorSet descriptorSet,
+    uint32_t binding,
+    const VkDescriptorBufferInfo* descriptorBufferInfo)
+{
+    return {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = descriptorSet,
+        .dstBinding = binding,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .pBufferInfo = descriptorBufferInfo
+    };
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkDescriptorSetLayout Material::getDescriptorSetLayout() const
+{
+    return descriptorSetLayout_;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkDescriptorSet Material::getDescriptorSet() const
+{
+    return descriptorSet_;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 

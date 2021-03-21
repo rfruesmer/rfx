@@ -117,6 +117,10 @@ void PointLightTest::createDescriptorPools()
 void PointLightTest::createDescriptorSetLayouts()
 {
     effect->createDescriptorSetLayouts();
+
+    for (const auto& material : scene->getMaterials()) {
+        material->createDescriptorSetLayout();
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -124,13 +128,20 @@ void PointLightTest::createDescriptorSetLayouts()
 void PointLightTest::createDescriptorSets()
 {
     effect->createDescriptorSets();
+
+    for (const auto& material : scene->getMaterials()) {
+        material->createDescriptorSet(effect->getDescriptorPool());
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void PointLightTest::createPipelineLayouts()
 {
-    TestApplication::createDefaultPipelineLayout(*effect);
+    vector<VkDescriptorSetLayout> descriptorSetLayouts = effect->getDescriptorSetLayouts();
+    descriptorSetLayouts.push_back(scene->getMaterial(0)->getDescriptorSetLayout());
+
+    TestApplication::createDefaultPipelineLayout(descriptorSetLayouts);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -215,7 +226,7 @@ void PointLightTest::createCommandBuffers()
 void PointLightTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
 {
     const vector<VkDescriptorSet>& meshDescSets = effect->getMeshDescriptorSets();
-    const vector<VkDescriptorSet>& materialDescSets = effect->getMaterialDescriptorSets();
+    const vector<shared_ptr<Material>>& materials = scene->getMaterials();
     
     for (size_t i = 0, count = scene->getMeshes().size(); i < count; ++i) {
 
@@ -236,7 +247,7 @@ void PointLightTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
                 VK_PIPELINE_BIND_POINT_GRAPHICS,
                 pipelineLayout,
                 2,
-                materialDescSets[subMesh.materialIndex]);
+                materials[subMesh.materialIndex]->getDescriptorSet());
 
             commandBuffer->drawIndexed(subMesh.indexCount, subMesh.firstIndex);
         }
@@ -276,6 +287,12 @@ void PointLightTest::cleanupSwapChain()
 {
     if (effect) {
         effect->cleanupSwapChain();
+    }
+
+    if (scene) {
+        for (const auto& material : scene->getMaterials()) {
+            material->destroyDescriptorSetLayout();
+        }
     }
 
     TestApplication::cleanupSwapChain();

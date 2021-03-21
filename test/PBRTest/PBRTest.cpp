@@ -102,6 +102,10 @@ void PBRTest::createDescriptorPools()
 void PBRTest::createDescriptorSetLayouts()
 {
     effect_->createDescriptorSetLayouts();
+
+    for (const auto& material : scene_->getMaterials()) {
+        material->createDescriptorSetLayout();
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -109,13 +113,20 @@ void PBRTest::createDescriptorSetLayouts()
 void PBRTest::createDescriptorSets()
 {
     effect_->createDescriptorSets();
+
+    for (const auto& material : scene_->getMaterials()) {
+        material->createDescriptorSet(effect_->getDescriptorPool());
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void PBRTest::createPipelineLayouts()
 {
-    TestApplication::createDefaultPipelineLayout(*effect_);
+    vector<VkDescriptorSetLayout> descriptorSetLayouts = effect_->getDescriptorSetLayouts();
+    descriptorSetLayouts.push_back(scene_->getMaterial(0)->getDescriptorSetLayout());
+
+    TestApplication::createDefaultPipelineLayout(descriptorSetLayouts);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -205,7 +216,7 @@ void PBRTest::drawGeometryNode(
 {
     const shared_ptr<ModelNode>& geometryNode = scene_->getGeometryNode(index);
     const vector<VkDescriptorSet>& meshDescSets = effect_->getMeshDescriptorSets();
-    const vector<VkDescriptorSet>& materialDescSets = effect_->getMaterialDescriptorSets();
+    const vector<shared_ptr<Material>>& materials = scene_->getMaterials();
 
     commandBuffer->bindDescriptorSet(
         VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -224,7 +235,7 @@ void PBRTest::drawGeometryNode(
                 VK_PIPELINE_BIND_POINT_GRAPHICS,
                 pipelineLayout,
                 2,
-                materialDescSets[subMesh.materialIndex]);
+                materials[subMesh.materialIndex]->getDescriptorSet());
 
             commandBuffer->drawIndexed(subMesh.indexCount, subMesh.firstIndex);
         }
@@ -314,6 +325,12 @@ void PBRTest::cleanupSwapChain()
 {
     if (effect_) {
         effect_->cleanupSwapChain();
+    }
+
+    if (scene_) {
+        for (const auto& material : scene_->getMaterials()) {
+            material->destroyDescriptorSetLayout();
+        }
     }
 
     TestApplication::cleanupSwapChain();

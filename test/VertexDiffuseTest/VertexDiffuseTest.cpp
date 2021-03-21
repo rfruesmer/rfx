@@ -113,6 +113,10 @@ void VertexDiffuseTest::createDescriptorPools()
 void VertexDiffuseTest::createDescriptorSetLayouts()
 {
     effect->createDescriptorSetLayouts();
+
+    for (const auto& material : scene->getMaterials()) {
+        material->createDescriptorSetLayout();
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -120,13 +124,20 @@ void VertexDiffuseTest::createDescriptorSetLayouts()
 void VertexDiffuseTest::createDescriptorSets()
 {
     effect->createDescriptorSets();
+
+    for (const auto& material : scene->getMaterials()) {
+        material->createDescriptorSet(effect->getDescriptorPool());
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void VertexDiffuseTest::createPipelineLayouts()
 {
-    TestApplication::createDefaultPipelineLayout(*effect);
+    vector<VkDescriptorSetLayout> descriptorSetLayouts = effect->getDescriptorSetLayouts();
+    descriptorSetLayouts.push_back(scene->getMaterial(0)->getDescriptorSetLayout());
+
+    TestApplication::createDefaultPipelineLayout(descriptorSetLayouts);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -216,8 +227,8 @@ void VertexDiffuseTest::drawGeometryNode(
 {
     const shared_ptr<ModelNode>& geometryNode = scene->getGeometryNode(index);
     const vector<VkDescriptorSet>& meshDescSets = effect->getMeshDescriptorSets();
-    const vector<VkDescriptorSet>& materialDescSets = effect->getMaterialDescriptorSets();
-
+    const vector<shared_ptr<Material>>& materials = scene->getMaterials();
+    
     commandBuffer->bindDescriptorSet(
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         pipelineLayout,
@@ -234,7 +245,7 @@ void VertexDiffuseTest::drawGeometryNode(
                 VK_PIPELINE_BIND_POINT_GRAPHICS,
                 pipelineLayout,
                 2,
-                materialDescSets[subMesh.materialIndex]);
+                materials[subMesh.materialIndex]->getDescriptorSet());
 
             commandBuffer->drawIndexed(subMesh.indexCount, subMesh.firstIndex);
         }
@@ -274,6 +285,12 @@ void VertexDiffuseTest::cleanupSwapChain()
 {
     if (effect) {
         effect->cleanupSwapChain();
+    }
+
+    if (scene) {
+        for (const auto& material : scene->getMaterials()) {
+            material->destroyDescriptorSetLayout();
+        }
     }
 
     TestApplication::cleanupSwapChain();

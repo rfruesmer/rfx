@@ -21,10 +21,10 @@ public:
 
     void cleanupSwapChain() override;
 
+    [[nodiscard]] VkDescriptorPool getDescriptorPool() const;
     [[nodiscard]] std::vector<VkDescriptorSetLayout> getDescriptorSetLayouts() const override;
     [[nodiscard]] VkDescriptorSet getSceneDescriptorSet() const override;
     [[nodiscard]] const std::vector<VkDescriptorSet>& getMeshDescriptorSets() const override;
-    [[nodiscard]] const std::vector<VkDescriptorSet>& getMaterialDescriptorSets() const override;
 
 protected:
     struct MeshData {
@@ -36,8 +36,6 @@ protected:
 
     void createSceneDescriptorSetLayout();
     void createSceneDescriptorSet();
-    void createMaterialDescriptorSetLayout();
-    void createMaterialDescriptorSets();
     void createMeshDescriptorSetLayout();
     void createMeshDescriptorSets();
 
@@ -56,27 +54,21 @@ private:
     enum DescriptorType {
         SCENE,
         MESH,
-        MATERIAL,
         QUANTITY
     };
 
-    VkDescriptorPool createDescriptorPool(const std::vector<VkDescriptorPoolSize>& poolSizes, uint32_t maxSets);
-    static VkWriteDescriptorSet buildWriteDescriptorSet(
-        VkDescriptorSet descriptorSet,
-        uint32_t binding,
-        const VkDescriptorImageInfo* descriptorImageInfo);
     static VkWriteDescriptorSet buildWriteDescriptorSet(
         VkDescriptorSet descriptorSet,
         uint32_t binding,
         const VkDescriptorBufferInfo* descriptorBufferInfo);
 
+    VkDescriptorPool createDescriptorPool(const std::vector<VkDescriptorPoolSize>& poolSizes, uint32_t maxSets);
 
-    VkDescriptorPool descriptorPool_ {};
+    VkDescriptorPool descriptorPool_ {}; // TODO: move to application ?!
     std::vector<VkDescriptorSetLayout> descriptorSetLayouts_ { DescriptorType::QUANTITY };
 
     VkDescriptorSet sceneDescriptorSet_ {};
     std::vector<VkDescriptorSet> meshDescriptorSets_;
-    std::vector<VkDescriptorSet> materialDescriptorSets_;
 };
 
 } // namespace rfx

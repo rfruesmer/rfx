@@ -1,14 +1,9 @@
 #pragma once
 
-namespace rfx {
+#include "rfx/scene/SubMesh.h"
 
-class SubMesh
-{
-public:
-    uint32_t firstIndex;
-    uint32_t indexCount;
-    uint32_t materialIndex;
-};
+
+namespace rfx {
 
 class Mesh
 {
