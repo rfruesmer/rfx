@@ -20,7 +20,6 @@ void TestEffect::createUniformBuffers()
 {
     createSceneDataBuffer();
     createMeshDataBuffers();
-    createMaterialDataBuffers();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -48,28 +47,6 @@ void TestEffect::createMeshDataBuffers()
         graphicsDevice_->bind(meshDataBuffer);
         meshDataBuffer->load(sizeof(mat4), &node->getWorldTransform());
         meshDataBuffers_.push_back(meshDataBuffer);
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TestEffect::createMaterialDataBuffers()
-{
-    for (const auto& material : scene_->getMaterials()) {
-        shared_ptr<Buffer> materialUniformBuffer = graphicsDevice_->createBuffer(
-            sizeof(MaterialData),
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-        MaterialData materialData {
-            .baseColor = material->getBaseColorFactor(),
-            .specular = material->getSpecularFactor(),
-            .shininess = material->getShininess()
-        };
-
-        graphicsDevice_->bind(materialUniformBuffer);
-        materialUniformBuffer->load(sizeof(MaterialData), &materialData);
-        materialDataBuffers_.push_back(materialUniformBuffer);
     }
 }
 
@@ -350,7 +327,7 @@ void TestEffect::createMaterialDescriptorSets()
             buildWriteDescriptorSet(
                 materialDescriptorSets_[i],
                 binding++,
-                &materialDataBuffers_[i]->getDescriptorBufferInfo()));
+                &material->getUniformBuffer()->getDescriptorBufferInfo()));
 
         if (const auto& baseColorTexture = material->getBaseColorTexture()) {
             writeDescriptorSets.push_back(

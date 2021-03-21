@@ -84,6 +84,21 @@ void VertexDiffuseTest::createEffects()
 void VertexDiffuseTest::createUniformBuffers()
 {
     effect->createUniformBuffers();
+
+
+    const VkDeviceSize bufferSize = sizeof(VertexDiffuseEffect::MaterialData);
+
+    for (const auto& material : scene->getMaterials())
+    {
+        const VertexDiffuseEffect::MaterialData materialData {
+            .baseColor = material->getBaseColorFactor(),
+            .specular = material->getSpecularFactor(),
+            .shininess = material->getShininess()
+        };
+
+        material->setUniformBuffer(
+            createAndBindUniformBuffer(bufferSize, &materialData));
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

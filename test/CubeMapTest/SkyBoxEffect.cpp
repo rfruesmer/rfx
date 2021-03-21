@@ -13,8 +13,8 @@ const string SkyBoxEffect::FRAGMENT_SHADER_ID = "skybox";
 
 SkyBoxEffect::SkyBoxEffect(
     const shared_ptr<GraphicsDevice>& graphicsDevice,
-    const shared_ptr<Model>& scene)
-        : TestEffect(graphicsDevice, scene) {}
+    const shared_ptr<Model>& model)
+        : TestEffect(graphicsDevice, model) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -42,6 +42,13 @@ size_t SkyBoxEffect::getSceneDataSize() const
 void SkyBoxEffect::updateSceneDataBuffer()
 {
     sceneDataBuffer_->load(sizeof(SceneData), &sceneData_);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SkyBoxEffect::update(const shared_ptr<Material>& material) const
+{
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

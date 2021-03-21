@@ -89,6 +89,20 @@ void PointLightTest::createEffects()
 void PointLightTest::createUniformBuffers()
 {
     effect->createUniformBuffers();
+
+    const VkDeviceSize bufferSize = sizeof(PointLightEffect::MaterialData);
+
+    for (const auto& material : scene->getMaterials())
+    {
+        const PointLightEffect::MaterialData materialData {
+            .baseColor = material->getBaseColorFactor(),
+            .specular = material->getSpecularFactor(),
+            .shininess = material->getShininess()
+        };
+
+        material->setUniformBuffer(
+            createAndBindUniformBuffer(bufferSize, &materialData));
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

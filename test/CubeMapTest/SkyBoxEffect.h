@@ -12,13 +12,15 @@ public:
 
     SkyBoxEffect(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,
-        const std::shared_ptr<Model>& scene);
+        const std::shared_ptr<Model>& model);
 
     void setProjectionMatrix(const glm::mat4& projection);
     void setViewMatrix(const glm::mat4& viewMatrix);
 
     [[nodiscard]] size_t getSceneDataSize() const override;
+
     void updateSceneDataBuffer();
+    void update(const std::shared_ptr<Material>& material) const override;
 
 private:
     struct SceneData {

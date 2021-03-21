@@ -14,6 +14,7 @@ public:
     virtual ~Effect() = default;
 
     virtual void loadShaders(const std::shared_ptr<Material>& material, const std::filesystem::path& shadersDirectory);
+    virtual void update(const std::shared_ptr<Material>& material) const = 0;
 
     virtual void createUniformBuffers() = 0;
     virtual void createDescriptorPools() = 0;

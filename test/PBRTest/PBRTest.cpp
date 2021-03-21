@@ -45,24 +45,18 @@ void PBRTest::loadScene()
     const path scenePath = getAssetsDirectory() / "models/teapot/teapot.gltf";
 
     ModelLoader modelLoader(graphicsDevice);
-    scene = modelLoader.load(
+    scene_ = modelLoader.load(
         scenePath,
         PBREffect::VERTEX_SHADER_ID,
         PBREffect::FRAGMENT_SHADER_ID);
-
-//    for (const auto& material : scene->getMaterials()) {
-//        material->setSpecularFactor({1.0f, 0.0f, 0.0f});
-//        material->setShininess(128.0f);
-//    }
+    RFX_CHECK_STATE(scene_->getLightCount() > 0, "");
 
     camera.setPosition({ 0.0f, 2.0f, 10.0f });
 
-    RFX_CHECK_STATE(scene->getLightCount() > 0, "");
-    pointLight = dynamic_pointer_cast<PointLight>(scene->getLight(0));
-    RFX_CHECK_STATE(pointLight != nullptr, "");
-
-    pointLight->setPosition({5.0f, 5.0f, 0.0f });
-    pointLight->setColor({1.0f, 1.0f, 1.0f});
+    pointLight_ = dynamic_pointer_cast<PointLight>(scene_->getLight(0));
+    RFX_CHECK_STATE(pointLight_ != nullptr, "");
+    pointLight_->setPosition({5.0f, 5.0f, 0.0f });
+    pointLight_->setColor({1.0f, 1.0f, 1.0f});
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -71,56 +65,64 @@ void PBRTest::createEffects()
 {
     const path shadersDirectory = getAssetsDirectory() / "shaders";
 
-    // TODO: support for multiple/different materials/effects/shaders per scene
-    const shared_ptr<Material>& material = scene->getMaterial(0);
+    // TODO: support for multiple/different materials/effects/shaders per scene_
+    const shared_ptr<Material>& material = scene_->getMaterial(0);
 
 
-    effect = make_unique<PBREffect>(graphicsDevice, scene);
-    effect->loadShaders(material, shadersDirectory);
-    effect->setLight(0, pointLight);
-    effect->setAlbedo({1.0f, 1.0f, 1.0f});
+    effect_ = make_unique<PBREffect>(graphicsDevice, scene_);
+    effect_->loadShaders(material, shadersDirectory);
+    effect_->setLight(0, pointLight_);
+    materialData_.baseColor = { 1.0f, 1.0f, 1.0f };
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void PBRTest::createUniformBuffers()
 {
-    effect->createUniformBuffers();
+    effect_->createUniformBuffers();
+
+    const VkDeviceSize bufferSize = sizeof(PBREffect::MaterialData);
+
+    for (const auto& material : scene_->getMaterials())
+    {
+        material->setUniformBuffer(
+            createAndBindUniformBuffer(bufferSize, &materialData_));
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void PBRTest::createDescriptorPools()
 {
-    effect->createDescriptorPools();
+    effect_->createDescriptorPools();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void PBRTest::createDescriptorSetLayouts()
 {
-    effect->createDescriptorSetLayouts();
+    effect_->createDescriptorSetLayouts();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void PBRTest::createDescriptorSets()
 {
-    effect->createDescriptorSets();
+    effect_->createDescriptorSets();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void PBRTest::createPipelineLayouts()
 {
-    TestApplication::createDefaultPipelineLayout(*effect);
+    TestApplication::createDefaultPipelineLayout(*effect_);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void PBRTest::createPipelines()
 {
-    TestApplication::createDefaultPipeline(*effect);
+    TestApplication::createDefaultPipeline(*effect_);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -182,11 +184,11 @@ void PBRTest::createCommandBuffers()
         commandBuffer->setViewport(viewport);
         commandBuffer->setScissor(scissor);
         commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, wireframe ? wireframePipeline : defaultPipeline);
-        commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, effect->getSceneDescriptorSet());
-        commandBuffer->bindVertexBuffer(scene->getVertexBuffer());
-        commandBuffer->bindIndexBuffer(scene->getIndexBuffer());
+        commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, effect_->getSceneDescriptorSet());
+        commandBuffer->bindVertexBuffer(scene_->getVertexBuffer());
+        commandBuffer->bindIndexBuffer(scene_->getIndexBuffer());
 
-        for (uint32_t j = 0; j < scene->getGeometryNodeCount(); ++j) {
+        for (uint32_t j = 0; j < scene_->getGeometryNodeCount(); ++j) {
             drawGeometryNode(j, commandBuffer);
         }
 
@@ -201,9 +203,9 @@ void PBRTest::drawGeometryNode(
     uint32_t index,
     const shared_ptr<CommandBuffer>& commandBuffer)
 {
-    const shared_ptr<ModelNode>& geometryNode = scene->getGeometryNode(index);
-    const vector<VkDescriptorSet>& meshDescSets = effect->getMeshDescriptorSets();
-    const vector<VkDescriptorSet>& materialDescSets = effect->getMaterialDescriptorSets();
+    const shared_ptr<ModelNode>& geometryNode = scene_->getGeometryNode(index);
+    const vector<VkDescriptorSet>& meshDescSets = effect_->getMeshDescriptorSets();
+    const vector<VkDescriptorSet>& materialDescSets = effect_->getMaterialDescriptorSets();
 
     commandBuffer->bindDescriptorSet(
         VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -233,16 +235,25 @@ void PBRTest::drawGeometryNode(
 
 void PBRTest::updateProjection()
 {
-    effect->setProjectionMatrix(calcDefaultProjection());
+    effect_->setProjectionMatrix(calcDefaultProjection());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void PBRTest::updateSceneData(float deltaTime)
 {
-    effect->setViewMatrix(camera.getViewMatrix());
-    effect->updateSceneDataBuffer();
-    effect->updateMaterialDataBuffers();
+    effect_->setViewMatrix(camera.getViewMatrix());
+    effect_->updateSceneDataBuffer();
+
+    for (const auto& material : scene_->getMaterials())
+    {
+        material->setBaseColorFactor(vec4(materialData_.baseColor, 1.0f));
+        material->setMetallicFactor(materialData_.metallic);
+        material->setRoughnessFactor(materialData_.roughness);
+        material->setOcclusionStrength(materialData_.ao);
+
+        effect_->update(material);
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -251,37 +262,37 @@ void PBRTest::updateDevTools()
 {
     TestApplication::updateDevTools();
 
-    float value = effect->getMetallicFactor();
+    float value = materialData_.metallic;
     if (devTools->sliderFloat("metallic", &value, 0.0f, 1.0f)) {
-        effect->setMetallicFactor(value);
+        materialData_.metallic = value;
     }
 
-    value = effect->getRoughnessFactor();
+    value = materialData_.roughness;
     if (devTools->sliderFloat("roughness", &value, 0.0f, 1.0f)) {
-        effect->setRoughnessFactor(value);
+        materialData_.roughness = value;
     }
 
-    vec3 color = effect->getAlbedo();
+    vec3 color = materialData_.baseColor;
     if (devTools->colorEdit3("albedo", &color.x)) {
-        effect->setAlbedo(color);
+        materialData_.baseColor = color;
     }
 
-    value = effect->getAmbientOcclusion();
+    value = materialData_.ao;
     if (devTools->sliderFloat("ambient", &value, 0.0f, 1.0f)) {
-        effect->setAmbientOcclusion(value);
+        materialData_.ao = value;
     }
 
-    const auto& light = static_pointer_cast<PointLight>(scene->getLight(0));
+    const auto& light = static_pointer_cast<PointLight>(scene_->getLight(0));
     color = light->getColor();
     if (devTools->colorEdit3("light#0 color", &color.x)) {
         light->setColor(color);
-        effect->setLight(0, light);
+        effect_->setLight(0, light);
     }
 
     vec3 lightPos = light->getPosition();
     if (devTools->sliderFloat3("light#0 position", &lightPos.x, -100.0f, 100.0f)) {
         light->setPosition(lightPos);
-        effect->setLight(0, static_pointer_cast<PointLight>(light));
+        effect_->setLight(0, static_pointer_cast<PointLight>(light));
     }
 }
 
@@ -289,10 +300,10 @@ void PBRTest::updateDevTools()
 
 void PBRTest::cleanup()
 {
-    effect->cleanupSwapChain();
-    effect.reset();
+    effect_->cleanupSwapChain();
+    effect_.reset();
 
-    scene.reset();
+    scene_.reset();
 
     TestApplication::cleanup();
 }
@@ -301,8 +312,8 @@ void PBRTest::cleanup()
 
 void PBRTest::cleanupSwapChain()
 {
-    if (effect) {
-        effect->cleanupSwapChain();
+    if (effect_) {
+        effect_->cleanupSwapChain();
     }
 
     TestApplication::cleanupSwapChain();

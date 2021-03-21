@@ -98,6 +98,20 @@ void MultiLightTest::createEffects()
 void MultiLightTest::createUniformBuffers()
 {
     effect->createUniformBuffers();
+
+    const VkDeviceSize bufferSize = sizeof(MultiLightEffect::MaterialData);
+
+    for (const auto& material : scene->getMaterials())
+    {
+        const MultiLightEffect::MaterialData materialData {
+            .baseColor = material->getBaseColorFactor(),
+            .specular = material->getSpecularFactor(),
+            .shininess = material->getShininess()
+        };
+
+        material->setUniformBuffer(
+            createAndBindUniformBuffer(bufferSize, &materialData));
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

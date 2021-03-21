@@ -24,6 +24,21 @@ void TestApplication::initGraphicsResources()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+shared_ptr<Buffer> TestApplication::createAndBindUniformBuffer(VkDeviceSize size, const void* data)
+{
+    shared_ptr<Buffer> uniformBuffer = graphicsDevice->createBuffer(
+        size,
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+    graphicsDevice->bind(uniformBuffer);
+    uniformBuffer->load(size, data);
+
+    return uniformBuffer;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void TestApplication::createRenderPass()
 {
     const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();

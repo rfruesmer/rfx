@@ -11,6 +11,16 @@ namespace rfx {
 class PBREffect : public TestEffect
 {
 public:
+    struct MaterialData {
+        glm::vec3 baseColor { 0.0f };
+        float pad0 = 0.0f;
+
+        float metallic = 0.5f;
+        float roughness = 0.2f;
+        float ao = 0.0f;
+        float pad1 = 0.0f;
+    };
+
     static const int MAX_LIGHTS = 4;
     static const std::string VERTEX_SHADER_ID;
     static const std::string FRAGMENT_SHADER_ID;
@@ -24,23 +34,11 @@ public:
     void setViewMatrix(const glm::mat4& viewMatrix);
     void setLight(int index, const std::shared_ptr<PointLight>& light);
 
-    void setMetallicFactor(float factor);
-    [[nodiscard]] float getMetallicFactor() const;
-
-    void setRoughnessFactor(float factor);
-    [[nodiscard]] float getRoughnessFactor() const;
-
-    void setAlbedo(const glm::vec3& value);
-    [[nodiscard]] glm::vec3 getAlbedo() const;
-
-    void setAmbientOcclusion(float value);
-    [[nodiscard]] float getAmbientOcclusion();
-
     void updateSceneDataBuffer();
-    void updateMaterialDataBuffers();
+
+    void update(const std::shared_ptr<Material>& material) const override;
 
 protected:
-    void createMaterialDataBuffers() override;
     [[nodiscard]] size_t getSceneDataSize() const override;
 
 private:
@@ -64,18 +62,7 @@ private:
         LightData lights[4];
     };
 
-    struct MaterialData {
-        glm::vec3 baseColor { 0.0f };
-        float pad0;
-
-        float metallic = 0.5f;
-        float roughness = 0.2f;
-        float ao = 0.0f;
-        float pad1;
-    };
-
     SceneData sceneData_ {};
-    MaterialData materialData_ {};
     std::shared_ptr<PointLight> lights_[MAX_LIGHTS];
 };
 

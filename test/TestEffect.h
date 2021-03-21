@@ -33,7 +33,6 @@ protected:
 
     void createSceneDataBuffer();
     void createMeshDataBuffers();
-    virtual void createMaterialDataBuffers();
 
     void createSceneDescriptorSetLayout();
     void createSceneDescriptorSet();
@@ -46,7 +45,6 @@ protected:
 
 
     std::shared_ptr<Buffer> sceneDataBuffer_;
-    std::vector<std::shared_ptr<Buffer>> materialDataBuffers_; // TODO: refactor to push constants
 
     // TODO: rename to nodeDataBuffers ??
     // TODO: refactor to sub-buffers
@@ -55,12 +53,6 @@ protected:
     std::shared_ptr<Model> scene_;
 
 private:
-    struct MaterialData {
-        glm::vec4 baseColor;
-        glm::vec3 specular;
-        float shininess = 0.0f;
-    };
-
     enum DescriptorType {
         SCENE,
         MESH,

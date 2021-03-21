@@ -92,6 +92,27 @@ void TexturedPBRTest::createEffects()
 void TexturedPBRTest::createUniformBuffers()
 {
     effect->createUniformBuffers();
+
+    const VkDeviceSize bufferSize = sizeof(TexturedPBREffect::MaterialData);
+
+    for (const auto& material : scene->getMaterials())
+    {
+        TexturedPBREffect::MaterialData materialData {
+            .baseColorFactor = material->getBaseColorFactor(),
+            .emissiveFactor = vec4(material->getEmissiveFactor(), 1.0f),
+            .metallic = material->getMetallicFactor(),
+            .roughness = material->getRoughnessFactor(),
+            .baseColorTexCoordSet = material->getBaseColorTexCoordSet(),
+            .metallicRoughnessTexCoordSet = material->getMetallicRoughnessTexCoordSet(),
+            .normalTexCoordSet = material->getNormalTexCoordSet(),
+            .occlusionTexCoordSet = material->getOcclusionTexCoordSet(),
+            .occlusionStrength = material->getOcclusionStrength(),
+            .emissiveTexCoordSet = material->getEmissiveTexCoordSet()
+        };
+
+        material->setUniformBuffer(
+            createAndBindUniformBuffer(bufferSize, &materialData));
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

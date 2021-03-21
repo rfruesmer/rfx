@@ -61,3 +61,18 @@ void SpotLightEffect::updateSceneDataBuffer()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void SpotLightEffect::update(const shared_ptr<Material>& material) const
+{
+    const SpotLightEffect::MaterialData materialData {
+        .baseColor = material->getBaseColorFactor(),
+        .specular = material->getSpecularFactor(),
+        .shininess = material->getShininess()
+    };
+
+    const shared_ptr<Buffer>& uniformBuffer = material->getUniformBuffer();
+    uniformBuffer->load(sizeof(MaterialData),
+        reinterpret_cast<const void*>(&materialData));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+

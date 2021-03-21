@@ -11,6 +11,19 @@ namespace rfx {
 class TexturedPBREffect : public TestEffect
 {
 public:
+    struct MaterialData {
+        glm::vec4 baseColorFactor { 0.0f };
+        glm::vec4 emissiveFactor { 0.0f };
+        float metallic = 0.0f;
+        float roughness = 0.0f;
+        int baseColorTexCoordSet = -1;
+        int metallicRoughnessTexCoordSet = -1;
+        int normalTexCoordSet = -1;
+        int occlusionTexCoordSet = -1;
+        float occlusionStrength = 1.0f;
+        int emissiveTexCoordSet = -1;
+    };
+
     static const int MAX_LIGHTS = 4;
     static const std::string VERTEX_SHADER_ID;
     static const std::string FRAGMENT_SHADER_ID;
@@ -26,6 +39,8 @@ public:
 
     void updateSceneDataBuffer();
 
+    void update(const std::shared_ptr<Material>& material) const override;
+
     [[nodiscard]] std::vector<std::string> buildShaderDefines(
         const std::shared_ptr<Material>& material,
         const VertexFormat& vertexFormat) override;
@@ -34,7 +49,6 @@ public:
     [[nodiscard]] std::vector<std::string> buildFragmentShaderInputs(const VertexFormat& vertexFormat) override;
 
 protected:
-    void createMaterialDataBuffers() override;
     [[nodiscard]] size_t getSceneDataSize() const override;
 
 private:
@@ -59,19 +73,6 @@ private:
         float padding;
 
         LightData lights[4];
-    };
-
-    struct MaterialData {
-        glm::vec4 baseColorFactor { 0.0f };
-        glm::vec4 emissiveFactor { 0.0f };
-        float metallic = 0.0f;
-        float roughness = 0.0f;
-        int baseColorTexCoordSet = -1;
-        int metallicRoughnessTexCoordSet = -1;
-        int normalTexCoordSet = -1;
-        int occlusionTexCoordSet = -1;
-        float occlusionStrength = 1.0f;
-        int emissiveTexCoordSet = -1;
     };
 
     SceneData sceneData_ {};

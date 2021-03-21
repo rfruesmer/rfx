@@ -90,6 +90,20 @@ void NormalMapTest::createEffects()
 void NormalMapTest::createUniformBuffers()
 {
     effect->createUniformBuffers();
+
+    const VkDeviceSize bufferSize = sizeof(NormalMapEffect::MaterialData);
+
+    for (const auto& material : scene->getMaterials())
+    {
+        const NormalMapEffect::MaterialData materialData {
+            .baseColor = material->getBaseColorFactor(),
+            .specular = material->getSpecularFactor(),
+            .shininess = material->getShininess()
+        };
+
+        material->setUniformBuffer(
+            createAndBindUniformBuffer(bufferSize, &materialData));
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

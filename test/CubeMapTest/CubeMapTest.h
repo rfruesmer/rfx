@@ -1,6 +1,7 @@
 #pragma once
 
 #include "TestApplication.h"
+#include "SkyBoxEffect.h"
 
 
 namespace rfx {
@@ -31,10 +32,8 @@ private:
         uint32_t index,
         const std::shared_ptr<CommandBuffer>& commandBuffer);
 
-    std::shared_ptr<Model> skyBox;
-
-//    PointLight light;
-//    VertexDiffuseEffect* effectImpl = nullptr;
+    std::shared_ptr<Model> skyBoxModel;
+    std::unique_ptr<SkyBoxEffect> skyBoxEffect;
 };
 
 } // namespace rfx

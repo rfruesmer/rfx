@@ -92,6 +92,20 @@ void TexturedMultiLightTest::createEffects()
 void TexturedMultiLightTest::createUniformBuffers()
 {
     effect->createUniformBuffers();
+
+    const VkDeviceSize bufferSize = sizeof(TexturedMultiLightEffect::MaterialData);
+
+    for (const auto& material : scene->getMaterials())
+    {
+        const TexturedMultiLightEffect::MaterialData materialData {
+            .baseColor = material->getBaseColorFactor(),
+            .specular = material->getSpecularFactor(),
+            .shininess = material->getShininess()
+        };
+
+        material->setUniformBuffer(
+            createAndBindUniformBuffer(bufferSize, &materialData));
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

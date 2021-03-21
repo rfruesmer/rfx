@@ -174,16 +174,23 @@ const std::shared_ptr<Texture2D>& Material::getOcclusionTexture() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-float Material::getOcclusionStrength() const
+int Material::getOcclusionTexCoordSet() const
 {
-    return occlusionStrength_;
+    return occlusionTexCoordSet_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-int Material::getOcclusionTexCoordSet() const
+void Material::setOcclusionStrength(float occlusionStrength)
 {
-    return occlusionTexCoordSet_;
+    occlusionStrength_ = occlusionStrength;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+float Material::getOcclusionStrength() const
+{
+    return occlusionStrength_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -250,6 +257,20 @@ void Material::setSpecularFactor(const vec3& specularFactor)
 const vec3& Material::getSpecularFactor() const
 {
     return specularFactor_;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Material::setUniformBuffer(const shared_ptr<Buffer>& uniformBuffer)
+{
+    uniformBuffer_ = uniformBuffer;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const shared_ptr<Buffer>& Material::getUniformBuffer() const
+{
+    return uniformBuffer_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

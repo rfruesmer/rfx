@@ -11,6 +11,12 @@ namespace rfx {
 class MultiLightEffect : public TestEffect
 {
 public:
+    struct MaterialData {
+        glm::vec4 baseColor;
+        glm::vec3 specular;
+        float shininess = 0.0f;
+    };
+
     static const int MAX_LIGHTS = 4;
     static const std::string VERTEX_SHADER_ID;
     static const std::string FRAGMENT_SHADER_ID;
@@ -26,6 +32,8 @@ public:
 
     [[nodiscard]] size_t getSceneDataSize() const override;
     void updateSceneDataBuffer();
+
+    void update(const std::shared_ptr<Material>& material) const override;
 
 private:
     struct LightData {

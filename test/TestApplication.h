@@ -21,6 +21,7 @@ protected:
     virtual void createCommandBuffers() = 0;
 
     void initGraphicsResources();
+    std::shared_ptr<Buffer> createAndBindUniformBuffer(VkDeviceSize size, const void* data);
     void createDefaultPipelineLayout(const Effect& effect);
     void createDefaultPipeline(const Effect& effect);
     void createRenderPass();

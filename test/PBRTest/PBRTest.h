@@ -34,9 +34,10 @@ private:
         const std::shared_ptr<CommandBuffer>& commandBuffer);
 
 
-    std::shared_ptr<Model> scene;
-    std::shared_ptr<PointLight> pointLight;
-    std::unique_ptr<PBREffect> effect;
+    std::shared_ptr<Model> scene_;
+    std::shared_ptr<PointLight> pointLight_;
+    std::unique_ptr<PBREffect> effect_;
+    PBREffect::MaterialData materialData_ {};
 };
 
 } // namespace rfx

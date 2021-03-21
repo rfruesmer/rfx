@@ -86,6 +86,20 @@ void SpotLightTest::createEffects()
 void SpotLightTest::createUniformBuffers()
 {
     effect->createUniformBuffers();
+
+    const VkDeviceSize bufferSize = sizeof(SpotLightEffect::MaterialData);
+
+    for (const auto& material : scene->getMaterials())
+    {
+        const SpotLightEffect::MaterialData materialData {
+            .baseColor = material->getBaseColorFactor(),
+            .specular = material->getSpecularFactor(),
+            .shininess = material->getShininess()
+        };
+
+        material->setUniformBuffer(
+            createAndBindUniformBuffer(bufferSize, &materialData));
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

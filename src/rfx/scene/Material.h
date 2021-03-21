@@ -2,6 +2,9 @@
 
 #include <rfx/graphics/VertexFormat.h>
 #include "rfx/graphics/Texture2D.h"
+#include <rfx/graphics/Buffer.h>
+#include <rfx/graphics/Buffer.h>
+
 
 namespace rfx {
 
@@ -45,6 +48,7 @@ public:
         float strength = 1.0f);
     [[nodiscard]] const std::shared_ptr<Texture2D>& getOcclusionTexture() const;
     [[nodiscard]] int getOcclusionTexCoordSet() const;
+    void setOcclusionStrength(float occlusionStrength);
     [[nodiscard]] float getOcclusionStrength() const;
 
     void setEmissiveTexture(std::shared_ptr<Texture2D> emissiveTexture, uint32_t texCoordSet = 0);
@@ -59,6 +63,9 @@ public:
 
     void setShininess(float shininess);
     [[nodiscard]] float getShininess() const;
+
+    void setUniformBuffer(const std::shared_ptr<Buffer>& uniformBuffer);
+    [[nodiscard]] const std::shared_ptr<Buffer>& getUniformBuffer() const;
 
 private:
     std::string id_;
@@ -89,6 +96,10 @@ private:
 
     glm::vec3 specularFactor_ { 0.0f };
     float shininess_ = 0.0f; // 0-128
+
+    VkDescriptorSetLayout descriptorSetLayout_ = VK_NULL_HANDLE;
+    VkDescriptorSet descriptorSet_ = VK_NULL_HANDLE;
+    std::shared_ptr<Buffer> uniformBuffer_; // TODO: consider refactoring to push constants
 };
 
 } // namespace rfx

@@ -47,25 +47,19 @@ void CubeMapTest::loadScene()
 
     ModelLoader modelLoader(graphicsDevice);
 
-    skyBox = modelLoader.load(
+    skyBoxModel = modelLoader.load(
         scenePath,
         SkyBoxEffect::VERTEX_SHADER_ID,
         SkyBoxEffect::FRAGMENT_SHADER_ID);
 
     camera.setPosition({0.0f, 1.0f, 20.0f});
-//    light.setPosition({5.0f, 5.0f, 2.0f});
-//    light.setColor({1.0f, 1.0f, 1.0f});
-//
-//    effect = make_unique<VertexDiffuseEffect>(graphicsDevice, scene);
-//    effectImpl = dynamic_cast<VertexDiffuseEffect*>(effect.get());
-//    effectImpl->setLight(light);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void CubeMapTest::createEffects()
 {
-
+    skyBoxEffect = make_unique<SkyBoxEffect>(graphicsDevice, skyBoxModel);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
