@@ -77,7 +77,7 @@ void SpotLightTest::createEffects()
     RFX_CHECK_STATE(light != nullptr, "");
 
     effect = make_unique<SpotLightEffect>(graphicsDevice, scene);
-    effect->load(shadersDirectory, material);
+    effect->loadShaders(material, shadersDirectory);
     effect->setLight(light);
 }
 

@@ -75,7 +75,7 @@ void VertexDiffuseTest::createEffects()
 
 
     effect = make_unique<VertexDiffuseEffect>(graphicsDevice, scene);
-    effect->load(shadersDirectory, material);
+    effect->loadShaders(material, shadersDirectory);
     effect->setLight(light);
 }
 

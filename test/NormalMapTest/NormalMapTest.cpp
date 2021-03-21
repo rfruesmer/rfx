@@ -81,7 +81,7 @@ void NormalMapTest::createEffects()
     RFX_CHECK_STATE(light != nullptr, "");
 
     effect = make_unique<NormalMapEffect>(graphicsDevice, scene);
-    effect->load(shadersDirectory, material);
+    effect->loadShaders(material, shadersDirectory);
     effect->setLight(0, light);
 }
 

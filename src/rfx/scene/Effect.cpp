@@ -15,7 +15,7 @@ Effect::Effect(shared_ptr<GraphicsDevice> graphicsDevice)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Effect::load(const path& shadersDirectory, const shared_ptr<Material>& material)
+void Effect::loadShaders(const std::shared_ptr<Material>& material, const std::filesystem::path& shadersDirectory)
 {
     const path vertexShaderFilename = material->getVertexShaderId() + ".vert";
     const path fragmentShaderFilename = material->getFragmentShaderId() + ".frag";

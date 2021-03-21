@@ -76,7 +76,7 @@ void PBRTest::createEffects()
 
 
     effect = make_unique<PBREffect>(graphicsDevice, scene);
-    effect->load(shadersDirectory, material);
+    effect->loadShaders(material, shadersDirectory);
     effect->setLight(0, pointLight);
     effect->setAlbedo({1.0f, 1.0f, 1.0f});
 }

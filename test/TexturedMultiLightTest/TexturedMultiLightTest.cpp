@@ -82,7 +82,7 @@ void TexturedMultiLightTest::createEffects()
 
 
     effect = make_unique<TexturedMultiLightEffect>(graphicsDevice, scene);
-    effect->load(shadersDirectory, material);
+    effect->loadShaders(material, shadersDirectory);
     effect->setLight(0, pointLight);
     effect->setLight(1, spotLight);
 }

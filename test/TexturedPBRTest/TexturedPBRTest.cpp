@@ -83,7 +83,7 @@ void TexturedPBRTest::createEffects()
     const shared_ptr<Material>& material = scene->getMaterial(0);
 
     effect = make_unique<TexturedPBREffect>(graphicsDevice, scene);
-    effect->load(shadersDirectory, material);
+    effect->loadShaders(material, shadersDirectory);
     effect->setLight(0, pointLight);
 }
 

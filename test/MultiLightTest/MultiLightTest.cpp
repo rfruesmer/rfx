@@ -88,7 +88,7 @@ void MultiLightTest::createEffects()
     const shared_ptr<Material>& material = scene->getMaterial(0);
 
     effect = make_unique<MultiLightEffect>(graphicsDevice, scene);
-    effect->load(shadersDirectory, material);
+    effect->loadShaders(material, shadersDirectory);
     effect->setLight(0, pointLight);
     effect->setLight(1, spotLight);
 }

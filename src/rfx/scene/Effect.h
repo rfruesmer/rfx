@@ -13,7 +13,7 @@ class Effect
 public:
     virtual ~Effect() = default;
 
-    virtual void load(const std::filesystem::path& shadersDirectory, const std::shared_ptr<Material>& material);
+    virtual void loadShaders(const std::shared_ptr<Material>& material, const std::filesystem::path& shadersDirectory);
 
     virtual void createUniformBuffers() = 0;
     virtual void createDescriptorPools() = 0;
