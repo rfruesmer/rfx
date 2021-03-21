@@ -60,7 +60,7 @@ void PointLightEffect::updateSceneDataBuffer()
 
 void PointLightEffect::update(const shared_ptr<Material>& material) const
 {
-    const PointLightEffect::MaterialData materialData {
+    const MaterialData materialData {
         .baseColor = material->getBaseColorFactor(),
         .specular = material->getSpecularFactor(),
         .shininess = material->getShininess()

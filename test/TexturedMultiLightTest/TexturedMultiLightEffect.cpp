@@ -88,7 +88,7 @@ void TexturedMultiLightEffect::updateSceneDataBuffer()
 
 void TexturedMultiLightEffect::update(const shared_ptr<Material>& material) const
 {
-    const TexturedMultiLightEffect::MaterialData materialData {
+    const MaterialData materialData {
         .baseColor = material->getBaseColorFactor(),
         .specular = material->getSpecularFactor(),
         .shininess = material->getShininess()

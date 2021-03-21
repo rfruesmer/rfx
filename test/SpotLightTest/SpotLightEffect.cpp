@@ -63,7 +63,7 @@ void SpotLightEffect::updateSceneDataBuffer()
 
 void SpotLightEffect::update(const shared_ptr<Material>& material) const
 {
-    const SpotLightEffect::MaterialData materialData {
+    const MaterialData materialData {
         .baseColor = material->getBaseColorFactor(),
         .specular = material->getSpecularFactor(),
         .shininess = material->getShininess()
