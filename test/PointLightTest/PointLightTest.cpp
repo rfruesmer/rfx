@@ -226,8 +226,8 @@ void PointLightTest::createCommandBuffers()
 void PointLightTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
 {
     const vector<VkDescriptorSet>& meshDescSets = effect->getMeshDescriptorSets();
-    const vector<shared_ptr<Material>>& materials = scene->getMaterials();
-    
+
+
     for (size_t i = 0, count = scene->getMeshes().size(); i < count; ++i) {
 
         commandBuffer->bindDescriptorSet(
@@ -247,7 +247,7 @@ void PointLightTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
                 VK_PIPELINE_BIND_POINT_GRAPHICS,
                 pipelineLayout,
                 2,
-                materials[subMesh.materialIndex]->getDescriptorSet());
+                subMesh.material->getDescriptorSet());
 
             commandBuffer->drawIndexed(subMesh.indexCount, subMesh.firstIndex);
         }

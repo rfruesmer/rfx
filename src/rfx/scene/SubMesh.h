@@ -1,12 +1,14 @@
 #pragma once
 
+#include "rfx/scene/Material.h"
+
 namespace rfx {
 
 struct SubMesh
 {
     uint32_t firstIndex;
     uint32_t indexCount;
-    uint32_t materialIndex; // TODO: reference material directly
+    std::shared_ptr<Material> material;
 };
 
 } // namespace rfx

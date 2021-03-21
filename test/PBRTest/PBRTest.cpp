@@ -216,7 +216,7 @@ void PBRTest::drawGeometryNode(
 {
     const shared_ptr<ModelNode>& geometryNode = scene_->getGeometryNode(index);
     const vector<VkDescriptorSet>& meshDescSets = effect_->getMeshDescriptorSets();
-    const vector<shared_ptr<Material>>& materials = scene_->getMaterials();
+
 
     commandBuffer->bindDescriptorSet(
         VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -235,7 +235,7 @@ void PBRTest::drawGeometryNode(
                 VK_PIPELINE_BIND_POINT_GRAPHICS,
                 pipelineLayout,
                 2,
-                materials[subMesh.materialIndex]->getDescriptorSet());
+                subMesh.material->getDescriptorSet());
 
             commandBuffer->drawIndexed(subMesh.indexCount, subMesh.firstIndex);
         }

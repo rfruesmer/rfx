@@ -457,7 +457,7 @@ void ModelLoader::ModelLoaderImpl::loadMesh(const tinygltf::Mesh& gltfMesh)
         mesh->addSubMesh({
             .firstIndex = firstIndex,
             .indexCount = indexCount,
-            .materialIndex = static_cast<uint32_t>(glTFPrimitive.material)
+            .material = scene_->getMaterial(glTFPrimitive.material)
         });
     }
 

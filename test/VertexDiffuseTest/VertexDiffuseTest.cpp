@@ -227,8 +227,8 @@ void VertexDiffuseTest::drawGeometryNode(
 {
     const shared_ptr<ModelNode>& geometryNode = scene->getGeometryNode(index);
     const vector<VkDescriptorSet>& meshDescSets = effect->getMeshDescriptorSets();
-    const vector<shared_ptr<Material>>& materials = scene->getMaterials();
-    
+
+
     commandBuffer->bindDescriptorSet(
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         pipelineLayout,
@@ -245,7 +245,7 @@ void VertexDiffuseTest::drawGeometryNode(
                 VK_PIPELINE_BIND_POINT_GRAPHICS,
                 pipelineLayout,
                 2,
-                materials[subMesh.materialIndex]->getDescriptorSet());
+                subMesh.material->getDescriptorSet());
 
             commandBuffer->drawIndexed(subMesh.indexCount, subMesh.firstIndex);
         }
