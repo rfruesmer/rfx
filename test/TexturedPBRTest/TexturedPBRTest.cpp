@@ -77,11 +77,56 @@ void TexturedPBRTest::loadScene()
 
 void TexturedPBRTest::createEffects()
 {
-    effect = make_unique<TexturedPBREffect>(graphicsDevice, scene);
-    effectImpl = dynamic_cast<TexturedPBREffect*>(effect.get());
-    effectImpl->setLight(0, pointLight);
+    const path shadersDirectory = getAssetsDirectory() / "shaders";
 
-    TestApplication::createEffects();
+    // TODO: support for multiple/different materials/effects/shaders per scene
+    const shared_ptr<Material>& material = scene->getMaterial(0);
+
+    effect = make_unique<TexturedPBREffect>(graphicsDevice, scene);
+    effect->load(shadersDirectory, material);
+    effect->setLight(0, pointLight);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedPBRTest::createUniformBuffers()
+{
+    effect->createUniformBuffers();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedPBRTest::createDescriptorPool()
+{
+    effect->createDescriptorPools();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedPBRTest::createDescriptorSetLayouts()
+{
+    effect->createDescriptorSetLayouts();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedPBRTest::createDescriptorSets()
+{
+    effect->createDescriptorSets();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedPBRTest::createPipelineLayout()
+{
+    TestApplication::createDefaultPipelineLayout(*effect);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedPBRTest::createPipeline()
+{
+    TestApplication::createDefaultPipeline(*effect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -194,16 +239,16 @@ void TexturedPBRTest::drawGeometryNode(
 
 void TexturedPBRTest::updateProjection()
 {
-    effectImpl->setProjectionMatrix(calcDefaultProjection());
+    effect->setProjectionMatrix(calcDefaultProjection());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void TexturedPBRTest::updateSceneData(float deltaTime)
 {
-    effectImpl->setViewMatrix(camera.getViewMatrix());
-    effectImpl->setCameraPos(camera.getPosition());
-    effectImpl->updateSceneDataBuffer();
+    effect->setViewMatrix(camera.getViewMatrix());
+    effect->setCameraPos(camera.getPosition());
+    effect->updateSceneDataBuffer();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -216,14 +261,37 @@ void TexturedPBRTest::updateDevTools()
     vec3 color = light->getColor();
     if (devTools->colorEdit3("light#0 color", &color.x)) {
         light->setColor(color);
-        effectImpl->setLight(0, light);
+        effect->setLight(0, light);
     }
 
     vec3 lightPos = light->getPosition();
     if (devTools->sliderFloat3("light#0 position", &lightPos.x, -10.0f, 10.0f)) {
         light->setPosition(lightPos);
-        effectImpl->setLight(0, static_pointer_cast<PointLight>(light));
+        effect->setLight(0, static_pointer_cast<PointLight>(light));
     }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedPBRTest::cleanup()
+{
+    effect->cleanupSwapChain();
+    effect.reset();
+
+    scene.reset();
+
+    TestApplication::cleanup();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedPBRTest::cleanupSwapChain()
+{
+    if (effect) {
+        effect->cleanupSwapChain();
+    }
+
+    TestApplication::cleanupSwapChain();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

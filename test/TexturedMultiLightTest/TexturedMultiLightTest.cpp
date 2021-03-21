@@ -75,12 +75,58 @@ void TexturedMultiLightTest::loadScene()
 
 void TexturedMultiLightTest::createEffects()
 {
-    effect = make_unique<TexturedMultiLightEffect>(graphicsDevice, scene);
-    effectImpl = dynamic_cast<TexturedMultiLightEffect*>(effect.get());
-    effectImpl->setLight(0, pointLight);
-    effectImpl->setLight(1, spotLight);
+    const path shadersDirectory = getAssetsDirectory() / "shaders";
 
-    TestApplication::createEffects();
+    // TODO: support for multiple/different materials/effects/shaders per scene
+    const shared_ptr<Material>& material = scene->getMaterial(0);
+
+
+    effect = make_unique<TexturedMultiLightEffect>(graphicsDevice, scene);
+    effect->load(shadersDirectory, material);
+    effect->setLight(0, pointLight);
+    effect->setLight(1, spotLight);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedMultiLightTest::createUniformBuffers()
+{
+    effect->createUniformBuffers();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedMultiLightTest::createDescriptorPool()
+{
+    effect->createDescriptorPools();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedMultiLightTest::createDescriptorSetLayouts()
+{
+    effect->createDescriptorSetLayouts();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedMultiLightTest::createDescriptorSets()
+{
+    effect->createDescriptorSets();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedMultiLightTest::createPipelineLayout()
+{
+    TestApplication::createDefaultPipelineLayout(*effect);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedMultiLightTest::createPipeline()
+{
+    TestApplication::createDefaultPipeline(*effect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -191,15 +237,38 @@ void TexturedMultiLightTest::drawScene(const shared_ptr<CommandBuffer>& commandB
 
 void TexturedMultiLightTest::updateProjection()
 {
-    effectImpl->setProjectionMatrix(calcDefaultProjection());
+    effect->setProjectionMatrix(calcDefaultProjection());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void TexturedMultiLightTest::updateSceneData(float deltaTime)
 {
-    effectImpl->setViewMatrix(camera.getViewMatrix());
-    effectImpl->updateSceneDataBuffer();
+    effect->setViewMatrix(camera.getViewMatrix());
+    effect->updateSceneDataBuffer();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedMultiLightTest::cleanup()
+{
+    effect->cleanupSwapChain();
+    effect.reset();
+
+    scene.reset();
+
+    TestApplication::cleanup();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedMultiLightTest::cleanupSwapChain()
+{
+    if (effect) {
+        effect->cleanupSwapChain();
+    }
+
+    TestApplication::cleanupSwapChain();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

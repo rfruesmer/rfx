@@ -69,15 +69,61 @@ void PointLightTest::loadScene()
 
 void PointLightTest::createEffects()
 {
+    const path shadersDirectory = getAssetsDirectory() / "shaders";
+
+    // TODO: support for multiple/different materials/effects/shaders per scene
+    const shared_ptr<Material>& material = scene->getMaterial(0);
+
+
     RFX_CHECK_STATE(scene->getLightCount() > 0, "");
     auto light = dynamic_pointer_cast<PointLight>(scene->getLight(0));
     RFX_CHECK_STATE(light != nullptr, "");
 
     effect = make_unique<PointLightEffect>(graphicsDevice, scene);
-    effectImpl = dynamic_cast<PointLightEffect*>(effect.get());
-    effectImpl->setLight(light);
+    effect->load(shadersDirectory, material);
+    effect->setLight(light);
+}
 
-    TestApplication::createEffects();
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PointLightTest::createUniformBuffers()
+{
+    effect->createUniformBuffers();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PointLightTest::createDescriptorPool()
+{
+    effect->createDescriptorPools();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PointLightTest::createDescriptorSetLayouts()
+{
+    effect->createDescriptorSetLayouts();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PointLightTest::createDescriptorSets()
+{
+    effect->createDescriptorSets();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PointLightTest::createPipelineLayout()
+{
+    TestApplication::createDefaultPipelineLayout(*effect);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PointLightTest::createPipeline()
+{
+    TestApplication::createDefaultPipeline(*effect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -187,15 +233,38 @@ void PointLightTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
 
 void PointLightTest::updateProjection()
 {
-    effectImpl->setProjectionMatrix(calcDefaultProjection());
+    effect->setProjectionMatrix(calcDefaultProjection());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void PointLightTest::updateSceneData(float deltaTime)
 {
-    effectImpl->setViewMatrix(camera.getViewMatrix());
-    effectImpl->updateSceneDataBuffer();
+    effect->setViewMatrix(camera.getViewMatrix());
+    effect->updateSceneDataBuffer();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PointLightTest::cleanup()
+{
+    effect->cleanupSwapChain();
+    effect.reset();
+
+    scene.reset();
+
+    TestApplication::cleanup();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PointLightTest::cleanupSwapChain()
+{
+    if (effect) {
+        effect->cleanupSwapChain();
+    }
+
+    TestApplication::cleanupSwapChain();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

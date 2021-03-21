@@ -9,18 +9,6 @@ using namespace std::filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestApplication::createEffects()
-{
-    const path shadersDirectory = getAssetsDirectory() / "shaders";
-
-    // TODO: support for multiple/different materials/effects/shaders per scene
-    const shared_ptr<Material>& material = scene->getMaterial(0);
-
-    effect->load(shadersDirectory, material);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void TestApplication::initGraphicsResources()
 {
     createUniformBuffers();
@@ -32,34 +20,6 @@ void TestApplication::initGraphicsResources()
     createPipeline();
     createFrameBuffers();
     createCommandBuffers();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TestApplication::createUniformBuffers()
-{
-    effect->createUniformBuffers();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TestApplication::createDescriptorPool()
-{
-    effect->createDescriptorPools();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TestApplication::createDescriptorSetLayouts()
-{
-    effect->createDescriptorSetLayouts();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TestApplication::createDescriptorSets()
-{
-    effect->createDescriptorSets();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -182,9 +142,9 @@ void TestApplication::createRenderPass()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestApplication::createPipelineLayout()
+void TestApplication::createDefaultPipelineLayout(const Effect& effect)
 {
-    vector<VkDescriptorSetLayout> descriptorSetLayouts = effect->getDescriptorSetLayouts();
+    vector<VkDescriptorSetLayout> descriptorSetLayouts = effect.getDescriptorSetLayouts();
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
@@ -203,7 +163,7 @@ void TestApplication::createPipelineLayout()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestApplication::createPipeline()
+void TestApplication::createDefaultPipeline(const Effect& effect)
 {
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
@@ -295,15 +255,15 @@ void TestApplication::createPipeline()
     };
 
     const array<VkPipelineShaderStageCreateInfo, 2> shaderStages {
-        effect->getVertexShader()->getStageCreateInfo(),
-        effect->getFragmentShader()->getStageCreateInfo()
+        effect.getVertexShader()->getStageCreateInfo(),
+        effect.getFragmentShader()->getStageCreateInfo()
     };
 
     VkGraphicsPipelineCreateInfo pipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .stageCount = shaderStages.size(),
         .pStages = shaderStages.data(),
-        .pVertexInputState = &effect->getVertexShader()->getVertexInputStateCreateInfo(),
+        .pVertexInputState = &effect.getVertexShader()->getVertexInputStateCreateInfo(),
         .pInputAssemblyState = &inputAssemblyStateCreateInfo,
         .pViewportState = &viewportStateCreateInfo,
         .pRasterizationState = &rasterizationStateCreateInfo,
@@ -435,23 +395,8 @@ void TestApplication::updateDevTools()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestApplication::cleanup()
-{
-    effect->cleanupSwapChain();
-    effect.reset();
-    scene.reset();
-
-    Application::cleanup();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void TestApplication::cleanupSwapChain()
 {
-    if (effect) {
-        effect->cleanupSwapChain();
-    }
-
     vkDestroyPipeline(graphicsDevice->getLogicalDevice(), wireframePipeline, nullptr);
 
     Application::cleanupSwapChain();

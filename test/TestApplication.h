@@ -11,17 +11,19 @@ namespace rfx {
 class TestApplication : public Application
 {
 protected:
-    virtual void createEffects();
+    virtual void createEffects() = 0;
+    virtual void createUniformBuffers() = 0;
+    virtual void createDescriptorPool() = 0;
+    virtual void createDescriptorSetLayouts() = 0;
+    virtual void createDescriptorSets() = 0;
+    virtual void createPipelineLayout() = 0;
+    virtual void createPipeline() = 0;
+    virtual void createCommandBuffers() = 0;
 
     void initGraphicsResources();
-    void createUniformBuffers();
-    void createDescriptorPool();
-    void createDescriptorSetLayouts();
-    void createDescriptorSets();
+    void createDefaultPipelineLayout(const Effect& effect);
+    void createDefaultPipeline(const Effect& effect);
     void createRenderPass();
-    void createPipelineLayout();
-    void createPipeline();
-    virtual void createCommandBuffers() = 0;
 
     void beginMainLoop() override;
     void lockMouseCursor(bool lock = true);
@@ -34,7 +36,6 @@ protected:
     glm::mat4 calcDefaultProjection();
     void updateDevTools() override;
 
-    void cleanup() override;
     void cleanupSwapChain() override;
     void recreateSwapChain() override;
 
@@ -42,9 +43,7 @@ protected:
     VkPipeline wireframePipeline = VK_NULL_HANDLE;
     bool wireframe = false;
 
-    std::shared_ptr<Model> scene;
     FlyCamera camera;
-    std::unique_ptr<Effect> effect;
 
     glm::vec2 lastMousePos {};
     bool mouseCursorLocked = false;

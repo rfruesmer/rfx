@@ -67,15 +67,60 @@ void SpotLightTest::loadScene()
 
 void SpotLightTest::createEffects()
 {
+    const path shadersDirectory = getAssetsDirectory() / "shaders";
+
+    // TODO: support for multiple/different materials/effects/shaders per scene
+    const shared_ptr<Material>& material = scene->getMaterial(0);
+
     RFX_CHECK_STATE(scene->getLightCount() > 0, "");
     auto light = dynamic_pointer_cast<SpotLight>(scene->getLight(0));
     RFX_CHECK_STATE(light != nullptr, "");
 
     effect = make_unique<SpotLightEffect>(graphicsDevice, scene);
-    effectImpl = dynamic_cast<SpotLightEffect*>(effect.get());
-    effectImpl->setLight(light);
+    effect->load(shadersDirectory, material);
+    effect->setLight(light);
+}
 
-    TestApplication::createEffects();
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SpotLightTest::createUniformBuffers()
+{
+    effect->createUniformBuffers();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SpotLightTest::createDescriptorPool()
+{
+    effect->createDescriptorPools();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SpotLightTest::createDescriptorSetLayouts()
+{
+    effect->createDescriptorSetLayouts();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SpotLightTest::createDescriptorSets()
+{
+    effect->createDescriptorSets();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SpotLightTest::createPipelineLayout()
+{
+    TestApplication::createDefaultPipelineLayout(*effect);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SpotLightTest::createPipeline()
+{
+    TestApplication::createDefaultPipeline(*effect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -185,15 +230,38 @@ void SpotLightTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
 
 void SpotLightTest::updateProjection()
 {
-    effectImpl->setProjectionMatrix(calcDefaultProjection());
+    effect->setProjectionMatrix(calcDefaultProjection());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void SpotLightTest::updateSceneData(float deltaTime)
 {
-    effectImpl->setViewMatrix(camera.getViewMatrix());
-    effectImpl->updateSceneDataBuffer();
+    effect->setViewMatrix(camera.getViewMatrix());
+    effect->updateSceneDataBuffer();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SpotLightTest::cleanup()
+{
+    effect->cleanupSwapChain();
+    effect.reset();
+
+    scene.reset();
+
+    TestApplication::cleanup();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SpotLightTest::cleanupSwapChain()
+{
+    if (effect) {
+        effect->cleanupSwapChain();
+    }
+
+    TestApplication::cleanupSwapChain();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -13,9 +13,20 @@ public:
 
 protected:
     void initGraphics() override;
+
+    void createUniformBuffers() override;
+    void createDescriptorPool() override;
+    void createDescriptorSetLayouts() override;
+    void createDescriptorSets() override;
+    void createPipelineLayout() override;
+    void createPipeline() override;
+
     void updateProjection() override;
     void updateSceneData(float deltaTime) override;
     void updateDevTools() override;
+
+    void cleanup() override;
+    void cleanupSwapChain() override;
 
 private:
     void loadScene();
@@ -27,11 +38,9 @@ private:
     void createCommandBuffers() override;
     void drawScene(const std::shared_ptr<CommandBuffer>& commandBuffer);
 
-    NormalMapEffect* effectImpl = nullptr;
+    std::shared_ptr<Model> scene;
+    std::unique_ptr<NormalMapEffect> effect;
     bool useNormalMap = true;
-
-//    float lightRotSpeed = glm::pi<float>() / 4000.0f;
-//    float lightRotAngle = 100.0f;
 };
 
 } // namespace rfx

@@ -69,12 +69,58 @@ void PBRTest::loadScene()
 
 void PBRTest::createEffects()
 {
-    effect = make_unique<PBREffect>(graphicsDevice, scene);
-    effectImpl = dynamic_cast<PBREffect*>(effect.get());
-    effectImpl->setLight(0, pointLight);
-    effectImpl->setAlbedo({1.0f, 1.0f, 1.0f});
+    const path shadersDirectory = getAssetsDirectory() / "shaders";
 
-    TestApplication::createEffects();
+    // TODO: support for multiple/different materials/effects/shaders per scene
+    const shared_ptr<Material>& material = scene->getMaterial(0);
+
+
+    effect = make_unique<PBREffect>(graphicsDevice, scene);
+    effect->load(shadersDirectory, material);
+    effect->setLight(0, pointLight);
+    effect->setAlbedo({1.0f, 1.0f, 1.0f});
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PBRTest::createUniformBuffers()
+{
+    effect->createUniformBuffers();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PBRTest::createDescriptorPool()
+{
+    effect->createDescriptorPools();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PBRTest::createDescriptorSetLayouts()
+{
+    effect->createDescriptorSetLayouts();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PBRTest::createDescriptorSets()
+{
+    effect->createDescriptorSets();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PBRTest::createPipelineLayout()
+{
+    TestApplication::createDefaultPipelineLayout(*effect);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PBRTest::createPipeline()
+{
+    TestApplication::createDefaultPipeline(*effect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -187,16 +233,16 @@ void PBRTest::drawGeometryNode(
 
 void PBRTest::updateProjection()
 {
-    effectImpl->setProjectionMatrix(calcDefaultProjection());
+    effect->setProjectionMatrix(calcDefaultProjection());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void PBRTest::updateSceneData(float deltaTime)
 {
-    effectImpl->setViewMatrix(camera.getViewMatrix());
-    effectImpl->updateSceneDataBuffer();
-    effectImpl->updateMaterialDataBuffers();
+    effect->setViewMatrix(camera.getViewMatrix());
+    effect->updateSceneDataBuffer();
+    effect->updateMaterialDataBuffers();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -205,38 +251,61 @@ void PBRTest::updateDevTools()
 {
     TestApplication::updateDevTools();
 
-    float value = effectImpl->getMetallicFactor();
+    float value = effect->getMetallicFactor();
     if (devTools->sliderFloat("metallic", &value, 0.0f, 1.0f)) {
-        effectImpl->setMetallicFactor(value);
+        effect->setMetallicFactor(value);
     }
 
-    value = effectImpl->getRoughnessFactor();
+    value = effect->getRoughnessFactor();
     if (devTools->sliderFloat("roughness", &value, 0.0f, 1.0f)) {
-        effectImpl->setRoughnessFactor(value);
+        effect->setRoughnessFactor(value);
     }
 
-    vec3 color = effectImpl->getAlbedo();
+    vec3 color = effect->getAlbedo();
     if (devTools->colorEdit3("albedo", &color.x)) {
-        effectImpl->setAlbedo(color);
+        effect->setAlbedo(color);
     }
 
-    value = effectImpl->getAmbientOcclusion();
+    value = effect->getAmbientOcclusion();
     if (devTools->sliderFloat("ambient", &value, 0.0f, 1.0f)) {
-        effectImpl->setAmbientOcclusion(value);
+        effect->setAmbientOcclusion(value);
     }
 
     const auto& light = static_pointer_cast<PointLight>(scene->getLight(0));
     color = light->getColor();
     if (devTools->colorEdit3("light#0 color", &color.x)) {
         light->setColor(color);
-        effectImpl->setLight(0, light);
+        effect->setLight(0, light);
     }
 
     vec3 lightPos = light->getPosition();
     if (devTools->sliderFloat3("light#0 position", &lightPos.x, -100.0f, 100.0f)) {
         light->setPosition(lightPos);
-        effectImpl->setLight(0, static_pointer_cast<PointLight>(light));
+        effect->setLight(0, static_pointer_cast<PointLight>(light));
     }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PBRTest::cleanup()
+{
+    effect->cleanupSwapChain();
+    effect.reset();
+
+    scene.reset();
+
+    TestApplication::cleanup();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void PBRTest::cleanupSwapChain()
+{
+    if (effect) {
+        effect->cleanupSwapChain();
+    }
+
+    TestApplication::cleanupSwapChain();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -82,12 +82,57 @@ void MultiLightTest::loadScene()
 
 void MultiLightTest::createEffects()
 {
-    effect = make_unique<MultiLightEffect>(graphicsDevice, scene);
-    effectImpl = dynamic_cast<MultiLightEffect*>(effect.get());
-    effectImpl->setLight(0, pointLight);
-    effectImpl->setLight(1, spotLight);
+    const path shadersDirectory = getAssetsDirectory() / "shaders";
 
-    TestApplication::createEffects();
+    // TODO: support for multiple/different materials/effects/shaders per scene
+    const shared_ptr<Material>& material = scene->getMaterial(0);
+
+    effect = make_unique<MultiLightEffect>(graphicsDevice, scene);
+    effect->load(shadersDirectory, material);
+    effect->setLight(0, pointLight);
+    effect->setLight(1, spotLight);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void MultiLightTest::createUniformBuffers()
+{
+    effect->createUniformBuffers();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void MultiLightTest::createDescriptorPool()
+{
+    effect->createDescriptorPools();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void MultiLightTest::createDescriptorSetLayouts()
+{
+    effect->createDescriptorSetLayouts();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void MultiLightTest::createDescriptorSets()
+{
+    effect->createDescriptorSets();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void MultiLightTest::createPipelineLayout()
+{
+    TestApplication::createDefaultPipelineLayout(*effect);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void MultiLightTest::createPipeline()
+{
+    TestApplication::createDefaultPipeline(*effect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -198,15 +243,38 @@ void MultiLightTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
 
 void MultiLightTest::updateProjection()
 {
-    effectImpl->setProjectionMatrix(calcDefaultProjection());
+    effect->setProjectionMatrix(calcDefaultProjection());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void MultiLightTest::updateSceneData(float deltaTime)
 {
-    effectImpl->setViewMatrix(camera.getViewMatrix());
-    effectImpl->updateSceneDataBuffer();
+    effect->setViewMatrix(camera.getViewMatrix());
+    effect->updateSceneDataBuffer();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void MultiLightTest::cleanup()
+{
+    effect->cleanupSwapChain();
+    effect.reset();
+
+    scene.reset();
+
+    TestApplication::cleanup();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void MultiLightTest::cleanupSwapChain()
+{
+    if (effect) {
+        effect->cleanupSwapChain();
+    }
+
+    TestApplication::cleanupSwapChain();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

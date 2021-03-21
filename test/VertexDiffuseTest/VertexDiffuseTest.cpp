@@ -68,11 +68,57 @@ void VertexDiffuseTest::loadScene()
 
 void VertexDiffuseTest::createEffects()
 {
-    effect = make_unique<VertexDiffuseEffect>(graphicsDevice, scene);
-    effectImpl = dynamic_cast<VertexDiffuseEffect*>(effect.get());
-    effectImpl->setLight(light);
+    const path shadersDirectory = getAssetsDirectory() / "shaders";
 
-    TestApplication::createEffects();
+    // TODO: support for multiple/different materials/effects/shaders per scene
+    const shared_ptr<Material>& material = scene->getMaterial(0);
+
+
+    effect = make_unique<VertexDiffuseEffect>(graphicsDevice, scene);
+    effect->load(shadersDirectory, material);
+    effect->setLight(light);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void VertexDiffuseTest::createUniformBuffers()
+{
+    effect->createUniformBuffers();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void VertexDiffuseTest::createDescriptorPool()
+{
+    effect->createDescriptorPools();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void VertexDiffuseTest::createDescriptorSetLayouts()
+{
+    effect->createDescriptorSetLayouts();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void VertexDiffuseTest::createDescriptorSets()
+{
+    effect->createDescriptorSets();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void VertexDiffuseTest::createPipelineLayout()
+{
+    TestApplication::createDefaultPipelineLayout(*effect);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void VertexDiffuseTest::createPipeline()
+{
+    TestApplication::createDefaultPipeline(*effect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -184,15 +230,38 @@ void VertexDiffuseTest::drawGeometryNode(
 
 void VertexDiffuseTest::updateProjection()
 {
-    effectImpl->setProjectionMatrix(calcDefaultProjection());
+    effect->setProjectionMatrix(calcDefaultProjection());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void VertexDiffuseTest::updateSceneData(float deltaTime)
 {
-    effectImpl->setViewMatrix(camera.getViewMatrix());
-    effectImpl->updateSceneDataBuffer();
+    effect->setViewMatrix(camera.getViewMatrix());
+    effect->updateSceneDataBuffer();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void VertexDiffuseTest::cleanup()
+{
+    effect->cleanupSwapChain();
+    effect.reset();
+
+    scene.reset();
+
+    TestApplication::cleanup();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void VertexDiffuseTest::cleanupSwapChain()
+{
+    if (effect) {
+        effect->cleanupSwapChain();
+    }
+
+    TestApplication::cleanupSwapChain();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

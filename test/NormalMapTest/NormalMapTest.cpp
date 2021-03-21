@@ -70,15 +70,61 @@ void NormalMapTest::loadScene()
 
 void NormalMapTest::createEffects()
 {
+    const path shadersDirectory = getAssetsDirectory() / "shaders";
+
+    // TODO: support for multiple/different materials/effects/shaders per scene
+    const shared_ptr<Material>& material = scene->getMaterial(0);
+
+
     RFX_CHECK_STATE(scene->getLightCount() > 0, "");
     auto light = dynamic_pointer_cast<PointLight>(scene->getLight(0));
     RFX_CHECK_STATE(light != nullptr, "");
 
     effect = make_unique<NormalMapEffect>(graphicsDevice, scene);
-    effectImpl = dynamic_cast<NormalMapEffect*>(effect.get());
-    effectImpl->setLight(0, light);
+    effect->load(shadersDirectory, material);
+    effect->setLight(0, light);
+}
 
-    TestApplication::createEffects();
+// ---------------------------------------------------------------------------------------------------------------------
+
+void NormalMapTest::createUniformBuffers()
+{
+    effect->createUniformBuffers();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void NormalMapTest::createDescriptorPool()
+{
+    effect->createDescriptorPools();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void NormalMapTest::createDescriptorSetLayouts()
+{
+    effect->createDescriptorSetLayouts();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void NormalMapTest::createDescriptorSets()
+{
+    effect->createDescriptorSets();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void NormalMapTest::createPipelineLayout()
+{
+    TestApplication::createDefaultPipelineLayout(*effect);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void NormalMapTest::createPipeline()
+{
+    TestApplication::createDefaultPipeline(*effect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -189,16 +235,16 @@ void NormalMapTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
 
 void NormalMapTest::updateProjection()
 {
-    effectImpl->setProjectionMatrix(calcDefaultProjection());
+    effect->setProjectionMatrix(calcDefaultProjection());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void NormalMapTest::updateSceneData(float deltaTime)
 {
-    effectImpl->setViewMatrix(camera.getViewMatrix());
-    effectImpl->setCameraPosition(camera.getPosition());
-    effectImpl->updateSceneDataBuffer();
+    effect->setViewMatrix(camera.getViewMatrix());
+    effect->setCameraPosition(camera.getPosition());
+    effect->updateSceneDataBuffer();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -208,15 +254,38 @@ void NormalMapTest::updateDevTools()
     TestApplication::updateDevTools();
 
     if (devTools->checkBox("Normal Map", &useNormalMap)) {
-        effectImpl->enableNormalMap(useNormalMap);
+        effect->enableNormalMap(useNormalMap);
     }
 
     const auto& light = static_pointer_cast<PointLight>(scene->getLight(0));
     vec3 lightPos = light->getPosition();
     if (devTools->sliderFloat3("light#0 position", &lightPos.x, -10.0f, 10.0f)) {
         light->setPosition(lightPos);
-        effectImpl->setLight(0, static_pointer_cast<PointLight>(light));
+        effect->setLight(0, static_pointer_cast<PointLight>(light));
     }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void NormalMapTest::cleanup()
+{
+    effect->cleanupSwapChain();
+    effect.reset();
+
+    scene.reset();
+
+    TestApplication::cleanup();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void NormalMapTest::cleanupSwapChain()
+{
+    if (effect) {
+        effect->cleanupSwapChain();
+    }
+
+    TestApplication::cleanupSwapChain();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
