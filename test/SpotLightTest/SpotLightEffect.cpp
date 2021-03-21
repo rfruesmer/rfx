@@ -7,11 +7,14 @@ using namespace glm;
 using namespace std;
 
 
+const string SpotLightEffect::VERTEX_SHADER_ID = "spotlight";
+const string SpotLightEffect::FRAGMENT_SHADER_ID = "spotlight";
+
 // ---------------------------------------------------------------------------------------------------------------------
 
 SpotLightEffect::SpotLightEffect(
-    const std::shared_ptr<GraphicsDevice>& graphicsDevice,
-    const std::shared_ptr<Scene>& scene)
+    const shared_ptr<GraphicsDevice>& graphicsDevice,
+    const shared_ptr<Scene>& scene)
         : TestEffect(graphicsDevice, scene) {}
 
 // ---------------------------------------------------------------------------------------------------------------------

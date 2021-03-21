@@ -6,12 +6,14 @@ using namespace rfx;
 using namespace glm;
 using namespace std;
 
+const string VertexDiffuseEffect::VERTEX_SHADER_ID = "vertex_diffuse";
+const string VertexDiffuseEffect::FRAGMENT_SHADER_ID = "vertex_diffuse";
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 VertexDiffuseEffect::VertexDiffuseEffect(
-    const std::shared_ptr<GraphicsDevice>& graphicsDevice,
-    const std::shared_ptr<Scene>& scene)
+    const shared_ptr<GraphicsDevice>& graphicsDevice,
+    const shared_ptr<Scene>& scene)
         : TestEffect(graphicsDevice, scene),
           light_("point") {}
 

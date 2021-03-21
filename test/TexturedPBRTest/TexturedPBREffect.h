@@ -12,8 +12,8 @@ class TexturedPBREffect : public TestEffect
 {
 public:
     static const int MAX_LIGHTS = 4;
-    static inline const std::string VERTEX_SHADER_ID = "pbr_textured";
-    static inline const std::string FRAGMENT_SHADER_ID = "pbr_textured";
+    static const std::string VERTEX_SHADER_ID;
+    static const std::string FRAGMENT_SHADER_ID;
 
     TexturedPBREffect(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,

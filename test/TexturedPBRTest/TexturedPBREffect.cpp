@@ -7,6 +7,9 @@ using namespace glm;
 using namespace std;
 
 
+const string TexturedPBREffect::VERTEX_SHADER_ID = "pbr_textured";
+const string TexturedPBREffect::FRAGMENT_SHADER_ID = "pbr_textured";
+
 // ---------------------------------------------------------------------------------------------------------------------
 
 TexturedPBREffect::TexturedPBREffect(

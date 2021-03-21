@@ -7,11 +7,14 @@ using namespace glm;
 using namespace std;
 
 
+const string PointLightEffect::VERTEX_SHADER_ID = "pointlight";
+const string PointLightEffect::FRAGMENT_SHADER_ID = "pointlight";
+
 // ---------------------------------------------------------------------------------------------------------------------
 
 PointLightEffect::PointLightEffect(
-    const std::shared_ptr<GraphicsDevice>& graphicsDevice,
-    const std::shared_ptr<Scene>& scene)
+    const shared_ptr<GraphicsDevice>& graphicsDevice,
+    const shared_ptr<Scene>& scene)
         : TestEffect(graphicsDevice, scene) {}
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -11,8 +11,8 @@ class NormalMapEffect : public TestEffect
 {
 public:
     static const int MAX_LIGHTS = 4;
-    static inline const std::string VERTEX_SHADER_ID = "normalmap";
-    static inline const std::string FRAGMENT_SHADER_ID = "normalmap";
+    static const std::string VERTEX_SHADER_ID;
+    static const std::string FRAGMENT_SHADER_ID;
 
 
     NormalMapEffect(

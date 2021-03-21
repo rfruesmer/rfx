@@ -7,6 +7,9 @@ using namespace glm;
 using namespace std;
 
 
+const std::string MultiLightEffect::VERTEX_SHADER_ID = "multilight";
+const std::string MultiLightEffect::FRAGMENT_SHADER_ID = "multilight";
+
 // ---------------------------------------------------------------------------------------------------------------------
 
 MultiLightEffect::MultiLightEffect(

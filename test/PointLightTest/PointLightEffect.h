@@ -10,8 +10,8 @@ namespace rfx {
 class PointLightEffect : public TestEffect
 {
 public:
-    static inline const std::string VERTEX_SHADER_ID = "pointlight";
-    static inline const std::string FRAGMENT_SHADER_ID = "pointlight";
+    static const std::string VERTEX_SHADER_ID;
+    static const std::string FRAGMENT_SHADER_ID;
 
     PointLightEffect(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,

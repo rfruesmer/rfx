@@ -9,8 +9,8 @@ namespace rfx {
 class VertexDiffuseEffect : public TestEffect
 {
 public:
-    static const inline std::string VERTEX_SHADER_ID = "vertex_diffuse";
-    static const inline std::string FRAGMENT_SHADER_ID = "vertex_diffuse";
+    static const std::string VERTEX_SHADER_ID;
+    static const std::string FRAGMENT_SHADER_ID;
 
     VertexDiffuseEffect(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,

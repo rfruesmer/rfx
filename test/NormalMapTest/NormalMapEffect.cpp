@@ -7,6 +7,9 @@ using namespace glm;
 using namespace std;
 
 
+const std::string NormalMapEffect::VERTEX_SHADER_ID = "normalmap";
+const std::string NormalMapEffect::FRAGMENT_SHADER_ID = "normalmap";
+
 // ---------------------------------------------------------------------------------------------------------------------
 
 NormalMapEffect::NormalMapEffect(

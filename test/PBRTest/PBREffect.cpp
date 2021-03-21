@@ -7,6 +7,9 @@ using namespace glm;
 using namespace std;
 
 
+const std::string PBREffect::VERTEX_SHADER_ID = "pbr";
+const std::string PBREffect::FRAGMENT_SHADER_ID = "pbr";
+
 // ---------------------------------------------------------------------------------------------------------------------
 
 PBREffect::PBREffect(

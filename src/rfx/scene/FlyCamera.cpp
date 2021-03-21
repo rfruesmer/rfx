@@ -6,6 +6,10 @@ using namespace glm;
 using namespace std;
 
 
+static const glm::vec3 UNIT_X { 1.0f, 0.0f, 0.0f };
+static const glm::vec3 UNIT_Y { 0.0f, 1.0f, 0.0f };
+static const glm::vec3 UNIT_Z { 0.0f, 0.0f, 1.0f };
+
 // ---------------------------------------------------------------------------------------------------------------------
 
 void FlyCamera::setPosition(const vec3& position)

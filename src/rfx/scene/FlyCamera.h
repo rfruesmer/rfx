@@ -5,10 +5,6 @@ namespace rfx {
 
 class FlyCamera
 {
-    static const inline glm::vec3 UNIT_X { 1.0f, 0.0f, 0.0f };
-    static const inline glm::vec3 UNIT_Y { 0.0f, 1.0f, 0.0f };
-    static const inline glm::vec3 UNIT_Z { 0.0f, 0.0f, 1.0f };
-
 public:
     void setPosition(const glm::vec3& position);
     void setVelocity(const glm::vec3& velocity);
