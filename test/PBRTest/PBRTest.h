@@ -16,6 +16,11 @@ protected:
 
 private:
     void loadScene();
+
+protected:
+    void createEffects() override;
+
+private:
     void createCommandBuffers() override;
     void drawGeometryNode(
         uint32_t index,
@@ -23,7 +28,6 @@ private:
 
 
     std::shared_ptr<PointLight> pointLight;
-    std::shared_ptr<SpotLight> spotLight;
     PBREffect* effectImpl = nullptr;
 };
 

@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "rfx/application/ShaderLoader.h"
+#include "rfx/graphics/ShaderLoader.h"
 #include "rfx/graphics/ShaderCompiler.h"
 #include "rfx/common/FileUtil.h"
 #include "rfx/common/Logger.h"

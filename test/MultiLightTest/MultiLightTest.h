@@ -18,6 +18,11 @@ protected:
 
 private:
     void loadScene();
+
+protected:
+    void createEffects() override;
+
+private:
     void createCommandBuffers() override;
     void drawScene(const std::shared_ptr<CommandBuffer>& commandBuffer);
 

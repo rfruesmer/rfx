@@ -16,6 +16,11 @@ protected:
 
 private:
     void loadScene();
+
+protected:
+    void createEffects() override;
+
+private:
     void createCommandBuffers() override;
     void drawGeometryNode(
         uint32_t index,

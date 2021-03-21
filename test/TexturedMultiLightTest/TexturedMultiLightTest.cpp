@@ -32,7 +32,7 @@ void TexturedMultiLightTest::initGraphics()
     Application::initGraphics();
 
     loadScene();
-    loadShaders();
+    createEffects();
     updateProjection();
 
     initGraphicsResources();
@@ -69,11 +69,18 @@ void TexturedMultiLightTest::loadScene()
     spotLight->setDirection({0.0f, -1.0f, 0.0f});
     spotLight->setInnerConeAngle(20.0f);
     spotLight->setOuterConeAngle(30.0f);
+}
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedMultiLightTest::createEffects()
+{
     effect = make_unique<TexturedMultiLightEffect>(graphicsDevice, scene);
     effectImpl = dynamic_cast<TexturedMultiLightEffect*>(effect.get());
     effectImpl->setLight(0, pointLight);
     effectImpl->setLight(1, spotLight);
+
+    TestApplication::createEffects();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

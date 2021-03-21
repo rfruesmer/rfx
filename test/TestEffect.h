@@ -2,8 +2,6 @@
 
 #include "rfx/scene/Effect.h"
 #include "rfx/scene/Model.h"
-//#include "rfx/scene/PointLight.h"
-#include "rfx/graphics/GraphicsDevice.h"
 
 
 namespace rfx {
@@ -23,7 +21,6 @@ public:
 
     void cleanupSwapChain() override;
 
-    [[nodiscard]] VertexFormat getVertexFormat() const override;
     [[nodiscard]] std::vector<VkDescriptorSetLayout> getDescriptorSetLayouts() const override;
     [[nodiscard]] VkDescriptorSet getSceneDescriptorSet() const override;
     [[nodiscard]] const std::vector<VkDescriptorSet>& getMeshDescriptorSets() const override;
@@ -47,7 +44,6 @@ protected:
 
     [[nodiscard]] virtual size_t getSceneDataSize() const = 0;
 
-    std::shared_ptr<GraphicsDevice> graphicsDevice_;
 
     std::shared_ptr<Buffer> sceneDataBuffer_;
     std::vector<std::shared_ptr<Buffer>> materialDataBuffers_; // TODO: refactor to push constants

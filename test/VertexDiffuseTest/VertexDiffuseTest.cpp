@@ -40,7 +40,7 @@ void VertexDiffuseTest::initGraphics()
     Application::initGraphics();
 
     loadScene();
-    loadShaders();
+    createEffects();
     updateProjection();
 
     initGraphicsResources();
@@ -62,9 +62,17 @@ void VertexDiffuseTest::loadScene()
     light.setPosition({5.0f, 5.0f, 2.0f});
     light.setColor({1.0f, 1.0f, 1.0f});
 
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void VertexDiffuseTest::createEffects()
+{
     effect = make_unique<VertexDiffuseEffect>(graphicsDevice, scene);
     effectImpl = dynamic_cast<VertexDiffuseEffect*>(effect.get());
     effectImpl->setLight(light);
+
+    TestApplication::createEffects();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

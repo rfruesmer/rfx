@@ -11,7 +11,7 @@ using namespace std;
 TestEffect::TestEffect(
     shared_ptr<GraphicsDevice> graphicsDevice,
     shared_ptr<Model> scene)
-    : graphicsDevice_(move(graphicsDevice)),
+    : Effect(move(graphicsDevice)),
       scene_(move(scene)) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -435,13 +435,6 @@ VkWriteDescriptorSet TestEffect::buildWriteDescriptorSet(
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .pBufferInfo = descriptorBufferInfo
     };
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-VertexFormat TestEffect::getVertexFormat() const
-{
-    return scene_->getMaterial(0)->getVertexFormat(); // TODO: support for multiple/different vertex formats
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

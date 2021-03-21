@@ -39,7 +39,7 @@ void NormalMapTest::initGraphics()
     Application::initGraphics();
 
     loadScene();
-    loadShaders();
+    createEffects();
     updateProjection();
 
     initGraphicsResources();
@@ -63,15 +63,22 @@ void NormalMapTest::loadScene()
 //        material->setShininess(100.0f);
 //    }
 
+    camera.setPosition({ 0.0f, 2.0f, 10.0f });
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void NormalMapTest::createEffects()
+{
     RFX_CHECK_STATE(scene->getLightCount() > 0, "");
     auto light = dynamic_pointer_cast<PointLight>(scene->getLight(0));
     RFX_CHECK_STATE(light != nullptr, "");
 
-    camera.setPosition({ 0.0f, 2.0f, 10.0f });
-
     effect = make_unique<NormalMapEffect>(graphicsDevice, scene);
     effectImpl = dynamic_cast<NormalMapEffect*>(effect.get());
     effectImpl->setLight(0, light);
+
+    TestApplication::createEffects();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

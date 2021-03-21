@@ -1,7 +1,5 @@
 #include "rfx/pch.h"
 #include "TestApplication.h"
-#include "rfx/application/ShaderLoader.h"
-#include "rfx/common/Logger.h"
 
 using namespace rfx;
 using namespace glm;
@@ -11,38 +9,14 @@ using namespace std::filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestApplication::loadShaders()
+void TestApplication::createEffects()
 {
-    // TODO: support for multiple/different shaders per scene
+    const path shadersDirectory = getAssetsDirectory() / "shaders";
+
+    // TODO: support for multiple/different materials/effects/shaders per scene
     const shared_ptr<Material>& material = scene->getMaterial(0);
 
-    const path shadersDirectory = getAssetsDirectory() / "shaders";
-    const path vertexShaderFilename = material->getVertexShaderId() + ".vert";
-    const path fragmentShaderFilename = material->getFragmentShaderId() + ".frag";
-    const VertexFormat& vertexFormat = material->getVertexFormat();
-
-    const vector<string> defines = effect->buildShaderDefines(material, vertexFormat);
-    const vector<string> vertexShaderInputs = effect->buildVertexShaderInputs(vertexFormat);
-    const vector<string> vertexShaderOutputs = effect->buildVertexShaderOutputs(vertexFormat);
-    const vector<string> fragmentShaderInputs = effect->buildFragmentShaderInputs(vertexFormat);
-
-
-    const ShaderLoader shaderLoader(graphicsDevice);
-    RFX_LOG_INFO << "Loading vertex shader ...";
-    vertexShader = shaderLoader.loadVertexShader(
-        shadersDirectory / vertexShaderFilename,
-        "main",
-        effect->getVertexFormat(),
-        defines,
-        vertexShaderInputs,
-        vertexShaderOutputs);
-
-    RFX_LOG_INFO << "Loading fragment shader ...";
-    fragmentShader = shaderLoader.loadFragmentShader(
-        shadersDirectory / fragmentShaderFilename,
-        "main",
-        defines,
-        fragmentShaderInputs);
+    effect->load(shadersDirectory, material);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -321,15 +295,15 @@ void TestApplication::createPipeline()
     };
 
     const array<VkPipelineShaderStageCreateInfo, 2> shaderStages {
-        vertexShader->getStageCreateInfo(),
-        fragmentShader->getStageCreateInfo()
+        effect->getVertexShader()->getStageCreateInfo(),
+        effect->getFragmentShader()->getStageCreateInfo()
     };
 
     VkGraphicsPipelineCreateInfo pipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .stageCount = shaderStages.size(),
         .pStages = shaderStages.data(),
-        .pVertexInputState = &vertexShader->getVertexInputStateCreateInfo(),
+        .pVertexInputState = &effect->getVertexShader()->getVertexInputStateCreateInfo(),
         .pInputAssemblyState = &inputAssemblyStateCreateInfo,
         .pViewportState = &viewportStateCreateInfo,
         .pRasterizationState = &rasterizationStateCreateInfo,
@@ -466,8 +440,6 @@ void TestApplication::cleanup()
     effect->cleanupSwapChain();
     effect.reset();
     scene.reset();
-    vertexShader.reset();
-    fragmentShader.reset();
 
     Application::cleanup();
 }

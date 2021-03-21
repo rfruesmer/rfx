@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
 #include "ColoredQuadTest.h"
-#include "rfx/application/ShaderLoader.h"
+#include "rfx/graphics/ShaderLoader.h"
 #include "rfx/common/Logger.h"
 
 using namespace rfx;

@@ -39,7 +39,7 @@ void SpotLightTest::initGraphics()
     Application::initGraphics();
 
     loadScene();
-    loadShaders();
+    createEffects();
     updateProjection();
 
     initGraphicsResources();
@@ -61,7 +61,12 @@ void SpotLightTest::loadScene()
 //        material->setSpecularFactor({1.0f, 0.0f, 0.0f});
 //    }
     camera.setPosition({0.0f, 1.0f, 2.0f});
+}
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SpotLightTest::createEffects()
+{
     RFX_CHECK_STATE(scene->getLightCount() > 0, "");
     auto light = dynamic_pointer_cast<SpotLight>(scene->getLight(0));
     RFX_CHECK_STATE(light != nullptr, "");
@@ -69,6 +74,8 @@ void SpotLightTest::loadScene()
     effect = make_unique<SpotLightEffect>(graphicsDevice, scene);
     effectImpl = dynamic_cast<SpotLightEffect*>(effect.get());
     effectImpl->setLight(light);
+
+    TestApplication::createEffects();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

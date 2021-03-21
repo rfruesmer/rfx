@@ -11,7 +11,7 @@ namespace rfx {
 class TestApplication : public Application
 {
 protected:
-    void loadShaders();
+    virtual void createEffects();
 
     void initGraphicsResources();
     void createUniformBuffers();
@@ -45,8 +45,6 @@ protected:
     std::shared_ptr<Model> scene;
     FlyCamera camera;
     std::unique_ptr<Effect> effect;
-    std::shared_ptr<VertexShader> vertexShader;
-    std::shared_ptr<FragmentShader> fragmentShader;
 
     glm::vec2 lastMousePos {};
     bool mouseCursorLocked = false;

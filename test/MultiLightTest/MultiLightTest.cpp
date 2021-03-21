@@ -39,7 +39,7 @@ void MultiLightTest::initGraphics()
     Application::initGraphics();
 
     loadScene();
-    loadShaders();
+    createEffects();
     updateProjection();
 
     initGraphicsResources();
@@ -76,11 +76,18 @@ void MultiLightTest::loadScene()
     spotLight->setDirection({0.0f, -1.0f, 0.0f});
     spotLight->setInnerConeAngle(20.0f);
     spotLight->setOuterConeAngle(30.0f);
+}
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+void MultiLightTest::createEffects()
+{
     effect = make_unique<MultiLightEffect>(graphicsDevice, scene);
     effectImpl = dynamic_cast<MultiLightEffect*>(effect.get());
     effectImpl->setLight(0, pointLight);
     effectImpl->setLight(1, spotLight);
+
+    TestApplication::createEffects();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -15,8 +15,8 @@ public:
         std::string fragmentShaderId);
 
     [[nodiscard]] const VertexFormat& getVertexFormat() const;
-    [[nodiscard]] const std::string& getVertexShaderId() const;
-    [[nodiscard]] const std::string& getFragmentShaderId() const;
+    [[nodiscard]] const std::string& getVertexShaderId() const;     // TODO: consider replacing with effect id
+    [[nodiscard]] const std::string& getFragmentShaderId() const;   // TODO: consider replacing with effect id
 
     void setBaseColorFactor(const glm::vec4& baseColorFactor);
     [[nodiscard]] const glm::vec4& getBaseColorFactor() const;

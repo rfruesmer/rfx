@@ -32,7 +32,7 @@ void TexturedPBRTest::initGraphics()
     Application::initGraphics();
 
     loadScene();
-    loadShaders();
+    createEffects();
     updateProjection();
 
     initGraphicsResources();
@@ -71,10 +71,17 @@ void TexturedPBRTest::loadScene()
         pointLight->setColor({0.5f, 0.5f, 0.5f});
         scene->addLight(pointLight);
     }
+}
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedPBRTest::createEffects()
+{
     effect = make_unique<TexturedPBREffect>(graphicsDevice, scene);
     effectImpl = dynamic_cast<TexturedPBREffect*>(effect.get());
     effectImpl->setLight(0, pointLight);
+
+    TestApplication::createEffects();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

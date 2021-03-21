@@ -14,14 +14,20 @@ protected:
 
 private:
     void loadScene();
+
+protected:
+    void createEffects() override;
+
+private:
     void createCommandBuffers() override;
     void drawGeometryNode(
         uint32_t index,
         const std::shared_ptr<CommandBuffer>& commandBuffer);
 
+    std::shared_ptr<Model> skyBox;
+
 //    PointLight light;
 //    VertexDiffuseEffect* effectImpl = nullptr;
-
 };
 
 } // namespace rfx

@@ -33,7 +33,7 @@ void CubeMapTest::initGraphics()
     Application::initGraphics();
 
     loadScene();
-    loadShaders();
+    createEffects();
     updateProjection();
 
     initGraphicsResources();
@@ -43,22 +43,29 @@ void CubeMapTest::initGraphics()
 
 void CubeMapTest::loadScene()
 {
-    const path scenePath = getAssetsDirectory() / "samples/vulkan_asset_pack_gltf/models/cube.gltf";
+    const path scenePath = getAssetsDirectory() / "models/vulkan_asset_pack_gltf/models/cube.gltf";
 
     ModelLoader modelLoader(graphicsDevice);
 
-    scene = modelLoader.load(
+    skyBox = modelLoader.load(
         scenePath,
         SkyBoxEffect::VERTEX_SHADER_ID,
         SkyBoxEffect::FRAGMENT_SHADER_ID);
 
-    camera.setPosition({0.0f, 1.0f, 2.0f});
+    camera.setPosition({0.0f, 1.0f, 20.0f});
 //    light.setPosition({5.0f, 5.0f, 2.0f});
 //    light.setColor({1.0f, 1.0f, 1.0f});
 //
 //    effect = make_unique<VertexDiffuseEffect>(graphicsDevice, scene);
 //    effectImpl = dynamic_cast<VertexDiffuseEffect*>(effect.get());
 //    effectImpl->setLight(light);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CubeMapTest::createEffects()
+{
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

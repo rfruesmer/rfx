@@ -1,7 +1,7 @@
 #include "rfx/pch.h"
 #include "TexturedQuadTest.h"
 #include "rfx/application/TextureLoader.h"
-#include "rfx/application/ShaderLoader.h"
+#include "rfx/graphics/ShaderLoader.h"
 #include "rfx/common/Logger.h"
 
 using namespace rfx;
