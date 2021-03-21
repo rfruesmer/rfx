@@ -15,11 +15,11 @@ protected:
     void initGraphics() override;
 
     void createUniformBuffers() override;
-    void createDescriptorPool() override;
+    void createDescriptorPools() override;
     void createDescriptorSetLayouts() override;
     void createDescriptorSets() override;
-    void createPipelineLayout() override;
-    void createPipeline() override;
+    void createPipelineLayouts() override;
+    void createPipelines() override;
 
     void updateProjection() override;
     void updateSceneData(float deltaTime) override;

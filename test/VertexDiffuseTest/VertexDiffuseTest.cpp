@@ -88,7 +88,7 @@ void VertexDiffuseTest::createUniformBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseTest::createDescriptorPool()
+void VertexDiffuseTest::createDescriptorPools()
 {
     effect->createDescriptorPools();
 }
@@ -109,14 +109,14 @@ void VertexDiffuseTest::createDescriptorSets()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseTest::createPipelineLayout()
+void VertexDiffuseTest::createPipelineLayouts()
 {
     TestApplication::createDefaultPipelineLayout(*effect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseTest::createPipeline()
+void VertexDiffuseTest::createPipelines()
 {
     TestApplication::createDefaultPipeline(*effect);
 }

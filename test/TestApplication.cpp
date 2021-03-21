@@ -12,12 +12,12 @@ using namespace std::filesystem;
 void TestApplication::initGraphicsResources()
 {
     createUniformBuffers();
-    createDescriptorPool();
+    createDescriptorPools();
     createDescriptorSetLayouts();
     createDescriptorSets();
     createRenderPass();
-    createPipelineLayout();
-    createPipeline();
+    createPipelineLayouts();
+    createPipelines();
     createFrameBuffers();
     createCommandBuffers();
 }

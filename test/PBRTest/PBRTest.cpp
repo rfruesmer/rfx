@@ -90,7 +90,7 @@ void PBRTest::createUniformBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PBRTest::createDescriptorPool()
+void PBRTest::createDescriptorPools()
 {
     effect->createDescriptorPools();
 }
@@ -111,14 +111,14 @@ void PBRTest::createDescriptorSets()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PBRTest::createPipelineLayout()
+void PBRTest::createPipelineLayouts()
 {
     TestApplication::createDefaultPipelineLayout(*effect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PBRTest::createPipeline()
+void PBRTest::createPipelines()
 {
     TestApplication::createDefaultPipeline(*effect);
 }

@@ -96,7 +96,7 @@ void TexturedMultiLightTest::createUniformBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedMultiLightTest::createDescriptorPool()
+void TexturedMultiLightTest::createDescriptorPools()
 {
     effect->createDescriptorPools();
 }
@@ -117,14 +117,14 @@ void TexturedMultiLightTest::createDescriptorSets()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedMultiLightTest::createPipelineLayout()
+void TexturedMultiLightTest::createPipelineLayouts()
 {
     TestApplication::createDefaultPipelineLayout(*effect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedMultiLightTest::createPipeline()
+void TexturedMultiLightTest::createPipelines()
 {
     TestApplication::createDefaultPipeline(*effect);
 }

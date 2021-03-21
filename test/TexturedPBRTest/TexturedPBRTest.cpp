@@ -96,7 +96,7 @@ void TexturedPBRTest::createUniformBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedPBRTest::createDescriptorPool()
+void TexturedPBRTest::createDescriptorPools()
 {
     effect->createDescriptorPools();
 }
@@ -117,14 +117,14 @@ void TexturedPBRTest::createDescriptorSets()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedPBRTest::createPipelineLayout()
+void TexturedPBRTest::createPipelineLayouts()
 {
     TestApplication::createDefaultPipelineLayout(*effect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedPBRTest::createPipeline()
+void TexturedPBRTest::createPipelines()
 {
     TestApplication::createDefaultPipeline(*effect);
 }

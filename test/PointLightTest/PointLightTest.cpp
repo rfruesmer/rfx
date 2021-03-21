@@ -93,7 +93,7 @@ void PointLightTest::createUniformBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PointLightTest::createDescriptorPool()
+void PointLightTest::createDescriptorPools()
 {
     effect->createDescriptorPools();
 }
@@ -114,14 +114,14 @@ void PointLightTest::createDescriptorSets()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PointLightTest::createPipelineLayout()
+void PointLightTest::createPipelineLayouts()
 {
     TestApplication::createDefaultPipelineLayout(*effect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PointLightTest::createPipeline()
+void PointLightTest::createPipelines()
 {
     TestApplication::createDefaultPipeline(*effect);
 }

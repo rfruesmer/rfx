@@ -77,7 +77,7 @@ void CubeMapTest::createUniformBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void CubeMapTest::createDescriptorPool()
+void CubeMapTest::createDescriptorPools()
 {
 
 }
@@ -98,14 +98,14 @@ void CubeMapTest::createDescriptorSets()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void CubeMapTest::createPipelineLayout()
+void CubeMapTest::createPipelineLayouts()
 {
 
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void CubeMapTest::createPipeline()
+void CubeMapTest::createPipelines()
 {
 
 }

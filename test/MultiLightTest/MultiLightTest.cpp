@@ -102,7 +102,7 @@ void MultiLightTest::createUniformBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void MultiLightTest::createDescriptorPool()
+void MultiLightTest::createDescriptorPools()
 {
     effect->createDescriptorPools();
 }
@@ -123,14 +123,14 @@ void MultiLightTest::createDescriptorSets()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void MultiLightTest::createPipelineLayout()
+void MultiLightTest::createPipelineLayouts()
 {
     TestApplication::createDefaultPipelineLayout(*effect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void MultiLightTest::createPipeline()
+void MultiLightTest::createPipelines()
 {
     TestApplication::createDefaultPipeline(*effect);
 }

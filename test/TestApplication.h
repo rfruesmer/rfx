@@ -13,11 +13,11 @@ class TestApplication : public Application
 protected:
     virtual void createEffects() = 0;
     virtual void createUniformBuffers() = 0;
-    virtual void createDescriptorPool() = 0;
+    virtual void createDescriptorPools() = 0;
     virtual void createDescriptorSetLayouts() = 0;
     virtual void createDescriptorSets() = 0;
-    virtual void createPipelineLayout() = 0;
-    virtual void createPipeline() = 0;
+    virtual void createPipelineLayouts() = 0;
+    virtual void createPipelines() = 0;
     virtual void createCommandBuffers() = 0;
 
     void initGraphicsResources();

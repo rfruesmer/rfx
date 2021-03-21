@@ -90,7 +90,7 @@ void SpotLightTest::createUniformBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SpotLightTest::createDescriptorPool()
+void SpotLightTest::createDescriptorPools()
 {
     effect->createDescriptorPools();
 }
@@ -111,14 +111,14 @@ void SpotLightTest::createDescriptorSets()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SpotLightTest::createPipelineLayout()
+void SpotLightTest::createPipelineLayouts()
 {
     TestApplication::createDefaultPipelineLayout(*effect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SpotLightTest::createPipeline()
+void SpotLightTest::createPipelines()
 {
     TestApplication::createDefaultPipeline(*effect);
 }

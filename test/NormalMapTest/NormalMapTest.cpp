@@ -94,7 +94,7 @@ void NormalMapTest::createUniformBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void NormalMapTest::createDescriptorPool()
+void NormalMapTest::createDescriptorPools()
 {
     effect->createDescriptorPools();
 }
@@ -115,14 +115,14 @@ void NormalMapTest::createDescriptorSets()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void NormalMapTest::createPipelineLayout()
+void NormalMapTest::createPipelineLayouts()
 {
     TestApplication::createDefaultPipelineLayout(*effect);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void NormalMapTest::createPipeline()
+void NormalMapTest::createPipelines()
 {
     TestApplication::createDefaultPipeline(*effect);
 }
