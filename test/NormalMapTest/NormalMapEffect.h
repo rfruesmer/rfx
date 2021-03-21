@@ -1,7 +1,7 @@
 #pragma once
 
 #include "TestEffect.h"
-#include "rfx/scene/Scene.h"
+#include "rfx/scene/Model.h"
 #include "rfx/scene/PointLight.h"
 
 
@@ -17,7 +17,7 @@ public:
 
     NormalMapEffect(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,
-        const std::shared_ptr<Scene>& scene);
+        const std::shared_ptr<Model>& scene);
 
     void setProjectionMatrix(const glm::mat4& projection);
     void setViewMatrix(const glm::mat4& viewMatrix);

@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "rfx/application/SceneLoader.h"
+#include "rfx/application/ModelLoader.h"
 #include "rfx/scene/PointLight.h"
 #include "rfx/scene/SpotLight.h"
 
@@ -33,18 +33,17 @@ struct GLTFLightProperties {
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-class SceneLoader::SceneLoaderImpl
+class ModelLoader::ModelLoaderImpl
 {
 public:
-    explicit SceneLoaderImpl(
-        shared_ptr<GraphicsDevice>&& graphicsDevice,
-        string&& defaultVertexShaderId,
-        string&& defaultFragmentShaderId)
-            : graphicsDevice_(move(graphicsDevice)),
-              defaultVertexShaderId(move(defaultVertexShaderId)),
-              defaultFragmentShaderId(move(defaultFragmentShaderId)) {}
+    explicit ModelLoaderImpl(
+        shared_ptr<GraphicsDevice>&& graphicsDevice)
+            : graphicsDevice_(move(graphicsDevice)) {}
 
-    const shared_ptr<Scene>& load(const path& scenePath);
+    const shared_ptr<Model>& load(
+        const path& scenePath,
+        const string& defaultVertexShaderId,
+        const string& defaultFragmentShaderId);
     void clear();
     VertexFormat getVertexFormatFrom(const tinygltf::Primitive& firstPrimitive);
     void checkVertexFormatConsistency();
@@ -82,7 +81,7 @@ public:
     void loadNodes();
     void loadNode(
         const tinygltf::Node& node,
-        const shared_ptr<SceneNode>& parentNode);
+        const shared_ptr<ModelNode>& parentNode);
     static mat4 getLocalTransformOf(const tinygltf::Node& gltfNode) ;
 
     void buildVertexBuffer();
@@ -91,23 +90,30 @@ public:
     shared_ptr<GraphicsDevice> graphicsDevice_;
     tinygltf::Model gltfModel_;
     VertexFormat vertexFormat_;
-    shared_ptr<Scene> scene_;
+    shared_ptr<Model> scene_;
     uint32_t vertexCount_ = 0;
     vector<float> vertexData_;
     vector<uint32_t> indices_;
     vector<SamplerDesc> samplers_;
     vector<shared_ptr<Image>> images_;
-    string defaultVertexShaderId;
-    string defaultFragmentShaderId;
+    string defaultVertexShaderId_;      // TODO: consider replacing with effect id or taking values from material
+    string defaultFragmentShaderId_;
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const shared_ptr<Scene>& SceneLoader::SceneLoaderImpl::load(const path& scenePath)
+const shared_ptr<Model>& ModelLoader::ModelLoaderImpl::load(
+    const path& scenePath,
+    const string& defaultVertexShaderId,
+    const string& defaultFragmentShaderId)
 {
     RFX_CHECK_STATE(exists(scenePath), "File not found: " + scenePath.string());
 
     clear();
+
+    defaultVertexShaderId_ = defaultVertexShaderId;
+    defaultFragmentShaderId_ = defaultFragmentShaderId;
+
 
     tinygltf::TinyGLTF gltfContext;
     string error;
@@ -142,12 +148,12 @@ const shared_ptr<Scene>& SceneLoader::SceneLoaderImpl::load(const path& scenePat
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneLoader::SceneLoaderImpl::clear()
+void ModelLoader::ModelLoaderImpl::clear()
 {
     gltfModel_ = {};
 
     scene_.reset();
-    scene_ = make_shared<Scene>();
+    scene_ = make_shared<Model>();
     vertexCount_ = 0;
     vertexData_.clear();
     indices_.clear();
@@ -157,7 +163,7 @@ void SceneLoader::SceneLoaderImpl::clear()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VertexFormat SceneLoader::SceneLoaderImpl::getVertexFormatFrom(const tinygltf::Primitive& firstPrimitive)
+VertexFormat ModelLoader::ModelLoaderImpl::getVertexFormatFrom(const tinygltf::Primitive& firstPrimitive)
 {
     unsigned int formatMask = 0;
     unsigned int texCoordSetCount = 0;
@@ -193,7 +199,7 @@ VertexFormat SceneLoader::SceneLoaderImpl::getVertexFormatFrom(const tinygltf::P
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneLoader::SceneLoaderImpl::checkVertexFormatConsistency()
+void ModelLoader::ModelLoaderImpl::checkVertexFormatConsistency()
 {
     for (const auto& mesh : gltfModel_.meshes) {
         for (const auto& primitive : mesh.primitives) {
@@ -205,7 +211,7 @@ void SceneLoader::SceneLoaderImpl::checkVertexFormatConsistency()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneLoader::SceneLoaderImpl::loadImages()
+void ModelLoader::ModelLoaderImpl::loadImages()
 {
     for (const auto& gltfImage : gltfModel_.images) {
         vector<std::byte> imageData;
@@ -235,7 +241,7 @@ void SceneLoader::SceneLoaderImpl::loadImages()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<std::byte> SceneLoader::SceneLoaderImpl::convertToRGBA(const tinygltf::Image& gltfImage)
+vector<std::byte> ModelLoader::ModelLoaderImpl::convertToRGBA(const tinygltf::Image& gltfImage)
 {
     const unsigned char* rgbData = gltfImage.image.data();
 
@@ -297,14 +303,14 @@ SamplerDesc toSamplerDesc(const tinygltf::Sampler& gltfSampler)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneLoader::SceneLoaderImpl::loadSamplers()
+void ModelLoader::ModelLoaderImpl::loadSamplers()
 {
     ranges::transform(gltfModel_.samplers, back_inserter(samplers_), toSamplerDesc);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneLoader::SceneLoaderImpl::loadTextures()
+void ModelLoader::ModelLoaderImpl::loadTextures()
 {
     for (const auto& texture : gltfModel_.textures) {
         loadTexture(texture);
@@ -313,7 +319,7 @@ void SceneLoader::SceneLoaderImpl::loadTextures()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneLoader::SceneLoaderImpl::loadTexture(const tinygltf::Texture& gltfTexture)
+void ModelLoader::ModelLoaderImpl::loadTexture(const tinygltf::Texture& gltfTexture)
 {
     const shared_ptr<Image>& image = images_[gltfTexture.source];
     const ImageDesc imageDesc = image->getDesc();
@@ -329,7 +335,7 @@ void SceneLoader::SceneLoaderImpl::loadTexture(const tinygltf::Texture& gltfText
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneLoader::SceneLoaderImpl::loadMaterials()
+void ModelLoader::ModelLoaderImpl::loadMaterials()
 {
     for (const auto& gltfMaterial : gltfModel_.materials) {
         loadMaterial(gltfMaterial);
@@ -338,15 +344,15 @@ void SceneLoader::SceneLoaderImpl::loadMaterials()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneLoader::SceneLoaderImpl::loadMaterial(const tinygltf::Material& glTFMaterial) const
+void ModelLoader::ModelLoaderImpl::loadMaterial(const tinygltf::Material& glTFMaterial) const
 {
     tinygltf::Value::Object extras = glTFMaterial.extras.Get<tinygltf::Value::Object>();
     const string vertexShaderId = extras.contains("vertexShader")
             ? extras.at("vertexShader").Get<string>()
-            : defaultVertexShaderId;
+            : defaultVertexShaderId_;
     const string fragmentShaderId = extras.contains("fragmentShader")
             ? extras.at("fragmentShader").Get<string>()
-            : defaultFragmentShaderId;
+            : defaultFragmentShaderId_;
 
     const auto material = make_shared<Material>(
         glTFMaterial.name,
@@ -396,7 +402,7 @@ void SceneLoader::SceneLoaderImpl::loadMaterial(const tinygltf::Material& glTFMa
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneLoader::SceneLoaderImpl::loadMeshes()
+void ModelLoader::ModelLoaderImpl::loadMeshes()
 {
     prepareGeometryBuffers();
 
@@ -407,7 +413,7 @@ void SceneLoader::SceneLoaderImpl::loadMeshes()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneLoader::SceneLoaderImpl::prepareGeometryBuffers()
+void ModelLoader::ModelLoaderImpl::prepareGeometryBuffers()
 {
     uint32_t vertexCount = 0;
     uint32_t indexCount = 0;
@@ -435,7 +441,7 @@ void SceneLoader::SceneLoaderImpl::prepareGeometryBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneLoader::SceneLoaderImpl::loadMesh(const tinygltf::Mesh& gltfMesh)
+void ModelLoader::ModelLoaderImpl::loadMesh(const tinygltf::Mesh& gltfMesh)
 {
     auto mesh = make_unique<Mesh>();
 
@@ -459,7 +465,7 @@ void SceneLoader::SceneLoaderImpl::loadMesh(const tinygltf::Mesh& gltfMesh)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneLoader::SceneLoaderImpl::loadVertices(const tinygltf::Primitive& glTFPrimitive)
+void ModelLoader::ModelLoaderImpl::loadVertices(const tinygltf::Primitive& glTFPrimitive)
 {
     const tinygltf::Accessor& accessor = gltfModel_.accessors[glTFPrimitive.attributes.find("POSITION")->second];
     const uint32_t vertexCount = accessor.count;
@@ -515,7 +521,7 @@ void SceneLoader::SceneLoaderImpl::loadVertices(const tinygltf::Primitive& glTFP
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const float* SceneLoader::SceneLoaderImpl::getBufferData(
+const float* ModelLoader::ModelLoaderImpl::getBufferData(
     const tinygltf::Primitive& glTFPrimitive,
     const string& attribute)
 {
@@ -531,7 +537,7 @@ const float* SceneLoader::SceneLoaderImpl::getBufferData(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneLoader::SceneLoaderImpl::appendVertexData(
+void ModelLoader::ModelLoaderImpl::appendVertexData(
     uint32_t vertexCount,
     const float* positionBuffer,
     const float* normalsBuffer,
@@ -552,7 +558,7 @@ void SceneLoader::SceneLoaderImpl::appendVertexData(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-uint32_t SceneLoader::SceneLoaderImpl::appendCoordinates(
+uint32_t ModelLoader::ModelLoaderImpl::appendCoordinates(
     const float* positionBuffer,
     uint32_t vertexIndex,
     uint32_t destIndex)
@@ -564,7 +570,7 @@ uint32_t SceneLoader::SceneLoaderImpl::appendCoordinates(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-uint32_t SceneLoader::SceneLoaderImpl::appendNormals(
+uint32_t ModelLoader::ModelLoaderImpl::appendNormals(
     const float* normalsBuffer,
     uint32_t vertexIndex,
     uint32_t destIndex)
@@ -581,7 +587,7 @@ uint32_t SceneLoader::SceneLoaderImpl::appendNormals(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-uint32_t SceneLoader::SceneLoaderImpl::appendTexCoords(
+uint32_t ModelLoader::ModelLoaderImpl::appendTexCoords(
     const float** texCoordsBuffers,
     const uint32_t vertexIndex,
     const uint32_t destIndex)
@@ -602,7 +608,7 @@ uint32_t SceneLoader::SceneLoaderImpl::appendTexCoords(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-uint32_t SceneLoader::SceneLoaderImpl::appendTangents(
+uint32_t ModelLoader::ModelLoaderImpl::appendTangents(
     const float* tangentsBuffer,
     uint32_t vertexIndex,
     uint32_t destIndex)
@@ -617,7 +623,7 @@ uint32_t SceneLoader::SceneLoaderImpl::appendTangents(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-uint32_t SceneLoader::SceneLoaderImpl::loadIndices(
+uint32_t ModelLoader::ModelLoaderImpl::loadIndices(
     const tinygltf::Primitive& glTFPrimitive,
     uint32_t vertexStart)
 {
@@ -662,7 +668,7 @@ uint32_t SceneLoader::SceneLoaderImpl::loadIndices(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneLoader::SceneLoaderImpl::loadLights()
+void ModelLoader::ModelLoaderImpl::loadLights()
 {
     if (!gltfModel_.extensions.contains("KHR_lights_punctual")) {
         return;
@@ -677,7 +683,7 @@ void SceneLoader::SceneLoaderImpl::loadLights()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneLoader::SceneLoaderImpl::loadLight(const tinygltf::Value::Object& gltfLight)
+void ModelLoader::ModelLoaderImpl::loadLight(const tinygltf::Value::Object& gltfLight)
 {
     shared_ptr<Light> light;
 
@@ -697,7 +703,7 @@ void SceneLoader::SceneLoaderImpl::loadLight(const tinygltf::Value::Object& gltf
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-shared_ptr<Light> SceneLoader::SceneLoaderImpl::loadPointLight(const tinygltf::Value::Object& gltfLight)
+shared_ptr<Light> ModelLoader::ModelLoaderImpl::loadPointLight(const tinygltf::Value::Object& gltfLight)
 {
     const GLTFLightProperties lightProperties = getLightProperties(gltfLight);
 
@@ -711,7 +717,7 @@ shared_ptr<Light> SceneLoader::SceneLoaderImpl::loadPointLight(const tinygltf::V
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-GLTFLightProperties SceneLoader::SceneLoaderImpl::getLightProperties(const tinygltf::Value::Object& gltfLight)
+GLTFLightProperties ModelLoader::ModelLoaderImpl::getLightProperties(const tinygltf::Value::Object& gltfLight)
 {
     GLTFLightProperties lightProperties;
 
@@ -747,7 +753,7 @@ GLTFLightProperties SceneLoader::SceneLoaderImpl::getLightProperties(const tinyg
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-shared_ptr<Light> SceneLoader::SceneLoaderImpl::loadSpotLight(const tinygltf::Value::Object& gltfLight)
+shared_ptr<Light> ModelLoader::ModelLoaderImpl::loadSpotLight(const tinygltf::Value::Object& gltfLight)
 {
     const GLTFLightProperties lightProperties = getLightProperties(gltfLight);
 
@@ -762,7 +768,7 @@ shared_ptr<Light> SceneLoader::SceneLoaderImpl::loadSpotLight(const tinygltf::Va
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneLoader::SceneLoaderImpl::loadNodes()
+void ModelLoader::ModelLoaderImpl::loadNodes()
 {
     RFX_CHECK_STATE(gltfModel_.scenes.size() == 1, "Multiple scenes not supported yet");
 
@@ -775,11 +781,11 @@ void SceneLoader::SceneLoaderImpl::loadNodes()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneLoader::SceneLoaderImpl::loadNode(
+void ModelLoader::ModelLoaderImpl::loadNode(
     const tinygltf::Node& gltfNode,
-    const shared_ptr<SceneNode>& parentNode)
+    const shared_ptr<ModelNode>& parentNode)
 {
-    auto node = make_shared<SceneNode>(parentNode);
+    auto node = make_shared<ModelNode>(parentNode);
     node->setLocalTransform(getLocalTransformOf(gltfNode));
     if (gltfNode.mesh > -1) {
         node->addMesh(scene_->getMesh(gltfNode.mesh));
@@ -798,7 +804,7 @@ void SceneLoader::SceneLoaderImpl::loadNode(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-mat4 SceneLoader::SceneLoaderImpl::getLocalTransformOf(const tinygltf::Node& gltfNode)
+mat4 ModelLoader::ModelLoaderImpl::getLocalTransformOf(const tinygltf::Node& gltfNode)
 {
     mat4 translation { 1.0f };
     mat4 scale { 1.0f };
@@ -827,7 +833,7 @@ mat4 SceneLoader::SceneLoaderImpl::getLocalTransformOf(const tinygltf::Node& glt
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneLoader::SceneLoaderImpl::buildVertexBuffer()
+void ModelLoader::ModelLoaderImpl::buildVertexBuffer()
 {
     const size_t vertexDataSize = vertexData_.size() * sizeof(float);
 
@@ -859,7 +865,7 @@ void SceneLoader::SceneLoaderImpl::buildVertexBuffer()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SceneLoader::SceneLoaderImpl::buildIndexBuffer()
+void ModelLoader::ModelLoaderImpl::buildIndexBuffer()
 {
     const VkDeviceSize bufferSize = indices_.size() * sizeof(uint32_t);
     shared_ptr<Buffer> stagingBuffer = graphicsDevice_->createBuffer(
@@ -893,21 +899,18 @@ void SceneLoader::SceneLoaderImpl::buildIndexBuffer()
 // #####################################################################################################################
 // ---------------------------------------------------------------------------------------------------------------------
 
-SceneLoader::SceneLoader(
-    shared_ptr<GraphicsDevice> graphicsDevice,
-    string defaultVertexShaderId,
-    string defaultFragmentShaderId)
-        : pimpl_(new SceneLoaderImpl(
-                move(graphicsDevice),
-                move(defaultVertexShaderId),
-                move(defaultFragmentShaderId)),
-                    [](SceneLoaderImpl* pimpl) { delete pimpl; }) {}
+ModelLoader::ModelLoader(shared_ptr<GraphicsDevice> graphicsDevice)
+    : pimpl_(new ModelLoaderImpl(move(graphicsDevice)),
+        [](ModelLoaderImpl* pimpl) { delete pimpl; }) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const shared_ptr<Scene>& SceneLoader::load(const path& scenePath)
+const shared_ptr<Model>& ModelLoader::load(
+    const path& scenePath,
+    const string& defaultVertexShaderId,
+    const string& defaultFragmentShaderId)
 {
-    return pimpl_->load(scenePath);
+    return pimpl_->load(scenePath, defaultVertexShaderId, defaultFragmentShaderId);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

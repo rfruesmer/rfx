@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
 #include "NormalMapTest.h"
-#include "rfx/application/SceneLoader.h"
+#include "rfx/application/ModelLoader.h"
 #include "rfx/common/Logger.h"
 #include <cmath>
 
@@ -52,11 +52,12 @@ void NormalMapTest::loadScene()
     const path scenePath = getAssetsDirectory() / "models/plane/brickwall.gltf";
 
 
-    SceneLoader sceneLoader(
-        graphicsDevice,
+    ModelLoader modelLoader(graphicsDevice);
+    scene = modelLoader.load(
+        scenePath,
         NormalMapEffect::VERTEX_SHADER_ID,
         NormalMapEffect::FRAGMENT_SHADER_ID);
-    scene = sceneLoader.load(scenePath);
+
 //    for (const auto& material : scene->getMaterials()) {
 //        material->setSpecularFactor({1.0f, 1.0f, 1.0f});
 //        material->setShininess(100.0f);

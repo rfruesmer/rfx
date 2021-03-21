@@ -14,7 +14,7 @@ const string TexturedPBREffect::FRAGMENT_SHADER_ID = "pbr_textured";
 
 TexturedPBREffect::TexturedPBREffect(
     const shared_ptr<GraphicsDevice>& graphicsDevice,
-    const shared_ptr<Scene>& scene)
+    const shared_ptr<Model>& scene)
         : TestEffect(graphicsDevice, scene) {}
 
 // ---------------------------------------------------------------------------------------------------------------------

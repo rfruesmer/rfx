@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
 #include "TexturedPBRTest.h"
-#include "rfx/application/SceneLoader.h"
+#include "rfx/application/ModelLoader.h"
 #include "rfx/common/Logger.h"
 
 
@@ -48,11 +48,12 @@ void TexturedPBRTest::loadScene()
 //    const path scenePath = getAssetsDirectory() / "models/plane/plane_pbr.gltf";
 //    const path scenePath = getAssetsDirectory() / "models/cubes/ice_low.gltf";
 
-    SceneLoader sceneLoader(
-        graphicsDevice,
+    ModelLoader modelLoader(graphicsDevice);
+    scene = modelLoader.load(
+        scenePath,
         TexturedPBREffect::VERTEX_SHADER_ID,
         TexturedPBREffect::FRAGMENT_SHADER_ID);
-    scene = sceneLoader.load(scenePath);
+
 //    for (const auto& material : scene->getMaterials()) {
 //        material->setSpecularFactor({1.0f, 0.0f, 0.0f});
 //        material->setShininess(128.0f);
@@ -154,7 +155,7 @@ void TexturedPBRTest::drawGeometryNode(
     uint32_t index,
     const shared_ptr<CommandBuffer>& commandBuffer)
 {
-    const shared_ptr<SceneNode>& geometryNode = scene->getGeometryNode(index);
+    const shared_ptr<ModelNode>& geometryNode = scene->getGeometryNode(index);
     const vector<VkDescriptorSet>& meshDescSets = effect->getMeshDescriptorSets();
     const vector<VkDescriptorSet>& materialDescSets = effect->getMaterialDescriptorSets();
 

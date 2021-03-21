@@ -1,7 +1,8 @@
 #include "rfx/pch.h"
-#include "PointLightTest.h"
+#include "CubeMapTest.h"
 #include "rfx/application/ModelLoader.h"
 #include "rfx/common/Logger.h"
+#include "SkyBoxEffect.h"
 
 
 using namespace rfx;
@@ -14,7 +15,7 @@ using namespace std::filesystem;
 int main()
 {
     try {
-        auto theApp = make_shared<PointLightTest>();
+        auto theApp = make_shared<CubeMapTest>();
         theApp->run();
     }
     catch (const exception& ex) {
@@ -27,14 +28,7 @@ int main()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-PointLightTest::PointLightTest()
-{
-    devToolsEnabled = true;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void PointLightTest::initGraphics()
+void CubeMapTest::initGraphics()
 {
     Application::initGraphics();
 
@@ -47,35 +41,29 @@ void PointLightTest::initGraphics()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PointLightTest::loadScene()
+void CubeMapTest::loadScene()
 {
-    const path scenePath = getAssetsDirectory() / "models/spheres/spheres.gltf";
+    const path scenePath = getAssetsDirectory() / "samples/vulkan_asset_pack_gltf/models/cube.gltf";
 
     ModelLoader modelLoader(graphicsDevice);
+
     scene = modelLoader.load(
         scenePath,
-        PointLightEffect::VERTEX_SHADER_ID,
-        PointLightEffect::FRAGMENT_SHADER_ID);
+        SkyBoxEffect::VERTEX_SHADER_ID,
+        SkyBoxEffect::FRAGMENT_SHADER_ID);
 
-    for (const auto& material : scene->getMaterials()) {
-        material->setSpecularFactor({1.0f, 1.0f, 1.0f});
-        material->setShininess(100.0f);
-    }
-
-    RFX_CHECK_STATE(scene->getLightCount() > 0, "");
-    auto light = dynamic_pointer_cast<PointLight>(scene->getLight(0));
-    RFX_CHECK_STATE(light != nullptr, "");
-
-    camera.setPosition({ 0.0f, 1.0f, 10.0f });
-
-    effect = make_unique<PointLightEffect>(graphicsDevice, scene);
-    effectImpl = dynamic_cast<PointLightEffect*>(effect.get());
-    effectImpl->setLight(light);
+    camera.setPosition({0.0f, 1.0f, 2.0f});
+//    light.setPosition({5.0f, 5.0f, 2.0f});
+//    light.setColor({1.0f, 1.0f, 1.0f});
+//
+//    effect = make_unique<VertexDiffuseEffect>(graphicsDevice, scene);
+//    effectImpl = dynamic_cast<VertexDiffuseEffect*>(effect.get());
+//    effectImpl->setLight(light);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PointLightTest::createCommandBuffers()
+void CubeMapTest::createCommandBuffers()
 {
     const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
@@ -136,7 +124,9 @@ void PointLightTest::createCommandBuffers()
         commandBuffer->bindVertexBuffer(scene->getVertexBuffer());
         commandBuffer->bindIndexBuffer(scene->getIndexBuffer());
 
-        drawScene(commandBuffer);
+        for (uint32_t j = 0; j < scene->getGeometryNodeCount(); ++j) {
+            drawGeometryNode(j, commandBuffer);
+        }
 
         commandBuffer->endRenderPass();
         commandBuffer->end();
@@ -145,22 +135,22 @@ void PointLightTest::createCommandBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PointLightTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
+void CubeMapTest::drawGeometryNode(
+    uint32_t index,
+    const shared_ptr<CommandBuffer>& commandBuffer)
 {
+    const shared_ptr<ModelNode>& geometryNode = scene->getGeometryNode(index);
     const vector<VkDescriptorSet>& meshDescSets = effect->getMeshDescriptorSets();
     const vector<VkDescriptorSet>& materialDescSets = effect->getMaterialDescriptorSets();
-    
-    for (size_t i = 0, count = scene->getMeshes().size(); i < count; ++i) {
 
-        commandBuffer->bindDescriptorSet(
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            pipelineLayout,
-            1,
-            meshDescSets[i]);
+    commandBuffer->bindDescriptorSet(
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        pipelineLayout,
+        1,
+        meshDescSets[index]);
 
-        const auto& mesh = scene->getMesh(i);
+    for (const auto& mesh : geometryNode->getMeshes()) {
         for (const auto& subMesh : mesh->getSubMeshes()) {
-
             if (subMesh.indexCount == 0) {
                 continue;
             }
@@ -178,17 +168,17 @@ void PointLightTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PointLightTest::updateProjection()
+void CubeMapTest::updateProjection()
 {
-    effectImpl->setProjectionMatrix(calcDefaultProjection());
+//    effectImpl->setProjectionMatrix(calcDefaultProjection());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PointLightTest::updateSceneData(float deltaTime)
+void CubeMapTest::updateSceneData(float deltaTime)
 {
-    effectImpl->setViewMatrix(camera.getViewMatrix());
-    effectImpl->updateSceneDataBuffer();
+//    effectImpl->setViewMatrix(camera.getViewMatrix());
+//    effectImpl->updateSceneDataBuffer();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

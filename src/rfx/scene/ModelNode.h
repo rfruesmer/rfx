@@ -5,16 +5,16 @@
 
 namespace rfx {
 
-class SceneNode
+class ModelNode
 {
 public:
-    explicit SceneNode(std::shared_ptr<SceneNode> parent);
+    explicit ModelNode(std::shared_ptr<ModelNode> parent);
 
-    [[nodiscard]] SceneNode* getParent() const;
+    [[nodiscard]] ModelNode* getParent() const;
 
-    void addChild(std::shared_ptr<SceneNode> child);
-    void setChildren(const std::vector<std::shared_ptr<SceneNode>>& children);
-    [[nodiscard]] const std::vector<std::shared_ptr<SceneNode>>& getChildren() const;
+    void addChild(std::shared_ptr<ModelNode> child);
+    void setChildren(const std::vector<std::shared_ptr<ModelNode>>& children);
+    [[nodiscard]] const std::vector<std::shared_ptr<ModelNode>>& getChildren() const;
 
     void setLocalTransform(const glm::mat4& localTransform);
     [[nodiscard]] const glm::mat4& getLocalTransform() const;
@@ -34,8 +34,8 @@ public:
 private:
     void updateLights();
 
-    SceneNode* parent_ = nullptr;  // TODO: use weak_ptr?
-    std::vector<std::shared_ptr<SceneNode>> children_;
+    ModelNode* parent_ = nullptr;  // TODO: use weak_ptr?
+    std::vector<std::shared_ptr<ModelNode>> children_;
 
     glm::mat4 localTransform_ { 1.0f };
     glm::mat4 worldTransform_ { 1.0f };

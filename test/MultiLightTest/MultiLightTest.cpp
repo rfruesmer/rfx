@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
 #include "MultiLightTest.h"
-#include "rfx/application/SceneLoader.h"
+#include "rfx/application/ModelLoader.h"
 #include "rfx/common/Logger.h"
 
 
@@ -52,11 +52,12 @@ void MultiLightTest::loadScene()
     const path scenePath = getAssetsDirectory() / "models/plane/plane.gltf";
 
 
-    SceneLoader sceneLoader(
-        graphicsDevice,
+    ModelLoader modelLoader(graphicsDevice);
+    scene = modelLoader.load(
+        scenePath,
         MultiLightEffect::VERTEX_SHADER_ID,
         MultiLightEffect::FRAGMENT_SHADER_ID);
-    scene = sceneLoader.load(scenePath);
+
 //    for (const auto& material : scene->getMaterials()) {
 //        material->setSpecularFactor({1.0f, 0.0f, 0.0f});
 //        material->setShininess(128.0f);

@@ -13,7 +13,7 @@ const string VertexDiffuseEffect::FRAGMENT_SHADER_ID = "vertex_diffuse";
 
 VertexDiffuseEffect::VertexDiffuseEffect(
     const shared_ptr<GraphicsDevice>& graphicsDevice,
-    const shared_ptr<Scene>& scene)
+    const shared_ptr<Model>& scene)
         : TestEffect(graphicsDevice, scene),
           light_("point") {}
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "rfx/scene/Material.h"
-#include "rfx/scene/SceneNode.h"
+#include "rfx/scene/ModelNode.h"
 #include "rfx/scene/Mesh.h"
 #include "rfx/scene/Light.h"
 #include "rfx/graphics/VertexBuffer.h"
@@ -11,17 +11,17 @@
 
 namespace rfx {
 
-class Scene
+class Model
 {
 public:
-    Scene();
+    Model();
 
     void compile();
 
-    [[nodiscard]] const std::shared_ptr<SceneNode>& getRootNode() const;
+    [[nodiscard]] const std::shared_ptr<ModelNode>& getRootNode() const;
 
-    [[nodiscard]] const std::shared_ptr<SceneNode>& getGeometryNode(uint32_t index) const;
-    [[nodiscard]] const std::vector<std::shared_ptr<SceneNode>>& getGeometryNodes() const;
+    [[nodiscard]] const std::shared_ptr<ModelNode>& getGeometryNode(uint32_t index) const;
+    [[nodiscard]] const std::vector<std::shared_ptr<ModelNode>>& getGeometryNodes() const;
     [[nodiscard]] uint32_t getGeometryNodeCount() const;
 
     void setVertexBuffer(std::shared_ptr<VertexBuffer> vertexBuffer);
@@ -50,10 +50,10 @@ public:
     [[nodiscard]] uint32_t getLightCount() const;
 
 private:
-    void compile(const std::shared_ptr<SceneNode>& sceneNode);
+    void compile(const std::shared_ptr<ModelNode>& sceneNode);
 
-    std::shared_ptr<SceneNode> rootNode_;
-    std::vector<std::shared_ptr<SceneNode>> geometryNodes;
+    std::shared_ptr<ModelNode> rootNode_;
+    std::vector<std::shared_ptr<ModelNode>> geometryNodes;
 
     std::shared_ptr<VertexBuffer> vertexBuffer_;
     std::shared_ptr<IndexBuffer> indexBuffer_;

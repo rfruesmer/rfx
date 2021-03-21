@@ -1,63 +1,47 @@
 #include "rfx/pch.h"
-#include "SpotLightEffect.h"
+#include "ReflectionEffect.h"
 
 
 using namespace rfx;
 using namespace glm;
 using namespace std;
 
-
-const string SpotLightEffect::VERTEX_SHADER_ID = "spotlight";
-const string SpotLightEffect::FRAGMENT_SHADER_ID = "spotlight";
+const string ReflectionEffect::VERTEX_SHADER_ID = "cubemap_reflection";
+const string ReflectionEffect::FRAGMENT_SHADER_ID = "cubemap_reflection";
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-SpotLightEffect::SpotLightEffect(
+ReflectionEffect::ReflectionEffect(
     const shared_ptr<GraphicsDevice>& graphicsDevice,
     const shared_ptr<Model>& scene)
         : TestEffect(graphicsDevice, scene) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SpotLightEffect::setProjectionMatrix(const glm::mat4& projection)
+void ReflectionEffect::setProjectionMatrix(const glm::mat4& projection)
 {
     sceneData_.projMatrix = projection;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SpotLightEffect::setViewMatrix(const mat4& viewMatrix)
+void ReflectionEffect::setViewMatrix(const mat4& viewMatrix)
 {
     sceneData_.viewMatrix = viewMatrix;
-    sceneData_.lightPos = viewMatrix * vec4(light_->getPosition(), 1.0f);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SpotLightEffect::setLight(const shared_ptr<SpotLight>& light)
-{
-    light_ = light;
-
-    sceneData_.lightPos = sceneData_.viewMatrix * vec4(light->getPosition(), 1.0f);
-    sceneData_.lightColor = vec4(light->getColor(), 1.0f);
-    sceneData_.spotDirection = light->getDirection();
-    sceneData_.spotInnerConeAngle = glm::cos(glm::radians(light->getInnerConeAngle()));
-    sceneData_.spotOuterConeAngle = glm::cos(glm::radians(light->getOuterConeAngle()));
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-size_t SpotLightEffect::getSceneDataSize() const
+size_t ReflectionEffect::getSceneDataSize() const
 {
     return sizeof(SceneData);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SpotLightEffect::updateSceneDataBuffer()
+void ReflectionEffect::updateSceneDataBuffer()
 {
     sceneDataBuffer_->load(sizeof(SceneData), &sceneData_);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-

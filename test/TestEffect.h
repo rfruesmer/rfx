@@ -1,7 +1,7 @@
 #pragma once
 
 #include "rfx/scene/Effect.h"
-#include "rfx/scene/Scene.h"
+#include "rfx/scene/Model.h"
 //#include "rfx/scene/PointLight.h"
 #include "rfx/graphics/GraphicsDevice.h"
 
@@ -13,7 +13,7 @@ class TestEffect : public Effect
 public:
     TestEffect(
         std::shared_ptr<GraphicsDevice> graphicsDevice,
-        std::shared_ptr<Scene> scene);
+        std::shared_ptr<Model> scene);
 
 
     void createUniformBuffers() override;
@@ -56,7 +56,7 @@ protected:
     // TODO: refactor to sub-buffers
     std::vector<std::shared_ptr<Buffer>> meshDataBuffers_;
 
-    std::shared_ptr<Scene> scene_;
+    std::shared_ptr<Model> scene_;
 
 private:
     struct MaterialData {

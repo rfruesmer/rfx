@@ -359,6 +359,10 @@ MigrationBackup/
 cmake-*
 lib/
 
+# Enterprise Architect
+*.eapx
+*.ldb
+
 # 3rd party artwork
 assets/models/
 assets/samples/

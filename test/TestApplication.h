@@ -1,7 +1,7 @@
 #pragma once
 
 #include "rfx/application/Application.h"
-#include "rfx/scene/Scene.h"
+#include "rfx/scene/Model.h"
 #include "rfx/scene/FlyCamera.h"
 #include "rfx/scene/Effect.h"
 
@@ -42,7 +42,7 @@ protected:
     VkPipeline wireframePipeline = VK_NULL_HANDLE;
     bool wireframe = false;
 
-    std::shared_ptr<Scene> scene;
+    std::shared_ptr<Model> scene;
     FlyCamera camera;
     std::unique_ptr<Effect> effect;
     std::shared_ptr<VertexShader> vertexShader;

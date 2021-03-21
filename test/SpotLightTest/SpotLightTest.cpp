@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
 #include "SpotLightTest.h"
-#include "rfx/application/SceneLoader.h"
+#include "rfx/application/ModelLoader.h"
 #include "rfx/common/Logger.h"
 
 
@@ -51,11 +51,12 @@ void SpotLightTest::loadScene()
 {
     const path scenePath = getAssetsDirectory() / "models/plane/plane_with_spotlight.gltf";
 
-    SceneLoader sceneLoader(
-        graphicsDevice,
+    ModelLoader modelLoader(graphicsDevice);
+    scene = modelLoader.load(
+        scenePath,
         SpotLightEffect::VERTEX_SHADER_ID,
         SpotLightEffect::FRAGMENT_SHADER_ID);
-    scene = sceneLoader.load(scenePath);
+
 //    for (const auto& material : scene->getMaterials()) {
 //        material->setSpecularFactor({1.0f, 0.0f, 0.0f});
 //    }

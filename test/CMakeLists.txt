@@ -32,6 +32,7 @@ set(TESTS
     NormalMapTest
     PBRTest
     TexturedPBRTest
+    CubeMapTest
 )
 
 buildTests()

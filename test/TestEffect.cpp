@@ -10,7 +10,7 @@ using namespace std;
 
 TestEffect::TestEffect(
     shared_ptr<GraphicsDevice> graphicsDevice,
-    shared_ptr<Scene> scene)
+    shared_ptr<Model> scene)
     : graphicsDevice_(move(graphicsDevice)),
       scene_(move(scene)) {}
 

@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
 #include "VertexDiffuseTest.h"
-#include "rfx/application/SceneLoader.h"
+#include "rfx/application/ModelLoader.h"
 #include "rfx/common/Logger.h"
 
 
@@ -52,12 +52,11 @@ void VertexDiffuseTest::loadScene()
 {
     const path scenePath = getAssetsDirectory() / "models/cubes/cubes.gltf";
 
-    SceneLoader sceneLoader(
-        graphicsDevice,
+    ModelLoader modelLoader(graphicsDevice);
+    scene = modelLoader.load(
+        scenePath,
         VertexDiffuseEffect::VERTEX_SHADER_ID,
         VertexDiffuseEffect::FRAGMENT_SHADER_ID);
-
-    scene = sceneLoader.load(scenePath);
 
     camera.setPosition({0.0f, 1.0f, 2.0f});
     light.setPosition({5.0f, 5.0f, 2.0f});
@@ -146,7 +145,7 @@ void VertexDiffuseTest::drawGeometryNode(
     uint32_t index,
     const shared_ptr<CommandBuffer>& commandBuffer)
 {
-    const shared_ptr<SceneNode>& geometryNode = scene->getGeometryNode(index);
+    const shared_ptr<ModelNode>& geometryNode = scene->getGeometryNode(index);
     const vector<VkDescriptorSet>& meshDescSets = effect->getMeshDescriptorSets();
     const vector<VkDescriptorSet>& materialDescSets = effect->getMaterialDescriptorSets();
 
