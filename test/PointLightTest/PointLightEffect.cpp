@@ -15,7 +15,7 @@ const string PointLightEffect::FRAGMENT_SHADER_ID = "pointlight";
 PointLightEffect::PointLightEffect(
     const shared_ptr<GraphicsDevice>& graphicsDevice,
     const shared_ptr<Model>& scene)
-        : TestEffect(graphicsDevice, scene) {}
+        : TestMaterialShader(graphicsDevice, scene) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 

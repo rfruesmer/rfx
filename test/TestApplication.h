@@ -3,7 +3,7 @@
 #include "rfx/application/Application.h"
 #include "rfx/scene/Model.h"
 #include "rfx/scene/FlyCamera.h"
-#include "rfx/scene/Effect.h"
+#include "rfx/scene/MaterialShader.h"
 
 
 namespace rfx {
@@ -23,7 +23,7 @@ protected:
     void initGraphicsResources();
     std::shared_ptr<Buffer> createAndBindUniformBuffer(VkDeviceSize size, const void* data);
     void createDefaultPipelineLayout(const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts);
-    void createDefaultPipeline(const Effect& effect);
+    void createDefaultPipeline(const MaterialShader& effect);
     void createRenderPass();
 
     void beginMainLoop() override;

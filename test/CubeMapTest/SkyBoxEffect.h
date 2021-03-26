@@ -1,10 +1,10 @@
 #pragma once
 
-#include "TestEffect.h"
+#include "TestMaterialShader.h"
 
 namespace rfx {
 
-class SkyBoxEffect : public TestEffect
+class SkyBoxEffect : public TestMaterialShader
 {
 public:
     static const std::string VERTEX_SHADER_ID;

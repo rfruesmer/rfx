@@ -15,7 +15,7 @@ const std::string PBREffect::FRAGMENT_SHADER_ID = "pbr";
 PBREffect::PBREffect(
     const shared_ptr<GraphicsDevice>& graphicsDevice,
     const shared_ptr<Model>& scene)
-        : TestEffect(graphicsDevice, scene) {}
+        : TestMaterialShader(graphicsDevice, scene) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 

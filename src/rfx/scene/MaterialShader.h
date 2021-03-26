@@ -8,10 +8,10 @@
 
 namespace rfx {
 
-class Effect
+class MaterialShader
 {
 public:
-    virtual ~Effect() = default;
+    virtual ~MaterialShader() = default;
 
     virtual void loadShaders(const std::shared_ptr<Material>& material, const std::filesystem::path& shadersDirectory);
     virtual void update(const std::shared_ptr<Material>& material) const = 0;
@@ -31,7 +31,7 @@ public:
     [[nodiscard]] virtual const std::vector<VkDescriptorSet>& getMeshDescriptorSets() const = 0;
 
 protected:
-    explicit Effect(std::shared_ptr<GraphicsDevice> graphicsDevice);
+    explicit MaterialShader(std::shared_ptr<GraphicsDevice> graphicsDevice);
 
     [[nodiscard]] virtual std::vector<std::string> buildShaderDefines(const std::shared_ptr<Material>& material, const VertexFormat& vertexFormat);
     [[nodiscard]] virtual std::vector<std::string> buildVertexShaderInputs(const VertexFormat& vertexFormat);

@@ -1,13 +1,13 @@
 #pragma once
 
-#include "TestEffect.h"
+#include "TestMaterialShader.h"
 #include "rfx/scene/Model.h"
 #include "rfx/scene/SpotLight.h"
 
 
 namespace rfx {
 
-class SpotLightEffect : public TestEffect
+class SpotLightEffect : public TestMaterialShader
 {
 public:
     struct MaterialData {

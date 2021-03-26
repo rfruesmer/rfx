@@ -176,7 +176,7 @@ void TestApplication::createDefaultPipelineLayout(const vector<VkDescriptorSetLa
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestApplication::createDefaultPipeline(const Effect& effect)
+void TestApplication::createDefaultPipeline(const MaterialShader& effect)
 {
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,

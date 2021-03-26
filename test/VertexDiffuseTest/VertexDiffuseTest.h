@@ -1,7 +1,7 @@
 #pragma once
 
 #include "TestApplication.h"
-#include "VertexDiffuseEffect.h"
+#include "VertexDiffuseShader.h"
 
 
 namespace rfx {
@@ -37,7 +37,7 @@ private:
 
     std::shared_ptr<Model> scene;
     PointLight light;
-    std::unique_ptr<VertexDiffuseEffect> effect;
+    std::unique_ptr<VertexDiffuseShader> effect;
 };
 
 } // namespace rfx

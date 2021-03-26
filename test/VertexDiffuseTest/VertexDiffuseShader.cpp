@@ -1,32 +1,32 @@
 #include "rfx/pch.h"
-#include "VertexDiffuseEffect.h"
+#include "VertexDiffuseShader.h"
 
 
 using namespace rfx;
 using namespace glm;
 using namespace std;
 
-const string VertexDiffuseEffect::VERTEX_SHADER_ID = "vertex_diffuse";
-const string VertexDiffuseEffect::FRAGMENT_SHADER_ID = "vertex_diffuse";
+const string VertexDiffuseShader::VERTEX_SHADER_ID = "vertex_diffuse";
+const string VertexDiffuseShader::FRAGMENT_SHADER_ID = "vertex_diffuse";
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VertexDiffuseEffect::VertexDiffuseEffect(
+VertexDiffuseShader::VertexDiffuseShader(
     const shared_ptr<GraphicsDevice>& graphicsDevice,
     const shared_ptr<Model>& scene)
-        : TestEffect(graphicsDevice, scene),
+        : TestMaterialShader(graphicsDevice, scene),
           light_("point") {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseEffect::setProjectionMatrix(const glm::mat4& projection)
+void VertexDiffuseShader::setProjectionMatrix(const glm::mat4& projection)
 {
     sceneData_.projMatrix = projection;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseEffect::setViewMatrix(const mat4& viewMatrix)
+void VertexDiffuseShader::setViewMatrix(const mat4& viewMatrix)
 {
     sceneData_.viewMatrix = viewMatrix;
     sceneData_.lightPos = viewMatrix * vec4(light_.getPosition(), 1.0f);
@@ -34,7 +34,7 @@ void VertexDiffuseEffect::setViewMatrix(const mat4& viewMatrix)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseEffect::setLight(const PointLight& light)
+void VertexDiffuseShader::setLight(const PointLight& light)
 {
     light_ = light;
 
@@ -46,21 +46,21 @@ void VertexDiffuseEffect::setLight(const PointLight& light)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-size_t VertexDiffuseEffect::getSceneDataSize() const
+size_t VertexDiffuseShader::getSceneDataSize() const
 {
     return sizeof(SceneData);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseEffect::updateSceneDataBuffer()
+void VertexDiffuseShader::updateSceneDataBuffer()
 {
     sceneDataBuffer_->load(sizeof(SceneData), &sceneData_);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseEffect::update(const shared_ptr<Material>& material) const
+void VertexDiffuseShader::update(const shared_ptr<Material>& material) const
 {
     const MaterialData materialData {
         .baseColor = material->getBaseColorFactor(),

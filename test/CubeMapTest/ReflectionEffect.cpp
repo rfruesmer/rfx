@@ -14,7 +14,7 @@ const string ReflectionEffect::FRAGMENT_SHADER_ID = "cubemap_reflection";
 ReflectionEffect::ReflectionEffect(
     const shared_ptr<GraphicsDevice>& graphicsDevice,
     const shared_ptr<Model>& scene)
-        : TestEffect(graphicsDevice, scene) {}
+        : TestMaterialShader(graphicsDevice, scene) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 

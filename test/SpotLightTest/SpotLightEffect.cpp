@@ -15,7 +15,7 @@ const string SpotLightEffect::FRAGMENT_SHADER_ID = "spotlight";
 SpotLightEffect::SpotLightEffect(
     const shared_ptr<GraphicsDevice>& graphicsDevice,
     const shared_ptr<Model>& scene)
-        : TestEffect(graphicsDevice, scene) {}
+        : TestMaterialShader(graphicsDevice, scene) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 

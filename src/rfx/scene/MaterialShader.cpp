@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "rfx/scene/Effect.h"
+#include "rfx/scene/MaterialShader.h"
 #include "rfx/graphics/ShaderLoader.h"
 #include "rfx/common/Logger.h"
 
@@ -10,12 +10,12 @@ using namespace std::filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-Effect::Effect(shared_ptr<GraphicsDevice> graphicsDevice)
+MaterialShader::MaterialShader(shared_ptr<GraphicsDevice> graphicsDevice)
     : graphicsDevice_(move(graphicsDevice)) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Effect::loadShaders(const std::shared_ptr<Material>& material, const std::filesystem::path& shadersDirectory)
+void MaterialShader::loadShaders(const std::shared_ptr<Material>& material, const std::filesystem::path& shadersDirectory)
 {
     const path vertexShaderFilename = material->getVertexShaderId() + ".vert";
     const path fragmentShaderFilename = material->getFragmentShaderId() + ".frag";
@@ -47,49 +47,49 @@ void Effect::loadShaders(const std::shared_ptr<Material>& material, const std::f
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const shared_ptr<VertexShader>& Effect::getVertexShader() const
+const shared_ptr<VertexShader>& MaterialShader::getVertexShader() const
 {
     return vertexShader;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const shared_ptr<FragmentShader>& Effect::getFragmentShader() const
+const shared_ptr<FragmentShader>& MaterialShader::getFragmentShader() const
 {
     return fragmentShader;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<string> Effect::buildShaderDefines(const shared_ptr<Material>& material, const VertexFormat& vertexFormat)
+vector<string> MaterialShader::buildShaderDefines(const shared_ptr<Material>& material, const VertexFormat& vertexFormat)
 {
     return vector<string>();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<string> Effect::buildVertexShaderInputs(const VertexFormat& vertexFormat)
+vector<string> MaterialShader::buildVertexShaderInputs(const VertexFormat& vertexFormat)
 {
     return vector<string>();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<string> Effect::buildVertexShaderOutputs(const VertexFormat& vertexFormat)
+vector<string> MaterialShader::buildVertexShaderOutputs(const VertexFormat& vertexFormat)
 {
     return vector<string>();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<string> Effect::buildFragmentShaderInputs(const VertexFormat& vertexFormat)
+vector<string> MaterialShader::buildFragmentShaderInputs(const VertexFormat& vertexFormat)
 {
     return vector<string>();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VertexFormat Effect::getVertexFormat() const
+VertexFormat MaterialShader::getVertexFormat() const
 {
     return vertexShader->getVertexFormat();
 }

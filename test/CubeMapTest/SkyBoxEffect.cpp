@@ -14,7 +14,7 @@ const string SkyBoxEffect::FRAGMENT_SHADER_ID = "skybox";
 SkyBoxEffect::SkyBoxEffect(
     const shared_ptr<GraphicsDevice>& graphicsDevice,
     const shared_ptr<Model>& model)
-        : TestEffect(graphicsDevice, model) {}
+        : TestMaterialShader(graphicsDevice, model) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 

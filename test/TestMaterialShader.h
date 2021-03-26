@@ -1,15 +1,15 @@
 #pragma once
 
-#include "rfx/scene/Effect.h"
+#include "rfx/scene/MaterialShader.h"
 #include "rfx/scene/Model.h"
 
 
 namespace rfx {
 
-class TestEffect : public Effect
+class TestMaterialShader : public MaterialShader
 {
 public:
-    TestEffect(
+    TestMaterialShader(
         std::shared_ptr<GraphicsDevice> graphicsDevice,
         std::shared_ptr<Model> scene);
 

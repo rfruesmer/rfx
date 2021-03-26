@@ -15,7 +15,7 @@ const std::string MultiLightEffect::FRAGMENT_SHADER_ID = "multilight";
 MultiLightEffect::MultiLightEffect(
     const shared_ptr<GraphicsDevice>& graphicsDevice,
     const shared_ptr<Model>& scene)
-        : TestEffect(graphicsDevice, scene) {}
+        : TestMaterialShader(graphicsDevice, scene) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 

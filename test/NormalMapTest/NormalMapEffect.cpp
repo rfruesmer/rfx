@@ -15,7 +15,7 @@ const std::string NormalMapEffect::FRAGMENT_SHADER_ID = "normalmap";
 NormalMapEffect::NormalMapEffect(
     const std::shared_ptr<GraphicsDevice>& graphicsDevice,
     const std::shared_ptr<Model>& scene)
-        : TestEffect(graphicsDevice, scene) {}
+        : TestMaterialShader(graphicsDevice, scene) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 

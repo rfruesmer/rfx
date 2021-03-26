@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "TestEffect.h"
+#include "TestMaterialShader.h"
 
 using namespace rfx;
 using namespace glm;
@@ -8,15 +8,15 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-TestEffect::TestEffect(
+TestMaterialShader::TestMaterialShader(
     shared_ptr<GraphicsDevice> graphicsDevice,
     shared_ptr<Model> scene)
-    : Effect(move(graphicsDevice)),
+    : MaterialShader(move(graphicsDevice)),
       scene_(move(scene)) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestEffect::createUniformBuffers()
+void TestMaterialShader::createUniformBuffers()
 {
     createSceneDataBuffer();
     createMeshDataBuffers();
@@ -24,7 +24,7 @@ void TestEffect::createUniformBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestEffect::createSceneDataBuffer()
+void TestMaterialShader::createSceneDataBuffer()
 {
     sceneDataBuffer_ = graphicsDevice_->createBuffer(
         getSceneDataSize(),
@@ -36,7 +36,7 @@ void TestEffect::createSceneDataBuffer()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestEffect::createMeshDataBuffers()
+void TestMaterialShader::createMeshDataBuffers()
 {
     for (const auto& node : scene_->getGeometryNodes()) {
         shared_ptr<Buffer> meshDataBuffer = graphicsDevice_->createBuffer(
@@ -52,7 +52,7 @@ void TestEffect::createMeshDataBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestEffect::createDescriptorPools()
+void TestMaterialShader::createDescriptorPools()
 {
     const uint32_t meshCount = scene_->getGeometryNodeCount();
     const uint32_t materialCount = scene_->getMaterialCount();
@@ -77,7 +77,7 @@ void TestEffect::createDescriptorPools()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VkDescriptorPool TestEffect::createDescriptorPool(
+VkDescriptorPool TestMaterialShader::createDescriptorPool(
     const vector<VkDescriptorPoolSize>& poolSizes,
     uint32_t maxSets)
 {
@@ -100,7 +100,7 @@ VkDescriptorPool TestEffect::createDescriptorPool(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestEffect::createDescriptorSetLayouts()
+void TestMaterialShader::createDescriptorSetLayouts()
 {
     createSceneDescriptorSetLayout();
     createMeshDescriptorSetLayout();
@@ -108,7 +108,7 @@ void TestEffect::createDescriptorSetLayouts()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestEffect::createSceneDescriptorSetLayout()
+void TestMaterialShader::createSceneDescriptorSetLayout()
 {
     const VkDescriptorSetLayoutBinding sceneDescSetLayoutBinding {
         .binding = 0,
@@ -132,7 +132,7 @@ void TestEffect::createSceneDescriptorSetLayout()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestEffect::createMeshDescriptorSetLayout()
+void TestMaterialShader::createMeshDescriptorSetLayout()
 {
     const VkDescriptorSetLayoutBinding meshDescSetLayoutBinding {
         .binding = 0,
@@ -156,7 +156,7 @@ void TestEffect::createMeshDescriptorSetLayout()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestEffect::createDescriptorSets()
+void TestMaterialShader::createDescriptorSets()
 {
     createSceneDescriptorSet();
     createMeshDescriptorSets();
@@ -164,7 +164,7 @@ void TestEffect::createDescriptorSets()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestEffect::createSceneDescriptorSet()
+void TestMaterialShader::createSceneDescriptorSet()
 {
     const VkDescriptorSetAllocateInfo allocInfo {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
@@ -191,7 +191,7 @@ void TestEffect::createSceneDescriptorSet()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestEffect::createMeshDescriptorSets()
+void TestMaterialShader::createMeshDescriptorSets()
 {
     meshDescriptorSets_.resize(scene_->getGeometryNodeCount());
 
@@ -226,7 +226,7 @@ void TestEffect::createMeshDescriptorSets()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VkWriteDescriptorSet TestEffect::buildWriteDescriptorSet(
+VkWriteDescriptorSet TestMaterialShader::buildWriteDescriptorSet(
     VkDescriptorSet descriptorSet,
     uint32_t binding,
     const VkDescriptorBufferInfo* descriptorBufferInfo)
@@ -244,35 +244,35 @@ VkWriteDescriptorSet TestEffect::buildWriteDescriptorSet(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VkDescriptorPool TestEffect::getDescriptorPool() const
+VkDescriptorPool TestMaterialShader::getDescriptorPool() const
 {
     return descriptorPool_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<VkDescriptorSetLayout> TestEffect::getDescriptorSetLayouts() const
+vector<VkDescriptorSetLayout> TestMaterialShader::getDescriptorSetLayouts() const
 {
     return descriptorSetLayouts_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VkDescriptorSet TestEffect::getSceneDescriptorSet() const
+VkDescriptorSet TestMaterialShader::getSceneDescriptorSet() const
 {
     return sceneDescriptorSet_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const vector<VkDescriptorSet>& TestEffect::getMeshDescriptorSets() const
+const vector<VkDescriptorSet>& TestMaterialShader::getMeshDescriptorSets() const
 {
     return meshDescriptorSets_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestEffect::cleanupSwapChain()
+void TestMaterialShader::cleanupSwapChain()
 {
     VkDevice device = graphicsDevice_->getLogicalDevice();
     for (int i = 0; i < DescriptorType::QUANTITY; ++i) {

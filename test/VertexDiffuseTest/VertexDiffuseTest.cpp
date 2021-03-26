@@ -55,8 +55,8 @@ void VertexDiffuseTest::loadScene()
     ModelLoader modelLoader(graphicsDevice);
     scene = modelLoader.load(
         scenePath,
-        VertexDiffuseEffect::VERTEX_SHADER_ID,
-        VertexDiffuseEffect::FRAGMENT_SHADER_ID);
+        VertexDiffuseShader::VERTEX_SHADER_ID,
+        VertexDiffuseShader::FRAGMENT_SHADER_ID);
 
     camera.setPosition({0.0f, 1.0f, 2.0f});
     light.setPosition({5.0f, 5.0f, 2.0f});
@@ -74,7 +74,7 @@ void VertexDiffuseTest::createEffects()
     const shared_ptr<Material>& material = scene->getMaterial(0);
 
 
-    effect = make_unique<VertexDiffuseEffect>(graphicsDevice, scene);
+    effect = make_unique<VertexDiffuseShader>(graphicsDevice, scene);
     effect->loadShaders(material, shadersDirectory);
     effect->setLight(light);
 }
@@ -86,11 +86,11 @@ void VertexDiffuseTest::createUniformBuffers()
     effect->createUniformBuffers();
 
 
-    const VkDeviceSize bufferSize = sizeof(VertexDiffuseEffect::MaterialData);
+    const VkDeviceSize bufferSize = sizeof(VertexDiffuseShader::MaterialData);
 
     for (const auto& material : scene->getMaterials())
     {
-        const VertexDiffuseEffect::MaterialData materialData {
+        const VertexDiffuseShader::MaterialData materialData {
             .baseColor = material->getBaseColorFactor(),
             .specular = material->getSpecularFactor(),
             .shininess = material->getShininess()

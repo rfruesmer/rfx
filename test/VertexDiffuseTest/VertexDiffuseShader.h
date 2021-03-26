@@ -1,12 +1,12 @@
 #pragma once
 
-#include "TestEffect.h"
+#include "TestMaterialShader.h"
 #include "rfx/scene/PointLight.h"
 
 
 namespace rfx {
 
-class VertexDiffuseEffect : public TestEffect
+class VertexDiffuseShader : public TestMaterialShader
 {
 public:
     struct MaterialData {
@@ -18,7 +18,7 @@ public:
     static const std::string VERTEX_SHADER_ID;
     static const std::string FRAGMENT_SHADER_ID;
 
-    VertexDiffuseEffect(
+    VertexDiffuseShader(
         const std::shared_ptr<GraphicsDevice>& graphicsDevice,
         const std::shared_ptr<Model>& scene);
 

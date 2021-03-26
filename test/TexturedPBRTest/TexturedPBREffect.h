@@ -1,6 +1,6 @@
 #pragma once
 
-#include "TestEffect.h"
+#include "TestMaterialShader.h"
 #include "rfx/scene/Model.h"
 #include "rfx/scene/PointLight.h"
 #include "rfx/scene/SpotLight.h"
@@ -8,7 +8,7 @@
 
 namespace rfx {
 
-class TexturedPBREffect : public TestEffect
+class TexturedPBREffect : public TestMaterialShader
 {
 public:
     struct MaterialData {
