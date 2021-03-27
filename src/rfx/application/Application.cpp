@@ -392,6 +392,7 @@ void Application::cleanup()
 
     cleanupSwapChain();
     destroySyncObjects();
+    vkDestroyDescriptorPool(graphicsDevice->getLogicalDevice(), descriptorPool, nullptr);
 
     graphicsDevice.reset();
     graphicsContext.reset();
@@ -424,7 +425,7 @@ void Application::cleanupSwapChain()
 {
     VkDevice vkDevice = graphicsDevice->getLogicalDevice();
 
-    vkDestroyDescriptorPool(vkDevice, descriptorPool, nullptr);
+//    vkDestroyDescriptorPool(vkDevice, descriptorPool, nullptr);
 
     auto commandBufferHandles = commandBuffers
             | views::transform([](const shared_ptr<CommandBuffer>& commandBuffer)
@@ -437,8 +438,6 @@ void Application::cleanupSwapChain()
         static_cast<uint32_t>(commandBufferHandles.size()),
         commandBufferHandles.data());
 
-    vkDestroyPipeline(vkDevice, defaultPipeline, nullptr);
-    vkDestroyPipelineLayout(vkDevice, pipelineLayout, nullptr);
     vkDestroyRenderPass(vkDevice, renderPass, nullptr);
 }
 

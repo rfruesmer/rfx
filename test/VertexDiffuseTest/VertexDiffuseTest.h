@@ -15,12 +15,7 @@ protected:
     void initGraphics() override;
 
     void createMeshResources() override;
-    void createMaterialResources() override;
-    void createMaterialDataBuffers();
-    void createMaterialDescriptorSetLayouts();
-    void createMaterialDescriptorSets();
 
-    void createPipelineLayouts() override;
     void createPipelines() override;
 
     void updateProjection() override;
@@ -39,6 +34,8 @@ private:
 
     std::shared_ptr<Model> scene;
     PointLight light;
+
+
     std::shared_ptr<VertexDiffuseShader> vertexDiffuseShader;
 
 

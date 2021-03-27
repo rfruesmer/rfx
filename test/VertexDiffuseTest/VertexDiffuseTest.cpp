@@ -28,8 +28,7 @@ int main()
 // ---------------------------------------------------------------------------------------------------------------------
 
 VertexDiffuseTest::VertexDiffuseTest()
-    : TestApplication(VertexDiffuseShader::ID),
-      light("point")
+    : light("point")
 {
     devToolsEnabled = true;
 }
@@ -41,6 +40,7 @@ void VertexDiffuseTest::initGraphics()
     Application::initGraphics();
 
     loadScene();
+    createDescriptorPool();
     createShaders();
     updateProjection();
 
@@ -65,11 +65,25 @@ void VertexDiffuseTest::loadScene()
 
 void VertexDiffuseTest::createShaders()
 {
+    MaterialShaderFactory shaderFactory(graphicsDevice, getShadersDirectory(), VertexDiffuseShader::ID);
+
     shaderFactory.addAllocator(VertexDiffuseShader::ID,
         [this] { return make_shared<VertexDiffuseShader>(graphicsDevice); });
 
     for (const auto& material : scene->getMaterials()) {
         const MaterialShaderPtr shader = shaderFactory.createShaderFor(material);
+
+
+        const VertexDiffuseShader::MaterialData materialData {
+            .baseColor = material->getBaseColorFactor(),
+            .specular = material->getSpecularFactor(),
+            .shininess = material->getShininess()
+        };
+
+        material->setUniformBuffer(
+            createAndBindUniformBuffer(sizeof(materialData), &materialData));
+
+        material->createDescriptorSet(descriptorPool, shader->getMaterialDescriptorSetLayout());
         materialShaderMap[shader].push_back(material);
     }
 
@@ -90,69 +104,23 @@ void VertexDiffuseTest::createMeshResources()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseTest::createMaterialResources()
-{
-    createMaterialDataBuffers();
-    createMaterialDescriptorSetLayouts();
-    createMaterialDescriptorSets();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void VertexDiffuseTest::createMaterialDataBuffers()
-{
-    const VkDeviceSize bufferSize = sizeof(VertexDiffuseShader::MaterialData);
-
-    for (const auto& material : scene->getMaterials())
-    {
-        const VertexDiffuseShader::MaterialData materialData {
-            .baseColor = material->getBaseColorFactor(),
-            .specular = material->getSpecularFactor(),
-            .shininess = material->getShininess()
-        };
-
-        material->setUniformBuffer(
-            createAndBindUniformBuffer(bufferSize, &materialData));
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void VertexDiffuseTest::createMaterialDescriptorSetLayouts()
-{
-    for (const auto& material : scene->getMaterials()) {
-        material->createDescriptorSetLayout();
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void VertexDiffuseTest::createMaterialDescriptorSets()
-{
-    for (const auto& material : scene->getMaterials()) {
-        material->createDescriptorSet(descriptorPool);
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void VertexDiffuseTest::createPipelineLayouts()
-{
-    vector<VkDescriptorSetLayout> descriptorSetLayouts {
-        sceneDescriptorSetLayout_,
-        meshDescriptorSetLayout_
-    };
-
-    descriptorSetLayouts.push_back(scene->getMaterial(0)->getDescriptorSetLayout());
-
-    TestApplication::createDefaultPipelineLayout(descriptorSetLayouts);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void VertexDiffuseTest::createPipelines()
 {
-    TestApplication::createDefaultPipeline(*vertexDiffuseShader);
+    for (const auto& [shader, materials] : materialShaderMap)
+    {
+        VkDescriptorSetLayout materialDescriptorSetLayout = shader->getMaterialDescriptorSetLayout();
+
+        vector<VkDescriptorSetLayout> descriptorSetLayouts {
+            sceneDescriptorSetLayout_,
+            meshDescriptorSetLayout_,
+            materialDescriptorSetLayout
+        };
+
+        VkPipelineLayout pipelineLayout = TestApplication::createDefaultPipelineLayout(descriptorSetLayouts);
+        VkPipeline pipeline = TestApplication::createDefaultPipelineFor(*vertexDiffuseShader, pipelineLayout);
+
+        shader->setPipeline(pipelineLayout, pipeline);
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -213,8 +181,8 @@ void VertexDiffuseTest::createCommandBuffers()
         commandBuffer->beginRenderPass(renderPassBeginInfo);
         commandBuffer->setViewport(viewport);
         commandBuffer->setScissor(scissor);
-        commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, wireframe ? wireframePipeline : defaultPipeline);
-        commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, sceneDescriptorSet_);
+        commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, wireframe ? wireframePipeline : materialShaderMap.begin()->first->getPipeline());
+        commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, materialShaderMap.begin()->first->getPipelineLayout(), 0, sceneDescriptorSet_);
         commandBuffer->bindVertexBuffer(scene->getVertexBuffer());
         commandBuffer->bindIndexBuffer(scene->getIndexBuffer());
 
@@ -240,7 +208,7 @@ void VertexDiffuseTest::drawGeometryNode(
 
         commandBuffer->bindDescriptorSet(
             VK_PIPELINE_BIND_POINT_GRAPHICS,
-            pipelineLayout,
+            materialShaderMap.begin()->first->getPipelineLayout(),
             1,
             mesh->getDescriptorSet());
 
@@ -251,7 +219,7 @@ void VertexDiffuseTest::drawGeometryNode(
 
             commandBuffer->bindDescriptorSet(
                 VK_PIPELINE_BIND_POINT_GRAPHICS,
-                pipelineLayout,
+                materialShaderMap.begin()->first->getPipelineLayout(),
                 2,
                 subMesh.material->getDescriptorSet());
 
@@ -279,6 +247,16 @@ void VertexDiffuseTest::updateSceneData(float deltaTime)
 
 void VertexDiffuseTest::cleanup()
 {
+    VkDevice device = graphicsDevice->getLogicalDevice();
+
+    for (const auto& [shader, materials] : materialShaderMap) {
+        shader->destroyMaterialDescriptorSetLayout();
+
+        vkDestroyPipeline(device, shader->getPipeline(), nullptr);
+        vkDestroyPipelineLayout(device, shader->getPipelineLayout(), nullptr);
+        shader->setPipeline(VK_NULL_HANDLE, VK_NULL_HANDLE);
+    }
+
     vertexDiffuseShader.reset();
     materialShaderMap.clear();
     scene.reset();
@@ -290,12 +268,6 @@ void VertexDiffuseTest::cleanup()
 
 void VertexDiffuseTest::cleanupSwapChain()
 {
-    if (scene) {
-        for (const auto& material : scene->getMaterials()) {
-            material->destroyDescriptorSetLayout();
-        }
-    }
-
     TestApplication::cleanupSwapChain();
 }
 

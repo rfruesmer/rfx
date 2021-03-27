@@ -11,7 +11,10 @@ namespace rfx {
 class MaterialShader
 {
 public:
-    virtual void loadShaders(const std::shared_ptr<Material>& material, const std::filesystem::path& shadersDirectory);
+    virtual void loadShaders(
+        const MaterialPtr& material,
+        VkDescriptorSetLayout materialDescriptorSetLayout,
+        const std::filesystem::path& shadersDirectory);
     virtual void update(const std::shared_ptr<Material>& material) const = 0;
 
     [[nodiscard]] const std::string& getId() const;
@@ -26,6 +29,15 @@ public:
     [[nodiscard]] virtual std::vector<std::string> getVertexShaderInputsFor(const MaterialPtr& material);
     [[nodiscard]] virtual std::vector<std::string> getVertexShaderOutputsFor(const MaterialPtr& material);
     [[nodiscard]] virtual std::vector<std::string> getFragmentShaderInputsFor(const MaterialPtr& material);
+
+
+    void setPipeline(VkPipelineLayout pipelineLayout, VkPipeline pipeline);
+    [[nodiscard]] VkPipelineLayout getPipelineLayout() const;
+    [[nodiscard]] VkPipeline getPipeline() const;
+
+    [[nodiscard]] VkDescriptorSetLayout getMaterialDescriptorSetLayout() const;
+
+    void destroyMaterialDescriptorSetLayout();
 
 protected:
     MaterialShader(
@@ -43,6 +55,11 @@ protected:
     std::shared_ptr<VertexShader> vertexShader;
     std::string fragmentShaderId;
     std::shared_ptr<FragmentShader> fragmentShader;
+
+    VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+    VkPipeline pipeline = VK_NULL_HANDLE;
+
+    VkDescriptorSetLayout materialDescriptorSetLayout = VK_NULL_HANDLE;
 };
 
 using MaterialShaderPtr = std::shared_ptr<MaterialShader>;

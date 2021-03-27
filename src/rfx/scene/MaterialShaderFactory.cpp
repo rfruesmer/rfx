@@ -8,9 +8,11 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 
 MaterialShaderFactory::MaterialShaderFactory(
+    GraphicsDevicePtr graphicsDevice,
     std::filesystem::path shadersDirectory,
     std::string defaultShaderId)
-    : shadersDirectory(move(shadersDirectory)),
+    : graphicsDevice(move(graphicsDevice)),
+      shadersDirectory(move(shadersDirectory)),
       defaultShaderId(move(defaultShaderId)) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -43,7 +45,8 @@ MaterialShaderPtr MaterialShaderFactory::createShaderFor(const MaterialPtr& mate
         return cachedShader;
     }
 
-    shader->loadShaders(material, shadersDirectory);
+    VkDescriptorSetLayout materialDescriptorSetLayout = createMaterialDescriptorSetLayoutFor(material);
+    shader->loadShaders(material, materialDescriptorSetLayout, shadersDirectory);
 
     shaderCache.add(shaderHash, shader);
 
@@ -85,6 +88,82 @@ size_t MaterialShaderFactory::hash(const MaterialShaderPtr& shader, const Materi
     }
 
     return hashValue;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkDescriptorSetLayout MaterialShaderFactory::createMaterialDescriptorSetLayoutFor(const MaterialPtr& material)
+{
+    const VertexFormat& vertexFormat = material->getVertexFormat();
+    vector<VkDescriptorSetLayoutBinding> materialDescSetLayoutBindings;
+    uint32_t binding = 0;
+
+    materialDescSetLayoutBindings.push_back({
+        .binding = binding++,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = 1,
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT
+    });
+
+    if (vertexFormat.containsTexCoords()) {
+        materialDescSetLayoutBindings.push_back({
+            .binding = binding++,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+        });
+    }
+
+    if (vertexFormat.containsTangents()) {
+        materialDescSetLayoutBindings.push_back({
+            .binding = binding++,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+        });
+    }
+
+    if (material->getMetallicRoughnessTexture() != nullptr) {
+        materialDescSetLayoutBindings.push_back({
+            .binding = binding++,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+        });
+    }
+
+    if (material->getOcclusionTexture() != nullptr) {
+        materialDescSetLayoutBindings.push_back({
+            .binding = binding++,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+        });
+    }
+
+    if (material->getEmissiveTexture() != nullptr) {
+        materialDescSetLayoutBindings.push_back({
+            .binding = binding++,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+        });
+    }
+
+    const VkDescriptorSetLayoutCreateInfo materialDescSetLayoutCreateInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .bindingCount = static_cast<uint32_t>(materialDescSetLayoutBindings.size()),
+        .pBindings = materialDescSetLayoutBindings.data()
+    };
+
+    VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
+    ThrowIfFailed(vkCreateDescriptorSetLayout(
+        graphicsDevice->getLogicalDevice(),
+        &materialDescSetLayoutCreateInfo,
+        nullptr,
+        &descriptorSetLayout));
+
+    return descriptorSetLayout;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

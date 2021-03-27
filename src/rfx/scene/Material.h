@@ -16,7 +16,6 @@ public:
         const VertexFormat& vertexFormat,
         std::string shaderId,
         std::shared_ptr<GraphicsDevice> graphicsDevice);
-    ~Material();
 
     [[nodiscard]] const VertexFormat& getVertexFormat() const;
     [[nodiscard]] const std::string& getShaderId() const;
@@ -67,11 +66,8 @@ public:
     void setUniformBuffer(const std::shared_ptr<Buffer>& uniformBuffer);
     [[nodiscard]] const std::shared_ptr<Buffer>& getUniformBuffer() const;
 
-    void createDescriptorSetLayout();
-    void destroyDescriptorSetLayout();
-    [[nodiscard]] VkDescriptorSetLayout getDescriptorSetLayout() const;
 
-    void createDescriptorSet(VkDescriptorPool descriptorPool);
+    void createDescriptorSet(VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout);
     [[nodiscard]] VkDescriptorSet getDescriptorSet() const;
 
 private:
@@ -113,9 +109,8 @@ private:
     float shininess_ = 0.0f; // 0-128
 
     std::shared_ptr<GraphicsDevice> graphicsDevice_;
-    VkDescriptorSetLayout descriptorSetLayout_ = VK_NULL_HANDLE;
     VkDescriptorSet descriptorSet_ = VK_NULL_HANDLE;
-    std::shared_ptr<Buffer> uniformBuffer_; // TODO: consider refactoring to push constants
+    std::shared_ptr<Buffer> uniformBuffer_; // TODO: consider refactoring to push constants or refactor to sub-buffer allocation
 };
 
 using MaterialPtr = std::shared_ptr<Material>;

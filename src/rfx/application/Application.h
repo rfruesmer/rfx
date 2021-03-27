@@ -40,8 +40,6 @@ protected:
     std::shared_ptr<GraphicsDevice> graphicsDevice;
     std::vector<std::shared_ptr<CommandBuffer>> commandBuffers;
 
-    VkPipeline defaultPipeline = VK_NULL_HANDLE;
-    VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
     VkRenderPass renderPass = VK_NULL_HANDLE;
     VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
     uint32_t currentImageIndex = 0;

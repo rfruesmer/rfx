@@ -9,6 +9,7 @@ class MaterialShaderFactory
 {
 public:
     explicit MaterialShaderFactory(
+        GraphicsDevicePtr graphicsDevice,
         std::filesystem::path shadersDirectory,
         std::string defaultShaderId);
 
@@ -21,8 +22,10 @@ public:
     void clearCache();
 
 private:
-    size_t hash(const MaterialShaderPtr& shader, const MaterialPtr& material);
+    static size_t hash(const MaterialShaderPtr& shader, const MaterialPtr& material);
+    VkDescriptorSetLayout createMaterialDescriptorSetLayoutFor(const MaterialPtr& material);
 
+    GraphicsDevicePtr graphicsDevice;
     std::filesystem::path shadersDirectory;
     std::string defaultShaderId;
     std::map<std::string, std::function<MaterialShaderPtr()>> allocatorMap;

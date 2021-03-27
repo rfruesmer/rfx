@@ -9,20 +9,12 @@ using namespace std::filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-TestApplication::TestApplication(const string& defaultShaderId)
-    : shaderFactory(getShadersDirectory(), defaultShaderId) {}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void TestApplication::initGraphicsResources()
 {
-    createDescriptorPool();
     createSceneResources();
     createMeshResources();
-    createMaterialResources();
 
     createRenderPass();
-    createPipelineLayouts();
     createPipelines();
     createFrameBuffers();
     createCommandBuffers();
@@ -363,7 +355,7 @@ void TestApplication::createRenderPass()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestApplication::createDefaultPipelineLayout(const vector<VkDescriptorSetLayout>& descriptorSetLayouts)
+VkPipelineLayout TestApplication::createDefaultPipelineLayout(const vector<VkDescriptorSetLayout>& descriptorSetLayouts)
 {
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
@@ -373,16 +365,21 @@ void TestApplication::createDefaultPipelineLayout(const vector<VkDescriptorSetLa
         .pPushConstantRanges = nullptr
     };
 
+    VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
     ThrowIfFailed(vkCreatePipelineLayout(
         graphicsDevice->getLogicalDevice(),
         &pipelineLayoutInfo,
         nullptr,
         &pipelineLayout));
+
+    return pipelineLayout;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestApplication::createDefaultPipeline(const MaterialShader& effect)
+VkPipeline TestApplication::createDefaultPipelineFor(
+    const MaterialShader& shader,
+    VkPipelineLayout pipelineLayout)
 {
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
@@ -462,34 +459,34 @@ void TestApplication::createDefaultPipeline(const MaterialShader& effect)
         .sampleShadingEnable = VK_FALSE
     };
 
-    const vector<VkDynamicState> dynamicStateEnables {
+    const vector<VkDynamicState> dynamicStates {
         VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_SCISSOR
     };
 
     VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
-        .dynamicStateCount = static_cast<uint32_t>(dynamicStateEnables.size()),
-        .pDynamicStates = dynamicStateEnables.data()
+        .dynamicStateCount = static_cast<uint32_t>(dynamicStates.size()),
+        .pDynamicStates = dynamicStates.data()
     };
 
     const array<VkPipelineShaderStageCreateInfo, 2> shaderStages {
-        effect.getVertexShader()->getStageCreateInfo(),
-        effect.getFragmentShader()->getStageCreateInfo()
+        shader.getVertexShader()->getStageCreateInfo(),
+        shader.getFragmentShader()->getStageCreateInfo()
     };
 
     VkGraphicsPipelineCreateInfo pipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .stageCount = shaderStages.size(),
         .pStages = shaderStages.data(),
-        .pVertexInputState = &effect.getVertexShader()->getVertexInputStateCreateInfo(),
+        .pVertexInputState = &shader.getVertexShader()->getVertexInputStateCreateInfo(),
         .pInputAssemblyState = &inputAssemblyStateCreateInfo,
         .pViewportState = &viewportStateCreateInfo,
         .pRasterizationState = &rasterizationStateCreateInfo,
         .pMultisampleState = &multisampleStateCreateInfo,
         .pDepthStencilState = &depthStencilStateCreateInfo,
         .pColorBlendState = &colorBlendStateCreateInfo,
-        .pDynamicState = &dynamicStateCreateInfo, // Optional
+        .pDynamicState = &dynamicStateCreateInfo,
         .layout = pipelineLayout,
         .renderPass = renderPass,
         .subpass = 0,
@@ -497,13 +494,14 @@ void TestApplication::createDefaultPipeline(const MaterialShader& effect)
         .basePipelineIndex = -1 // Optional
     };
 
+    VkPipeline pipeline = VK_NULL_HANDLE;
     ThrowIfFailed(vkCreateGraphicsPipelines(
         graphicsDevice->getLogicalDevice(),
         VK_NULL_HANDLE,
         1,
         &pipelineCreateInfo,
         nullptr,
-        &defaultPipeline));
+        &pipeline));
 
 
     rasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_LINE;
@@ -514,6 +512,8 @@ void TestApplication::createDefaultPipeline(const MaterialShader& effect)
         &pipelineCreateInfo,
         nullptr,
         &wireframePipeline));
+
+    return pipeline;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -616,7 +616,12 @@ void TestApplication::updateDevTools()
 
 void TestApplication::cleanup()
 {
-    shaderFactory.clearCache();
+    VkDevice device = graphicsDevice->getLogicalDevice();
+
+    if (wireframePipeline) {
+        vkDestroyPipeline(device, wireframePipeline, nullptr);
+        wireframePipeline = VK_NULL_HANDLE;
+    }
 
     Application::cleanup();
 }
@@ -625,9 +630,8 @@ void TestApplication::cleanup()
 
 void TestApplication::cleanupSwapChain()
 {
-    const VkDevice device = graphicsDevice->getLogicalDevice();
+    VkDevice device = graphicsDevice->getLogicalDevice();
 
-    vkDestroyPipeline(device, wireframePipeline, nullptr);
     vkDestroyDescriptorSetLayout(device, sceneDescriptorSetLayout_, nullptr);
     sceneDataBuffer_.reset();
 
@@ -642,7 +646,16 @@ void TestApplication::recreateSwapChain()
 {
     Application::recreateSwapChain();
 
-    initGraphicsResources();
+//    createDescriptorPool();
+//    initGraphicsResources();
+
+    createSceneResources();
+    createMeshResources();
+
+    createRenderPass();
+    createFrameBuffers();
+    createCommandBuffers();
+
     updateProjection();
 }
 

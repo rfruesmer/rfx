@@ -24,7 +24,17 @@ MaterialShader::MaterialShader(
 
 MaterialShader::~MaterialShader()
 {
-    int i = 42;
+    destroyMaterialDescriptorSetLayout();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void MaterialShader::destroyMaterialDescriptorSetLayout()
+{
+    if (materialDescriptorSetLayout != VK_NULL_HANDLE) {
+        vkDestroyDescriptorSetLayout(graphicsDevice_->getLogicalDevice(), materialDescriptorSetLayout, nullptr);
+        materialDescriptorSetLayout = VK_NULL_HANDLE;
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -38,8 +48,9 @@ const string& MaterialShader::getId() const
 
 // TODO: move to factory (?!)
 void MaterialShader::loadShaders(
-    const std::shared_ptr<Material>& material,
-    const std::filesystem::path& shadersDirectory)
+    const MaterialPtr& material,
+    VkDescriptorSetLayout materialDescriptorSetLayout,
+    const path& shadersDirectory)
 {
     const path vertexShaderFilename = vertexShaderId + ".vert";
     const path fragmentShaderFilename = fragmentShaderId + ".frag";
@@ -67,6 +78,8 @@ void MaterialShader::loadShaders(
         "main",
         defines,
         fragmentShaderInputs);
+
+    this->materialDescriptorSetLayout = materialDescriptorSetLayout;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -123,6 +136,35 @@ vector<string> MaterialShader::getVertexShaderOutputsFor(const MaterialPtr& mate
 vector<string> MaterialShader::getFragmentShaderInputsFor(const MaterialPtr& material)
 {
     return vector<string>();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkDescriptorSetLayout MaterialShader::getMaterialDescriptorSetLayout() const
+{
+    return materialDescriptorSetLayout;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void MaterialShader::setPipeline(VkPipelineLayout pipelineLayout, VkPipeline pipeline)
+{
+    this->pipelineLayout = pipelineLayout;
+    this->pipeline = pipeline;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkPipelineLayout MaterialShader::getPipelineLayout() const
+{
+    return pipelineLayout;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkPipeline MaterialShader::getPipeline() const
+{
+    return pipeline;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

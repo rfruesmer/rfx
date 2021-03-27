@@ -26,8 +26,6 @@ protected:
         glm::mat4 modelMatrix;
     };
 
-    explicit TestApplication(const std::string& defaultShaderId);
-
     virtual void createShaders() = 0;
 
     void createDescriptorPool();
@@ -44,16 +42,13 @@ protected:
     void createMeshDescriptorSets(const ModelPtr& model);
     void createMeshDataBuffers(const ModelPtr& model);
 
-    virtual void createMaterialResources() = 0;
-
-    virtual void createPipelineLayouts() = 0;
     virtual void createPipelines() = 0;
     virtual void createCommandBuffers() = 0;
 
     void initGraphicsResources();
     std::shared_ptr<Buffer> createAndBindUniformBuffer(VkDeviceSize size, const void* data);
-    void createDefaultPipelineLayout(const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts);
-    void createDefaultPipeline(const MaterialShader& effect);
+    [[nodiscard]] VkPipelineLayout createDefaultPipelineLayout(const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts);
+    [[nodiscard]] VkPipeline createDefaultPipelineFor(const MaterialShader& shader, VkPipelineLayout pipelineLayout);
     void createRenderPass();
 
     void beginMainLoop() override;
@@ -95,8 +90,6 @@ protected:
     SceneData sceneData_ {};
 
     VkDescriptorSetLayout meshDescriptorSetLayout_ = VK_NULL_HANDLE;
-
-    MaterialShaderFactory shaderFactory;
 
     PointLight light_ { "point" };
 };
