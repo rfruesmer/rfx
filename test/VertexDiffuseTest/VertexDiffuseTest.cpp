@@ -76,15 +76,16 @@ void VertexDiffuseTest::createEffects()
 
     effect = make_unique<VertexDiffuseShader>(graphicsDevice, scene);
     effect->loadShaders(material, shadersDirectory);
-    effect->setLight(light);
+    setLight(light);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void VertexDiffuseTest::createUniformBuffers()
 {
-    effect->createUniformBuffers();
+    createSceneDataBuffer();
 
+    effect->createUniformBuffers();
 
     const VkDeviceSize bufferSize = sizeof(VertexDiffuseShader::MaterialData);
 
@@ -103,15 +104,10 @@ void VertexDiffuseTest::createUniformBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseTest::createDescriptorPools()
-{
-    effect->createDescriptorPools();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void VertexDiffuseTest::createDescriptorSetLayouts()
 {
+    createSceneDescriptorSetLayout();
+
     effect->createDescriptorSetLayouts();
 
     for (const auto& material : scene->getMaterials()) {
@@ -123,10 +119,12 @@ void VertexDiffuseTest::createDescriptorSetLayouts()
 
 void VertexDiffuseTest::createDescriptorSets()
 {
-    effect->createDescriptorSets();
+    createSceneDescriptorSet();
+
+    effect->createDescriptorSets(descriptorPool);
 
     for (const auto& material : scene->getMaterials()) {
-        material->createDescriptorSet(effect->getDescriptorPool());
+        material->createDescriptorSet(descriptorPool);
     }
 }
 
@@ -134,7 +132,11 @@ void VertexDiffuseTest::createDescriptorSets()
 
 void VertexDiffuseTest::createPipelineLayouts()
 {
-    vector<VkDescriptorSetLayout> descriptorSetLayouts = effect->getDescriptorSetLayouts();
+    vector<VkDescriptorSetLayout> descriptorSetLayouts {
+        sceneDescriptorSetLayout_
+    };
+
+    ranges::copy(effect->getDescriptorSetLayouts(), back_inserter(descriptorSetLayouts));
     descriptorSetLayouts.push_back(scene->getMaterial(0)->getDescriptorSetLayout());
 
     TestApplication::createDefaultPipelineLayout(descriptorSetLayouts);
@@ -206,7 +208,7 @@ void VertexDiffuseTest::createCommandBuffers()
         commandBuffer->setViewport(viewport);
         commandBuffer->setScissor(scissor);
         commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, wireframe ? wireframePipeline : defaultPipeline);
-        commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, effect->getSceneDescriptorSet());
+        commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, sceneDescriptorSet_);
         commandBuffer->bindVertexBuffer(scene->getVertexBuffer());
         commandBuffer->bindIndexBuffer(scene->getIndexBuffer());
 
@@ -256,15 +258,15 @@ void VertexDiffuseTest::drawGeometryNode(
 
 void VertexDiffuseTest::updateProjection()
 {
-    effect->setProjectionMatrix(calcDefaultProjection());
+    setProjectionMatrix(calcDefaultProjection());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void VertexDiffuseTest::updateSceneData(float deltaTime)
 {
-    effect->setViewMatrix(camera.getViewMatrix());
-    effect->updateSceneDataBuffer();
+    setViewMatrix(camera.getViewMatrix());
+    updateSceneDataBuffer();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

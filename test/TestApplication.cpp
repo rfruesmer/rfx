@@ -12,7 +12,7 @@ using namespace std::filesystem;
 void TestApplication::initGraphicsResources()
 {
     createUniformBuffers();
-    createDescriptorPools();
+    createDescriptorPool();
     createDescriptorSetLayouts();
     createDescriptorSets();
     createRenderPass();
@@ -35,6 +35,102 @@ shared_ptr<Buffer> TestApplication::createAndBindUniformBuffer(VkDeviceSize size
     uniformBuffer->load(size, data);
 
     return uniformBuffer;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::createDescriptorPool()
+{
+    const uint32_t uniformBufferDescCount = 2000;
+    const uint32_t combinedImageSamplerDescCount = 2000;
+    const uint32_t maxSets = 2000;
+
+    vector<VkDescriptorPoolSize> poolSizes = {
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, uniformBufferDescCount },
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, combinedImageSamplerDescCount }
+    };
+
+    VkDescriptorPoolCreateInfo poolCreateInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .maxSets = maxSets,
+        .poolSizeCount = static_cast<uint32_t>(poolSizes.size()),
+        .pPoolSizes = poolSizes.data()
+    };
+
+    ThrowIfFailed(vkCreateDescriptorPool(
+        graphicsDevice->getLogicalDevice(),
+        &poolCreateInfo,
+        nullptr,
+        &descriptorPool));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::createSceneDescriptorSetLayout()
+{
+    const VkDescriptorSetLayoutBinding sceneDescSetLayoutBinding {
+        .binding = 0,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = 1,
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT
+    };
+
+    const VkDescriptorSetLayoutCreateInfo sceneDescSetLayoutCreateInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .bindingCount = 1,
+        .pBindings = &sceneDescSetLayoutBinding
+    };
+
+    ThrowIfFailed(vkCreateDescriptorSetLayout(
+        graphicsDevice->getLogicalDevice(),
+        &sceneDescSetLayoutCreateInfo,
+        nullptr,
+        &sceneDescriptorSetLayout_));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::createSceneDescriptorSet()
+{
+    const VkDescriptorSetAllocateInfo allocInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool = descriptorPool,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &sceneDescriptorSetLayout_
+    };
+
+    ThrowIfFailed(vkAllocateDescriptorSets(
+        graphicsDevice->getLogicalDevice(),
+        &allocInfo,
+        &sceneDescriptorSet_));
+
+    const VkWriteDescriptorSet writeDescriptorSet =
+        buildWriteDescriptorSet(sceneDescriptorSet_, 0, &sceneDataBuffer_->getDescriptorBufferInfo());
+
+    vkUpdateDescriptorSets(
+        graphicsDevice->getLogicalDevice(),
+        1,
+        &writeDescriptorSet,
+        0,
+        nullptr);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkWriteDescriptorSet TestApplication::buildWriteDescriptorSet(
+    VkDescriptorSet descriptorSet,
+    uint32_t binding,
+    const VkDescriptorBufferInfo* descriptorBufferInfo)
+{
+    return {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = descriptorSet,
+        .dstBinding = binding,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .pBufferInfo = descriptorBufferInfo
+    };
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -411,6 +507,8 @@ void TestApplication::updateDevTools()
 void TestApplication::cleanupSwapChain()
 {
     vkDestroyPipeline(graphicsDevice->getLogicalDevice(), wireframePipeline, nullptr);
+    vkDestroyDescriptorSetLayout(graphicsDevice->getLogicalDevice(), sceneDescriptorSetLayout_, nullptr);
+    sceneDataBuffer_.reset();
 
     Application::cleanupSwapChain();
 }
@@ -465,3 +563,57 @@ mat4 TestApplication::calcDefaultProjection()
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::updateSceneDataBuffer()
+{
+    sceneDataBuffer_->load(sizeof(SceneData), &sceneData_);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::setProjectionMatrix(const glm::mat4& projection)
+{
+    sceneData_.projMatrix = projection;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::setViewMatrix(const mat4& viewMatrix)
+{
+    sceneData_.viewMatrix = viewMatrix;
+    sceneData_.lightPos = viewMatrix * vec4(light_.getPosition(), 1.0f);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::setLight(const PointLight& light)
+{
+    light_ = light;
+
+    sceneData_.lightPos = sceneData_.viewMatrix * vec4(light.getPosition(), 1.0f);
+    sceneData_.La = vec4(0.01f, 0.01f, 0.01f, 1.0f);
+    sceneData_.Ld = vec4(0.7f, 0.7f, 0.7f, 1.0f);
+    sceneData_.Ls = vec4(0.3f, 0.3f, 0.3f, 1.0f);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::createSceneDataBuffer()
+{
+    sceneDataBuffer_ = graphicsDevice->createBuffer(
+        getSceneDataSize(),
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+    graphicsDevice->bind(sceneDataBuffer_);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+size_t TestApplication::getSceneDataSize() const
+{
+    return sizeof(SceneData);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+

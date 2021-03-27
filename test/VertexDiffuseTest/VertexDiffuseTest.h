@@ -15,7 +15,6 @@ protected:
     void initGraphics() override;
 
     void createUniformBuffers() override;
-    void createDescriptorPools() override;
     void createDescriptorSetLayouts() override;
     void createDescriptorSets() override;
     void createPipelineLayouts() override;

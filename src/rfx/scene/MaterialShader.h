@@ -17,9 +17,8 @@ public:
     virtual void update(const std::shared_ptr<Material>& material) const = 0;
 
     virtual void createUniformBuffers() = 0;
-    virtual void createDescriptorPools() = 0;
     virtual void createDescriptorSetLayouts() = 0;
-    virtual void createDescriptorSets() = 0;
+    virtual void createDescriptorSets(VkDescriptorPool descriptorPool) = 0;
 
     virtual void cleanupSwapChain() = 0;
 
@@ -27,7 +26,6 @@ public:
     [[nodiscard]] const std::shared_ptr<FragmentShader>& getFragmentShader() const;
 
     [[nodiscard]] virtual std::vector<VkDescriptorSetLayout> getDescriptorSetLayouts() const = 0;
-    [[nodiscard]] virtual VkDescriptorSet getSceneDescriptorSet() const = 0;
     [[nodiscard]] virtual const std::vector<VkDescriptorSet>& getMeshDescriptorSets() const = 0;
 
 protected:
