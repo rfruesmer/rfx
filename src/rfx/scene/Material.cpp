@@ -11,13 +11,11 @@ using namespace std;
 Material::Material(
     string id,
     const VertexFormat& vertexFormat,
-    string vertexShaderId,
-    string fragmentShaderId,
+    string shaderId,
     shared_ptr<GraphicsDevice> graphicsDevice)
         : id_(move(id)),
           vertexFormat_(vertexFormat),
-          vertexShaderId_(move(vertexShaderId)),
-          fragmentShaderId_(move(fragmentShaderId)),
+          shaderId_(move(shaderId)),
           graphicsDevice_(move(graphicsDevice)) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -36,16 +34,9 @@ const VertexFormat& Material::getVertexFormat() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const string& Material::getVertexShaderId() const
+const string& Material::getShaderId() const
 {
-    return vertexShaderId_;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-const string& Material::getFragmentShaderId() const
-{
-    return fragmentShaderId_;
+    return shaderId_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

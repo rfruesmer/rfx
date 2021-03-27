@@ -9,7 +9,10 @@ namespace rfx {
 class TestMaterialShader : public MaterialShader
 {
 public:
-    TestMaterialShader(GraphicsDevicePtr graphicsDevice);
+    TestMaterialShader(
+        GraphicsDevicePtr graphicsDevice,
+        std::string vertexShaderId,
+        std::string fragmentShaderId);
 };
 
 } // namespace rfx

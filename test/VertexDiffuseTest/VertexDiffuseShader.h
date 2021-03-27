@@ -22,7 +22,7 @@ public:
 
     void update(const std::shared_ptr<Material>& material) const override;
 
-private:
+protected:
 };
 
 } // namespace rfx

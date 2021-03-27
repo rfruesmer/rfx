@@ -14,10 +14,7 @@ public:
     explicit ModelLoader(
         std::shared_ptr<GraphicsDevice> graphicsDevice);
 
-    const std::shared_ptr<Model>& load(
-        const std::filesystem::path& scenePath,
-        const std::string& defaultVertexShaderId,
-        const std::string& defaultFragmentShaderId);
+    const std::shared_ptr<Model>& load(const std::filesystem::path& scenePath);
 
 
 private:

@@ -14,14 +14,12 @@ public:
     Material(
         std::string id,
         const VertexFormat& vertexFormat,
-        std::string vertexShaderId,
-        std::string fragmentShaderId,
+        std::string shaderId,
         std::shared_ptr<GraphicsDevice> graphicsDevice);
     ~Material();
 
     [[nodiscard]] const VertexFormat& getVertexFormat() const;
-    [[nodiscard]] const std::string& getVertexShaderId() const;     // TODO: consider replacing with effect id
-    [[nodiscard]] const std::string& getFragmentShaderId() const;   // TODO: consider replacing with effect id
+    [[nodiscard]] const std::string& getShaderId() const;
 
     void setBaseColorFactor(const glm::vec4& baseColorFactor);
     [[nodiscard]] const glm::vec4& getBaseColorFactor() const;
@@ -89,8 +87,7 @@ private:
     std::string id_;
 
     const VertexFormat vertexFormat_;
-    const std::string vertexShaderId_;
-    const std::string fragmentShaderId_;
+    const std::string shaderId_;
 
     glm::vec4 baseColorFactor_ { 1.0f };
     std::shared_ptr<Texture2D> baseColorTexture_;
@@ -120,5 +117,7 @@ private:
     VkDescriptorSet descriptorSet_ = VK_NULL_HANDLE;
     std::shared_ptr<Buffer> uniformBuffer_; // TODO: consider refactoring to push constants
 };
+
+using MaterialPtr = std::shared_ptr<Material>;
 
 } // namespace rfx

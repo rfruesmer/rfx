@@ -20,7 +20,10 @@ public:
     [[nodiscard]] const std::shared_ptr<FragmentShader>& getFragmentShader() const;
 
 protected:
-    explicit MaterialShader(std::shared_ptr<GraphicsDevice> graphicsDevice);
+    explicit MaterialShader(
+        GraphicsDevicePtr graphicsDevice,
+        std::string vertexShaderId,
+        std::string fragmentShaderId);
 
     [[nodiscard]] virtual std::vector<std::string> buildShaderDefines(const std::shared_ptr<Material>& material, const VertexFormat& vertexFormat);
     [[nodiscard]] virtual std::vector<std::string> buildVertexShaderInputs(const VertexFormat& vertexFormat);
@@ -29,8 +32,12 @@ protected:
 
 
     std::shared_ptr<GraphicsDevice> graphicsDevice_;
+    std::string vertexShaderId;
     std::shared_ptr<VertexShader> vertexShader;
+    std::string fragmentShaderId;
     std::shared_ptr<FragmentShader> fragmentShader;
 };
+
+using MaterialShaderPtr = std::shared_ptr<MaterialShader>;
 
 } // namespace rfx

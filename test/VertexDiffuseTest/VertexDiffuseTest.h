@@ -39,7 +39,9 @@ private:
 
     std::shared_ptr<Model> scene;
     PointLight light;
-    std::unique_ptr<VertexDiffuseShader> effect;
+    std::unique_ptr<VertexDiffuseShader> shader;
+
+    std::unordered_map<MaterialShaderPtr, std::vector<MaterialPtr>> materialShaderMap;
 };
 
 } // namespace rfx

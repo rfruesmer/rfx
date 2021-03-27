@@ -40,10 +40,7 @@ public:
         shared_ptr<GraphicsDevice>&& graphicsDevice)
             : graphicsDevice_(move(graphicsDevice)) {}
 
-    const shared_ptr<Model>& load(
-        const path& scenePath,
-        const string& defaultVertexShaderId,
-        const string& defaultFragmentShaderId);
+    const shared_ptr<Model>& load(const path& scenePath);
     void clear();
     VertexFormat getVertexFormatFrom(const tinygltf::Primitive& firstPrimitive);
     void checkVertexFormatConsistency();
@@ -96,23 +93,15 @@ public:
     vector<uint32_t> indices_;
     vector<SamplerDesc> samplers_;
     vector<shared_ptr<Image>> images_;
-    string defaultVertexShaderId_;      // TODO: consider replacing with effect id or taking values from material
-    string defaultFragmentShaderId_;
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const shared_ptr<Model>& ModelLoader::ModelLoaderImpl::load(
-    const path& scenePath,
-    const string& defaultVertexShaderId,
-    const string& defaultFragmentShaderId)
+const shared_ptr<Model>& ModelLoader::ModelLoaderImpl::load(const path& scenePath)
 {
     RFX_CHECK_STATE(exists(scenePath), "File not found: " + scenePath.string());
 
     clear();
-
-    defaultVertexShaderId_ = defaultVertexShaderId;
-    defaultFragmentShaderId_ = defaultFragmentShaderId;
 
 
     tinygltf::TinyGLTF gltfContext;
@@ -347,18 +336,14 @@ void ModelLoader::ModelLoaderImpl::loadMaterials()
 void ModelLoader::ModelLoaderImpl::loadMaterial(const tinygltf::Material& glTFMaterial) const
 {
     tinygltf::Value::Object extras = glTFMaterial.extras.Get<tinygltf::Value::Object>();
-    const string vertexShaderId = extras.contains("vertexShader")
-            ? extras.at("vertexShader").Get<string>()
-            : defaultVertexShaderId_;
-    const string fragmentShaderId = extras.contains("fragmentShader")
-            ? extras.at("fragmentShader").Get<string>()
-            : defaultFragmentShaderId_;
+    const string shaderId = extras.contains("shader")
+            ? extras.at("shader").Get<string>()
+            : "";
 
     const auto material = make_shared<Material>(
         glTFMaterial.name,
         vertexFormat_,
-        vertexShaderId,
-        fragmentShaderId,
+        shaderId,
         graphicsDevice_);
 
     // TODO: specular-glossiness material model
@@ -906,12 +891,9 @@ ModelLoader::ModelLoader(shared_ptr<GraphicsDevice> graphicsDevice)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const shared_ptr<Model>& ModelLoader::load(
-    const path& scenePath,
-    const string& defaultVertexShaderId,
-    const string& defaultFragmentShaderId)
+const shared_ptr<Model>& ModelLoader::load(const path& scenePath)
 {
-    return pimpl_->load(scenePath, defaultVertexShaderId, defaultFragmentShaderId);
+    return pimpl_->load(scenePath);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -12,7 +12,7 @@ const string VertexDiffuseShader::FRAGMENT_SHADER_ID = "vertex_diffuse";
 // ---------------------------------------------------------------------------------------------------------------------
 
 VertexDiffuseShader::VertexDiffuseShader(const GraphicsDevicePtr& graphicsDevice)
-        : TestMaterialShader(graphicsDevice) {}
+        : TestMaterialShader(graphicsDevice, VERTEX_SHADER_ID, FRAGMENT_SHADER_ID) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 

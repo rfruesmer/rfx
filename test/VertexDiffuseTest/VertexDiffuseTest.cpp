@@ -53,15 +53,11 @@ void VertexDiffuseTest::loadScene()
     const path scenePath = getAssetsDirectory() / "models/cubes/cubes.gltf";
 
     ModelLoader modelLoader(graphicsDevice);
-    scene = modelLoader.load(
-        scenePath,
-        VertexDiffuseShader::VERTEX_SHADER_ID,
-        VertexDiffuseShader::FRAGMENT_SHADER_ID);
+    scene = modelLoader.load(scenePath);
 
     camera.setPosition({0.0f, 1.0f, 2.0f});
     light.setPosition({5.0f, 5.0f, 2.0f});
     light.setColor({1.0f, 1.0f, 1.0f});
-
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -73,9 +69,9 @@ void VertexDiffuseTest::createEffects()
     // TODO: support for multiple/different materials/effects/shaders per scene
     const shared_ptr<Material>& material = scene->getMaterial(0);
 
+    shader = make_unique<VertexDiffuseShader>(graphicsDevice);
+    shader->loadShaders(material, shadersDirectory);
 
-    effect = make_unique<VertexDiffuseShader>(graphicsDevice);
-    effect->loadShaders(material, shadersDirectory);
     setLight(light);
 }
 
@@ -152,7 +148,7 @@ void VertexDiffuseTest::createPipelineLayouts()
 
 void VertexDiffuseTest::createPipelines()
 {
-    TestApplication::createDefaultPipeline(*effect);
+    TestApplication::createDefaultPipeline(*shader);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -279,7 +275,7 @@ void VertexDiffuseTest::updateSceneData(float deltaTime)
 
 void VertexDiffuseTest::cleanup()
 {
-    effect.reset();
+    shader.reset();
     scene.reset();
 
     TestApplication::cleanup();

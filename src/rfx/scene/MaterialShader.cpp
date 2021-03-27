@@ -10,15 +10,23 @@ using namespace std::filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-MaterialShader::MaterialShader(shared_ptr<GraphicsDevice> graphicsDevice)
-    : graphicsDevice_(move(graphicsDevice)) {}
+MaterialShader::MaterialShader(
+    GraphicsDevicePtr graphicsDevice,
+    std::string vertexShaderId,
+    std::string fragmentShaderId)
+    : graphicsDevice_(move(graphicsDevice)),
+      vertexShaderId(move(vertexShaderId)),
+      fragmentShaderId(move(fragmentShaderId)) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void MaterialShader::loadShaders(const std::shared_ptr<Material>& material, const std::filesystem::path& shadersDirectory)
+// TODO: move to factory (?!)
+void MaterialShader::loadShaders(
+    const std::shared_ptr<Material>& material,
+    const std::filesystem::path& shadersDirectory)
 {
-    const path vertexShaderFilename = material->getVertexShaderId() + ".vert";
-    const path fragmentShaderFilename = material->getFragmentShaderId() + ".frag";
+    const path vertexShaderFilename = vertexShaderId + ".vert";
+    const path fragmentShaderFilename = fragmentShaderId + ".frag";
     const VertexFormat& vertexFormat = material->getVertexFormat();
 
     const vector<string> defines = buildShaderDefines(material, vertexFormat);
