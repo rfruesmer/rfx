@@ -34,11 +34,6 @@ private:
 
     std::shared_ptr<Model> scene;
     PointLight light;
-
-
-    std::shared_ptr<VertexDiffuseShader> vertexDiffuseShader;
-
-
     std::unordered_map<MaterialShaderPtr, std::vector<MaterialPtr>> materialShaderMap;
 };
 

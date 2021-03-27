@@ -250,7 +250,6 @@ void VertexDiffuseTest::cleanup()
         shader->setPipeline(VK_NULL_HANDLE, VK_NULL_HANDLE);
     }
 
-    vertexDiffuseShader.reset();
     materialShaderMap.clear();
     scene.reset();
 
