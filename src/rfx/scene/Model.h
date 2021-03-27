@@ -64,4 +64,6 @@ private:
     std::vector<std::shared_ptr<Light>> lights_;
 };
 
+using ModelPtr = std::shared_ptr<Model>;
+
 } // namespace rfx

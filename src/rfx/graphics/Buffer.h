@@ -29,4 +29,6 @@ private:
     VkDescriptorBufferInfo descriptorBufferInfo_{};
 };
 
+using BufferPtr = std::shared_ptr<Buffer>;
+
 } // namespace rfx

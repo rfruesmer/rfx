@@ -88,10 +88,3 @@ vector<string> MaterialShader::buildFragmentShaderInputs(const VertexFormat& ver
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-
-VertexFormat MaterialShader::getVertexFormat() const
-{
-    return vertexShader->getVertexFormat();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------

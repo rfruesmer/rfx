@@ -58,6 +58,7 @@ private:
     void createDepthBuffer();
     void createMultiSamplingBuffer();
     void createWindow();
+    void showWindow();
     void initDevTools();
     void runMainLoop();
 
@@ -89,8 +90,6 @@ private:
     uint32_t frameCounter = 0;
     uint32_t lastFPS = 0;
     std::chrono::time_point<std::chrono::high_resolution_clock> lastFPSUpdateTimePoint;
-
-    void showWindow();
 };
 
 } // namespace rfx

@@ -66,6 +66,18 @@ void TestApplication::createDescriptorPool()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void TestApplication::createSceneDataBuffer()
+{
+    sceneDataBuffer_ = graphicsDevice->createBuffer(
+        sizeof(SceneData),
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+    graphicsDevice->bind(sceneDataBuffer_);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void TestApplication::createSceneDescriptorSetLayout()
 {
     const VkDescriptorSetLayoutBinding sceneDescSetLayoutBinding {
@@ -131,6 +143,89 @@ VkWriteDescriptorSet TestApplication::buildWriteDescriptorSet(
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .pBufferInfo = descriptorBufferInfo
     };
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::createMeshDataBuffers(const ModelPtr& model)
+{
+    for (const auto& node : model->getGeometryNodes()) {
+        if (node->getMeshCount() == 0) {
+            continue;
+        }
+
+        RFX_CHECK_STATE(node->getMeshCount() == 1, "");
+
+        BufferPtr meshDataBuffer = graphicsDevice->createBuffer(
+            sizeof(MeshData),
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+        graphicsDevice->bind(meshDataBuffer);
+        meshDataBuffer->load(sizeof(mat4), &node->getWorldTransform());
+
+        node->getMeshes().at(0)->setDataBuffer(meshDataBuffer);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::createMeshDescriptorSetLayout()
+{
+    const VkDescriptorSetLayoutBinding meshDescSetLayoutBinding {
+        .binding = 0,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = 1,
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT
+    };
+
+    const VkDescriptorSetLayoutCreateInfo meshDescSetLayoutCreateInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .bindingCount = 1,
+        .pBindings = &meshDescSetLayoutBinding
+    };
+
+    ThrowIfFailed(vkCreateDescriptorSetLayout(
+        graphicsDevice->getLogicalDevice(),
+        &meshDescSetLayoutCreateInfo,
+        nullptr,
+        &meshDescriptorSetLayout_));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::createMeshDescriptorSets(const ModelPtr& model)
+{
+    const VkDescriptorSetAllocateInfo allocInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool = descriptorPool,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &meshDescriptorSetLayout_
+    };
+
+    for (const auto& mesh : model->getMeshes()) {
+
+        VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
+        ThrowIfFailed(vkAllocateDescriptorSets(
+            graphicsDevice->getLogicalDevice(),
+            &allocInfo,
+            &descriptorSet));
+
+        const VkWriteDescriptorSet writeDescriptorSet =
+            buildWriteDescriptorSet(
+                descriptorSet,
+                0,
+                &mesh->getDataBuffer()->getDescriptorBufferInfo());
+
+        vkUpdateDescriptorSets(
+            graphicsDevice->getLogicalDevice(),
+            1,
+            &writeDescriptorSet,
+            0,
+            nullptr);
+
+        mesh->setDescriptorSet(descriptorSet);
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -506,9 +601,13 @@ void TestApplication::updateDevTools()
 
 void TestApplication::cleanupSwapChain()
 {
-    vkDestroyPipeline(graphicsDevice->getLogicalDevice(), wireframePipeline, nullptr);
-    vkDestroyDescriptorSetLayout(graphicsDevice->getLogicalDevice(), sceneDescriptorSetLayout_, nullptr);
+    const VkDevice device = graphicsDevice->getLogicalDevice();
+
+    vkDestroyPipeline(device, wireframePipeline, nullptr);
+    vkDestroyDescriptorSetLayout(device, sceneDescriptorSetLayout_, nullptr);
     sceneDataBuffer_.reset();
+
+    vkDestroyDescriptorSetLayout(device, meshDescriptorSetLayout_, nullptr);
 
     Application::cleanupSwapChain();
 }
@@ -597,23 +696,3 @@ void TestApplication::setLight(const PointLight& light)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-
-void TestApplication::createSceneDataBuffer()
-{
-    sceneDataBuffer_ = graphicsDevice->createBuffer(
-        getSceneDataSize(),
-        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-    graphicsDevice->bind(sceneDataBuffer_);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-size_t TestApplication::getSceneDataSize() const
-{
-    return sizeof(SceneData);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-

@@ -74,7 +74,7 @@ void VertexDiffuseTest::createEffects()
     const shared_ptr<Material>& material = scene->getMaterial(0);
 
 
-    effect = make_unique<VertexDiffuseShader>(graphicsDevice, scene);
+    effect = make_unique<VertexDiffuseShader>(graphicsDevice);
     effect->loadShaders(material, shadersDirectory);
     setLight(light);
 }
@@ -84,8 +84,8 @@ void VertexDiffuseTest::createEffects()
 void VertexDiffuseTest::createUniformBuffers()
 {
     createSceneDataBuffer();
+    createMeshDataBuffers(scene);
 
-    effect->createUniformBuffers();
 
     const VkDeviceSize bufferSize = sizeof(VertexDiffuseShader::MaterialData);
 
@@ -107,8 +107,7 @@ void VertexDiffuseTest::createUniformBuffers()
 void VertexDiffuseTest::createDescriptorSetLayouts()
 {
     createSceneDescriptorSetLayout();
-
-    effect->createDescriptorSetLayouts();
+    createMeshDescriptorSetLayout();
 
     for (const auto& material : scene->getMaterials()) {
         material->createDescriptorSetLayout();
@@ -120,8 +119,7 @@ void VertexDiffuseTest::createDescriptorSetLayouts()
 void VertexDiffuseTest::createDescriptorSets()
 {
     createSceneDescriptorSet();
-
-    effect->createDescriptorSets(descriptorPool);
+    createMeshDescriptorSets(scene);
 
     for (const auto& material : scene->getMaterials()) {
         material->createDescriptorSet(descriptorPool);
@@ -133,10 +131,10 @@ void VertexDiffuseTest::createDescriptorSets()
 void VertexDiffuseTest::createPipelineLayouts()
 {
     vector<VkDescriptorSetLayout> descriptorSetLayouts {
-        sceneDescriptorSetLayout_
+        sceneDescriptorSetLayout_,
+        meshDescriptorSetLayout_
     };
 
-    ranges::copy(effect->getDescriptorSetLayouts(), back_inserter(descriptorSetLayouts));
     descriptorSetLayouts.push_back(scene->getMaterial(0)->getDescriptorSetLayout());
 
     TestApplication::createDefaultPipelineLayout(descriptorSetLayouts);
@@ -228,16 +226,16 @@ void VertexDiffuseTest::drawGeometryNode(
     const shared_ptr<CommandBuffer>& commandBuffer)
 {
     const shared_ptr<ModelNode>& geometryNode = scene->getGeometryNode(index);
-    const vector<VkDescriptorSet>& meshDescSets = effect->getMeshDescriptorSets();
 
-
-    commandBuffer->bindDescriptorSet(
-        VK_PIPELINE_BIND_POINT_GRAPHICS,
-        pipelineLayout,
-        1,
-        meshDescSets[index]);
 
     for (const auto& mesh : geometryNode->getMeshes()) {
+
+        commandBuffer->bindDescriptorSet(
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            pipelineLayout,
+            1,
+            mesh->getDescriptorSet());
+
         for (const auto& subMesh : mesh->getSubMeshes()) {
             if (subMesh.indexCount == 0) {
                 continue;
@@ -273,9 +271,7 @@ void VertexDiffuseTest::updateSceneData(float deltaTime)
 
 void VertexDiffuseTest::cleanup()
 {
-    effect->cleanupSwapChain();
     effect.reset();
-
     scene.reset();
 
     TestApplication::cleanup();
@@ -285,10 +281,6 @@ void VertexDiffuseTest::cleanup()
 
 void VertexDiffuseTest::cleanupSwapChain()
 {
-    if (effect) {
-        effect->cleanupSwapChain();
-    }
-
     if (scene) {
         for (const auto& material : scene->getMaterials()) {
             material->destroyDescriptorSetLayout();

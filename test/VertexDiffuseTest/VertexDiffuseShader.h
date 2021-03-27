@@ -18,9 +18,7 @@ public:
     static const std::string VERTEX_SHADER_ID;
     static const std::string FRAGMENT_SHADER_ID;
 
-    VertexDiffuseShader(
-        const std::shared_ptr<GraphicsDevice>& graphicsDevice,
-        const std::shared_ptr<Model>& scene);
+    explicit VertexDiffuseShader(const GraphicsDevicePtr& graphicsDevice);
 
     void update(const std::shared_ptr<Material>& material) const override;
 

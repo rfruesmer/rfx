@@ -22,18 +22,26 @@ protected:
         glm::vec4 Ls;
     };
 
+    struct MeshData {
+        glm::mat4 modelMatrix;
+    };
+
     virtual void createEffects() = 0;
-    virtual void createUniformBuffers() = 0;
+
     void createDescriptorPool();
-    virtual void createDescriptorSetLayouts() = 0;
+
     void createSceneDescriptorSetLayout();
     void createSceneDescriptorSet();
-    static VkWriteDescriptorSet buildWriteDescriptorSet(
-        VkDescriptorSet descriptorSet,
-        uint32_t binding,
-        const VkDescriptorBufferInfo* descriptorBufferInfo);
     void createSceneDataBuffer();
+    virtual void updateSceneData(float deltaTime) = 0;
+    void updateSceneDataBuffer();
 
+    void createMeshDescriptorSetLayout();
+    void createMeshDescriptorSets(const ModelPtr& model);
+    void createMeshDataBuffers(const ModelPtr& model);
+
+    virtual void createUniformBuffers() = 0;
+    virtual void createDescriptorSetLayouts() = 0;
     virtual void createDescriptorSets() = 0;
     virtual void createPipelineLayouts() = 0;
     virtual void createPipelines() = 0;
@@ -49,15 +57,17 @@ protected:
     void lockMouseCursor(bool lock = true);
     void onKeyEvent(const Window& window, int key, int scancode, int action, int mods) override;
 
+    static VkWriteDescriptorSet buildWriteDescriptorSet(
+        VkDescriptorSet descriptorSet,
+        uint32_t binding,
+        const VkDescriptorBufferInfo* descriptorBufferInfo);
+
     void setProjectionMatrix(const glm::mat4& projection);
     void setViewMatrix(const glm::mat4& viewMatrix);
     void setLight(const PointLight& light);
 
-    [[nodiscard]] size_t getSceneDataSize() const;
 
     void update(float deltaTime) override;
-    virtual void updateSceneData(float deltaTime) = 0;
-    void updateSceneDataBuffer();
     void updateCamera(float deltaTime);
     virtual void updateProjection() {};
     glm::mat4 calcDefaultProjection();
@@ -79,6 +89,8 @@ protected:
     VkDescriptorSet sceneDescriptorSet_ = VK_NULL_HANDLE;
     std::shared_ptr<Buffer> sceneDataBuffer_;
     SceneData sceneData_ {};
+
+    VkDescriptorSetLayout meshDescriptorSetLayout_;
 
     PointLight light_ { "point" };
 };

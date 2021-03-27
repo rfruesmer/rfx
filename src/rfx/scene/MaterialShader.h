@@ -16,17 +16,8 @@ public:
     virtual void loadShaders(const std::shared_ptr<Material>& material, const std::filesystem::path& shadersDirectory);
     virtual void update(const std::shared_ptr<Material>& material) const = 0;
 
-    virtual void createUniformBuffers() = 0;
-    virtual void createDescriptorSetLayouts() = 0;
-    virtual void createDescriptorSets(VkDescriptorPool descriptorPool) = 0;
-
-    virtual void cleanupSwapChain() = 0;
-
     [[nodiscard]] const std::shared_ptr<VertexShader>& getVertexShader() const;
     [[nodiscard]] const std::shared_ptr<FragmentShader>& getFragmentShader() const;
-
-    [[nodiscard]] virtual std::vector<VkDescriptorSetLayout> getDescriptorSetLayouts() const = 0;
-    [[nodiscard]] virtual const std::vector<VkDescriptorSet>& getMeshDescriptorSets() const = 0;
 
 protected:
     explicit MaterialShader(std::shared_ptr<GraphicsDevice> graphicsDevice);
@@ -36,7 +27,6 @@ protected:
     [[nodiscard]] virtual std::vector<std::string> buildVertexShaderOutputs(const VertexFormat& vertexFormat);
     [[nodiscard]] virtual std::vector<std::string> buildFragmentShaderInputs(const VertexFormat& vertexFormat);
 
-    [[nodiscard]] VertexFormat getVertexFormat() const;
 
     std::shared_ptr<GraphicsDevice> graphicsDevice_;
     std::shared_ptr<VertexShader> vertexShader;

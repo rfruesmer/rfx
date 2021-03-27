@@ -20,3 +20,32 @@ void Mesh::addSubMesh(const SubMesh& subMesh)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+
+void Mesh::setDescriptorSet(VkDescriptorSet descriptorSet)
+{
+    this->descriptorSet = descriptorSet;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkDescriptorSet Mesh::getDescriptorSet() const
+{
+    return descriptorSet;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Mesh::setDataBuffer(const BufferPtr& dataBuffer)
+{
+    this->dataBuffer = dataBuffer;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const BufferPtr& Mesh::getDataBuffer() const
+{
+    return dataBuffer;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+

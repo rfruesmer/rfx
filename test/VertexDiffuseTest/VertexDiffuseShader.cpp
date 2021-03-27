@@ -11,10 +11,8 @@ const string VertexDiffuseShader::FRAGMENT_SHADER_ID = "vertex_diffuse";
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VertexDiffuseShader::VertexDiffuseShader(
-    const shared_ptr<GraphicsDevice>& graphicsDevice,
-    const shared_ptr<Model>& scene)
-        : TestMaterialShader(graphicsDevice, scene) {}
+VertexDiffuseShader::VertexDiffuseShader(const GraphicsDevicePtr& graphicsDevice)
+        : TestMaterialShader(graphicsDevice) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 

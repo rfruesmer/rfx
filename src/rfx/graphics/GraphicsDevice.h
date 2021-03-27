@@ -226,4 +226,6 @@ private:
     void destroySwapChain();
 };
 
+using GraphicsDevicePtr = std::shared_ptr<GraphicsDevice>;
+
 } // namespace rfx
