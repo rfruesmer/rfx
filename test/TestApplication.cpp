@@ -431,26 +431,10 @@ VkPipeline TestApplication::createDefaultPipelineFor(
     const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
 
-    VkViewport viewport = {
-        .x = 0.0f,
-        .y = 0.0f,
-        .width = static_cast<float>(swapChainDesc.extent.width),
-        .height = static_cast<float>(swapChainDesc.extent.height),
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f
-    };
-
-    VkRect2D scissor = {
-        .offset = {0, 0},
-        .extent = swapChainDesc.extent
-    };
-
     VkPipelineViewportStateCreateInfo viewportStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
         .viewportCount = 1,
-        .pViewports = &viewport,
         .scissorCount = 1,
-        .pScissors = &scissor
     };
 
     VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo = {
@@ -645,9 +629,6 @@ void TestApplication::cleanupSwapChain()
 void TestApplication::recreateSwapChain()
 {
     Application::recreateSwapChain();
-
-//    createDescriptorPool();
-//    initGraphicsResources();
 
     createSceneResources();
     createMeshResources();
