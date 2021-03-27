@@ -1,4 +1,3 @@
-#include "rfx/pch.h"
 #include "rfx/scene/MaterialShaderCache.h"
 
 
@@ -11,7 +10,7 @@ void MaterialShaderCache::add(size_t hash, MaterialShaderPtr shader)
 {
     RFX_CHECK_ARGUMENT(!cache.contains(hash));
 
-    cache[hash] = shader;
+    cache[hash] = move(shader);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

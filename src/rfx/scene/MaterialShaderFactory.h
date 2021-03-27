@@ -29,18 +29,6 @@ private:
     MaterialShaderPtr createShader(const MaterialPtr& material);
     void addToCache(const MaterialShaderPtr& shader, const MaterialPtr& material);
     VkDescriptorSetLayout createMaterialDescriptorSetLayoutFor(const MaterialPtr& material);
-    void initMaterialUniformBuffer(const MaterialPtr& material, const MaterialShaderPtr& shader);
-    BufferPtr createAndBindUniformBuffer(VkDeviceSize bufferSize);
-    void initMaterialDescriptorSetLayout(const MaterialPtr& material, const MaterialShaderPtr& shader);
-    VkDescriptorSet createMaterialDescriptorSetFor(const MaterialPtr& material, VkDescriptorSetLayout descriptorSetLayout);
-    static VkWriteDescriptorSet buildWriteDescriptorSet(
-        VkDescriptorSet descriptorSet,
-        uint32_t binding,
-        const VkDescriptorImageInfo* descriptorImageInfo);
-    static VkWriteDescriptorSet buildWriteDescriptorSet(
-        VkDescriptorSet descriptorSet,
-        uint32_t binding,
-        const VkDescriptorBufferInfo* descriptorBufferInfo);
 
     GraphicsDevicePtr graphicsDevice;
     VkDescriptorPool descriptorPool = VK_NULL_HANDLE;

@@ -48,22 +48,16 @@ protected:
     void initGraphicsResources();
     BufferPtr createAndBindUniformBuffer(VkDeviceSize bufferSize);
     [[nodiscard]] VkPipelineLayout createDefaultPipelineLayout(const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts);
-    [[nodiscard]] VkPipeline createDefaultPipelineFor(const MaterialShader& shader, VkPipelineLayout pipelineLayout);
+    [[nodiscard]] VkPipeline createDefaultPipelineFor(const MaterialShaderPtr& shader, VkPipelineLayout pipelineLayout);
     void createRenderPass();
 
     void beginMainLoop() override;
     void lockMouseCursor(bool lock = true);
     void onKeyEvent(const Window& window, int key, int scancode, int action, int mods) override;
 
-    static VkWriteDescriptorSet buildWriteDescriptorSet(
-        VkDescriptorSet descriptorSet,
-        uint32_t binding,
-        const VkDescriptorBufferInfo* descriptorBufferInfo);
-
     void setProjectionMatrix(const glm::mat4& projection);
     void setViewMatrix(const glm::mat4& viewMatrix);
     void setLight(const PointLight& light);
-
 
     void update(float deltaTime) override;
     void updateCamera(float deltaTime);
@@ -74,6 +68,18 @@ protected:
     void cleanup() override;
     void cleanupSwapChain() override;
     void recreateSwapChain() override;
+
+    void initMaterialUniformBuffer(const MaterialPtr& material, const MaterialShaderPtr& shader);
+    void initMaterialDescriptorSetLayout(const MaterialPtr& material, const MaterialShaderPtr& shader);
+    VkDescriptorSet createMaterialDescriptorSetFor(const MaterialPtr& material, VkDescriptorSetLayout descriptorSetLayout);
+    static VkWriteDescriptorSet buildWriteDescriptorSet(
+        VkDescriptorSet descriptorSet,
+        uint32_t binding,
+        const VkDescriptorImageInfo* descriptorImageInfo);
+    static VkWriteDescriptorSet buildWriteDescriptorSet(
+        VkDescriptorSet descriptorSet,
+        uint32_t binding,
+        const VkDescriptorBufferInfo* descriptorBufferInfo);
 
 
     VkPipeline wireframePipeline = VK_NULL_HANDLE;

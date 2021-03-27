@@ -121,24 +121,6 @@ void TestApplication::createSceneDescriptorSet()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VkWriteDescriptorSet TestApplication::buildWriteDescriptorSet(
-    VkDescriptorSet descriptorSet,
-    uint32_t binding,
-    const VkDescriptorBufferInfo* descriptorBufferInfo)
-{
-    return {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .dstSet = descriptorSet,
-        .dstBinding = binding,
-        .dstArrayElement = 0,
-        .descriptorCount = 1,
-        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .pBufferInfo = descriptorBufferInfo
-    };
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void TestApplication::createMeshDataBuffers(const ModelPtr& model)
 {
     for (const auto& node : model->getGeometryNodes()) {
@@ -218,20 +200,6 @@ void TestApplication::createMeshDescriptorSets(const ModelPtr& model)
 
         mesh->setDescriptorSet(descriptorSet);
     }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-BufferPtr TestApplication::createAndBindUniformBuffer(VkDeviceSize bufferSize)
-{
-    shared_ptr<Buffer> uniformBuffer = graphicsDevice->createBuffer(
-        bufferSize,
-        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-    graphicsDevice->bind(uniformBuffer);
-
-    return uniformBuffer;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -377,7 +345,7 @@ VkPipelineLayout TestApplication::createDefaultPipelineLayout(const vector<VkDes
 // ---------------------------------------------------------------------------------------------------------------------
 
 VkPipeline TestApplication::createDefaultPipelineFor(
-    const MaterialShader& shader,
+    const MaterialShaderPtr& shader,
     VkPipelineLayout pipelineLayout)
 {
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = {
@@ -454,15 +422,15 @@ VkPipeline TestApplication::createDefaultPipelineFor(
     };
 
     const array<VkPipelineShaderStageCreateInfo, 2> shaderStages {
-        shader.getVertexShader()->getStageCreateInfo(),
-        shader.getFragmentShader()->getStageCreateInfo()
+        shader->getVertexShader()->getStageCreateInfo(),
+        shader->getFragmentShader()->getStageCreateInfo()
     };
 
     VkGraphicsPipelineCreateInfo pipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .stageCount = shaderStages.size(),
         .pStages = shaderStages.data(),
-        .pVertexInputState = &shader.getVertexShader()->getVertexInputStateCreateInfo(),
+        .pVertexInputState = &shader->getVertexShader()->getVertexInputStateCreateInfo(),
         .pInputAssemblyState = &inputAssemblyStateCreateInfo,
         .pViewportState = &viewportStateCreateInfo,
         .pRasterizationState = &rasterizationStateCreateInfo,
@@ -710,6 +678,158 @@ void TestApplication::setLight(const PointLight& light)
     sceneData_.La = vec4(0.01f, 0.01f, 0.01f, 1.0f);
     sceneData_.Ld = vec4(0.7f, 0.7f, 0.7f, 1.0f);
     sceneData_.Ls = vec4(0.3f, 0.3f, 0.3f, 1.0f);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::initMaterialUniformBuffer(
+    const MaterialPtr& material,
+    const MaterialShaderPtr& shader)
+{
+    const vector<std::byte> materialData = shader->createDataFor(material);
+    const BufferPtr materialDataBuffer = createAndBindUniformBuffer(materialData.size());
+    materialDataBuffer->load(materialData.size(), materialData.data());
+    material->setUniformBuffer(materialDataBuffer);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+BufferPtr TestApplication::createAndBindUniformBuffer(VkDeviceSize bufferSize)
+{
+    shared_ptr<Buffer> uniformBuffer = graphicsDevice->createBuffer(
+        bufferSize,
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+    graphicsDevice->bind(uniformBuffer);
+
+    return uniformBuffer;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::initMaterialDescriptorSetLayout(
+    const MaterialPtr& material,
+    const MaterialShaderPtr& shader)
+{
+    VkDescriptorSet materialDescriptorSet = createMaterialDescriptorSetFor(
+        material,
+        shader->getMaterialDescriptorSetLayout());
+    material->setDescriptorSet(materialDescriptorSet);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkDescriptorSet TestApplication::createMaterialDescriptorSetFor(
+    const MaterialPtr& material,
+    VkDescriptorSetLayout descriptorSetLayout)
+{
+    const VkDescriptorSetAllocateInfo allocInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool = descriptorPool,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &descriptorSetLayout
+    };
+
+    VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
+    ThrowIfFailed(vkAllocateDescriptorSets(
+        graphicsDevice->getLogicalDevice(),
+        &allocInfo,
+        &descriptorSet));
+
+    vector<VkWriteDescriptorSet> writeDescriptorSets;
+    uint32_t binding = 0;
+
+    writeDescriptorSets.push_back(
+        buildWriteDescriptorSet(
+            descriptorSet,
+            binding++,
+            &material->getUniformBuffer()->getDescriptorBufferInfo()));
+
+    if (material->getBaseColorTexture() != nullptr) {
+        writeDescriptorSets.push_back(
+            buildWriteDescriptorSet(
+                descriptorSet,
+                binding++,
+                &material->getBaseColorTexture()->getDescriptorImageInfo()));
+    }
+
+    if (material->getNormalTexture() != nullptr) {
+        writeDescriptorSets.push_back(
+            buildWriteDescriptorSet(
+                descriptorSet,
+                binding++,
+                &material->getNormalTexture()->getDescriptorImageInfo()));
+    }
+
+    if (material->getMetallicRoughnessTexture() != nullptr) {
+        writeDescriptorSets.push_back(
+            buildWriteDescriptorSet(
+                descriptorSet,
+                binding++,
+                &material->getMetallicRoughnessTexture()->getDescriptorImageInfo()));
+    }
+
+    if (material->getOcclusionTexture() != nullptr) {
+        writeDescriptorSets.push_back(
+            buildWriteDescriptorSet(
+                descriptorSet,
+                binding++,
+                &material->getOcclusionTexture()->getDescriptorImageInfo()));
+    }
+
+    if (material->getEmissiveTexture() != nullptr) {
+        writeDescriptorSets.push_back(
+            buildWriteDescriptorSet(
+                descriptorSet,
+                binding++,
+                &material->getEmissiveTexture()->getDescriptorImageInfo()));
+    }
+
+    vkUpdateDescriptorSets(
+        graphicsDevice->getLogicalDevice(),
+        writeDescriptorSets.size(),
+        writeDescriptorSets.data(),
+        0,
+        nullptr);
+
+    return descriptorSet;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkWriteDescriptorSet TestApplication::buildWriteDescriptorSet(
+    VkDescriptorSet descriptorSet,
+    uint32_t binding,
+    const VkDescriptorImageInfo* descriptorImageInfo)
+{
+    return {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = descriptorSet,
+        .dstBinding = binding,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .pImageInfo = descriptorImageInfo
+    };
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkWriteDescriptorSet TestApplication::buildWriteDescriptorSet(
+    VkDescriptorSet descriptorSet,
+    uint32_t binding,
+    const VkDescriptorBufferInfo* descriptorBufferInfo)
+{
+    return {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = descriptorSet,
+        .dstBinding = binding,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .pBufferInfo = descriptorBufferInfo
+    };
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -77,11 +77,11 @@ void VertexDiffuseTest::createShaders()
     for (const auto& material : scene->getMaterials())
     {
         const MaterialShaderPtr shader = shaderFactory.createShaderFor(material);
+        initMaterialUniformBuffer(material, shader);
+        initMaterialDescriptorSetLayout(material, shader);
+
         materialShaderMap[shader].push_back(material);
     }
-
-    RFX_CHECK_STATE(materialShaderMap.size() == 1, "");
-    vertexDiffuseShader = static_pointer_cast<VertexDiffuseShader>(materialShaderMap.begin()->first);
 
     setLight(light);
 }
@@ -110,7 +110,7 @@ void VertexDiffuseTest::createPipelines()
         };
 
         VkPipelineLayout pipelineLayout = TestApplication::createDefaultPipelineLayout(descriptorSetLayouts);
-        VkPipeline pipeline = TestApplication::createDefaultPipelineFor(*vertexDiffuseShader, pipelineLayout);
+        VkPipeline pipeline = TestApplication::createDefaultPipelineFor(shader, pipelineLayout);
 
         shader->setPipeline(pipelineLayout, pipeline);
     }
