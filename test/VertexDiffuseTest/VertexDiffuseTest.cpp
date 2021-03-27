@@ -81,12 +81,26 @@ void VertexDiffuseTest::createEffects()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseTest::createUniformBuffers()
+void VertexDiffuseTest::createMeshResources()
 {
-    createSceneDataBuffer();
     createMeshDataBuffers(scene);
+    createMeshDescriptorSetLayout();
+    createMeshDescriptorSets(scene);
+}
 
+// ---------------------------------------------------------------------------------------------------------------------
 
+void VertexDiffuseTest::createMaterialResources()
+{
+    createMaterialDataBuffers();
+    createMaterialDescriptorSetLayouts();
+    createMaterialDescriptorSets();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void VertexDiffuseTest::createMaterialDataBuffers()
+{
     const VkDeviceSize bufferSize = sizeof(VertexDiffuseShader::MaterialData);
 
     for (const auto& material : scene->getMaterials())
@@ -104,11 +118,8 @@ void VertexDiffuseTest::createUniformBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseTest::createDescriptorSetLayouts()
+void VertexDiffuseTest::createMaterialDescriptorSetLayouts()
 {
-    createSceneDescriptorSetLayout();
-    createMeshDescriptorSetLayout();
-
     for (const auto& material : scene->getMaterials()) {
         material->createDescriptorSetLayout();
     }
@@ -116,11 +127,8 @@ void VertexDiffuseTest::createDescriptorSetLayouts()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseTest::createDescriptorSets()
+void VertexDiffuseTest::createMaterialDescriptorSets()
 {
-    createSceneDescriptorSet();
-    createMeshDescriptorSets(scene);
-
     for (const auto& material : scene->getMaterials()) {
         material->createDescriptorSet(descriptorPool);
     }

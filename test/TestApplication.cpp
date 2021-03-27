@@ -11,30 +11,16 @@ using namespace std::filesystem;
 
 void TestApplication::initGraphicsResources()
 {
-    createUniformBuffers();
     createDescriptorPool();
-    createDescriptorSetLayouts();
-    createDescriptorSets();
+    createSceneResources();
+    createMeshResources();
+    createMaterialResources();
+
     createRenderPass();
     createPipelineLayouts();
     createPipelines();
     createFrameBuffers();
     createCommandBuffers();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-shared_ptr<Buffer> TestApplication::createAndBindUniformBuffer(VkDeviceSize size, const void* data)
-{
-    shared_ptr<Buffer> uniformBuffer = graphicsDevice->createBuffer(
-        size,
-        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-    graphicsDevice->bind(uniformBuffer);
-    uniformBuffer->load(size, data);
-
-    return uniformBuffer;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -62,6 +48,15 @@ void TestApplication::createDescriptorPool()
         &poolCreateInfo,
         nullptr,
         &descriptorPool));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::createSceneResources()
+{
+    createSceneDataBuffer();
+    createSceneDescriptorSetLayout();
+    createSceneDescriptorSet();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -226,6 +221,21 @@ void TestApplication::createMeshDescriptorSets(const ModelPtr& model)
 
         mesh->setDescriptorSet(descriptorSet);
     }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+shared_ptr<Buffer> TestApplication::createAndBindUniformBuffer(VkDeviceSize size, const void* data)
+{
+    shared_ptr<Buffer> uniformBuffer = graphicsDevice->createBuffer(
+        size,
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+    graphicsDevice->bind(uniformBuffer);
+    uniformBuffer->load(size, data);
+
+    return uniformBuffer;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

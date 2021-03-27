@@ -30,19 +30,20 @@ protected:
 
     void createDescriptorPool();
 
+    void createSceneResources();
     void createSceneDescriptorSetLayout();
     void createSceneDescriptorSet();
     void createSceneDataBuffer();
     virtual void updateSceneData(float deltaTime) = 0;
     void updateSceneDataBuffer();
 
+    virtual void createMeshResources() = 0;
     void createMeshDescriptorSetLayout();
     void createMeshDescriptorSets(const ModelPtr& model);
     void createMeshDataBuffers(const ModelPtr& model);
 
-    virtual void createUniformBuffers() = 0;
-    virtual void createDescriptorSetLayouts() = 0;
-    virtual void createDescriptorSets() = 0;
+    virtual void createMaterialResources() = 0;
+
     virtual void createPipelineLayouts() = 0;
     virtual void createPipelines() = 0;
     virtual void createCommandBuffers() = 0;
@@ -90,7 +91,7 @@ protected:
     std::shared_ptr<Buffer> sceneDataBuffer_;
     SceneData sceneData_ {};
 
-    VkDescriptorSetLayout meshDescriptorSetLayout_;
+    VkDescriptorSetLayout meshDescriptorSetLayout_ = VK_NULL_HANDLE;
 
     PointLight light_ { "point" };
 };

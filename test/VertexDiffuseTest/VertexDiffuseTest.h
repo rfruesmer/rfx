@@ -14,9 +14,12 @@ public:
 protected:
     void initGraphics() override;
 
-    void createUniformBuffers() override;
-    void createDescriptorSetLayouts() override;
-    void createDescriptorSets() override;
+    void createMeshResources() override;
+    void createMaterialResources() override;
+    void createMaterialDataBuffers();
+    void createMaterialDescriptorSetLayouts();
+    void createMaterialDescriptorSets();
+
     void createPipelineLayouts() override;
     void createPipelines() override;
 
