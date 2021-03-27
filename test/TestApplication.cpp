@@ -222,15 +222,14 @@ void TestApplication::createMeshDescriptorSets(const ModelPtr& model)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-shared_ptr<Buffer> TestApplication::createAndBindUniformBuffer(VkDeviceSize size, const void* data)
+BufferPtr TestApplication::createAndBindUniformBuffer(VkDeviceSize bufferSize)
 {
     shared_ptr<Buffer> uniformBuffer = graphicsDevice->createBuffer(
-        size,
+        bufferSize,
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
     graphicsDevice->bind(uniformBuffer);
-    uniformBuffer->load(size, data);
 
     return uniformBuffer;
 }

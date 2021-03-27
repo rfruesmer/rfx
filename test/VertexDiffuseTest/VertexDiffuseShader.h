@@ -19,7 +19,9 @@ public:
 
     explicit VertexDiffuseShader(const GraphicsDevicePtr& graphicsDevice);
 
-    void update(const std::shared_ptr<Material>& material) const override;
+    [[nodiscard]] std::vector<std::byte> createDataFor(const MaterialPtr& material) const override;
+
+    void update(const MaterialPtr& material) const override;
 };
 
 } // namespace rfx

@@ -9,9 +9,11 @@ using namespace std;
 
 MaterialShaderFactory::MaterialShaderFactory(
     GraphicsDevicePtr graphicsDevice,
+    VkDescriptorPool descriptorPool,
     std::filesystem::path shadersDirectory,
     std::string defaultShaderId)
     : graphicsDevice(move(graphicsDevice)),
+      descriptorPool(descriptorPool),
       shadersDirectory(move(shadersDirectory)),
       defaultShaderId(move(defaultShaderId)) {}
 
@@ -30,6 +32,31 @@ void MaterialShaderFactory::addAllocator(
 
 MaterialShaderPtr MaterialShaderFactory::createShaderFor(const MaterialPtr& material)
 {
+    MaterialShaderPtr shader = getCachedShaderFor(material);
+    if (shader == nullptr) {
+        shader = createShader(material);
+        addToCache(shader, material);
+    }
+
+    initMaterialUniformBuffer(material, shader);
+    initMaterialDescriptorSetLayout(material, shader);
+
+    return shader;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+MaterialShaderPtr MaterialShaderFactory::getCachedShaderFor(const MaterialPtr& material)
+{
+    const size_t shaderHash = hash(material);
+
+    return shaderCache.get(shaderHash);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+size_t MaterialShaderFactory::hash(const MaterialPtr& material)
+{
     string shaderId = material->getShaderId();
     shaderId = shaderId.empty() ? defaultShaderId : shaderId;
 
@@ -38,19 +65,8 @@ MaterialShaderPtr MaterialShaderFactory::createShaderFor(const MaterialPtr& mate
 
     const auto allocator = it->second;
     MaterialShaderPtr shader = allocator();
-    size_t shaderHash = hash(shader, material);
 
-    MaterialShaderPtr cachedShader = shaderCache.get(shaderHash);
-    if (cachedShader != nullptr) {
-        return cachedShader;
-    }
-
-    VkDescriptorSetLayout materialDescriptorSetLayout = createMaterialDescriptorSetLayoutFor(material);
-    shader->loadShaders(material, materialDescriptorSetLayout, shadersDirectory);
-
-    shaderCache.add(shaderHash, shader);
-
-    return shader;
+    return hash(shader, material);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -88,6 +104,26 @@ size_t MaterialShaderFactory::hash(const MaterialShaderPtr& shader, const Materi
     }
 
     return hashValue;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+MaterialShaderPtr MaterialShaderFactory::createShader(const MaterialPtr& material)
+{
+    string shaderId = material->getShaderId();
+    shaderId = shaderId.empty() ? defaultShaderId : shaderId;
+
+    const auto it = allocatorMap.find(shaderId);
+    RFX_CHECK_ARGUMENT(it != allocatorMap.end());
+    const auto allocator = it->second;
+
+    MaterialShaderPtr shader = allocator();
+    shader->create(
+        material,
+        createMaterialDescriptorSetLayoutFor(material),
+        shadersDirectory);
+
+    return shader;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -164,6 +200,169 @@ VkDescriptorSetLayout MaterialShaderFactory::createMaterialDescriptorSetLayoutFo
         &descriptorSetLayout));
 
     return descriptorSetLayout;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void MaterialShaderFactory::addToCache(
+    const MaterialShaderPtr& shader,
+    const MaterialPtr& material)
+{
+    const size_t shaderHash = hash(shader, material);
+
+    shaderCache.add(shaderHash, shader);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void MaterialShaderFactory::initMaterialUniformBuffer(
+    const MaterialPtr& material,
+    const MaterialShaderPtr& shader)
+{
+    const vector<std::byte> materialData = shader->createDataFor(material);
+    const BufferPtr materialDataBuffer = createAndBindUniformBuffer(materialData.size());
+    materialDataBuffer->load(materialData.size(), materialData.data());
+    material->setUniformBuffer(materialDataBuffer);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+BufferPtr MaterialShaderFactory::createAndBindUniformBuffer(VkDeviceSize bufferSize)
+{
+    shared_ptr<Buffer> uniformBuffer = graphicsDevice->createBuffer(
+        bufferSize,
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+    graphicsDevice->bind(uniformBuffer);
+
+    return uniformBuffer;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void MaterialShaderFactory::initMaterialDescriptorSetLayout(
+    const MaterialPtr& material,
+    const MaterialShaderPtr& shader)
+{
+    VkDescriptorSet materialDescriptorSet = createMaterialDescriptorSetFor(
+        material,
+        shader->getMaterialDescriptorSetLayout());
+    material->setDescriptorSet(materialDescriptorSet);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkDescriptorSet MaterialShaderFactory::createMaterialDescriptorSetFor(
+    const MaterialPtr& material,
+    VkDescriptorSetLayout descriptorSetLayout)
+{
+    const VkDescriptorSetAllocateInfo allocInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool = descriptorPool,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &descriptorSetLayout
+    };
+
+    VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
+    ThrowIfFailed(vkAllocateDescriptorSets(
+        graphicsDevice->getLogicalDevice(),
+        &allocInfo,
+        &descriptorSet));
+
+    vector<VkWriteDescriptorSet> writeDescriptorSets;
+    uint32_t binding = 0;
+
+    writeDescriptorSets.push_back(
+        buildWriteDescriptorSet(
+            descriptorSet,
+            binding++,
+            &material->getUniformBuffer()->getDescriptorBufferInfo()));
+
+    if (material->getBaseColorTexture() != nullptr) {
+        writeDescriptorSets.push_back(
+            buildWriteDescriptorSet(
+                descriptorSet,
+                binding++,
+                &material->getBaseColorTexture()->getDescriptorImageInfo()));
+    }
+
+    if (material->getNormalTexture() != nullptr) {
+        writeDescriptorSets.push_back(
+            buildWriteDescriptorSet(
+                descriptorSet,
+                binding++,
+                &material->getNormalTexture()->getDescriptorImageInfo()));
+    }
+
+    if (material->getMetallicRoughnessTexture() != nullptr) {
+        writeDescriptorSets.push_back(
+            buildWriteDescriptorSet(
+                descriptorSet,
+                binding++,
+                &material->getMetallicRoughnessTexture()->getDescriptorImageInfo()));
+    }
+
+    if (material->getOcclusionTexture() != nullptr) {
+        writeDescriptorSets.push_back(
+            buildWriteDescriptorSet(
+                descriptorSet,
+                binding++,
+                &material->getOcclusionTexture()->getDescriptorImageInfo()));
+    }
+
+    if (material->getEmissiveTexture() != nullptr) {
+        writeDescriptorSets.push_back(
+            buildWriteDescriptorSet(
+                descriptorSet,
+                binding++,
+                &material->getEmissiveTexture()->getDescriptorImageInfo()));
+    }
+
+    vkUpdateDescriptorSets(
+        graphicsDevice->getLogicalDevice(),
+        writeDescriptorSets.size(),
+        writeDescriptorSets.data(),
+        0,
+        nullptr);
+
+    return descriptorSet;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkWriteDescriptorSet MaterialShaderFactory::buildWriteDescriptorSet(
+    VkDescriptorSet descriptorSet,
+    uint32_t binding,
+    const VkDescriptorImageInfo* descriptorImageInfo)
+{
+    return {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = descriptorSet,
+        .dstBinding = binding,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .pImageInfo = descriptorImageInfo
+    };
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkWriteDescriptorSet MaterialShaderFactory::buildWriteDescriptorSet(
+    VkDescriptorSet descriptorSet,
+    uint32_t binding,
+    const VkDescriptorBufferInfo* descriptorBufferInfo)
+{
+    return {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = descriptorSet,
+        .dstBinding = binding,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .pBufferInfo = descriptorBufferInfo
+    };
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

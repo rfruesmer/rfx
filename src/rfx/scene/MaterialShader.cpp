@@ -47,7 +47,7 @@ const string& MaterialShader::getId() const
 // ---------------------------------------------------------------------------------------------------------------------
 
 // TODO: move to factory (?!)
-void MaterialShader::loadShaders(
+void MaterialShader::create(
     const MaterialPtr& material,
     VkDescriptorSetLayout materialDescriptorSetLayout,
     const path& shadersDirectory)
@@ -84,23 +84,9 @@ void MaterialShader::loadShaders(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const string& MaterialShader::getVertexShaderId() const
-{
-    return vertexShaderId;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 const shared_ptr<VertexShader>& MaterialShader::getVertexShader() const
 {
     return vertexShader;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-const string& MaterialShader::getFragmentShaderId() const
-{
-    return fragmentShaderId;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

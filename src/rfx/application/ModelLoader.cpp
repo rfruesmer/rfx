@@ -343,8 +343,7 @@ void ModelLoader::ModelLoaderImpl::loadMaterial(const tinygltf::Material& glTFMa
     const auto material = make_shared<Material>(
         glTFMaterial.name,
         vertexFormat_,
-        shaderId,
-        graphicsDevice_);
+        shaderId);
 
     // TODO: specular-glossiness material model
     const tinygltf::PbrMetallicRoughness& gltfMetallicRoughness = glTFMaterial.pbrMetallicRoughness;

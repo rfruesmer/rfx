@@ -14,8 +14,7 @@ public:
     Material(
         std::string id,
         const VertexFormat& vertexFormat,
-        std::string shaderId,
-        std::shared_ptr<GraphicsDevice> graphicsDevice);
+        std::string shaderId);
 
     [[nodiscard]] const VertexFormat& getVertexFormat() const;
     [[nodiscard]] const std::string& getShaderId() const;
@@ -66,20 +65,10 @@ public:
     void setUniformBuffer(const std::shared_ptr<Buffer>& uniformBuffer);
     [[nodiscard]] const std::shared_ptr<Buffer>& getUniformBuffer() const;
 
-
-    void createDescriptorSet(VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout);
+    void setDescriptorSet(VkDescriptorSet descriptorSet);
     [[nodiscard]] VkDescriptorSet getDescriptorSet() const;
 
 private:
-    static VkWriteDescriptorSet buildWriteDescriptorSet(
-        VkDescriptorSet descriptorSet,
-        uint32_t binding,
-        const VkDescriptorImageInfo* descriptorImageInfo);
-    static VkWriteDescriptorSet buildWriteDescriptorSet(
-        VkDescriptorSet descriptorSet,
-        uint32_t binding,
-        const VkDescriptorBufferInfo* descriptorBufferInfo);
-
     std::string id_;
 
     const VertexFormat vertexFormat_;
@@ -108,7 +97,6 @@ private:
     glm::vec3 specularFactor_ { 0.0f };
     float shininess_ = 0.0f; // 0-128
 
-    std::shared_ptr<GraphicsDevice> graphicsDevice_;
     VkDescriptorSet descriptorSet_ = VK_NULL_HANDLE;
     std::shared_ptr<Buffer> uniformBuffer_; // TODO: consider refactoring to push constants or refactor to sub-buffer allocation
 };

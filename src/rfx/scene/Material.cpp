@@ -11,12 +11,10 @@ using namespace std;
 Material::Material(
     string id,
     const VertexFormat& vertexFormat,
-    string shaderId,
-    shared_ptr<GraphicsDevice> graphicsDevice)
+    string shaderId)
         : id_(move(id)),
           vertexFormat_(vertexFormat),
-          shaderId_(move(shaderId)),
-          graphicsDevice_(move(graphicsDevice)) {}
+          shaderId_(move(shaderId)) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -268,113 +266,9 @@ const shared_ptr<Buffer>& Material::getUniformBuffer() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Material::createDescriptorSet(
-    VkDescriptorPool descriptorPool,
-    VkDescriptorSetLayout descriptorSetLayout)
+void Material::setDescriptorSet(VkDescriptorSet descriptorSet)
 {
-    const VkDescriptorSetAllocateInfo allocInfo {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .descriptorPool = descriptorPool,
-        .descriptorSetCount = 1,
-        .pSetLayouts = &descriptorSetLayout
-    };
-
-    vector<VkWriteDescriptorSet> writeDescriptorSets;
-    uint32_t binding = 0;
-
-    ThrowIfFailed(vkAllocateDescriptorSets(
-        graphicsDevice_->getLogicalDevice(),
-        &allocInfo,
-        &descriptorSet_));
-
-    writeDescriptorSets.push_back(
-        buildWriteDescriptorSet(
-            descriptorSet_,
-            binding++,
-            &uniformBuffer_->getDescriptorBufferInfo()));
-
-    if (baseColorTexture_ != nullptr) {
-        writeDescriptorSets.push_back(
-            buildWriteDescriptorSet(
-                descriptorSet_,
-                binding++,
-                &baseColorTexture_->getDescriptorImageInfo()));
-    }
-
-    if (normalTexture_ != nullptr) {
-        writeDescriptorSets.push_back(
-            buildWriteDescriptorSet(
-                descriptorSet_,
-                binding++,
-                &normalTexture_->getDescriptorImageInfo()));
-    }
-
-    if (metallicRoughnessTexture_ != nullptr) {
-        writeDescriptorSets.push_back(
-            buildWriteDescriptorSet(
-                descriptorSet_,
-                binding++,
-                &metallicRoughnessTexture_->getDescriptorImageInfo()));
-    }
-
-    if (occlusionTexture_ != nullptr) {
-        writeDescriptorSets.push_back(
-            buildWriteDescriptorSet(
-                descriptorSet_,
-                binding++,
-                &occlusionTexture_->getDescriptorImageInfo()));
-    }
-
-    if (emissiveTexture_ != nullptr) {
-        writeDescriptorSets.push_back(
-            buildWriteDescriptorSet(
-                descriptorSet_,
-                binding++,
-                &emissiveTexture_->getDescriptorImageInfo()));
-    }
-
-    vkUpdateDescriptorSets(
-        graphicsDevice_->getLogicalDevice(),
-        writeDescriptorSets.size(),
-        writeDescriptorSets.data(),
-        0,
-        nullptr);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-VkWriteDescriptorSet Material::buildWriteDescriptorSet(
-    VkDescriptorSet descriptorSet,
-    uint32_t binding,
-    const VkDescriptorImageInfo* descriptorImageInfo)
-{
-    return {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .dstSet = descriptorSet,
-        .dstBinding = binding,
-        .dstArrayElement = 0,
-        .descriptorCount = 1,
-        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-        .pImageInfo = descriptorImageInfo
-    };
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-VkWriteDescriptorSet Material::buildWriteDescriptorSet(
-    VkDescriptorSet descriptorSet,
-    uint32_t binding,
-    const VkDescriptorBufferInfo* descriptorBufferInfo)
-{
-    return {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .dstSet = descriptorSet,
-        .dstBinding = binding,
-        .dstArrayElement = 0,
-        .descriptorCount = 1,
-        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .pBufferInfo = descriptorBufferInfo
-    };
+    descriptorSet_ = descriptorSet;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

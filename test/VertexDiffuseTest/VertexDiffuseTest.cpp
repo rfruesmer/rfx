@@ -65,25 +65,18 @@ void VertexDiffuseTest::loadScene()
 
 void VertexDiffuseTest::createShaders()
 {
-    MaterialShaderFactory shaderFactory(graphicsDevice, getShadersDirectory(), VertexDiffuseShader::ID);
+    MaterialShaderFactory shaderFactory(
+        graphicsDevice,
+        descriptorPool,
+        getShadersDirectory(),
+        VertexDiffuseShader::ID);
 
     shaderFactory.addAllocator(VertexDiffuseShader::ID,
         [this] { return make_shared<VertexDiffuseShader>(graphicsDevice); });
 
-    for (const auto& material : scene->getMaterials()) {
+    for (const auto& material : scene->getMaterials())
+    {
         const MaterialShaderPtr shader = shaderFactory.createShaderFor(material);
-
-
-        const VertexDiffuseShader::MaterialData materialData {
-            .baseColor = material->getBaseColorFactor(),
-            .specular = material->getSpecularFactor(),
-            .shininess = material->getShininess()
-        };
-
-        material->setUniformBuffer(
-            createAndBindUniformBuffer(sizeof(materialData), &materialData));
-
-        material->createDescriptorSet(descriptorPool, shader->getMaterialDescriptorSetLayout());
         materialShaderMap[shader].push_back(material);
     }
 

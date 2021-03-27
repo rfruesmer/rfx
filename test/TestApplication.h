@@ -46,7 +46,7 @@ protected:
     virtual void createCommandBuffers() = 0;
 
     void initGraphicsResources();
-    std::shared_ptr<Buffer> createAndBindUniformBuffer(VkDeviceSize size, const void* data);
+    BufferPtr createAndBindUniformBuffer(VkDeviceSize bufferSize);
     [[nodiscard]] VkPipelineLayout createDefaultPipelineLayout(const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts);
     [[nodiscard]] VkPipeline createDefaultPipelineFor(const MaterialShader& shader, VkPipelineLayout pipelineLayout);
     void createRenderPass();

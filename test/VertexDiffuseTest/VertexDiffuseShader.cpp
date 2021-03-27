@@ -19,7 +19,7 @@ VertexDiffuseShader::VertexDiffuseShader(const GraphicsDevicePtr& graphicsDevice
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseShader::update(const shared_ptr<Material>& material) const
+std::vector<std::byte> VertexDiffuseShader::createDataFor(const MaterialPtr& material) const
 {
     const MaterialData materialData {
         .baseColor = material->getBaseColorFactor(),
@@ -27,9 +27,21 @@ void VertexDiffuseShader::update(const shared_ptr<Material>& material) const
         .shininess = material->getShininess()
     };
 
+    std::vector<std::byte> data(sizeof(MaterialData));
+    memcpy(data.data(), &materialData, sizeof(MaterialData));
+
+    return data;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void VertexDiffuseShader::update(const MaterialPtr& material) const
+{
+    vector<std::byte> materialData = createDataFor(material);
+    
     const shared_ptr<Buffer>& uniformBuffer = material->getUniformBuffer();
     uniformBuffer->load(sizeof(MaterialData),
-        reinterpret_cast<const void*>(&materialData));
+        reinterpret_cast<const void*>(materialData.data()));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -11,18 +11,13 @@ namespace rfx {
 class MaterialShader
 {
 public:
-    virtual void loadShaders(
+    virtual void create(
         const MaterialPtr& material,
         VkDescriptorSetLayout materialDescriptorSetLayout,
         const std::filesystem::path& shadersDirectory);
-    virtual void update(const std::shared_ptr<Material>& material) const = 0;
 
     [[nodiscard]] const std::string& getId() const;
-
-    [[nodiscard]] const std::string& getVertexShaderId() const;
     [[nodiscard]] const std::shared_ptr<VertexShader>& getVertexShader() const;
-
-    [[nodiscard]] const std::string& getFragmentShaderId() const;
     [[nodiscard]] const std::shared_ptr<FragmentShader>& getFragmentShader() const;
 
     [[nodiscard]] virtual std::vector<std::string> getShaderDefinesFor(const MaterialPtr& material);
@@ -30,14 +25,15 @@ public:
     [[nodiscard]] virtual std::vector<std::string> getVertexShaderOutputsFor(const MaterialPtr& material);
     [[nodiscard]] virtual std::vector<std::string> getFragmentShaderInputsFor(const MaterialPtr& material);
 
-
     void setPipeline(VkPipelineLayout pipelineLayout, VkPipeline pipeline);
     [[nodiscard]] VkPipelineLayout getPipelineLayout() const;
     [[nodiscard]] VkPipeline getPipeline() const;
 
     [[nodiscard]] VkDescriptorSetLayout getMaterialDescriptorSetLayout() const;
-
     void destroyMaterialDescriptorSetLayout();
+
+    [[nodiscard]] virtual std::vector<std::byte> createDataFor(const MaterialPtr& material) const = 0;
+    virtual void update(const MaterialPtr& material) const = 0;
 
 protected:
     MaterialShader(
