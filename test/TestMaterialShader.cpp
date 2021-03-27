@@ -10,8 +10,13 @@ using namespace std;
 
 TestMaterialShader::TestMaterialShader(
     GraphicsDevicePtr graphicsDevice,
+    std::string id,
     std::string vertexShaderId,
     std::string fragmentShaderId)
-        : MaterialShader(move(graphicsDevice), move(vertexShaderId), move(fragmentShaderId)) {}
+        : MaterialShader(
+            move(graphicsDevice),
+            move(id),
+            move(vertexShaderId),
+            move(fragmentShaderId)) {}
 
 // ---------------------------------------------------------------------------------------------------------------------

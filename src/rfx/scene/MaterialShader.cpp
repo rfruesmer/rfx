@@ -12,11 +12,27 @@ using namespace std::filesystem;
 
 MaterialShader::MaterialShader(
     GraphicsDevicePtr graphicsDevice,
+    std::string id,
     std::string vertexShaderId,
     std::string fragmentShaderId)
     : graphicsDevice_(move(graphicsDevice)),
+      id(move(id)),
       vertexShaderId(move(vertexShaderId)),
       fragmentShaderId(move(fragmentShaderId)) {}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+MaterialShader::~MaterialShader()
+{
+    int i = 42;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const string& MaterialShader::getId() const
+{
+    return id;
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -29,10 +45,10 @@ void MaterialShader::loadShaders(
     const path fragmentShaderFilename = fragmentShaderId + ".frag";
     const VertexFormat& vertexFormat = material->getVertexFormat();
 
-    const vector<string> defines = buildShaderDefines(material, vertexFormat);
-    const vector<string> vertexShaderInputs = buildVertexShaderInputs(vertexFormat);
-    const vector<string> vertexShaderOutputs = buildVertexShaderOutputs(vertexFormat);
-    const vector<string> fragmentShaderInputs = buildFragmentShaderInputs(vertexFormat);
+    const vector<string> defines = getShaderDefinesFor(material);
+    const vector<string> vertexShaderInputs = getVertexShaderInputsFor(material);
+    const vector<string> vertexShaderOutputs = getVertexShaderOutputsFor(material);
+    const vector<string> fragmentShaderInputs = getFragmentShaderInputsFor(material);
 
 
     const ShaderLoader shaderLoader(graphicsDevice_);
@@ -55,9 +71,23 @@ void MaterialShader::loadShaders(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+const string& MaterialShader::getVertexShaderId() const
+{
+    return vertexShaderId;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 const shared_ptr<VertexShader>& MaterialShader::getVertexShader() const
 {
     return vertexShader;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const string& MaterialShader::getFragmentShaderId() const
+{
+    return fragmentShaderId;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -69,28 +99,28 @@ const shared_ptr<FragmentShader>& MaterialShader::getFragmentShader() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<string> MaterialShader::buildShaderDefines(const shared_ptr<Material>& material, const VertexFormat& vertexFormat)
+vector<string> MaterialShader::getShaderDefinesFor(const MaterialPtr& material)
 {
     return vector<string>();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<string> MaterialShader::buildVertexShaderInputs(const VertexFormat& vertexFormat)
+vector<string> MaterialShader::getVertexShaderInputsFor(const MaterialPtr& material)
 {
     return vector<string>();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<string> MaterialShader::buildVertexShaderOutputs(const VertexFormat& vertexFormat)
+vector<string> MaterialShader::getVertexShaderOutputsFor(const MaterialPtr& material)
 {
     return vector<string>();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<string> MaterialShader::buildFragmentShaderInputs(const VertexFormat& vertexFormat)
+vector<string> MaterialShader::getFragmentShaderInputsFor(const MaterialPtr& material)
 {
     return vector<string>();
 }

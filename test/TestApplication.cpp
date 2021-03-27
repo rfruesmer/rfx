@@ -9,6 +9,11 @@ using namespace std::filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+TestApplication::TestApplication(const string& defaultShaderId)
+    : shaderFactory(getShadersDirectory(), defaultShaderId) {}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void TestApplication::initGraphicsResources()
 {
     createDescriptorPool();
@@ -605,6 +610,15 @@ void TestApplication::updateDevTools()
     if (devTools->checkBox("Wireframe", &wireframe)) {
         createCommandBuffers();
     }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::cleanup()
+{
+    shaderFactory.clearCache();
+
+    Application::cleanup();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -31,7 +31,7 @@ protected:
 
 private:
     void loadScene();
-    void createEffects() override;
+    void createShaders() override;
     void createCommandBuffers() override;
     void drawGeometryNode(
         uint32_t index,
@@ -39,7 +39,8 @@ private:
 
     std::shared_ptr<Model> scene;
     PointLight light;
-    std::unique_ptr<VertexDiffuseShader> shader;
+    std::shared_ptr<VertexDiffuseShader> vertexDiffuseShader;
+
 
     std::unordered_map<MaterialShaderPtr, std::vector<MaterialPtr>> materialShaderMap;
 };

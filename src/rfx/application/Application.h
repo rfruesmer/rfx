@@ -20,7 +20,8 @@ public:
     void run();
 
 protected:
-    [[nodiscard]] static std::filesystem::path getAssetsDirectory();
+    [[nodiscard]] static std::filesystem::path getAssetsDirectory();    // TODO: this should be defined by concrete application - make pure virtual
+    [[nodiscard]] static std::filesystem::path getShadersDirectory();   // TODO: this should be defined by concrete application - make pure virtual
 
     void onResized(const Window& window, int width, int height) override;
 

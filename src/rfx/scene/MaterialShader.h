@@ -11,27 +11,34 @@ namespace rfx {
 class MaterialShader
 {
 public:
-    virtual ~MaterialShader() = default;
-
     virtual void loadShaders(const std::shared_ptr<Material>& material, const std::filesystem::path& shadersDirectory);
     virtual void update(const std::shared_ptr<Material>& material) const = 0;
 
+    [[nodiscard]] const std::string& getId() const;
+
+    [[nodiscard]] const std::string& getVertexShaderId() const;
     [[nodiscard]] const std::shared_ptr<VertexShader>& getVertexShader() const;
+
+    [[nodiscard]] const std::string& getFragmentShaderId() const;
     [[nodiscard]] const std::shared_ptr<FragmentShader>& getFragmentShader() const;
 
+    [[nodiscard]] virtual std::vector<std::string> getShaderDefinesFor(const MaterialPtr& material);
+    [[nodiscard]] virtual std::vector<std::string> getVertexShaderInputsFor(const MaterialPtr& material);
+    [[nodiscard]] virtual std::vector<std::string> getVertexShaderOutputsFor(const MaterialPtr& material);
+    [[nodiscard]] virtual std::vector<std::string> getFragmentShaderInputsFor(const MaterialPtr& material);
+
 protected:
-    explicit MaterialShader(
+    MaterialShader(
         GraphicsDevicePtr graphicsDevice,
+        std::string id,
         std::string vertexShaderId,
         std::string fragmentShaderId);
-
-    [[nodiscard]] virtual std::vector<std::string> buildShaderDefines(const std::shared_ptr<Material>& material, const VertexFormat& vertexFormat);
-    [[nodiscard]] virtual std::vector<std::string> buildVertexShaderInputs(const VertexFormat& vertexFormat);
-    [[nodiscard]] virtual std::vector<std::string> buildVertexShaderOutputs(const VertexFormat& vertexFormat);
-    [[nodiscard]] virtual std::vector<std::string> buildFragmentShaderInputs(const VertexFormat& vertexFormat);
+    virtual ~MaterialShader();
 
 
     std::shared_ptr<GraphicsDevice> graphicsDevice_;
+
+    std::string id;
     std::string vertexShaderId;
     std::shared_ptr<VertexShader> vertexShader;
     std::string fragmentShaderId;

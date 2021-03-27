@@ -182,6 +182,13 @@ path Application::getAssetsDirectory()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+path Application::getShadersDirectory()
+{
+    return getAssetsDirectory() / "shaders";
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void Application::createFrameBuffers()
 {
     graphicsDevice->getSwapChain()->createFrameBuffers(

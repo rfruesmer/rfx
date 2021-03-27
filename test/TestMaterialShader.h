@@ -11,6 +11,7 @@ class TestMaterialShader : public MaterialShader
 public:
     TestMaterialShader(
         GraphicsDevicePtr graphicsDevice,
+        std::string id,
         std::string vertexShaderId,
         std::string fragmentShaderId);
 };

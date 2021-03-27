@@ -1,10 +1,10 @@
 #pragma once
 
-#include <rfx/scene/PointLight.h>
 #include "rfx/application/Application.h"
 #include "rfx/scene/Model.h"
 #include "rfx/scene/FlyCamera.h"
-#include "rfx/scene/MaterialShader.h"
+#include "rfx/scene/MaterialShaderFactory.h"
+#include "rfx/scene/PointLight.h"
 
 
 namespace rfx {
@@ -26,7 +26,9 @@ protected:
         glm::mat4 modelMatrix;
     };
 
-    virtual void createEffects() = 0;
+    explicit TestApplication(const std::string& defaultShaderId);
+
+    virtual void createShaders() = 0;
 
     void createDescriptorPool();
 
@@ -74,6 +76,7 @@ protected:
     glm::mat4 calcDefaultProjection();
     void updateDevTools() override;
 
+    void cleanup() override;
     void cleanupSwapChain() override;
     void recreateSwapChain() override;
 
@@ -92,6 +95,8 @@ protected:
     SceneData sceneData_ {};
 
     VkDescriptorSetLayout meshDescriptorSetLayout_ = VK_NULL_HANDLE;
+
+    MaterialShaderFactory shaderFactory;
 
     PointLight light_ { "point" };
 };

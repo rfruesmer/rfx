@@ -6,13 +6,16 @@ using namespace rfx;
 using namespace glm;
 using namespace std;
 
-const string VertexDiffuseShader::VERTEX_SHADER_ID = "vertex_diffuse";
-const string VertexDiffuseShader::FRAGMENT_SHADER_ID = "vertex_diffuse";
+const string VertexDiffuseShader::ID = "vertex_diffuse";
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 VertexDiffuseShader::VertexDiffuseShader(const GraphicsDevicePtr& graphicsDevice)
-        : TestMaterialShader(graphicsDevice, VERTEX_SHADER_ID, FRAGMENT_SHADER_ID) {}
+        : TestMaterialShader(
+            graphicsDevice,
+            ID,
+            ID,
+            ID) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 

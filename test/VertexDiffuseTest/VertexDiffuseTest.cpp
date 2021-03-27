@@ -28,7 +28,8 @@ int main()
 // ---------------------------------------------------------------------------------------------------------------------
 
 VertexDiffuseTest::VertexDiffuseTest()
-    : light("point")
+    : TestApplication(VertexDiffuseShader::ID),
+      light("point")
 {
     devToolsEnabled = true;
 }
@@ -40,7 +41,7 @@ void VertexDiffuseTest::initGraphics()
     Application::initGraphics();
 
     loadScene();
-    createEffects();
+    createShaders();
     updateProjection();
 
     initGraphicsResources();
@@ -62,15 +63,18 @@ void VertexDiffuseTest::loadScene()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseTest::createEffects()
+void VertexDiffuseTest::createShaders()
 {
-    const path shadersDirectory = getAssetsDirectory() / "shaders";
+    shaderFactory.addAllocator(VertexDiffuseShader::ID,
+        [this] { return make_shared<VertexDiffuseShader>(graphicsDevice); });
 
-    // TODO: support for multiple/different materials/effects/shaders per scene
-    const shared_ptr<Material>& material = scene->getMaterial(0);
+    for (const auto& material : scene->getMaterials()) {
+        const MaterialShaderPtr shader = shaderFactory.createShaderFor(material);
+        materialShaderMap[shader].push_back(material);
+    }
 
-    shader = make_unique<VertexDiffuseShader>(graphicsDevice);
-    shader->loadShaders(material, shadersDirectory);
+    RFX_CHECK_STATE(materialShaderMap.size() == 1, "");
+    vertexDiffuseShader = static_pointer_cast<VertexDiffuseShader>(materialShaderMap.begin()->first);
 
     setLight(light);
 }
@@ -148,7 +152,7 @@ void VertexDiffuseTest::createPipelineLayouts()
 
 void VertexDiffuseTest::createPipelines()
 {
-    TestApplication::createDefaultPipeline(*shader);
+    TestApplication::createDefaultPipeline(*vertexDiffuseShader);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -275,7 +279,8 @@ void VertexDiffuseTest::updateSceneData(float deltaTime)
 
 void VertexDiffuseTest::cleanup()
 {
-    shader.reset();
+    vertexDiffuseShader.reset();
+    materialShaderMap.clear();
     scene.reset();
 
     TestApplication::cleanup();
