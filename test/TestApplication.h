@@ -1,6 +1,7 @@
 #pragma once
 
 #include "rfx/application/Application.h"
+#include "rfx/rendering/RenderGraph.h"
 #include "rfx/scene/Model.h"
 #include "rfx/scene/FlyCamera.h"
 #include "rfx/scene/MaterialShaderFactory.h"
@@ -44,6 +45,30 @@ protected:
 
     virtual void createPipelines() = 0;
     virtual void createCommandBuffers() = 0;
+
+    void recordRenderGraphTo(const CommandBufferPtr& commandBuffer);
+    void recordCommandBuffer(
+        const CommandBufferPtr& commandBuffer,
+        const MaterialShaderNode& shaderNode);
+    void bindShader(
+        const MaterialShaderPtr& shader,
+        const CommandBufferPtr& commandBuffer);
+    static void recordCommandBuffer(
+        const CommandBufferPtr& commandBuffer,
+        const MaterialNode& materialNode,
+        const MaterialShaderPtr& shader);
+    static void bindMaterial(
+        const MaterialPtr& material,
+        const MaterialShaderPtr& shader,
+        const CommandBufferPtr& commandBuffer);
+    static void recordCommandBuffer(
+        const CommandBufferPtr& commandBuffer,
+        const MeshNode& meshNode,
+        const MaterialShaderPtr& shader);
+    static void bindObject(
+        const MeshPtr& mesh,
+        const MaterialShaderPtr& shader,
+        const CommandBufferPtr& commandBuffer);
 
     void initGraphicsResources();
     BufferPtr createAndBindUniformBuffer(VkDeviceSize bufferSize);
@@ -96,6 +121,8 @@ protected:
     SceneData sceneData_ {};
 
     VkDescriptorSetLayout meshDescriptorSetLayout_ = VK_NULL_HANDLE;
+
+    RenderGraph renderGraph;
 
     PointLight light_ { "point" };
 };

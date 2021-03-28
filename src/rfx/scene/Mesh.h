@@ -8,19 +8,21 @@ namespace rfx {
 class Mesh
 {
 public:
-    [[nodiscard]] const std::vector<SubMesh>& getSubMeshes() const;
     void addSubMesh(const SubMesh& subMesh);
+    [[nodiscard]] const std::vector<SubMesh>& getSubMeshes() const;
 
-    void setDescriptorSet(const VkDescriptorSet descriptorSet);
-    VkDescriptorSet getDescriptorSet() const;
+    void setDescriptorSet(VkDescriptorSet descriptorSet);
+    [[nodiscard]] VkDescriptorSet getDescriptorSet() const;
 
     void setDataBuffer(const BufferPtr& dataBuffer);
-    const BufferPtr& getDataBuffer() const;
+    [[nodiscard]] const BufferPtr& getDataBuffer() const;
 
 private:
     std::vector<SubMesh> subMeshes;
     VkDescriptorSet descriptorSet;
     BufferPtr dataBuffer;
 };
+
+using MeshPtr = std::shared_ptr<Mesh>;
 
 } // namespace rfx

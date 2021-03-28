@@ -17,7 +17,6 @@ void TestApplication::initGraphicsResources()
     createRenderPass();
     createPipelines();
     createFrameBuffers();
-    createCommandBuffers();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -830,6 +829,104 @@ VkWriteDescriptorSet TestApplication::buildWriteDescriptorSet(
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .pBufferInfo = descriptorBufferInfo
     };
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::recordRenderGraphTo(const CommandBufferPtr& commandBuffer)
+{
+    for (const auto& shaderNode : renderGraph.getChildNodes()) {
+        recordCommandBuffer(commandBuffer, shaderNode);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::recordCommandBuffer(
+    const CommandBufferPtr& commandBuffer,
+    const MaterialShaderNode& shaderNode)
+{
+    const MaterialShaderPtr& shader = shaderNode.getMaterialShader();
+
+    bindShader(shader, commandBuffer);
+
+    for (const auto& materialNode : shaderNode.getChildNodes()) {
+        recordCommandBuffer(commandBuffer, materialNode, shader);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::bindShader(
+    const MaterialShaderPtr& shader,
+    const CommandBufferPtr& commandBuffer)
+{
+    commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, shader->getPipeline());
+    commandBuffer->bindDescriptorSet(
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        shader->getPipelineLayout(),
+        0,
+        sceneDescriptorSet_);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::recordCommandBuffer(
+    const CommandBufferPtr& commandBuffer,
+    const MaterialNode& materialNode,
+    const MaterialShaderPtr& shader)
+{
+    const MaterialPtr& material = materialNode.getMaterial();
+
+    bindMaterial(material, shader, commandBuffer);
+
+    for (const auto& meshNode : materialNode.getChildNodes()) {
+        recordCommandBuffer(commandBuffer, meshNode, shader);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::bindMaterial(
+    const MaterialPtr& material,
+    const MaterialShaderPtr& shader,
+    const CommandBufferPtr& commandBuffer)
+{
+    commandBuffer->bindDescriptorSet(
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        shader->getPipelineLayout(),
+        2,
+        material->getDescriptorSet());
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::recordCommandBuffer(
+    const CommandBufferPtr& commandBuffer,
+    const MeshNode& meshNode,
+    const MaterialShaderPtr& shader)
+{
+    const MeshPtr& mesh = meshNode.getMesh();
+
+    bindObject(mesh, shader, commandBuffer);
+
+    for (const auto& subMesh : meshNode.getSubMeshes()) {
+        commandBuffer->drawIndexed(subMesh.indexCount, subMesh.firstIndex);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::bindObject(
+    const MeshPtr& mesh,
+    const MaterialShaderPtr& shader,
+    const CommandBufferPtr& commandBuffer)
+{
+    commandBuffer->bindDescriptorSet(
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        shader->getPipelineLayout(),
+        1,
+        mesh->getDescriptorSet());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

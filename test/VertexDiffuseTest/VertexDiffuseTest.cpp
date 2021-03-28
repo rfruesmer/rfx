@@ -45,6 +45,8 @@ void VertexDiffuseTest::initGraphics()
     updateProjection();
 
     initGraphicsResources();
+    buildRenderGraph();
+    createCommandBuffers();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -118,6 +120,13 @@ void VertexDiffuseTest::createPipelines()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void VertexDiffuseTest::buildRenderGraph()
+{
+    renderGraph.add(scene, materialShaderMap);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void VertexDiffuseTest::createCommandBuffers()
 {
     const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
@@ -174,50 +183,13 @@ void VertexDiffuseTest::createCommandBuffers()
         commandBuffer->beginRenderPass(renderPassBeginInfo);
         commandBuffer->setViewport(viewport);
         commandBuffer->setScissor(scissor);
-        commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, wireframe ? wireframePipeline : materialShaderMap.begin()->first->getPipeline());
-        commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, materialShaderMap.begin()->first->getPipelineLayout(), 0, sceneDescriptorSet_);
         commandBuffer->bindVertexBuffer(scene->getVertexBuffer());
         commandBuffer->bindIndexBuffer(scene->getIndexBuffer());
 
-        for (uint32_t j = 0; j < scene->getGeometryNodeCount(); ++j) {
-            drawGeometryNode(j, commandBuffer);
-        }
+        recordRenderGraphTo(commandBuffer);
 
         commandBuffer->endRenderPass();
         commandBuffer->end();
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void VertexDiffuseTest::drawGeometryNode(
-    uint32_t index,
-    const shared_ptr<CommandBuffer>& commandBuffer)
-{
-    const shared_ptr<ModelNode>& geometryNode = scene->getGeometryNode(index);
-
-
-    for (const auto& mesh : geometryNode->getMeshes()) {
-
-        commandBuffer->bindDescriptorSet(
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            materialShaderMap.begin()->first->getPipelineLayout(),
-            1,
-            mesh->getDescriptorSet());
-
-        for (const auto& subMesh : mesh->getSubMeshes()) {
-            if (subMesh.indexCount == 0) {
-                continue;
-            }
-
-            commandBuffer->bindDescriptorSet(
-                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                materialShaderMap.begin()->first->getPipelineLayout(),
-                2,
-                subMesh.material->getDescriptorSet());
-
-            commandBuffer->drawIndexed(subMesh.indexCount, subMesh.firstIndex);
-        }
     }
 }
 
@@ -240,6 +212,8 @@ void VertexDiffuseTest::updateSceneData(float deltaTime)
 
 void VertexDiffuseTest::cleanup()
 {
+    renderGraph.clear();
+
     VkDevice device = graphicsDevice->getLogicalDevice();
 
     for (const auto& [shader, materials] : materialShaderMap) {
@@ -264,3 +238,4 @@ void VertexDiffuseTest::cleanupSwapChain()
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+

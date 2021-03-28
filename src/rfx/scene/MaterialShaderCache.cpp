@@ -1,3 +1,4 @@
+#include "rfx/pch.h"
 #include "rfx/scene/MaterialShaderCache.h"
 
 

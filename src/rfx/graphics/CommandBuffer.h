@@ -71,4 +71,6 @@ private:
     VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
 };
 
+using CommandBufferPtr = std::shared_ptr<CommandBuffer>;
+
 } // namespace rfx

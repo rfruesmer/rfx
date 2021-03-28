@@ -13,10 +13,9 @@ public:
 
 protected:
     void initGraphics() override;
-
     void createMeshResources() override;
-
     void createPipelines() override;
+    void buildRenderGraph();
 
     void updateProjection() override;
     void updateSceneData(float deltaTime) override;
@@ -28,9 +27,7 @@ private:
     void loadScene();
     void createShaders() override;
     void createCommandBuffers() override;
-    void drawGeometryNode(
-        uint32_t index,
-        const std::shared_ptr<CommandBuffer>& commandBuffer);
+
 
     std::shared_ptr<Model> scene;
     PointLight light;

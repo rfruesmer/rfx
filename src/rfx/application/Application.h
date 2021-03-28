@@ -38,7 +38,7 @@ protected:
     std::shared_ptr<Window> window_;
     std::unique_ptr<GraphicsContext> graphicsContext;
     std::shared_ptr<GraphicsDevice> graphicsDevice;
-    std::vector<std::shared_ptr<CommandBuffer>> commandBuffers;
+    std::vector<CommandBufferPtr> commandBuffers;
 
     VkRenderPass renderPass = VK_NULL_HANDLE;
     VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
