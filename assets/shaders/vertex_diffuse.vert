@@ -14,16 +14,15 @@ uniform SceneData {
 } scene;
 
 layout(set = 1, binding = 0)
-uniform MeshData {
-    mat4 modelMatrix;
-} mesh;
-
-layout(set = 2, binding = 0)
 uniform MaterialData {
     vec4 baseColor;
     float shininess;
 } material;
 
+layout(set = 2, binding = 0)
+uniform MeshData {
+    mat4 modelMatrix;
+} mesh;
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;

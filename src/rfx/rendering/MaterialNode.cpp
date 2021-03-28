@@ -54,7 +54,7 @@ void MaterialNode::bindMaterial(
     commandBuffer->bindDescriptorSet(
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         shader->getPipelineLayout(),
-        2,
+        1,
         material->getDescriptorSet());
 }
 

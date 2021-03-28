@@ -107,8 +107,8 @@ void VertexDiffuseTest::createPipelines()
 
         vector<VkDescriptorSetLayout> descriptorSetLayouts {
             sceneDescriptorSetLayout_,
-            meshDescriptorSetLayout_,
-            materialDescriptorSetLayout
+            materialDescriptorSetLayout,
+            meshDescriptorSetLayout_
         };
 
         VkPipelineLayout pipelineLayout = TestApplication::createDefaultPipelineLayout(descriptorSetLayouts);
