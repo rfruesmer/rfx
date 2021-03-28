@@ -13,7 +13,7 @@ public:
 
 protected:
     void initGraphics() override;
-    void createShaders() override;
+    void initShaderFactory(MaterialShaderFactory& shaderFactory) override;
     void createMeshResources() override;
     void buildRenderGraph();
 

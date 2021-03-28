@@ -691,6 +691,32 @@ void TestApplication::updateSceneDataBuffer()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void TestApplication::createShadersFor(
+    const ModelPtr& model,
+    const string& defaultShaderId)
+{
+    MaterialShaderFactory shaderFactory(
+        graphicsDevice,
+        descriptorPool,
+        getShadersDirectory(),
+        defaultShaderId);
+
+    initShaderFactory(shaderFactory);
+
+    for (const auto& material : model->getMaterials())
+    {
+        const MaterialShaderPtr shader = shaderFactory.createShaderFor(material);
+        initMaterialUniformBuffer(material, shader);
+        initMaterialDescriptorSet(material, shader);
+
+        materialShaderMap[shader].push_back(material);
+    }
+
+    updateShaderData();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void TestApplication::setViewMatrix(const mat4& viewMatrix)
 {
     sceneData_.viewMatrix = viewMatrix;

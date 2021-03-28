@@ -18,10 +18,8 @@ protected:
     };
 
     struct MeshData {
-        glm::mat4 modelMatrix;
+        [[maybe_unused]] glm::mat4 modelMatrix;
     };
-
-    virtual void createShaders() = 0;
 
     void createDescriptorPool();
 
@@ -31,6 +29,11 @@ protected:
     void createSceneDataBuffer();
     void updateSceneData(float deltaTime);
     void updateSceneDataBuffer();
+
+    void createShadersFor(
+        const ModelPtr& model,
+        const std::string& defaultShaderId);
+    virtual void initShaderFactory(MaterialShaderFactory& shaderFactory) = 0;
 
     virtual void createMeshResources();
     void createMeshDescriptorSetLayout();
