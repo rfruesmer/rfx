@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "VertexDiffuseShader.h"
+#include "PointLightShader.h"
 
 
 using namespace rfx;
@@ -8,11 +8,11 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const string VertexDiffuseShader::ID = "vertex_diffuse";
+const string PointLightShader::ID = "pointlight";
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VertexDiffuseShader::VertexDiffuseShader(const GraphicsDevicePtr& graphicsDevice)
+PointLightShader::PointLightShader(const GraphicsDevicePtr& graphicsDevice)
     : TestMaterialShader(
         graphicsDevice,
         ID,
@@ -21,10 +21,12 @@ VertexDiffuseShader::VertexDiffuseShader(const GraphicsDevicePtr& graphicsDevice
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<std::byte> VertexDiffuseShader::createDataFor(const MaterialPtr& material) const
+vector<std::byte> PointLightShader::createDataFor(const MaterialPtr& material) const
 {
     const MaterialData materialData {
-        .baseColor = material->getBaseColorFactor()
+        .baseColor = material->getBaseColorFactor(),
+        .specular = material->getSpecularFactor(),
+        .shininess = material->getShininess()
     };
 
     vector<std::byte> data(sizeof(MaterialData));
@@ -35,44 +37,30 @@ vector<std::byte> VertexDiffuseShader::createDataFor(const MaterialPtr& material
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const void* VertexDiffuseShader::getData() const
+const void* PointLightShader::getData() const
 {
     return reinterpret_cast<const void*>(&data);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-uint32_t VertexDiffuseShader::getDataSize() const
+uint32_t PointLightShader::getDataSize() const
 {
     return sizeof(ShaderData);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseShader::setLightPosition(const vec3& position)
+void PointLightShader::setLightPosition(const vec3& position)
 {
     data.lightPos = position;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseShader::setLightAmbient(const vec3& color)
+void PointLightShader::setLightColor(const vec3& color)
 {
-    data.La = vec4(color, 1.0f);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void VertexDiffuseShader::setLightDiffuse(const vec3& color)
-{
-    data.Ld = vec4(color, 1.0f);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void VertexDiffuseShader::setLightSpecular(const vec3& color)
-{
-    data.Ls = vec4(color, 1.0f);
+    data.lightColor = color;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -15,17 +15,15 @@ protected:
     void initGraphics() override;
     void initShaderFactory(MaterialShaderFactory& shaderFactory) override;
     void createMeshResources() override;
-    void buildRenderGraph();
-
     void updateShaderData() override;
-
     void cleanup() override;
 
 private:
     void loadScene();
+    void buildRenderGraph();
 
     ModelPtr scene;
-    PointLight light { "point" };
+    PointLight light { "pointLight" };
 };
 
 } // namespace rfx

@@ -280,4 +280,11 @@ VkDescriptorSet Material::getDescriptorSet() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void Material::loadUniformBufferData(const vector<std::byte>& data)
+{
+    uniformBuffer_->load(data.size(), reinterpret_cast<const void*>(data.data()));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 

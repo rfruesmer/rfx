@@ -37,7 +37,7 @@ public:
 
     [[nodiscard]] VkDescriptorSetLayout getMaterialDescriptorSetLayout() const;
     [[nodiscard]] virtual std::vector<std::byte> createDataFor(const MaterialPtr& material) const = 0;
-    virtual void update(const MaterialPtr& material) const = 0;
+    virtual void update(const MaterialPtr& material) const;
 
     [[nodiscard]] virtual const void* getData() const = 0;
     [[nodiscard]] virtual uint32_t getDataSize() const = 0;

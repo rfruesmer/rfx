@@ -186,3 +186,10 @@ VkDescriptorSet MaterialShader::getShaderDescriptorSet() const
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+
+void MaterialShader::update(const MaterialPtr& material) const
+{
+    material->loadUniformBufferData(createDataFor(material));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------

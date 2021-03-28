@@ -17,7 +17,6 @@ uniform ShaderData {
 layout(set = 2, binding = 0)
 uniform MaterialData {
     vec4 baseColor;
-    float shininess;
 } material;
 
 layout(set = 3, binding = 0)

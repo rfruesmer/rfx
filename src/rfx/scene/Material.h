@@ -65,6 +65,8 @@ public:
     void setUniformBuffer(const std::shared_ptr<Buffer>& uniformBuffer);
     [[nodiscard]] const std::shared_ptr<Buffer>& getUniformBuffer() const;
 
+    void loadUniformBufferData(const std::vector<std::byte>& data);
+
     void setDescriptorSet(VkDescriptorSet descriptorSet);
     [[nodiscard]] VkDescriptorSet getDescriptorSet() const;
 
