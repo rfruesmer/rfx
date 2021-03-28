@@ -2,25 +2,21 @@
 
 layout(set = 0, binding = 0)
 uniform SceneData {
-    // Camera
     mat4 viewMatrix;
     mat4 projMatrix;
-
-    // Light
-    vec3 lightPos;              // light position in eye coords
-    float pad1;
-    vec3 lightColor;
-    float pad2;
-    vec3 spotDirection;         // Direction of the spotlight in eye coords
-    float pad3;
-    float innerConeAngle;
-    float outerConeAngle;
 } scene;
 
 layout(set = 1, binding = 0)
-uniform MeshData {
-    mat4 modelMatrix;
-} mesh;
+uniform ShaderData {
+    vec3 lightPos;
+    float pad1;
+    vec3 lightColor;
+    float pad2;
+    vec3 spotDirection;
+    float pad3;
+    float innerConeAngle;
+    float outerConeAngle;
+} shader;
 
 layout(set = 2, binding = 0)
 uniform MaterialData {
@@ -29,6 +25,10 @@ uniform MaterialData {
     float shininess;
 } material;
 
+layout(set = 3, binding = 0)
+uniform MeshData {
+    mat4 modelMatrix;
+} mesh;
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
@@ -47,5 +47,5 @@ void main() {
 
     outPosition = (modelViewMatrix * vec4(inPosition, 1.0)).xyz;
     outNormal = normal;
-    outSpotDirection = normalMatrix * scene.spotDirection;
+    outSpotDirection = normalMatrix * shader.spotDirection;
 }
