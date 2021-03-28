@@ -144,30 +144,6 @@ void VertexDiffuseTest::buildRenderGraph()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseTest::createCommandBuffers()
-{
-    const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
-    const vector<VkFramebuffer>& swapChainFrameBuffers = swapChain->getFramebuffers();
-
-
-    commandBuffers = graphicsDevice->createCommandBuffers(
-        graphicsDevice->getGraphicsCommandPool(),
-        swapChainFrameBuffers.size());
-
-    for (size_t i = 0; i < commandBuffers.size(); ++i)
-    {
-        const auto& commandBuffer = commandBuffers[i];
-
-        renderGraph->record(
-            commandBuffer,
-            sceneDescriptorSet_,
-            renderPass,
-            swapChainFrameBuffers[i]);
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void VertexDiffuseTest::setViewMatrix(const mat4& viewMatrix)
 {
     TestApplication::setViewMatrix(viewMatrix);

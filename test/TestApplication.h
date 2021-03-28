@@ -38,7 +38,7 @@ protected:
     void createMeshDataBuffers(const ModelPtr& model);
 
     virtual void createPipelines() = 0;
-    virtual void createCommandBuffers() = 0;
+    virtual void createCommandBuffers();
 
     void initGraphicsResources();
     BufferPtr createAndBindUniformBuffer(VkDeviceSize bufferSize);

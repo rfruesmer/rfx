@@ -29,7 +29,7 @@ protected:
 private:
     void loadScene();
     void createShaders() override;
-    void createCommandBuffers() override;
+
 
     std::shared_ptr<Model> scene;
     PointLight light { "point" };

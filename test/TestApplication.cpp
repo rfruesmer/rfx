@@ -822,3 +822,27 @@ VkWriteDescriptorSet TestApplication::buildWriteDescriptorSet(
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::createCommandBuffers()
+{
+    const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
+    const vector<VkFramebuffer>& swapChainFrameBuffers = swapChain->getFramebuffers();
+
+
+    commandBuffers = graphicsDevice->createCommandBuffers(
+        graphicsDevice->getGraphicsCommandPool(),
+        swapChainFrameBuffers.size());
+
+    for (size_t i = 0; i < commandBuffers.size(); ++i)
+    {
+        const auto& commandBuffer = commandBuffers[i];
+
+        renderGraph->record(
+            commandBuffer,
+            sceneDescriptorSet_,
+            renderPass,
+            swapChainFrameBuffers[i]);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
