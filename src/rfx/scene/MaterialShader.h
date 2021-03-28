@@ -16,6 +16,8 @@ public:
         VkDescriptorSetLayout materialDescriptorSetLayout,
         const std::filesystem::path& shadersDirectory);
 
+    void destroy();
+
     [[nodiscard]] const std::string& getId() const;
     [[nodiscard]] const std::shared_ptr<VertexShader>& getVertexShader() const;
     [[nodiscard]] const std::shared_ptr<FragmentShader>& getFragmentShader() const;
@@ -30,10 +32,18 @@ public:
     [[nodiscard]] VkPipeline getPipeline() const;
 
     [[nodiscard]] VkDescriptorSetLayout getMaterialDescriptorSetLayout() const;
-    void destroyMaterialDescriptorSetLayout();
-
     [[nodiscard]] virtual std::vector<std::byte> createDataFor(const MaterialPtr& material) const = 0;
     virtual void update(const MaterialPtr& material) const = 0;
+
+    void setResources(
+        VkDescriptorSetLayout descriptorSetLayout,
+        VkDescriptorSet descriptorSet,
+        BufferPtr buffer);
+    [[nodiscard]] virtual const void* getData() const = 0;
+    [[nodiscard]] virtual uint32_t getDataSize() const = 0;
+    [[nodiscard]] VkDescriptorSetLayout getShaderDescriptorSetLayout() const;
+    [[nodiscard]] VkDescriptorSet getShaderDescriptorSet() const;
+    void updateDataBuffer();
 
 protected:
     MaterialShader(
@@ -56,6 +66,10 @@ protected:
     VkPipeline pipeline = VK_NULL_HANDLE;
 
     VkDescriptorSetLayout materialDescriptorSetLayout = VK_NULL_HANDLE;
+
+    VkDescriptorSetLayout shaderDescriptorSetLayout = VK_NULL_HANDLE;
+    VkDescriptorSet shaderDescriptorSet = VK_NULL_HANDLE;
+    std::shared_ptr<Buffer> shaderDataBuffer;
 };
 
 using MaterialShaderPtr = std::shared_ptr<MaterialShader>;

@@ -54,16 +54,23 @@ MaterialShaderPtr MaterialShaderFactory::getCachedShaderFor(const MaterialPtr& m
 
 size_t MaterialShaderFactory::hash(const MaterialPtr& material)
 {
+    const auto& allocator = getAllocatorFor(material);
+    MaterialShaderPtr shader = allocator();
+
+    return hash(shader, material);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+function<MaterialShaderPtr()> MaterialShaderFactory::getAllocatorFor(const MaterialPtr& material)
+{
     string shaderId = material->getShaderId();
     shaderId = shaderId.empty() ? defaultShaderId : shaderId;
 
     const auto it = allocatorMap.find(shaderId);
     RFX_CHECK_ARGUMENT(it != allocatorMap.end());
 
-    const auto allocator = it->second;
-    MaterialShaderPtr shader = allocator();
-
-    return hash(shader, material);
+    return it->second;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -107,18 +114,21 @@ size_t MaterialShaderFactory::hash(const MaterialShaderPtr& shader, const Materi
 
 MaterialShaderPtr MaterialShaderFactory::createShader(const MaterialPtr& material)
 {
-    string shaderId = material->getShaderId();
-    shaderId = shaderId.empty() ? defaultShaderId : shaderId;
-
-    const auto it = allocatorMap.find(shaderId);
-    RFX_CHECK_ARGUMENT(it != allocatorMap.end());
-    const auto allocator = it->second;
+    const auto allocator = getAllocatorFor(material);
 
     MaterialShaderPtr shader = allocator();
     shader->create(
         material,
         createMaterialDescriptorSetLayoutFor(material),
         shadersDirectory);
+
+    VkDescriptorSetLayout shaderDescriptorSetLayout = createShaderDescriptorSetLayout();
+    BufferPtr shaderDataBuffer = createShaderDataBuffer(shader);
+    VkDescriptorSet shaderDescriptorSet = createShaderDescriptorSet(
+        shaderDescriptorSetLayout,
+        shaderDataBuffer);
+
+    shader->setResources(shaderDescriptorSetLayout, shaderDescriptorSet, shaderDataBuffer);
 
     return shader;
 }
@@ -197,6 +207,91 @@ VkDescriptorSetLayout MaterialShaderFactory::createMaterialDescriptorSetLayoutFo
         &descriptorSetLayout));
 
     return descriptorSetLayout;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkDescriptorSetLayout MaterialShaderFactory::createShaderDescriptorSetLayout()
+{
+    VkDescriptorSetLayoutBinding layoutBinding {
+        .binding = 0,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = 1,
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT
+    };
+
+    const VkDescriptorSetLayoutCreateInfo createInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .bindingCount = 1,
+        .pBindings = &layoutBinding
+    };
+
+    VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
+    ThrowIfFailed(vkCreateDescriptorSetLayout(
+        graphicsDevice->getLogicalDevice(),
+        &createInfo,
+        nullptr,
+        &descriptorSetLayout));
+
+    return descriptorSetLayout;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+BufferPtr MaterialShaderFactory::createShaderDataBuffer(const MaterialShaderPtr& shader)
+{
+    const void* shaderData = shader->getData();
+    const uint32_t shaderDataSize = shader->getDataSize();
+
+    BufferPtr shaderDataBuffer = graphicsDevice->createBuffer(
+        shaderDataSize,
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+    graphicsDevice->bind(shaderDataBuffer);
+
+    shaderDataBuffer->load(shaderDataSize, shaderData);
+
+    return shaderDataBuffer;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkDescriptorSet MaterialShaderFactory::createShaderDescriptorSet(
+    VkDescriptorSetLayout descriptorSetLayout,
+    const BufferPtr& shaderDataBuffer)
+{
+    const VkDescriptorSetAllocateInfo allocInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool = descriptorPool,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &descriptorSetLayout
+    };
+
+    VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
+    ThrowIfFailed(vkAllocateDescriptorSets(
+        graphicsDevice->getLogicalDevice(),
+        &allocInfo,
+        &descriptorSet));
+
+    VkWriteDescriptorSet writeDescriptorSet {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = descriptorSet,
+        .dstBinding = 0,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .pBufferInfo = &shaderDataBuffer->getDescriptorBufferInfo()
+    };
+
+    vkUpdateDescriptorSets(
+        graphicsDevice->getLogicalDevice(),
+        1,
+        &writeDescriptorSet,
+        0,
+        nullptr);
+
+    return descriptorSet;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

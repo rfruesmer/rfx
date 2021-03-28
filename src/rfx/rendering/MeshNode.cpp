@@ -40,7 +40,7 @@ void MeshNode::bindObject(
     commandBuffer->bindDescriptorSet(
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         shader->getPipelineLayout(),
-        2,
+        3,
         mesh->getDescriptorSet());
 }
 

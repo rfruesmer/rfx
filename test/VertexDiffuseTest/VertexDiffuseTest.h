@@ -17,6 +17,9 @@ protected:
     void createPipelines() override;
     void buildRenderGraph();
 
+    void setViewMatrix(const glm::mat4& viewMatrix) override;
+    void updateShaderData();
+
     void updateProjection() override;
     void updateSceneData(float deltaTime) override;
 
@@ -28,9 +31,8 @@ private:
     void createShaders() override;
     void createCommandBuffers() override;
 
-
     std::shared_ptr<Model> scene;
-    PointLight light;
+    PointLight light { "point" };
     std::unordered_map<MaterialShaderPtr, std::vector<MaterialPtr>> materialShaderMap;
 };
 

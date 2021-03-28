@@ -80,12 +80,29 @@ void VertexDiffuseTest::createShaders()
     {
         const MaterialShaderPtr shader = shaderFactory.createShaderFor(material);
         initMaterialUniformBuffer(material, shader);
-        initMaterialDescriptorSetLayout(material, shader);
+        initMaterialDescriptorSet(material, shader);
 
         materialShaderMap[shader].push_back(material);
     }
 
-    setLight(light);
+    updateShaderData();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void VertexDiffuseTest::updateShaderData()
+{
+    RFX_CHECK_STATE(materialShaderMap.size() == 1, "");
+    RFX_CHECK_STATE(materialShaderMap.begin()->first->getId() == VertexDiffuseShader::ID, "");
+
+    const VertexDiffuseShaderPtr shader = static_pointer_cast<VertexDiffuseShader>(materialShaderMap.begin()->first);
+
+    shader->setLightPosition(sceneData_.viewMatrix * vec4(light.getPosition(), 1.0f));
+    shader->setLightAmbient({ 0.01f, 0.01f, 0.01f });
+    shader->setLightDiffuse({ 0.7f, 0.7f, 0.7f });
+    shader->setLightSpecular({ 0.3f, 0.3f, 0.3f });
+
+    shader->updateDataBuffer();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -103,11 +120,10 @@ void VertexDiffuseTest::createPipelines()
 {
     for (const auto& [shader, materials] : materialShaderMap)
     {
-        VkDescriptorSetLayout materialDescriptorSetLayout = shader->getMaterialDescriptorSetLayout();
-
         vector<VkDescriptorSetLayout> descriptorSetLayouts {
             sceneDescriptorSetLayout_,
-            materialDescriptorSetLayout,
+            shader->getShaderDescriptorSetLayout(),
+            shader->getMaterialDescriptorSetLayout(),
             meshDescriptorSetLayout_
         };
 
@@ -132,10 +148,11 @@ void VertexDiffuseTest::createCommandBuffers()
 {
     const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
     const vector<VkFramebuffer>& swapChainFrameBuffers = swapChain->getFramebuffers();
-    VkCommandPool graphicsCommandPool = graphicsDevice->getGraphicsCommandPool();
 
 
-    commandBuffers = graphicsDevice->createCommandBuffers(graphicsCommandPool, swapChainFrameBuffers.size());
+    commandBuffers = graphicsDevice->createCommandBuffers(
+        graphicsDevice->getGraphicsCommandPool(),
+        swapChainFrameBuffers.size());
 
     for (size_t i = 0; i < commandBuffers.size(); ++i)
     {
@@ -151,6 +168,15 @@ void VertexDiffuseTest::createCommandBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void VertexDiffuseTest::setViewMatrix(const mat4& viewMatrix)
+{
+    TestApplication::setViewMatrix(viewMatrix);
+
+    updateShaderData();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void VertexDiffuseTest::updateProjection()
 {
     setProjectionMatrix(calcDefaultProjection());
@@ -161,6 +187,7 @@ void VertexDiffuseTest::updateProjection()
 void VertexDiffuseTest::updateSceneData(float deltaTime)
 {
     setViewMatrix(camera.getViewMatrix());
+
     updateSceneDataBuffer();
 }
 
@@ -168,14 +195,8 @@ void VertexDiffuseTest::updateSceneData(float deltaTime)
 
 void VertexDiffuseTest::cleanup()
 {
-    VkDevice device = graphicsDevice->getLogicalDevice();
-
     for (const auto& [shader, materials] : materialShaderMap) {
-        shader->destroyMaterialDescriptorSetLayout();
-
-        vkDestroyPipeline(device, shader->getPipeline(), nullptr);
-        vkDestroyPipelineLayout(device, shader->getPipelineLayout(), nullptr);
-        shader->setPipeline(VK_NULL_HANDLE, VK_NULL_HANDLE);
+        shader->destroy();
     }
 
     materialShaderMap.clear();

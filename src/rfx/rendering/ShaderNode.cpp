@@ -52,6 +52,12 @@ void ShaderNode::bindShader(
         shader->getPipelineLayout(),
         0,
         sceneDescriptorSet);
+
+    commandBuffer->bindDescriptorSet(
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        shader->getPipelineLayout(),
+        1,
+        shader->getShaderDescriptorSet());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

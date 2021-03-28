@@ -23,12 +23,19 @@ public:
     void clearCache();
 
 private:
+    std::function<MaterialShaderPtr()> getAllocatorFor(const MaterialPtr& material);
     MaterialShaderPtr getCachedShaderFor(const MaterialPtr& material);
     size_t hash(const MaterialPtr& material);
     static size_t hash(const MaterialShaderPtr& shader, const MaterialPtr& material);
     MaterialShaderPtr createShader(const MaterialPtr& material);
     void addToCache(const MaterialShaderPtr& shader, const MaterialPtr& material);
     VkDescriptorSetLayout createMaterialDescriptorSetLayoutFor(const MaterialPtr& material);
+
+    BufferPtr createShaderDataBuffer(const MaterialShaderPtr& shader);
+    VkDescriptorSetLayout createShaderDescriptorSetLayout();
+    VkDescriptorSet createShaderDescriptorSet(
+        VkDescriptorSetLayout descriptorSetLayout,
+        const BufferPtr& shaderDataBuffer);
 
     GraphicsDevicePtr graphicsDevice;
     VkDescriptorPool descriptorPool = VK_NULL_HANDLE;

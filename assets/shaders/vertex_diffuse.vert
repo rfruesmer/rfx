@@ -2,24 +2,25 @@
 
 layout(set = 0, binding = 0)
 uniform SceneData {
-    // Camera
     mat4 viewMatrix;
     mat4 projMatrix;
+} scene;
 
-    // Light
+layout(set = 1, binding = 0)
+uniform ShaderData {
     vec4 lightPos;          // light position in eye coords
     vec4 La;                // Ambient light intensity
     vec4 Ld;                // Diffuse light intensity
     vec4 Ls;                // Specular light intensity
-} scene;
+} shader;
 
-layout(set = 1, binding = 0)
+layout(set = 2, binding = 0)
 uniform MaterialData {
     vec4 baseColor;
     float shininess;
 } material;
 
-layout(set = 2, binding = 0)
+layout(set = 3, binding = 0)
 uniform MeshData {
     mat4 modelMatrix;
 } mesh;
@@ -37,10 +38,10 @@ void main() {
 
     vec3 normal = normalize(normalMatrix * inNormal);
     vec4 eyeCoords = modelViewMatrix * vec4(inPosition, 1.0);
-    vec3 s = normalize(vec3(scene.lightPos - eyeCoords));
+    vec3 s = normalize(vec3(shader.lightPos - eyeCoords));
 
     float sDotN = max(dot(s, normal), 0.0);
-    vec3 diffuse = vec3(scene.Ld * material.baseColor) * sDotN;
+    vec3 diffuse = vec3(shader.Ld * material.baseColor) * sDotN;
 
     outLightIntensity = diffuse;
 

@@ -24,16 +24,33 @@ MaterialShader::MaterialShader(
 
 MaterialShader::~MaterialShader()
 {
-    destroyMaterialDescriptorSetLayout();
+    destroy();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void MaterialShader::destroyMaterialDescriptorSetLayout()
+void MaterialShader::destroy()
 {
+    VkDevice device = graphicsDevice_->getLogicalDevice();
+
     if (materialDescriptorSetLayout != VK_NULL_HANDLE) {
-        vkDestroyDescriptorSetLayout(graphicsDevice_->getLogicalDevice(), materialDescriptorSetLayout, nullptr);
+        vkDestroyDescriptorSetLayout(device, materialDescriptorSetLayout, nullptr);
         materialDescriptorSetLayout = VK_NULL_HANDLE;
+    }
+
+    if (shaderDescriptorSetLayout != VK_NULL_HANDLE) {
+        vkDestroyDescriptorSetLayout(device, shaderDescriptorSetLayout, nullptr);
+        shaderDescriptorSetLayout = VK_NULL_HANDLE;
+    }
+
+    if (pipeline != VK_NULL_HANDLE) {
+        vkDestroyPipeline(device, pipeline, nullptr);
+        pipeline = VK_NULL_HANDLE;
+    }
+
+    if (pipelineLayout != VK_NULL_HANDLE) {
+        vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+        pipelineLayout = VK_NULL_HANDLE;
     }
 }
 
@@ -151,6 +168,43 @@ VkPipelineLayout MaterialShader::getPipelineLayout() const
 VkPipeline MaterialShader::getPipeline() const
 {
     return pipeline;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void MaterialShader::setResources(
+    VkDescriptorSetLayout descriptorSetLayout,
+    VkDescriptorSet descriptorSet,
+    BufferPtr buffer)
+{
+    shaderDescriptorSetLayout = descriptorSetLayout;
+    shaderDescriptorSet = descriptorSet;
+    shaderDataBuffer = move(buffer);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void MaterialShader::updateDataBuffer()
+{
+    const uint32_t dataSize = getDataSize();
+
+    if (dataSize > 0) {
+        shaderDataBuffer->load(dataSize, getData());
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkDescriptorSetLayout MaterialShader::getShaderDescriptorSetLayout() const
+{
+    return shaderDescriptorSetLayout;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkDescriptorSet MaterialShader::getShaderDescriptorSet() const
+{
+    return shaderDescriptorSet;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
