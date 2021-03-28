@@ -20,4 +20,6 @@ private:
     VertexFormat vertexFormat;
 };
 
+using VertexBufferPtr = std::shared_ptr<VertexBuffer>;
+
 } // namespace rfx

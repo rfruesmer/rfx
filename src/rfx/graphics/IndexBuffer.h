@@ -23,4 +23,6 @@ private:
     VkIndexType indexType = VK_INDEX_TYPE_UINT32;
 };
 
+using IndexBufferPtr = std::shared_ptr<IndexBuffer>;
+
 } // namespace rfx

@@ -392,7 +392,11 @@ void Application::cleanup()
 
     cleanupSwapChain();
     destroySyncObjects();
-    vkDestroyDescriptorPool(graphicsDevice->getLogicalDevice(), descriptorPool, nullptr);
+
+    if (descriptorPool != VK_NULL_HANDLE) {
+        vkDestroyDescriptorPool(graphicsDevice->getLogicalDevice(), descriptorPool, nullptr);
+        descriptorPool = VK_NULL_HANDLE;
+    }
 
     graphicsDevice.reset();
     graphicsContext.reset();
