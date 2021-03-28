@@ -143,6 +143,13 @@ void TestApplication::createMeshDataBuffers(const ModelPtr& model)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void TestApplication::createMeshResources()
+{
+    createMeshDescriptorSetLayout();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void TestApplication::createMeshDescriptorSetLayout()
 {
     const VkDescriptorSetLayoutBinding meshDescSetLayoutBinding {

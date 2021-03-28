@@ -110,8 +110,9 @@ void VertexDiffuseTest::updateShaderData()
 
 void VertexDiffuseTest::createMeshResources()
 {
+    TestApplication::createMeshResources();
+
     createMeshDataBuffers(scene);
-    createMeshDescriptorSetLayout();
     createMeshDescriptorSets(scene);
 }
 
@@ -133,4 +134,3 @@ void VertexDiffuseTest::cleanup()
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-

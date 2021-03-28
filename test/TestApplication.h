@@ -32,7 +32,7 @@ protected:
     void updateSceneData(float deltaTime);
     void updateSceneDataBuffer();
 
-    virtual void createMeshResources() = 0;
+    virtual void createMeshResources();
     void createMeshDescriptorSetLayout();
     void createMeshDescriptorSets(const ModelPtr& model);
     void createMeshDataBuffers(const ModelPtr& model);
