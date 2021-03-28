@@ -12,4 +12,6 @@ public:
         const VkPipelineShaderStageCreateInfo& createInfo);
 };
 
+using FragmentShaderPtr = std::shared_ptr<FragmentShader>;
+
 } // namespace rfx

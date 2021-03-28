@@ -6,41 +6,24 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-ShaderProgram::ShaderProgram(const shared_ptr<VertexShader>& vertexShader, 
-    const shared_ptr<FragmentShader>& fragmentShader)
-        : vertexShader(vertexShader),
-          fragmentShader(fragmentShader)
-{
-    shaderStages.push_back(vertexShader->getStageCreateInfo());
-    shaderStages.push_back(fragmentShader->getStageCreateInfo());
-}
+ShaderProgram::ShaderProgram(
+    VertexShaderPtr vertexShader,
+    FragmentShaderPtr fragmentShader)
+        : vertexShader(move(vertexShader)),
+          fragmentShader(move(fragmentShader)) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const VertexFormat& ShaderProgram::getVertexFormat() const
-{
-    return vertexShader->getVertexFormat();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-const shared_ptr<VertexShader>& ShaderProgram::getVertexShader() const
+const VertexShaderPtr& ShaderProgram::getVertexShader() const
 {
     return vertexShader;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const shared_ptr<FragmentShader>& ShaderProgram::getFragmentShader() const
+const FragmentShaderPtr& ShaderProgram::getFragmentShader() const
 {
     return fragmentShader;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-const vector<VkPipelineShaderStageCreateInfo>& ShaderProgram::getShaderStages() const
-{
-    return shaderStages;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

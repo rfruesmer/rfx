@@ -1,5 +1,6 @@
 #pragma once
 
+#include <rfx/graphics/ShaderProgram.h>
 #include "rfx/scene/MaterialShader.h"
 #include "rfx/scene/MaterialShaderCache.h"
 
@@ -25,11 +26,17 @@ public:
 private:
     std::function<MaterialShaderPtr()> getAllocatorFor(const MaterialPtr& material);
     MaterialShaderPtr getCachedShaderFor(const MaterialPtr& material);
+
     size_t hash(const MaterialPtr& material);
     static size_t hash(const MaterialShaderPtr& shader, const MaterialPtr& material);
+
     MaterialShaderPtr createShader(const MaterialPtr& material);
-    void addToCache(const MaterialShaderPtr& shader, const MaterialPtr& material);
     VkDescriptorSetLayout createMaterialDescriptorSetLayoutFor(const MaterialPtr& material);
+    ShaderProgramPtr createShaderProgramFor(
+        const MaterialShaderPtr& shader,
+        const MaterialPtr& material);
+
+    void addToCache(const MaterialShaderPtr& shader, const MaterialPtr& material);
 
     BufferPtr createShaderDataBuffer(const MaterialShaderPtr& shader);
     VkDescriptorSetLayout createShaderDescriptorSetLayout();

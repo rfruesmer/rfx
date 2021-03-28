@@ -27,5 +27,7 @@ private:
     std::vector<VkVertexInputAttributeDescription> vertexAttributeDescriptions;
     VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {};
 };
-    
-}
+
+using VertexShaderPtr = std::shared_ptr<VertexShader>;
+
+} // namespace rfx

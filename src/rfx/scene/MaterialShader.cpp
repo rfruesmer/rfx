@@ -1,21 +1,19 @@
 #include "rfx/pch.h"
 #include "rfx/scene/MaterialShader.h"
-#include "rfx/graphics/ShaderLoader.h"
-#include "rfx/common/Logger.h"
 
 
 using namespace rfx;
 using namespace std;
-using namespace std::filesystem;
+using namespace filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 MaterialShader::MaterialShader(
     GraphicsDevicePtr graphicsDevice,
-    std::string id,
-    std::string vertexShaderId,
-    std::string fragmentShaderId)
-    : graphicsDevice_(move(graphicsDevice)),
+    string id,
+    string vertexShaderId,
+    string fragmentShaderId)
+    : graphicsDevice(move(graphicsDevice)),
       id(move(id)),
       vertexShaderId(move(vertexShaderId)),
       fragmentShaderId(move(fragmentShaderId)) {}
@@ -31,7 +29,7 @@ MaterialShader::~MaterialShader()
 
 void MaterialShader::destroy()
 {
-    VkDevice device = graphicsDevice_->getLogicalDevice();
+    VkDevice device = graphicsDevice->getLogicalDevice();
 
     if (materialDescriptorSetLayout != VK_NULL_HANDLE) {
         vkDestroyDescriptorSetLayout(device, materialDescriptorSetLayout, nullptr);
@@ -63,54 +61,46 @@ const string& MaterialShader::getId() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-// TODO: move to factory (?!)
 void MaterialShader::create(
-    const MaterialPtr& material,
-    VkDescriptorSetLayout materialDescriptorSetLayout,
-    const path& shadersDirectory)
+    ShaderProgramPtr shaderProgram,
+    VkDescriptorSetLayout shaderDescriptorSetLayout,
+    VkDescriptorSet shaderDescriptorSet,
+    BufferPtr shaderDataBuffer,
+    VkDescriptorSetLayout materialDescriptorSetLayout)
 {
-    const path vertexShaderFilename = vertexShaderId + ".vert";
-    const path fragmentShaderFilename = fragmentShaderId + ".frag";
-    const VertexFormat& vertexFormat = material->getVertexFormat();
-
-    const vector<string> defines = getShaderDefinesFor(material);
-    const vector<string> vertexShaderInputs = getVertexShaderInputsFor(material);
-    const vector<string> vertexShaderOutputs = getVertexShaderOutputsFor(material);
-    const vector<string> fragmentShaderInputs = getFragmentShaderInputsFor(material);
-
-
-    const ShaderLoader shaderLoader(graphicsDevice_);
-    RFX_LOG_INFO << "Loading vertex shader ...";
-    vertexShader = shaderLoader.loadVertexShader(
-        shadersDirectory / vertexShaderFilename,
-        "main",
-        vertexFormat,
-        defines,
-        vertexShaderInputs,
-        vertexShaderOutputs);
-
-    RFX_LOG_INFO << "Loading fragment shader ...";
-    fragmentShader = shaderLoader.loadFragmentShader(
-        shadersDirectory / fragmentShaderFilename,
-        "main",
-        defines,
-        fragmentShaderInputs);
-
+    this->shaderProgram = move(shaderProgram);
+    this->shaderDescriptorSetLayout = shaderDescriptorSetLayout;
+    this->shaderDescriptorSet = shaderDescriptorSet;
+    this->shaderDataBuffer = move(shaderDataBuffer);
     this->materialDescriptorSetLayout = materialDescriptorSetLayout;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const string& MaterialShader::getVertexShaderId() const
+{
+    return vertexShaderId;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 const shared_ptr<VertexShader>& MaterialShader::getVertexShader() const
 {
-    return vertexShader;
+    return shaderProgram->getVertexShader();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const string& MaterialShader::getFragmentShaderId() const
+{
+    return fragmentShaderId;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 const shared_ptr<FragmentShader>& MaterialShader::getFragmentShader() const
 {
-    return fragmentShader;
+    return shaderProgram->getFragmentShader();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -168,18 +158,6 @@ VkPipelineLayout MaterialShader::getPipelineLayout() const
 VkPipeline MaterialShader::getPipeline() const
 {
     return pipeline;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void MaterialShader::setResources(
-    VkDescriptorSetLayout descriptorSetLayout,
-    VkDescriptorSet descriptorSet,
-    BufferPtr buffer)
-{
-    shaderDescriptorSetLayout = descriptorSetLayout;
-    shaderDescriptorSet = descriptorSet;
-    shaderDataBuffer = move(buffer);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -1,9 +1,12 @@
+#include <rfx/graphics/ShaderLoader.h>
 #include "rfx/pch.h"
 #include "rfx/scene/MaterialShaderFactory.h"
-
+#include "rfx/graphics/ShaderProgram.h"
+#include "rfx/common/Logger.h"
 
 using namespace rfx;
 using namespace std;
+using namespace std::filesystem;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -117,18 +120,23 @@ MaterialShaderPtr MaterialShaderFactory::createShader(const MaterialPtr& materia
     const auto allocator = getAllocatorFor(material);
 
     MaterialShaderPtr shader = allocator();
-    shader->create(
-        material,
-        createMaterialDescriptorSetLayoutFor(material),
-        shadersDirectory);
 
+    ShaderProgramPtr shaderProgram = createShaderProgramFor(shader, material);
     VkDescriptorSetLayout shaderDescriptorSetLayout = createShaderDescriptorSetLayout();
     BufferPtr shaderDataBuffer = createShaderDataBuffer(shader);
     VkDescriptorSet shaderDescriptorSet = createShaderDescriptorSet(
         shaderDescriptorSetLayout,
         shaderDataBuffer);
+    VkDescriptorSetLayout materialDescriptorSetLayout =
+        createMaterialDescriptorSetLayoutFor(material);
 
-    shader->setResources(shaderDescriptorSetLayout, shaderDescriptorSet, shaderDataBuffer);
+    shader->create(
+        shaderProgram,
+        shaderDescriptorSetLayout,
+        shaderDescriptorSet,
+        shaderDataBuffer,
+        materialDescriptorSetLayout);
+
 
     return shader;
 }
@@ -207,6 +215,42 @@ VkDescriptorSetLayout MaterialShaderFactory::createMaterialDescriptorSetLayoutFo
         &descriptorSetLayout));
 
     return descriptorSetLayout;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+ShaderProgramPtr MaterialShaderFactory::createShaderProgramFor(
+    const MaterialShaderPtr& shader,
+    const MaterialPtr& material)
+{
+    const path vertexShaderFilename = shader->getVertexShaderId() + ".vert";
+    const path fragmentShaderFilename = shader->getFragmentShaderId() + ".frag";
+    const VertexFormat& vertexFormat = material->getVertexFormat();
+
+    const vector<string> defines = shader->getShaderDefinesFor(material);
+    const vector<string> vertexShaderInputs = shader->getVertexShaderInputsFor(material);
+    const vector<string> vertexShaderOutputs = shader->getVertexShaderOutputsFor(material);
+    const vector<string> fragmentShaderInputs = shader->getFragmentShaderInputsFor(material);
+
+
+    const ShaderLoader shaderLoader(graphicsDevice);
+    RFX_LOG_INFO << "Loading vertex shader ...";
+    const VertexShaderPtr vertexShader = shaderLoader.loadVertexShader(
+        shadersDirectory / vertexShaderFilename,
+        "main",
+        vertexFormat,
+        defines,
+        vertexShaderInputs,
+        vertexShaderOutputs);
+
+    RFX_LOG_INFO << "Loading fragment shader ...";
+    const FragmentShaderPtr fragmentShader = shaderLoader.loadFragmentShader(
+        shadersDirectory / fragmentShaderFilename,
+        "main",
+        defines,
+        fragmentShaderInputs);
+
+    return make_shared<ShaderProgram>(vertexShader, fragmentShader);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

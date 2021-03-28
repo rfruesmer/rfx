@@ -2,24 +2,28 @@
 
 #include "rfx/scene/Material.h"
 #include "rfx/graphics/GraphicsDevice.h"
-#include <rfx/graphics/VertexShader.h>
-#include <rfx/graphics/FragmentShader.h>
-
+#include "rfx/graphics/ShaderProgram.h"
 
 namespace rfx {
 
 class MaterialShader
 {
 public:
-    virtual void create(
-        const MaterialPtr& material,
-        VkDescriptorSetLayout materialDescriptorSetLayout,
-        const std::filesystem::path& shadersDirectory);
+    void create(
+        ShaderProgramPtr shaderProgram,
+        VkDescriptorSetLayout shaderDescriptorSetLayout,
+        VkDescriptorSet shaderDescriptorSet,
+        BufferPtr shaderDataBuffer,
+        VkDescriptorSetLayout materialDescriptorSetLayout);
 
     void destroy();
 
     [[nodiscard]] const std::string& getId() const;
+
+    [[nodiscard]] const std::string& getVertexShaderId() const;
     [[nodiscard]] const std::shared_ptr<VertexShader>& getVertexShader() const;
+
+    [[nodiscard]] const std::string& getFragmentShaderId() const;
     [[nodiscard]] const std::shared_ptr<FragmentShader>& getFragmentShader() const;
 
     [[nodiscard]] virtual std::vector<std::string> getShaderDefinesFor(const MaterialPtr& material);
@@ -35,10 +39,6 @@ public:
     [[nodiscard]] virtual std::vector<std::byte> createDataFor(const MaterialPtr& material) const = 0;
     virtual void update(const MaterialPtr& material) const = 0;
 
-    void setResources(
-        VkDescriptorSetLayout descriptorSetLayout,
-        VkDescriptorSet descriptorSet,
-        BufferPtr buffer);
     [[nodiscard]] virtual const void* getData() const = 0;
     [[nodiscard]] virtual uint32_t getDataSize() const = 0;
     [[nodiscard]] VkDescriptorSetLayout getShaderDescriptorSetLayout() const;
@@ -54,13 +54,12 @@ protected:
     virtual ~MaterialShader();
 
 
-    std::shared_ptr<GraphicsDevice> graphicsDevice_;
+    std::shared_ptr<GraphicsDevice> graphicsDevice;
 
     std::string id;
     std::string vertexShaderId;
-    std::shared_ptr<VertexShader> vertexShader;
     std::string fragmentShaderId;
-    std::shared_ptr<FragmentShader> fragmentShader;
+    ShaderProgramPtr shaderProgram;
 
     VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
     VkPipeline pipeline = VK_NULL_HANDLE;
