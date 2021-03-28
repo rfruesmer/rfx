@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "rfx/rendering/MaterialShaderNode.h"
+#include "rfx/rendering/ShaderNode.h"
 
 using namespace rfx;
 using namespace std;
@@ -7,18 +7,18 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-MaterialShaderNode::MaterialShaderNode(
+ShaderNode::ShaderNode(
     MaterialShaderPtr shader,
     const vector<MaterialPtr>& materials,
     const ModelPtr& model)
-        : materialShader(move(shader))
+        : shader(move(shader))
 {
     add(materials, model);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void MaterialShaderNode::add(const vector<MaterialPtr>& materials, const ModelPtr& model)
+void ShaderNode::add(const vector<MaterialPtr>& materials, const ModelPtr& model)
 {
     for (const auto& material : materials) {
         MaterialNode childNode(material, model);
@@ -28,16 +28,30 @@ void MaterialShaderNode::add(const vector<MaterialPtr>& materials, const ModelPt
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const MaterialShaderPtr& MaterialShaderNode::getMaterialShader() const
+void ShaderNode::record(
+    const CommandBufferPtr& commandBuffer,
+    VkDescriptorSet sceneDescriptorSet) const
 {
-    return materialShader;
+    bindShader(commandBuffer, sceneDescriptorSet);
+
+    for (const auto& materialNode : childNodes) {
+        materialNode.record(commandBuffer, shader);
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const vector<MaterialNode>& MaterialShaderNode::getChildNodes() const
+void ShaderNode::bindShader(
+    const CommandBufferPtr& commandBuffer,
+    VkDescriptorSet sceneDescriptorSet) const
 {
-    return childNodes;
+    commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, shader->getPipeline());
+
+    commandBuffer->bindDescriptorSet(
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        shader->getPipelineLayout(),
+        0,
+        sceneDescriptorSet);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

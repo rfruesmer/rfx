@@ -122,7 +122,8 @@ void VertexDiffuseTest::createPipelines()
 
 void VertexDiffuseTest::buildRenderGraph()
 {
-    renderGraph.add(scene, materialShaderMap);
+    renderGraph = make_shared<RenderGraph>();
+    renderGraph->add(scene, materialShaderMap);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -183,10 +184,11 @@ void VertexDiffuseTest::createCommandBuffers()
         commandBuffer->beginRenderPass(renderPassBeginInfo);
         commandBuffer->setViewport(viewport);
         commandBuffer->setScissor(scissor);
+
         commandBuffer->bindVertexBuffer(scene->getVertexBuffer());
         commandBuffer->bindIndexBuffer(scene->getIndexBuffer());
 
-        recordRenderGraphTo(commandBuffer);
+        renderGraph->record(commandBuffer, sceneDescriptorSet_);
 
         commandBuffer->endRenderPass();
         commandBuffer->end();

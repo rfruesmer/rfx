@@ -20,16 +20,28 @@ MeshNode::MeshNode(const MeshPtr& mesh, const MaterialPtr& material)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const MeshPtr& MeshNode::getMesh() const
+void MeshNode::record(
+    const CommandBufferPtr& commandBuffer,
+    const MaterialShaderPtr& shader) const
 {
-    return mesh;
+    bindObject(commandBuffer, shader);
+
+    for (const auto& subMesh : subMeshes) {
+        commandBuffer->drawIndexed(subMesh.indexCount, subMesh.firstIndex);
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const vector<SubMesh>& MeshNode::getSubMeshes() const
+void MeshNode::bindObject(
+    const CommandBufferPtr& commandBuffer,
+    const MaterialShaderPtr& shader) const
 {
-    return subMeshes;
+    commandBuffer->bindDescriptorSet(
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        shader->getPipelineLayout(),
+        1,
+        mesh->getDescriptorSet());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -6,22 +6,26 @@
 
 namespace rfx {
 
-class MaterialShaderNode
+class ShaderNode
 {
 public:
-    MaterialShaderNode(
+    ShaderNode(
         MaterialShaderPtr shader,
         const std::vector<MaterialPtr>& materials,
         const ModelPtr& model);
 
-    [[nodiscard]] const MaterialShaderPtr& getMaterialShader() const;
-
-    [[nodiscard]] const std::vector<MaterialNode>& getChildNodes() const;
+    void record(
+        const CommandBufferPtr& commandBuffer,
+        VkDescriptorSet sceneDescriptorSet) const;
 
 private:
     void add(const std::vector<MaterialPtr>& materials, const ModelPtr& model);
 
-    MaterialShaderPtr materialShader;
+    void bindShader(
+        const CommandBufferPtr& commandBuffer,
+        VkDescriptorSet sceneDescriptorSet) const;
+
+    MaterialShaderPtr shader;
     std::vector<MaterialNode> childNodes;
 };
 

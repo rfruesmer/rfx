@@ -9,15 +9,19 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-MaterialNode::MaterialNode(const MaterialPtr& material, const ModelPtr& model)
-    : material(material)
+MaterialNode::MaterialNode(
+    const MaterialPtr& material,
+    const ModelPtr& model)
+        : material(material)
 {
     add(material, model);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void MaterialNode::add(const MaterialPtr& material, const ModelPtr& model)
+void MaterialNode::add(
+    const MaterialPtr& material,
+    const ModelPtr& model)
 {
     for (const auto& mesh : model->getMeshes())
     {
@@ -30,16 +34,28 @@ void MaterialNode::add(const MaterialPtr& material, const ModelPtr& model)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const MaterialPtr& MaterialNode::getMaterial() const
+void MaterialNode::record(
+    const CommandBufferPtr& commandBuffer,
+    const MaterialShaderPtr& shader) const
 {
-    return material;
+    bindMaterial(commandBuffer, shader);
+
+    for (const auto& meshNode : childNodes) {
+        meshNode.record(commandBuffer, shader);
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const vector<MeshNode>& MaterialNode::getChildNodes() const
+void MaterialNode::bindMaterial(
+    const CommandBufferPtr& commandBuffer,
+    const MaterialShaderPtr& shader) const
 {
-    return childNodes;
+    commandBuffer->bindDescriptorSet(
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        shader->getPipelineLayout(),
+        2,
+        material->getDescriptorSet());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

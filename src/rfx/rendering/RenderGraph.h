@@ -2,11 +2,14 @@
 
 #include "rfx/scene/Model.h"
 #include "rfx/scene/MaterialShader.h"
-#include "rfx/rendering/MaterialShaderNode.h"
+#include "rfx/rendering/ShaderNode.h"
 
 
 namespace rfx {
 
+/**
+ *  TODO: support for multiple models
+ */
 class RenderGraph
 {
 public:
@@ -14,7 +17,9 @@ public:
         const ModelPtr& model,
         const std::unordered_map<MaterialShaderPtr, std::vector<MaterialPtr>>& materialShaderMap);
 
-    [[nodiscard]] const std::vector<MaterialShaderNode>& getChildNodes() const;
+    void record(
+        const CommandBufferPtr& commandBuffer,
+        VkDescriptorSet sceneDescriptorSet);
 
     void clear();
 
@@ -25,7 +30,9 @@ private:
         const ModelPtr& model);
 
 
-    std::vector<MaterialShaderNode> childNodes;
+    std::vector<ShaderNode> childNodes;
 };
+
+using RenderGraphPtr = std::shared_ptr<RenderGraph>;
 
 } // namespace rfx

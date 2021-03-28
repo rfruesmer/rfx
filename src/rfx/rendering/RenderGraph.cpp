@@ -23,15 +23,19 @@ void RenderGraph::add(
     const vector<MaterialPtr>& materials,
     const ModelPtr& model)
 {
-    MaterialShaderNode childNode(shader, materials, model);
+    ShaderNode childNode(shader, materials, model);
     childNodes.push_back(childNode);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const vector<MaterialShaderNode>& RenderGraph::getChildNodes() const
+void RenderGraph::record(
+    const CommandBufferPtr& commandBuffer,
+    VkDescriptorSet sceneDescriptorSet)
 {
-    return childNodes;
+    for (const auto& shaderNode : childNodes) {
+        shaderNode.record(commandBuffer, sceneDescriptorSet);
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
