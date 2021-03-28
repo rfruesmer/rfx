@@ -23,7 +23,6 @@ protected:
     void updateSceneData(float deltaTime) override;
 
     void cleanup() override;
-    void cleanupSwapChain() override;
 
 private:
     void loadScene();

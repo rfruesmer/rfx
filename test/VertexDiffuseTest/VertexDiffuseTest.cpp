@@ -151,21 +151,9 @@ void VertexDiffuseTest::updateSceneData(float deltaTime)
 
 void VertexDiffuseTest::cleanup()
 {
-    for (const auto& [shader, materials] : materialShaderMap) {
-        shader->destroy();
-    }
-
-    materialShaderMap.clear();
     scene.reset();
 
     TestApplication::cleanup();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void VertexDiffuseTest::cleanupSwapChain()
-{
-    TestApplication::cleanupSwapChain();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

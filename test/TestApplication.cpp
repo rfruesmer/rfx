@@ -568,6 +568,11 @@ void TestApplication::cleanup()
 {
     VkDevice device = graphicsDevice->getLogicalDevice();
 
+    for (const auto& [shader, materials] : materialShaderMap) {
+        shader->destroy();
+    }
+    materialShaderMap.clear();
+
     renderGraph.reset();
 
     if (wireframePipeline) {
