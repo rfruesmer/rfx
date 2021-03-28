@@ -30,4 +30,6 @@ private:
     VkDescriptorImageInfo descriptorImageInfo;
 };
 
+using Texture2DPtr = std::shared_ptr<Texture2D>;
+
 } // namespace rfx

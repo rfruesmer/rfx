@@ -35,15 +35,17 @@ private:
     void cleanupSwapChain() override;
     void recreateSwapChain() override;
 
-// scene
+
+    VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+    VkPipeline pipeline = VK_NULL_HANDLE;
     VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
     std::vector<VkDescriptorSet> descriptorSets;
-    std::shared_ptr<VertexBuffer> vertexBuffer;
-    std::shared_ptr<IndexBuffer> indexBuffer;
-    std::shared_ptr<VertexShader> vertexShader;
-    std::shared_ptr<FragmentShader> fragmentShader;
-    std::vector<std::shared_ptr<Buffer>> uniformBuffers;
-    std::shared_ptr<Texture2D> texture;
+    VertexBufferPtr vertexBuffer;
+    IndexBufferPtr indexBuffer;
+    VertexShaderPtr vertexShader;
+    FragmentShaderPtr fragmentShader;
+    std::vector<BufferPtr> uniformBuffers;
+    Texture2DPtr texture;
     UniformBufferObject ubo;
 };
 

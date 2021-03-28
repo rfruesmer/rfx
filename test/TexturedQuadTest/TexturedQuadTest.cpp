@@ -540,7 +540,7 @@ void TexturedQuadTest::createGraphicsPipeline()
         1,
         &pipelineInfo,
         nullptr,
-        &defaultPipeline));
+        &pipeline));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -588,7 +588,7 @@ void TexturedQuadTest::createCommandBuffers()
         const auto& commandBuffer = commandBuffers[i];
         commandBuffer->begin();
         commandBuffer->beginRenderPass(renderPassBeginInfo);
-        commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, defaultPipeline);
+        commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
         commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, descriptorSets[i]);
         commandBuffer->bindVertexBuffers(vertexBuffers);
         commandBuffer->bindIndexBuffer(indexBuffer);
@@ -620,6 +620,7 @@ void TexturedQuadTest::update(float deltaTime)
 void TexturedQuadTest::cleanup()
 {
     vkDestroyDescriptorSetLayout(graphicsDevice->getLogicalDevice(), descriptorSetLayout, nullptr);
+
     vertexBuffer.reset();
     indexBuffer.reset();
     vertexShader.reset();
@@ -633,6 +634,16 @@ void TexturedQuadTest::cleanup()
 
 void TexturedQuadTest::cleanupSwapChain()
 {
+    VkDevice device = graphicsDevice->getLogicalDevice();
+
+    vkDestroyPipeline(device, pipeline, nullptr);
+    vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+
+    if (descriptorPool != VK_NULL_HANDLE) {
+        vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+        descriptorPool = VK_NULL_HANDLE;
+    }
+
     uniformBuffers.clear();
 
     Application::cleanupSwapChain();
