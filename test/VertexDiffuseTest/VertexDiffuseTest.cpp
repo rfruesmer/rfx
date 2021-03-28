@@ -59,6 +59,7 @@ void VertexDiffuseTest::loadScene()
     scene = modelLoader.load(scenePath);
 
     camera.setPosition({0.0f, 0.0f, 20.0f});
+
     light.setPosition({5.0f, 5.0f, 2.0f});
     light.setColor({1.0f, 1.0f, 1.0f});
 }
@@ -120,31 +121,6 @@ void VertexDiffuseTest::buildRenderGraph()
 {
     renderGraph = make_shared<RenderGraph>(graphicsDevice);
     renderGraph->add(scene, materialShaderMap);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void VertexDiffuseTest::setViewMatrix(const mat4& viewMatrix)
-{
-    TestApplication::setViewMatrix(viewMatrix);
-
-    updateShaderData();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void VertexDiffuseTest::updateProjection()
-{
-    setProjectionMatrix(calcDefaultProjection());
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void VertexDiffuseTest::updateSceneData(float deltaTime)
-{
-    setViewMatrix(camera.getViewMatrix());
-
-    updateSceneDataBuffer();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

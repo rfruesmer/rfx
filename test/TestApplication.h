@@ -29,7 +29,7 @@ protected:
     void createSceneDescriptorSetLayout();
     void createSceneDescriptorSet();
     void createSceneDataBuffer();
-    virtual void updateSceneData(float deltaTime) = 0;
+    void updateSceneData(float deltaTime);
     void updateSceneDataBuffer();
 
     virtual void createMeshResources() = 0;
@@ -55,8 +55,9 @@ protected:
 
     void update(float deltaTime) override;
     void updateCamera(float deltaTime);
-    virtual void updateProjection() {};
+    virtual void updateProjection();
     glm::mat4 calcDefaultProjection();
+    virtual void updateShaderData() {};
     void updateDevTools() override;
 
     void cleanup() override;

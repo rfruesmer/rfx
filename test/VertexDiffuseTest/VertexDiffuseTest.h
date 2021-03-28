@@ -13,23 +13,18 @@ public:
 
 protected:
     void initGraphics() override;
+    void createShaders() override;
     void createMeshResources() override;
     void buildRenderGraph();
 
-    void setViewMatrix(const glm::mat4& viewMatrix) override;
-    void updateShaderData();
-
-    void updateProjection() override;
-    void updateSceneData(float deltaTime) override;
+    void updateShaderData() override;
 
     void cleanup() override;
 
 private:
     void loadScene();
-    void createShaders() override;
 
-
-    std::shared_ptr<Model> scene;
+    ModelPtr scene;
     PointLight light { "point" };
 };
 

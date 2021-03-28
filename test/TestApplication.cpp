@@ -638,6 +638,13 @@ void TestApplication::onKeyEvent(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void TestApplication::updateProjection()
+{
+    setProjectionMatrix(calcDefaultProjection());
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 mat4 TestApplication::calcDefaultProjection()
 {
     const SwapChainDesc& swapChainDesc = graphicsDevice->getSwapChain()->getDesc();
@@ -654,13 +661,6 @@ mat4 TestApplication::calcDefaultProjection()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestApplication::updateSceneDataBuffer()
-{
-    sceneDataBuffer_->load(sizeof(SceneData), &sceneData_);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void TestApplication::setProjectionMatrix(const glm::mat4& projection)
 {
     sceneData_.projMatrix = projection;
@@ -668,9 +668,27 @@ void TestApplication::setProjectionMatrix(const glm::mat4& projection)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void TestApplication::updateSceneData(float deltaTime)
+{
+    setViewMatrix(camera.getViewMatrix());
+
+    updateSceneDataBuffer();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::updateSceneDataBuffer()
+{
+    sceneDataBuffer_->load(sizeof(SceneData), &sceneData_);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void TestApplication::setViewMatrix(const mat4& viewMatrix)
 {
     sceneData_.viewMatrix = viewMatrix;
+
+    updateShaderData();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
