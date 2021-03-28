@@ -212,8 +212,6 @@ void VertexDiffuseTest::updateSceneData(float deltaTime)
 
 void VertexDiffuseTest::cleanup()
 {
-    renderGraph.clear();
-
     VkDevice device = graphicsDevice->getLogicalDevice();
 
     for (const auto& [shader, materials] : materialShaderMap) {

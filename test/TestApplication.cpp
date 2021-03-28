@@ -568,6 +568,8 @@ void TestApplication::cleanup()
 {
     VkDevice device = graphicsDevice->getLogicalDevice();
 
+    renderGraph.clear();
+
     if (wireframePipeline) {
         vkDestroyPipeline(device, wireframePipeline, nullptr);
         wireframePipeline = VK_NULL_HANDLE;
