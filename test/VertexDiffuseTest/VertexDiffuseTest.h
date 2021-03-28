@@ -14,7 +14,6 @@ public:
 protected:
     void initGraphics() override;
     void createMeshResources() override;
-    void createPipelines() override;
     void buildRenderGraph();
 
     void setViewMatrix(const glm::mat4& viewMatrix) override;
@@ -33,7 +32,6 @@ private:
 
     std::shared_ptr<Model> scene;
     PointLight light { "point" };
-    std::unordered_map<MaterialShaderPtr, std::vector<MaterialPtr>> materialShaderMap;
 };
 
 } // namespace rfx

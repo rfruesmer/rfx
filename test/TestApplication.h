@@ -37,7 +37,7 @@ protected:
     void createMeshDescriptorSets(const ModelPtr& model);
     void createMeshDataBuffers(const ModelPtr& model);
 
-    virtual void createPipelines() = 0;
+    virtual void createPipelines();
     virtual void createCommandBuffers();
 
     void initGraphicsResources();
@@ -90,6 +90,8 @@ protected:
     SceneData sceneData_ {};
 
     VkDescriptorSetLayout meshDescriptorSetLayout_ = VK_NULL_HANDLE;
+
+    std::unordered_map<MaterialShaderPtr, std::vector<MaterialPtr>> materialShaderMap;
 
     RenderGraphPtr renderGraph;
 };

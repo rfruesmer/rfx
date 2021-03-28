@@ -846,3 +846,22 @@ void TestApplication::createCommandBuffers()
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::createPipelines()
+{
+    for (const auto& [shader, materials] : materialShaderMap)
+    {
+        vector<VkDescriptorSetLayout> descriptorSetLayouts {
+            sceneDescriptorSetLayout_,
+            shader->getShaderDescriptorSetLayout(),
+            shader->getMaterialDescriptorSetLayout(),
+            meshDescriptorSetLayout_
+        };
+
+        VkPipelineLayout pipelineLayout = createDefaultPipelineLayout(descriptorSetLayouts);
+        VkPipeline pipeline = createDefaultPipelineFor(shader, pipelineLayout);
+        shader->setPipeline(pipelineLayout, pipeline);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------

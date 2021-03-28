@@ -116,26 +116,6 @@ void VertexDiffuseTest::createMeshResources()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void VertexDiffuseTest::createPipelines()
-{
-    for (const auto& [shader, materials] : materialShaderMap)
-    {
-        vector<VkDescriptorSetLayout> descriptorSetLayouts {
-            sceneDescriptorSetLayout_,
-            shader->getShaderDescriptorSetLayout(),
-            shader->getMaterialDescriptorSetLayout(),
-            meshDescriptorSetLayout_
-        };
-
-        VkPipelineLayout pipelineLayout = TestApplication::createDefaultPipelineLayout(descriptorSetLayouts);
-        VkPipeline pipeline = TestApplication::createDefaultPipelineFor(shader, pipelineLayout);
-
-        shader->setPipeline(pipelineLayout, pipeline);
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void VertexDiffuseTest::buildRenderGraph()
 {
     renderGraph = make_shared<RenderGraph>(graphicsDevice);
