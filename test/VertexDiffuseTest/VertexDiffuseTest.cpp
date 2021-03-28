@@ -122,7 +122,7 @@ void VertexDiffuseTest::createPipelines()
 
 void VertexDiffuseTest::buildRenderGraph()
 {
-    renderGraph = make_shared<RenderGraph>();
+    renderGraph = make_shared<RenderGraph>(graphicsDevice);
     renderGraph->add(scene, materialShaderMap);
 }
 
@@ -131,67 +131,21 @@ void VertexDiffuseTest::buildRenderGraph()
 void VertexDiffuseTest::createCommandBuffers()
 {
     const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
-    const SwapChainDesc& swapChainDesc = swapChain->getDesc();
-    const vector<VkFramebuffer>& swapChainFramebuffers = swapChain->getFramebuffers();
-    const unique_ptr<DepthBuffer>& depthBuffer = graphicsDevice->getDepthBuffer();
-
-
-    vector<VkClearValue> clearValues(1);
-    clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-    if (graphicsDevice->getMultiSampleCount() > VK_SAMPLE_COUNT_1_BIT) {
-        clearValues.resize(clearValues.size() + 1);
-        clearValues[clearValues.size() - 1].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-    }
-    if (depthBuffer) {
-        clearValues.resize(clearValues.size() + 1);
-        clearValues[clearValues.size() - 1].depthStencil = { 1.0f, 0 };
-    }
-
-    VkRenderPassBeginInfo renderPassBeginInfo = {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .renderPass = renderPass,
-        .renderArea = {
-            .offset = { 0, 0 },
-            .extent = swapChainDesc.extent
-        },
-        .clearValueCount = static_cast<uint32_t>(clearValues.size()),
-        .pClearValues = clearValues.data()
-    };
-
-    VkViewport viewport = {
-        .x = 0.0f,
-        .y = 0.0f,
-        .width = static_cast<float>(swapChainDesc.extent.width),
-        .height = static_cast<float>(swapChainDesc.extent.height),
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f
-    };
-
-    VkRect2D scissor = {
-        .offset = {0, 0},
-        .extent = swapChainDesc.extent
-    };
-
+    const vector<VkFramebuffer>& swapChainFrameBuffers = swapChain->getFramebuffers();
     VkCommandPool graphicsCommandPool = graphicsDevice->getGraphicsCommandPool();
-    commandBuffers = graphicsDevice->createCommandBuffers(graphicsCommandPool, swapChainFramebuffers.size());
 
-    for (size_t i = 0; i < commandBuffers.size(); ++i) {
 
-        renderPassBeginInfo.framebuffer = swapChainFramebuffers[i];
+    commandBuffers = graphicsDevice->createCommandBuffers(graphicsCommandPool, swapChainFrameBuffers.size());
 
+    for (size_t i = 0; i < commandBuffers.size(); ++i)
+    {
         const auto& commandBuffer = commandBuffers[i];
-        commandBuffer->begin();
-        commandBuffer->beginRenderPass(renderPassBeginInfo);
-        commandBuffer->setViewport(viewport);
-        commandBuffer->setScissor(scissor);
 
-        commandBuffer->bindVertexBuffer(scene->getVertexBuffer());
-        commandBuffer->bindIndexBuffer(scene->getIndexBuffer());
-
-        renderGraph->record(commandBuffer, sceneDescriptorSet_);
-
-        commandBuffer->endRenderPass();
-        commandBuffer->end();
+        renderGraph->record(
+            commandBuffer,
+            sceneDescriptorSet_,
+            renderPass,
+            swapChainFrameBuffers[i]);
     }
 }
 

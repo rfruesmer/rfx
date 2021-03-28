@@ -568,7 +568,7 @@ void TestApplication::cleanup()
 {
     VkDevice device = graphicsDevice->getLogicalDevice();
 
-    renderGraph->clear();
+    renderGraph.reset();
 
     if (wireframePipeline) {
         vkDestroyPipeline(device, wireframePipeline, nullptr);
