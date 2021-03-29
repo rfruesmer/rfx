@@ -1,7 +1,7 @@
 #pragma once
 
 #include "TestApplication.h"
-#include "MultiLightEffect.h"
+#include "MultiLightShader.h"
 
 
 namespace rfx {
@@ -13,34 +13,21 @@ public:
 
 protected:
     void initGraphics() override;
-
-    void createUniformBuffers() override;
-    void createDescriptorPools() override;
-    void createDescriptorSetLayouts() override;
-    void createDescriptorSets() override;
-    void createPipelineLayouts() override;
-    void createPipelines() override;
-
-    void updateProjection() override;
-    void updateSceneData(float deltaTime) override;
-
+    void initShaderFactory(MaterialShaderFactory& shaderFactory) override;
+    void createMeshResources() override;
+    void updateShaderData() override;
     void cleanup() override;
-    void cleanupSwapChain() override;
+
+    void setViewMatrix(const glm::mat4 &viewMatrix) override;
 
 private:
     void loadScene();
+    void buildRenderGraph();
 
-protected:
-    void createEffects() override;
-
-private:
-    void createCommandBuffers() override;
-    void drawScene(const std::shared_ptr<CommandBuffer>& commandBuffer);
-
-    std::shared_ptr<Model> scene;
-    std::shared_ptr<PointLight> pointLight;
-    std::shared_ptr<SpotLight> spotLight;
-    std::unique_ptr<MultiLightEffect> effect;
+    ModelPtr scene;
+    PointLightPtr pointLight;
+    SpotLightPtr spotLight;
+    std::shared_ptr<MultiLightShader> shader;
 };
 
 } // namespace rfx

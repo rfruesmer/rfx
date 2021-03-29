@@ -57,7 +57,7 @@ void SpotLightTest::loadScene()
     ModelLoader modelLoader(graphicsDevice);
     scene = modelLoader.load(scenePath);
 
-    camera.setPosition({0.0f, 1.0f, 2.0f});
+    camera->setPosition({0.0f, 1.0f, 2.0f});
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

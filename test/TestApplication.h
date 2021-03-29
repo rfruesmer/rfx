@@ -83,7 +83,7 @@ protected:
     VkPipeline wireframePipeline = VK_NULL_HANDLE;
     bool wireframe = false;
 
-    FlyCamera camera;
+    std::shared_ptr<FlyCamera> camera = std::make_shared<FlyCamera>();
 
     glm::vec2 lastMousePos {};
     bool mouseCursorLocked = false;

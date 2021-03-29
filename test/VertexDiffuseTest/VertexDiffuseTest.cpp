@@ -57,7 +57,7 @@ void VertexDiffuseTest::loadScene()
     ModelLoader modelLoader(graphicsDevice);
     scene = modelLoader.load(scenePath);
 
-    camera.setPosition({0.0f, 0.0f, 20.0f});
+    camera->setPosition({0.0f, 0.0f, 20.0f});
 
     light.setPosition({5.0f, 5.0f, 2.0f});
     light.setColor({1.0f, 1.0f, 1.0f});

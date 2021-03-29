@@ -62,7 +62,7 @@ void PointLightTest::loadScene()
         material->setShininess(100.0f);
     }
 
-    camera.setPosition({ 0.0f, 1.0f, 10.0f });
+    camera->setPosition({ 0.0f, 1.0f, 10.0f });
 
     light.setColor({ 1.0f, 1.0f, 1.0f });
 }

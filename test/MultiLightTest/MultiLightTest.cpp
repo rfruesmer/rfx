@@ -39,10 +39,13 @@ void MultiLightTest::initGraphics()
     Application::initGraphics();
 
     loadScene();
-    createEffects();
+    createDescriptorPool();
+    createShadersFor(scene, MultiLightShader::ID);
     updateProjection();
 
     initGraphicsResources();
+    buildRenderGraph();
+    createCommandBuffers();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -51,240 +54,71 @@ void MultiLightTest::loadScene()
 {
     const path scenePath = getAssetsDirectory() / "models/plane/plane.gltf";
 
-
     ModelLoader modelLoader(graphicsDevice);
-    scene = modelLoader.load(
-        scenePath,
-        MultiLightEffect::VERTEX_SHADER_ID,
-        MultiLightEffect::FRAGMENT_SHADER_ID);
+    scene = modelLoader.load(scenePath);
 
-//    for (const auto& material : scene->getMaterials()) {
-//        material->setSpecularFactor({1.0f, 0.0f, 0.0f});
-//        material->setShininess(128.0f);
-//    }
-
-    camera.setPosition({ 0.0f, 2.0f, 10.0f });
+    camera->setPosition({ 0.0f, 2.0f, 10.0f });
 
     pointLight = make_shared<PointLight>("point");
-    pointLight->setPosition({5.0f, .5f, 5.0f });
-    pointLight->setColor({1.0f, 1.0f, 1.0f});
+    pointLight->setPosition({ 5.0f, .5f, 5.0f });
+    pointLight->setColor({ 1.0f, 1.0f, 1.0f });
     pointLight->setRange(6.0f);
 
     spotLight = make_shared<SpotLight>("spot");
-    spotLight->setPosition({0.0f, 10.0f, 0.0f});
-    spotLight->setColor({1.0f, 1.0f, 1.0f});
-    spotLight->setDirection({0.0f, -1.0f, 0.0f});
+    spotLight->setPosition({ 0.0f, 10.0f, 0.0f });
+    spotLight->setColor({ 1.0f, 1.0f, 1.0f });
+    spotLight->setDirection({ 0.0f, -1.0f, 0.0f });
     spotLight->setInnerConeAngle(20.0f);
     spotLight->setOuterConeAngle(30.0f);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void MultiLightTest::createEffects()
+void MultiLightTest::initShaderFactory(MaterialShaderFactory& shaderFactory)
 {
-    const path shadersDirectory = getAssetsDirectory() / "shaders";
-
-    // TODO: support for multiple/different materials/effects/shaders per scene
-    const shared_ptr<Material>& material = scene->getMaterial(0);
-
-    effect = make_unique<MultiLightEffect>(graphicsDevice, scene);
-    effect->loadShaders(material, shadersDirectory);
-    effect->setLight(0, pointLight);
-    effect->setLight(1, spotLight);
+    shaderFactory.addAllocator(MultiLightShader::ID,
+        [this] { return make_shared<MultiLightShader>(graphicsDevice); });
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void MultiLightTest::createUniformBuffers()
+void MultiLightTest::updateShaderData()
 {
-    effect->createUniformBuffers();
+    RFX_CHECK_STATE(materialShaderMap.size() == 1, "");
+    RFX_CHECK_STATE(materialShaderMap.begin()->first->getId() == MultiLightShader::ID, "");
 
-    const VkDeviceSize bufferSize = sizeof(MultiLightEffect::MaterialData);
+    shader = static_pointer_cast<MultiLightShader>(materialShaderMap.begin()->first);
 
-    for (const auto& material : scene->getMaterials())
-    {
-        const MultiLightEffect::MaterialData materialData {
-            .baseColor = material->getBaseColorFactor(),
-            .specular = material->getSpecularFactor(),
-            .shininess = material->getShininess()
-        };
+    shader->setCamera(camera);
+    shader->setLight(0, pointLight);
+    shader->setLight(1, spotLight);
 
-        material->setUniformBuffer(
-            createAndBindUniformBuffer(bufferSize, &materialData));
-    }
+    shader->updateDataBuffer();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void MultiLightTest::createDescriptorPools()
+void MultiLightTest::createMeshResources()
 {
-    effect->createDescriptorPools();
+    TestApplication::createMeshResources();
+
+    createMeshDataBuffers(scene);
+    createMeshDescriptorSets(scene);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void MultiLightTest::createDescriptorSetLayouts()
+void MultiLightTest::buildRenderGraph()
 {
-    effect->createDescriptorSetLayouts();
-
-    for (const auto& material : scene->getMaterials()) {
-        material->createDescriptorSetLayout();
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void MultiLightTest::createDescriptorSets()
-{
-    effect->createDescriptorSets();
-
-    for (const auto& material : scene->getMaterials()) {
-        material->createDescriptorSet(effect->getDescriptorPool());
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void MultiLightTest::createPipelineLayouts()
-{
-    vector<VkDescriptorSetLayout> descriptorSetLayouts = effect->getDescriptorSetLayouts();
-    descriptorSetLayouts.push_back(scene->getMaterial(0)->getDescriptorSetLayout());
-
-    TestApplication::createDefaultPipelineLayout(descriptorSetLayouts);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void MultiLightTest::createPipelines()
-{
-    TestApplication::createDefaultPipeline(*effect);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void MultiLightTest::createCommandBuffers()
-{
-    const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
-    const SwapChainDesc& swapChainDesc = swapChain->getDesc();
-    const vector<VkFramebuffer>& swapChainFramebuffers = swapChain->getFramebuffers();
-    const unique_ptr<DepthBuffer>& depthBuffer = graphicsDevice->getDepthBuffer();
-
-
-    vector<VkClearValue> clearValues(1);
-    clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-    if (graphicsDevice->getMultiSampleCount() > VK_SAMPLE_COUNT_1_BIT) {
-        clearValues.resize(clearValues.size() + 1);
-        clearValues[clearValues.size() - 1].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-    }
-    if (depthBuffer) {
-        clearValues.resize(clearValues.size() + 1);
-        clearValues[clearValues.size() - 1].depthStencil = { 1.0f, 0 };
-    }
-
-    VkRenderPassBeginInfo renderPassBeginInfo = {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .renderPass = renderPass,
-        .renderArea = {
-            .offset = { 0, 0 },
-            .extent = swapChainDesc.extent
-        },
-        .clearValueCount = static_cast<uint32_t>(clearValues.size()),
-        .pClearValues = clearValues.data()
-    };
-
-    VkViewport viewport = {
-        .x = 0.0f,
-        .y = 0.0f,
-        .width = static_cast<float>(swapChainDesc.extent.width),
-        .height = static_cast<float>(swapChainDesc.extent.height),
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f
-    };
-
-    VkRect2D scissor = {
-        .offset = {0, 0},
-        .extent = swapChainDesc.extent
-    };
-
-    VkCommandPool graphicsCommandPool = graphicsDevice->getGraphicsCommandPool();
-    commandBuffers = graphicsDevice->createCommandBuffers(graphicsCommandPool, swapChainFramebuffers.size());
-
-    for (size_t i = 0; i < commandBuffers.size(); ++i) {
-
-        renderPassBeginInfo.framebuffer = swapChainFramebuffers[i];
-
-        const auto& commandBuffer = commandBuffers[i];
-        commandBuffer->begin();
-        commandBuffer->beginRenderPass(renderPassBeginInfo);
-        commandBuffer->setViewport(viewport);
-        commandBuffer->setScissor(scissor);
-        commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, wireframe ? wireframePipeline : defaultPipeline);
-        commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, effect->getSceneDescriptorSet());
-        commandBuffer->bindVertexBuffer(scene->getVertexBuffer());
-        commandBuffer->bindIndexBuffer(scene->getIndexBuffer());
-
-        drawScene(commandBuffer);
-
-        commandBuffer->endRenderPass();
-        commandBuffer->end();
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void MultiLightTest::drawScene(const shared_ptr<CommandBuffer>& commandBuffer)
-{
-    const vector<VkDescriptorSet>& meshDescSets = effect->getMeshDescriptorSets();
-
-
-    for (size_t i = 0, count = scene->getMeshes().size(); i < count; ++i) {
-
-        commandBuffer->bindDescriptorSet(
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            pipelineLayout,
-            1,
-            meshDescSets[i]);
-
-        const auto& mesh = scene->getMesh(i);
-        for (const auto& subMesh : mesh->getSubMeshes()) {
-
-            if (subMesh.indexCount == 0) {
-                continue;
-            }
-
-            commandBuffer->bindDescriptorSet(
-                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                pipelineLayout,
-                2,
-                subMesh.material->getDescriptorSet());
-
-            commandBuffer->drawIndexed(subMesh.indexCount, subMesh.firstIndex);
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void MultiLightTest::updateProjection()
-{
-    effect->setProjectionMatrix(calcDefaultProjection());
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void MultiLightTest::updateSceneData(float deltaTime)
-{
-    effect->setViewMatrix(camera.getViewMatrix());
-    effect->updateSceneDataBuffer();
+    renderGraph = make_shared<RenderGraph>(graphicsDevice);
+    renderGraph->add(scene, materialShaderMap);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void MultiLightTest::cleanup()
 {
-    effect->cleanupSwapChain();
-    effect.reset();
-
+    shader.reset();
     scene.reset();
 
     TestApplication::cleanup();
@@ -292,19 +126,13 @@ void MultiLightTest::cleanup()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void MultiLightTest::cleanupSwapChain()
+void MultiLightTest::setViewMatrix(const mat4& viewMatrix)
 {
-    if (effect) {
-        effect->cleanupSwapChain();
-    }
+    TestApplication::setViewMatrix(viewMatrix);
 
-    if (scene) {
-        for (const auto& material : scene->getMaterials()) {
-            material->destroyDescriptorSetLayout();
-        }
+    if (shader) {
+        shader->onViewMatrixChanged();
     }
-
-    TestApplication::cleanupSwapChain();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

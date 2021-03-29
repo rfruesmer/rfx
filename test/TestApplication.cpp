@@ -538,7 +538,7 @@ void TestApplication::updateCamera(float deltaTime)
         velocity.z = movementSpeed;
     }
 
-    camera.setVelocity(velocity);
+    camera->setVelocity(velocity);
 
     if (mouseCursorLocked) {
         double x, y;
@@ -553,11 +553,11 @@ void TestApplication::updateCamera(float deltaTime)
         const float sensitivity = 0.1f;
         offset *= sensitivity;
 
-        camera.addYaw(offset.x);
-        camera.addPitch(offset.y);
+        camera->addYaw(offset.x);
+        camera->addPitch(offset.y);
     }
 
-    camera.update(deltaTime);
+    camera->update(deltaTime);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -677,7 +677,7 @@ void TestApplication::setProjectionMatrix(const glm::mat4& projection)
 
 void TestApplication::updateSceneData(float deltaTime)
 {
-    setViewMatrix(camera.getViewMatrix());
+    setViewMatrix(camera->getViewMatrix());
 
     updateSceneDataBuffer();
 }

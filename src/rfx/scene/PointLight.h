@@ -23,4 +23,6 @@ private:
     float range_ = 0.0f;
 };
 
+using PointLightPtr = std::shared_ptr<PointLight>;
+
 } // namespace rfx

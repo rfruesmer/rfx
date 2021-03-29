@@ -1,9 +1,11 @@
 #pragma once
 
+#include "rfx/scene/Camera.h"
+
 
 namespace rfx {
 
-class FlyCamera
+class FlyCamera : public Camera
 {
 public:
     void setPosition(const glm::vec3& position);
@@ -14,8 +16,8 @@ public:
 
     void update(float deltaTime);
 
-    [[nodiscard]] const glm::mat4& getViewMatrix() const;
-    [[nodiscard]] const glm::vec3& getPosition() const;
+    [[nodiscard]] const glm::vec3& getPosition() const override;
+    [[nodiscard]] const glm::mat4& getViewMatrix() const override;
 
 private:
     float pitch_ = 0.0f;

@@ -26,4 +26,6 @@ private:
     float outerConeAngle = glm::radians(90.0f);
 };
 
+using SpotLightPtr = std::shared_ptr<SpotLight>;
+
 } // namespace rfx
