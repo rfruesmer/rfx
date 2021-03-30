@@ -126,12 +126,12 @@ void MultiLightTest::cleanup()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void MultiLightTest::setViewMatrix(const mat4& viewMatrix)
+void MultiLightTest::updateSceneData()
 {
-    TestApplication::setViewMatrix(viewMatrix);
+    TestApplication::updateSceneData();
 
     if (shader) {
-        shader->onViewMatrixChanged();
+        shader->onSceneDataUpdated();
     }
 }
 

@@ -126,12 +126,12 @@ void TexturedMultiLightTest::cleanup()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedMultiLightTest::setViewMatrix(const mat4& viewMatrix)
+void TexturedMultiLightTest::updateSceneData()
 {
-    TestApplication::setViewMatrix(viewMatrix);
+    TestApplication::updateSceneData();
 
     if (shader) {
-        shader->onViewMatrixChanged();
+        shader->onSceneDataUpdated();
     }
 }
 

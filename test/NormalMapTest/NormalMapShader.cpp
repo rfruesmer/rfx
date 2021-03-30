@@ -1,18 +1,19 @@
 #include "rfx/pch.h"
-#include "TexturedMultiLightShader.h"
+#include "NormalMapShader.h"
 
 
 using namespace rfx;
 using namespace glm;
 using namespace std;
 
-// ---------------------------------------------------------------------------------------------------------------------
-
-const std::string TexturedMultiLightShader::ID = "textured_multilight";
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-TexturedMultiLightShader::TexturedMultiLightShader(const GraphicsDevicePtr& graphicsDevice)
+const std::string NormalMapShader::ID = "normalmap";
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+NormalMapShader::NormalMapShader(const GraphicsDevicePtr& graphicsDevice)
     : TestMaterialShader(
         graphicsDevice,
         ID,
@@ -21,7 +22,7 @@ TexturedMultiLightShader::TexturedMultiLightShader(const GraphicsDevicePtr& grap
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<std::byte> TexturedMultiLightShader::createDataFor(const MaterialPtr& material) const
+vector<std::byte> NormalMapShader::createDataFor(const MaterialPtr& material) const
 {
     const MaterialData materialData {
         .baseColor = material->getBaseColorFactor(),
@@ -37,28 +38,21 @@ vector<std::byte> TexturedMultiLightShader::createDataFor(const MaterialPtr& mat
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const void* TexturedMultiLightShader::getData() const
+const void* NormalMapShader::getData() const
 {
     return reinterpret_cast<const void*>(&data);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-uint32_t TexturedMultiLightShader::getDataSize() const
+uint32_t NormalMapShader::getDataSize() const
 {
     return sizeof(ShaderData);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedMultiLightShader::setCamera(CameraPtr camera)
-{
-    this->camera = move(camera);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TexturedMultiLightShader::setLight(int index, const PointLightPtr& light)
+void NormalMapShader::setLight(int index, const PointLightPtr& light)
 {
     lights[index] = light;
 
@@ -71,36 +65,15 @@ void TexturedMultiLightShader::setLight(int index, const PointLightPtr& light)
     lightData.type = light->getType();
     lightData.enabled = true;
     lightData.color = vec4(light->getColor(), 1.0f);
-    lightData.position = camera->getViewMatrix() * vec4(light->getPosition(), 1.0f);
+    lightData.position = vec4(light->getPosition(), 1.0f);
     lightData.range = light->getRange();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedMultiLightShader::setLight(int index, const SpotLightPtr& light)
+void NormalMapShader::enableNormalMap(bool state)
 {
-    setLight(index, static_pointer_cast<PointLight>(light));
-    if (light == nullptr) {
-        return;
-    }
-
-    auto& lightData = data.lights[index];
-    lightData.direction = light->getDirection();
-    lightData.spotInnerConeAngle = glm::cos(glm::radians(light->getInnerConeAngle()));
-    lightData.spotOuterConeAngle = glm::cos(glm::radians(light->getOuterConeAngle()));
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TexturedMultiLightShader::onSceneDataUpdated()
-{
-    for (int i = 0; i < MAX_LIGHTS; ++i) {
-        if (lights[i] != nullptr) {
-            data.lights[i].position = camera->getViewMatrix() * vec4(lights[i]->getPosition(), 1.0f);
-        }
-    }
-
-    updateDataBuffer();
+    data.useNormalMap = state;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

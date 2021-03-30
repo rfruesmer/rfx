@@ -25,7 +25,7 @@ public:
     void setCamera(CameraPtr camera);
     void setLight(int index, const PointLightPtr& light);
     void setLight(int index, const SpotLightPtr& light);
-    void onViewMatrixChanged();
+    void onSceneDataUpdated();
 
 private:
     struct LightData {

@@ -677,8 +677,7 @@ void TestApplication::setProjectionMatrix(const glm::mat4& projection)
 
 void TestApplication::updateSceneData(float deltaTime)
 {
-    setViewMatrix(camera->getViewMatrix());
-
+    updateSceneData();
     updateSceneDataBuffer();
 }
 
@@ -717,9 +716,10 @@ void TestApplication::createShadersFor(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TestApplication::setViewMatrix(const mat4& viewMatrix)
+void TestApplication::updateSceneData()
 {
-    sceneData_.viewMatrix = viewMatrix;
+    sceneData_.viewMatrix = camera->getViewMatrix();
+    sceneData_.cameraPosition = camera->getPosition();
 
     updateShaderData();
 }

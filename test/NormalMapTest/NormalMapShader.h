@@ -1,31 +1,27 @@
 #pragma once
 
 #include "TestMaterialShader.h"
-#include "rfx/scene/Camera.h"
 #include "rfx/scene/PointLight.h"
-#include "rfx/scene/SpotLight.h"
 
 
 namespace rfx {
 
-class MultiLightShader : public TestMaterialShader
+class NormalMapShader : public TestMaterialShader
 {
 public:
     static const std::string ID;
 
     static const int MAX_LIGHTS = 4;
 
-    explicit MultiLightShader(const GraphicsDevicePtr& graphicsDevice);
+    explicit NormalMapShader(const GraphicsDevicePtr& graphicsDevice);
 
     [[nodiscard]] std::vector<std::byte> createDataFor(const MaterialPtr& material) const override;
 
     [[nodiscard]] const void* getData() const override;
     [[nodiscard]] uint32_t getDataSize() const override;
 
-    void setCamera(CameraPtr camera);
     void setLight(int index, const PointLightPtr& light);
-    void setLight(int index, const SpotLightPtr& light);
-    void onSceneDataUpdated();
+    void enableNormalMap(bool state);
 
 private:
     struct LightData {
@@ -40,17 +36,15 @@ private:
         glm::vec3 color;
         float pad4;
 
-        glm::vec3 direction;
-        float pad5;
-
-        float spotInnerConeAngle = 0.0f;
-        float spotOuterConeAngle = 0.0f;
         float range = 0.0f;
+        float pad5;
         float pad6;
+        float pad7;
     };
 
     struct ShaderData {
         LightData lights[MAX_LIGHTS];
+        int useNormalMap = 1;
     };
 
     struct MaterialData {
@@ -60,7 +54,6 @@ private:
     };
 
     ShaderData data {};
-    CameraPtr camera;
     PointLightPtr lights[MAX_LIGHTS];
 };
 

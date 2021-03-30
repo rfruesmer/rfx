@@ -15,6 +15,8 @@ protected:
     struct SceneData {
         glm::mat4 viewMatrix;
         glm::mat4 projMatrix;
+        glm::vec3 cameraPosition;
+        float padding;
     };
 
     struct MeshData {
@@ -54,7 +56,7 @@ protected:
     void onKeyEvent(const Window& window, int key, int scancode, int action, int mods) override;
 
     void setProjectionMatrix(const glm::mat4& projection);
-    virtual void setViewMatrix(const glm::mat4& viewMatrix);
+    virtual void updateSceneData();
 
     void update(float deltaTime) override;
     void updateCamera(float deltaTime);

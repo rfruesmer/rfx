@@ -92,7 +92,7 @@ void MultiLightShader::setLight(int index, const SpotLightPtr& light)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void MultiLightShader::onViewMatrixChanged()
+void MultiLightShader::onSceneDataUpdated()
 {
     for (int i = 0; i < MAX_LIGHTS; ++i) {
         if (lights[i] != nullptr) {

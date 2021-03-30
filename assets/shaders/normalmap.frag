@@ -14,34 +14,22 @@ struct Light {
     vec3 color;
     float pad4;
 
-    vec3 direction;
-    float pad5;
-
-    float spotCosInnerConeAngle;
-    float spotCosOuterConeAngle;
     float range;
-    float pad6;
 };
 
 layout(set = 0, binding = 0)
 uniform SceneData {
-    // Camera
     mat4 viewMatrix;
     mat4 projMatrix;
-
-    vec3 camPos;
+    vec3 cameraPosition;
     float padding;
-
-    // Light
-    Light lights[4];
-
-    int useNormalMap;
 } scene;
 
 layout(set = 1, binding = 0)
-uniform MeshData {
-    mat4 modelMatrix;
-} mesh;
+uniform ShaderData {
+    Light lights[MAX_LIGHTS];
+    int useNormalMap;
+} shader;
 
 layout(set = 2, binding = 0)
 uniform MaterialData {
@@ -49,6 +37,11 @@ uniform MaterialData {
     vec3 specular;
     float shininess;
 } material;
+
+layout(set = 3, binding = 0)
+uniform MeshData {
+    mat4 modelMatrix;
+} mesh;
 
 layout(set = 2, binding = 1)
 uniform sampler2D baseColorTexture;
@@ -77,8 +70,8 @@ vec3 pointLightNM(int index, vec3 position, vec3 normal)
     lightDirection /= lightDistance;
 
     float attenuation = 1.0;
-    if (scene.lights[index].range > 0.0) {
-        attenuation = max(min(1.0f - (lightDistance / scene.lights[index].range), 1), 0) / lightDistance;
+    if (shader.lights[index].range > 0.0) {
+        attenuation = max(min(1.0f - (lightDistance / shader.lights[index].range), 1), 0) / lightDistance;
     }
 
     float nDotL = max(0.0, dot(normal, lightDirection));
@@ -92,7 +85,7 @@ vec3 pointLightNM(int index, vec3 position, vec3 normal)
         specular = baseColor * material.specular * pow(nDotH, material.shininess);
     }
 
-    return scene.lights[index].color * (diffuse + specular) * attenuation;
+    return shader.lights[index].color * (diffuse + specular) * attenuation;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -101,13 +94,13 @@ vec3 pointLight(int index, vec3 position, vec3 normal)
 {
     vec3 baseColor = texture(baseColorTexture, inTexCoord).rgb;
 
-    vec3 lightDirection = scene.lights[index].position - position;
+    vec3 lightDirection = shader.lights[index].position - position;
     float lightDistance = length(lightDirection);
     lightDirection /= lightDistance;
 
     float attenuation = 1.0;
-    if (scene.lights[index].range > 0.0) {
-        attenuation = max(min(1.0f - (lightDistance / scene.lights[index].range), 1), 0) / lightDistance;
+    if (shader.lights[index].range > 0.0) {
+        attenuation = max(min(1.0f - (lightDistance / shader.lights[index].range), 1), 0) / lightDistance;
     }
 
     float nDotL = max(0.0, dot(normal, lightDirection));
@@ -121,7 +114,7 @@ vec3 pointLight(int index, vec3 position, vec3 normal)
         specular = baseColor * material.specular * pow(nDotH, material.shininess);
     }
 
-    return scene.lights[index].color * (diffuse + specular) * attenuation;
+    return shader.lights[index].color * (diffuse + specular) * attenuation;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -131,7 +124,7 @@ void main()
     vec3 color = vec3(0.0);
 
     vec3 normal;
-    if (scene.useNormalMap != 0) {
+    if (shader.useNormalMap != 0) {
         normal = texture(normalMap, inTexCoord).xyz * 2.0 - 1.0;
     }
     else {
@@ -139,15 +132,15 @@ void main()
     }
 
     for (int i = 0; i < MAX_LIGHTS; ++i) {
-        if (!scene.lights[i].enabled) {
+        if (!shader.lights[i].enabled) {
             continue;
         }
 
-        if (scene.lights[i].type != 0) {
+        if (shader.lights[i].type != 0) {
             continue; // TODO: support for spot and other light types
         }
 
-        if (scene.useNormalMap != 0) {
+        if (shader.useNormalMap != 0) {
             color += pointLightNM(0, inTangentPosition, normal);
         }
         else {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "TestApplication.h"
-#include "NormalMapEffect.h"
+#include "NormalMapShader.h"
 
 
 namespace rfx {
@@ -13,33 +13,19 @@ public:
 
 protected:
     void initGraphics() override;
-
-    void createUniformBuffers() override;
-    void createDescriptorPools() override;
-    void createDescriptorSetLayouts() override;
-    void createDescriptorSets() override;
-    void createPipelineLayouts() override;
-    void createPipelines() override;
-
-    void updateProjection() override;
-    void updateSceneData(float deltaTime) override;
+    void initShaderFactory(MaterialShaderFactory& shaderFactory) override;
+    void createMeshResources() override;
+    void updateShaderData() override;
     void updateDevTools() override;
-
     void cleanup() override;
-    void cleanupSwapChain() override;
 
 private:
     void loadScene();
+    void buildRenderGraph();
 
-protected:
-    void createEffects() override;
-
-private:
-    void createCommandBuffers() override;
-    void drawScene(const std::shared_ptr<CommandBuffer>& commandBuffer);
-
-    std::shared_ptr<Model> scene;
-    std::unique_ptr<NormalMapEffect> effect;
+    ModelPtr scene;
+    PointLightPtr light;
+    std::shared_ptr<NormalMapShader> shader;
     bool useNormalMap = true;
 };
 

@@ -14,34 +14,22 @@ struct Light {
     vec3 color;
     float pad4;
 
-    vec3 direction;
-    float pad5;
-
-    float spotCosInnerConeAngle;
-    float spotCosOuterConeAngle;
     float range;
-    float pad6;
 };
 
 layout(set = 0, binding = 0)
 uniform SceneData {
-    // Camera
     mat4 viewMatrix;
     mat4 projMatrix;
-
-    vec3 camPos;
+    vec3 cameraPosition;
     float padding;
-
-    // Light
-    Light lights[MAX_LIGHTS];
-
-    int useNormalMap;
 } scene;
 
 layout(set = 1, binding = 0)
-uniform MeshData {
-    mat4 modelMatrix;
-} mesh;
+uniform ShaderData {
+    Light lights[MAX_LIGHTS];
+    int useNormalMap;
+} shader;
 
 layout(set = 2, binding = 0)
 uniform MaterialData {
@@ -50,6 +38,10 @@ uniform MaterialData {
     float shininess;
 } material;
 
+layout(set = 3, binding = 0)
+uniform MeshData {
+    mat4 modelMatrix;
+} mesh;
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
@@ -70,7 +62,7 @@ void main() {
     outPosition = (modelMatrix * vec4(inPosition, 1.0)).xyz;
     outTexCoord = inTexCoord;
 
-    if (scene.useNormalMap != 0) {
+    if (shader.useNormalMap != 0) {
         mat3 normalMatrix = mat3(modelMatrix);
         vec3 T = normalize(normalMatrix * vec3(inTangent));
         vec3 N = normalize(normalMatrix * inNormal);
@@ -81,10 +73,10 @@ void main() {
         vec3 B = normalize(cross(N, T)) * inTangent.w;
         mat3 TBN = transpose(mat3(T, B, N));
 
-        outTangentCamPos   = TBN * scene.camPos;
+        outTangentCamPos   = TBN * scene.cameraPosition;
         outTangentPosition = TBN * outPosition;
         for (int i = 0; i < MAX_LIGHTS; ++i) {
-            outTangentLightPos[i] = TBN * scene.lights[i].position;
+            outTangentLightPos[i] = TBN * shader.lights[i].position;
         }
     }
     else {

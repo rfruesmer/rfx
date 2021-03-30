@@ -18,7 +18,7 @@ protected:
     void updateShaderData() override;
     void cleanup() override;
 
-    void setViewMatrix(const glm::mat4 &viewMatrix) override;
+    void updateSceneData() override;
 
 private:
     void loadScene();
