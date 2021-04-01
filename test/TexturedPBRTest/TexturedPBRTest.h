@@ -1,7 +1,7 @@
 #pragma once
 
 #include "TestApplication.h"
-#include "TexturedPBREffect.h"
+#include "TexturedPBRShader.h"
 
 
 namespace rfx {
@@ -10,34 +10,20 @@ class TexturedPBRTest : public TestApplication
 {
 protected:
     void initGraphics() override;
-
-    void createUniformBuffers() override;
-    void createDescriptorPools() override;
-    void createDescriptorSetLayouts() override;
-    void createDescriptorSets() override;
-    void createPipelineLayouts() override;
-    void createPipelines() override;
-
-    void updateProjection() override;
-    void updateSceneData(float deltaTime) override;
+    void initShaderFactory(MaterialShaderFactory& shaderFactory) override;
+    void createMeshResources() override;
+    void updateShaderData() override;
     void updateDevTools() override;
-
     void cleanup() override;
-    void cleanupSwapChain() override;
 
 private:
     void loadScene();
-    void createEffects() override;
-    void createCommandBuffers() override;
-    void drawGeometryNode(
-        uint32_t index,
-        const std::shared_ptr<CommandBuffer>& commandBuffer);
+    void buildRenderGraph();
 
-
-    std::shared_ptr<Model> scene;
-    std::shared_ptr<PointLight> pointLight;
-    std::shared_ptr<SpotLight> spotLight;
-    std::unique_ptr<TexturedPBREffect> effect;
+    ModelPtr scene;
+    PointLightPtr pointLight;
+    SpotLightPtr spotLight;
+    std::shared_ptr<TexturedPBRShader> shader;
 };
 
 } // namespace rfx

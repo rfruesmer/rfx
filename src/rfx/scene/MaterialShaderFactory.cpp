@@ -1,8 +1,8 @@
-#include <rfx/graphics/ShaderLoader.h>
 #include "rfx/pch.h"
 #include "rfx/scene/MaterialShaderFactory.h"
-#include "rfx/graphics/ShaderProgram.h"
+#include "rfx/graphics/ShaderLoader.h"
 #include "rfx/common/Logger.h"
+
 
 using namespace rfx;
 using namespace std;
@@ -13,12 +13,12 @@ using namespace std::filesystem;
 MaterialShaderFactory::MaterialShaderFactory(
     GraphicsDevicePtr graphicsDevice,
     VkDescriptorPool descriptorPool,
-    std::filesystem::path shadersDirectory,
-    std::string defaultShaderId)
-    : graphicsDevice(move(graphicsDevice)),
-      descriptorPool(descriptorPool),
-      shadersDirectory(move(shadersDirectory)),
-      defaultShaderId(move(defaultShaderId)) {}
+    filesystem::path shadersDirectory,
+    string defaultShaderId)
+        : graphicsDevice(move(graphicsDevice)),
+          descriptorPool(descriptorPool),
+          shadersDirectory(move(shadersDirectory)),
+          defaultShaderId(move(defaultShaderId)) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 

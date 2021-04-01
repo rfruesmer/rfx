@@ -32,13 +32,17 @@ void TexturedPBRTest::initGraphics()
     Application::initGraphics();
 
     loadScene();
-    createEffects();
+    createDescriptorPool();
+    createShadersFor(scene, TexturedPBRShader::ID);
     updateProjection();
 
     initGraphicsResources();
+    buildRenderGraph();
+    createCommandBuffers();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+
 
 void TexturedPBRTest::loadScene()
 {
@@ -49,17 +53,9 @@ void TexturedPBRTest::loadScene()
 //    const path scenePath = getAssetsDirectory() / "models/cubes/ice_low.gltf";
 
     ModelLoader modelLoader(graphicsDevice);
-    scene = modelLoader.load(
-        scenePath,
-        TexturedPBREffect::VERTEX_SHADER_ID,
-        TexturedPBREffect::FRAGMENT_SHADER_ID);
+    scene = modelLoader.load(scenePath);
 
-//    for (const auto& material : scene->getMaterials()) {
-//        material->setSpecularFactor({1.0f, 0.0f, 0.0f});
-//        material->setShininess(128.0f);
-//    }
-
-    camera.setPosition({ 0.0f, 2.0f, 10.0f });
+    camera->setPosition({ 0.0f, 2.0f, 10.0f });
 
     if (scene->getLightCount() > 0) {
         pointLight = dynamic_pointer_cast<PointLight>(scene->getLight(0));
@@ -75,212 +71,50 @@ void TexturedPBRTest::loadScene()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedPBRTest::createEffects()
+void TexturedPBRTest::initShaderFactory(MaterialShaderFactory& shaderFactory)
 {
-    const path shadersDirectory = getAssetsDirectory() / "shaders";
-
-    // TODO: support for multiple/different materials/effects/shaders per scene
-    const shared_ptr<Material>& material = scene->getMaterial(0);
-
-    effect = make_unique<TexturedPBREffect>(graphicsDevice, scene);
-    effect->loadShaders(material, shadersDirectory);
-    effect->setLight(0, pointLight);
+    shaderFactory.addAllocator(TexturedPBRShader::ID,
+        [this] { return make_shared<TexturedPBRShader>(graphicsDevice); });
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedPBRTest::createUniformBuffers()
+void TexturedPBRTest::updateShaderData()
 {
-    effect->createUniformBuffers();
+    RFX_CHECK_STATE(materialShaderMap.size() == 1, "");
+    RFX_CHECK_STATE(materialShaderMap.begin()->first->getId() == TexturedPBRShader::ID, "");
 
-    const VkDeviceSize bufferSize = sizeof(TexturedPBREffect::MaterialData);
-
-    for (const auto& material : scene->getMaterials())
-    {
-        TexturedPBREffect::MaterialData materialData {
-            .baseColorFactor = material->getBaseColorFactor(),
-            .emissiveFactor = vec4(material->getEmissiveFactor(), 1.0f),
-            .metallic = material->getMetallicFactor(),
-            .roughness = material->getRoughnessFactor(),
-            .baseColorTexCoordSet = material->getBaseColorTexCoordSet(),
-            .metallicRoughnessTexCoordSet = material->getMetallicRoughnessTexCoordSet(),
-            .normalTexCoordSet = material->getNormalTexCoordSet(),
-            .occlusionTexCoordSet = material->getOcclusionTexCoordSet(),
-            .occlusionStrength = material->getOcclusionStrength(),
-            .emissiveTexCoordSet = material->getEmissiveTexCoordSet()
-        };
-
-        material->setUniformBuffer(
-            createAndBindUniformBuffer(bufferSize, &materialData));
-    }
+    shader = static_pointer_cast<TexturedPBRShader>(materialShaderMap.begin()->first);
+    shader->setLight(0, pointLight);
+    shader->updateDataBuffer();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedPBRTest::createDescriptorPools()
+void TexturedPBRTest::createMeshResources()
 {
-    effect->createDescriptorPools();
+    TestApplication::createMeshResources();
+
+    createMeshDataBuffers(scene);
+    createMeshDescriptorSets(scene);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedPBRTest::createDescriptorSetLayouts()
+void TexturedPBRTest::buildRenderGraph()
 {
-    effect->createDescriptorSetLayouts();
-
-    for (const auto& material : scene->getMaterials()) {
-        material->createDescriptorSetLayout();
-    }
+    renderGraph = make_shared<RenderGraph>(graphicsDevice);
+    renderGraph->add(scene, materialShaderMap);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedPBRTest::createDescriptorSets()
+void TexturedPBRTest::cleanup()
 {
-    effect->createDescriptorSets();
+    shader.reset();
+    scene.reset();
 
-    for (const auto& material : scene->getMaterials()) {
-        material->createDescriptorSet(effect->getDescriptorPool());
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TexturedPBRTest::createPipelineLayouts()
-{
-    vector<VkDescriptorSetLayout> descriptorSetLayouts = effect->getDescriptorSetLayouts();
-    descriptorSetLayouts.push_back(scene->getMaterial(0)->getDescriptorSetLayout());
-
-    TestApplication::createDefaultPipelineLayout(descriptorSetLayouts);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TexturedPBRTest::createPipelines()
-{
-    TestApplication::createDefaultPipeline(*effect);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TexturedPBRTest::createCommandBuffers()
-{
-    const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
-    const SwapChainDesc& swapChainDesc = swapChain->getDesc();
-    const vector<VkFramebuffer>& swapChainFramebuffers = swapChain->getFramebuffers();
-    const unique_ptr<DepthBuffer>& depthBuffer = graphicsDevice->getDepthBuffer();
-
-
-    vector<VkClearValue> clearValues(1);
-    clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-    if (graphicsDevice->getMultiSampleCount() > VK_SAMPLE_COUNT_1_BIT) {
-        clearValues.resize(clearValues.size() + 1);
-        clearValues[clearValues.size() - 1].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-    }
-    if (depthBuffer) {
-        clearValues.resize(clearValues.size() + 1);
-        clearValues[clearValues.size() - 1].depthStencil = { 1.0f, 0 };
-    }
-
-    VkRenderPassBeginInfo renderPassBeginInfo = {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .renderPass = renderPass,
-        .renderArea = {
-            .offset = { 0, 0 },
-            .extent = swapChainDesc.extent
-        },
-        .clearValueCount = static_cast<uint32_t>(clearValues.size()),
-        .pClearValues = clearValues.data()
-    };
-
-    VkViewport viewport = {
-        .x = 0.0f,
-        .y = 0.0f,
-        .width = static_cast<float>(swapChainDesc.extent.width),
-        .height = static_cast<float>(swapChainDesc.extent.height),
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f
-    };
-
-    VkRect2D scissor = {
-        .offset = {0, 0},
-        .extent = swapChainDesc.extent
-    };
-
-    VkCommandPool graphicsCommandPool = graphicsDevice->getGraphicsCommandPool();
-    commandBuffers = graphicsDevice->createCommandBuffers(graphicsCommandPool, swapChainFramebuffers.size());
-
-    for (size_t i = 0; i < commandBuffers.size(); ++i) {
-
-        renderPassBeginInfo.framebuffer = swapChainFramebuffers[i];
-
-        const auto& commandBuffer = commandBuffers[i];
-        commandBuffer->begin();
-        commandBuffer->beginRenderPass(renderPassBeginInfo);
-        commandBuffer->setViewport(viewport);
-        commandBuffer->setScissor(scissor);
-        commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, wireframe ? wireframePipeline : defaultPipeline);
-        commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, effect->getSceneDescriptorSet());
-        commandBuffer->bindVertexBuffer(scene->getVertexBuffer());
-        commandBuffer->bindIndexBuffer(scene->getIndexBuffer());
-
-        for (uint32_t j = 0; j < scene->getGeometryNodeCount(); ++j) {
-            drawGeometryNode(j, commandBuffer);
-        }
-
-        commandBuffer->endRenderPass();
-        commandBuffer->end();
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TexturedPBRTest::drawGeometryNode(
-    uint32_t index,
-    const shared_ptr<CommandBuffer>& commandBuffer)
-{
-    const shared_ptr<ModelNode>& geometryNode = scene->getGeometryNode(index);
-    const vector<VkDescriptorSet>& meshDescSets = effect->getMeshDescriptorSets();
-
-
-    commandBuffer->bindDescriptorSet(
-        VK_PIPELINE_BIND_POINT_GRAPHICS,
-        pipelineLayout,
-        1,
-        meshDescSets[index]);
-
-    for (const auto& mesh : geometryNode->getMeshes()) {
-        for (const auto& subMesh : mesh->getSubMeshes()) {
-
-            if (subMesh.indexCount == 0) {
-                continue;
-            }
-
-            commandBuffer->bindDescriptorSet(
-                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                pipelineLayout,
-                2,
-                subMesh.material->getDescriptorSet());
-
-            commandBuffer->drawIndexed(subMesh.indexCount, subMesh.firstIndex);
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TexturedPBRTest::updateProjection()
-{
-    effect->setProjectionMatrix(calcDefaultProjection());
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TexturedPBRTest::updateSceneData(float deltaTime)
-{
-    effect->setViewMatrix(camera.getViewMatrix());
-    effect->setCameraPos(camera.getPosition());
-    effect->updateSceneDataBuffer();
+    TestApplication::cleanup();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -290,46 +124,23 @@ void TexturedPBRTest::updateDevTools()
     TestApplication::updateDevTools();
 
     const auto& light = static_pointer_cast<PointLight>(scene->getLight(0));
+    bool lightNeedsUpdate = false;
+
     vec3 color = light->getColor();
     if (devTools->colorEdit3("light#0 color", &color.x)) {
         light->setColor(color);
-        effect->setLight(0, light);
+        lightNeedsUpdate = true;
     }
 
     vec3 lightPos = light->getPosition();
     if (devTools->sliderFloat3("light#0 position", &lightPos.x, -10.0f, 10.0f)) {
         light->setPosition(lightPos);
-        effect->setLight(0, static_pointer_cast<PointLight>(light));
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TexturedPBRTest::cleanup()
-{
-    effect->cleanupSwapChain();
-    effect.reset();
-
-    scene.reset();
-
-    TestApplication::cleanup();
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TexturedPBRTest::cleanupSwapChain()
-{
-    if (effect) {
-        effect->cleanupSwapChain();
+        lightNeedsUpdate = true;
     }
 
-    if (scene) {
-        for (const auto& material : scene->getMaterials()) {
-            material->destroyDescriptorSetLayout();
-        }
+    if (lightNeedsUpdate) {
+        shader->setLight(0, light);
     }
-
-    TestApplication::cleanupSwapChain();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

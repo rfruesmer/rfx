@@ -21,17 +21,14 @@ layout(set = 0, binding = 0)
 uniform SceneData {
     mat4 viewMatrix;
     mat4 projMatrix;
-
-    vec3 camPos;
-    float padding;
-
-    Light lights[MAX_LIGHTS];
+    vec3 cameraPosition;
+    float pad;
 } scene;
 
 layout(set = 1, binding = 0)
-uniform MeshData {
-    mat4 modelMatrix;
-} mesh;
+uniform ShaderData {
+    Light lights[MAX_LIGHTS];
+} shader;
 
 layout(set = 2, binding = 0)
 uniform MaterialData {
@@ -46,6 +43,11 @@ uniform MaterialData {
     float occlusionStrength;
     int emissiveTexCoordSet;
 } material;
+
+layout(set = 3, binding = 0)
+uniform MeshData {
+    mat4 modelMatrix;
+} mesh;
 
 layout(location = 0) in vec3 inPosition;
 
@@ -72,10 +74,10 @@ void main() {
     vec3 B = normalize(cross(N, T)) * inTangent.w;
     mat3 TBN = transpose(mat3(T, B, N));
 
-    outTangentCamPos   = TBN * scene.camPos;
+    outTangentCamPos   = TBN * scene.cameraPosition;
     outTangentPosition = TBN * outPosition;
     for (int i = 0; i < MAX_LIGHTS; ++i) {
-        outTangentLightPos[i] = TBN * scene.lights[i].position;
+        outTangentLightPos[i] = TBN * shader.lights[i].position;
     }
 #endif
 

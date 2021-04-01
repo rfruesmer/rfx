@@ -23,9 +23,9 @@ void TestApplication::initGraphicsResources()
 
 void TestApplication::createDescriptorPool()
 {
-    const uint32_t uniformBufferDescCount = 2000;
-    const uint32_t combinedImageSamplerDescCount = 2000;
-    const uint32_t maxSets = 2000;
+    const uint32_t uniformBufferDescCount = 8000;
+    const uint32_t combinedImageSamplerDescCount = 8000;
+    const uint32_t maxSets = 8000;
 
     vector<VkDescriptorPoolSize> poolSizes = {
         { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, uniformBufferDescCount },

@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "TexturedPBREffect.h"
+#include "TexturedPBRShader.h"
 
 
 using namespace rfx;
@@ -7,70 +7,22 @@ using namespace glm;
 using namespace std;
 
 
-const string TexturedPBREffect::VERTEX_SHADER_ID = "pbr_textured";
-const string TexturedPBREffect::FRAGMENT_SHADER_ID = "pbr_textured";
+// ---------------------------------------------------------------------------------------------------------------------
+
+const string TexturedPBRShader::ID = "pbr_textured";
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-TexturedPBREffect::TexturedPBREffect(
-    const shared_ptr<GraphicsDevice>& graphicsDevice,
-    const shared_ptr<Model>& scene)
-        : TestMaterialShader(graphicsDevice, scene) {}
+TexturedPBRShader::TexturedPBRShader(GraphicsDevicePtr& graphicsDevice)
+    : TestMaterialShader(
+        graphicsDevice,
+        ID,
+        ID,
+        ID) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedPBREffect::setProjectionMatrix(const mat4& projection)
-{
-    sceneData_.projMatrix = projection;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TexturedPBREffect::setViewMatrix(const mat4& viewMatrix)
-{
-    sceneData_.viewMatrix = viewMatrix;
-
-    for (int i = 0; i < MAX_LIGHTS; ++i) {
-        if (lights_[i] != nullptr) {
-            sceneData_.lights[i].position = vec4(lights_[i]->getPosition(), 1.0f);
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TexturedPBREffect::setLight(int index, const shared_ptr<PointLight>& light)
-{
-    lights_[index] = light;
-    if (light == nullptr) {
-        sceneData_.lights[index].enabled = false;
-        return;
-    }
-
-    auto& sceneDataLight = sceneData_.lights[index];
-    sceneDataLight.enabled = true;
-    sceneDataLight.position = vec4(light->getPosition(), 1.0f);
-
-    const vec3& lightColor = light->getColor();
-    sceneDataLight.color = vec4(lightColor * 255.0f, 1.0f);
-}
-// ---------------------------------------------------------------------------------------------------------------------
-
-size_t TexturedPBREffect::getSceneDataSize() const
-{
-    return sizeof(SceneData);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TexturedPBREffect::updateSceneDataBuffer()
-{
-    sceneDataBuffer_->load(sizeof(SceneData), &sceneData_);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TexturedPBREffect::update(const shared_ptr<Material>& material) const
+vector<std::byte> TexturedPBRShader::createDataFor(const MaterialPtr& material) const
 {
     const MaterialData materialData {
         .baseColorFactor = material->getBaseColorFactor(),
@@ -85,23 +37,45 @@ void TexturedPBREffect::update(const shared_ptr<Material>& material) const
         .emissiveTexCoordSet = material->getEmissiveTexCoordSet()
     };
 
-    const shared_ptr<Buffer>& uniformBuffer = material->getUniformBuffer();
-    uniformBuffer->load(sizeof(MaterialData),
-        reinterpret_cast<const void*>(&materialData));
+
+    vector<std::byte> data(sizeof(MaterialData));
+    memcpy(data.data(), &materialData, sizeof(MaterialData));
+
+    return data;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void TexturedPBREffect::setCameraPos(const vec3& pos)
+const void* TexturedPBRShader::getData() const
 {
-    sceneData_.camPos = pos;
+    return reinterpret_cast<const void*>(&data);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<string> TexturedPBREffect::buildShaderDefines(
-    const shared_ptr<Material>& material,
-    const VertexFormat& vertexFormat)
+uint32_t TexturedPBRShader::getDataSize() const
+{
+    return sizeof(ShaderData);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TexturedPBRShader::setLight(int index, const PointLightPtr& light)
+{
+    if (light == nullptr) {
+        data.lights[index].enabled = false;
+        return;
+    }
+
+    auto& lightData = data.lights[index];
+    lightData.enabled = true;
+    lightData.position = light->getPosition();
+    lightData.color = vec4(light->getColor() * 255.0f, 1.0f);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+vector<string> TexturedPBRShader::getShaderDefinesFor(const MaterialPtr& material)
 {
     vector<string> defines;
 
@@ -125,6 +99,7 @@ vector<string> TexturedPBREffect::buildShaderDefines(
         defines.emplace_back("HAS_EMISSIVE_MAP 1");
     }
 
+    const VertexFormat& vertexFormat = material->getVertexFormat();
     if (vertexFormat.containsNormals()) {
         defines.emplace_back("HAS_NORMALS 1");
     }
@@ -143,13 +118,14 @@ vector<string> TexturedPBREffect::buildShaderDefines(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<string> TexturedPBREffect::buildVertexShaderInputs(const VertexFormat& vertexFormat)
+vector<string> TexturedPBRShader::getVertexShaderInputsFor(const MaterialPtr& material)
 {
     vector<string> inputs;
 
-    // location=0 for coordinates (must be always present)
+    // location=0 for coordinates (must be present always)
     uint32_t location = 1;
 
+    const VertexFormat& vertexFormat = material->getVertexFormat();
     if (vertexFormat.containsNormals()) {
         inputs.push_back(fmt::format("layout(location = {}) in vec3 inNormal;", location));
         location++;
@@ -171,13 +147,14 @@ vector<string> TexturedPBREffect::buildVertexShaderInputs(const VertexFormat& ve
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<string> TexturedPBREffect::buildVertexShaderOutputs(const VertexFormat& vertexFormat)
+vector<string> TexturedPBRShader::getVertexShaderOutputsFor(const MaterialPtr& material)
 {
     vector<string> outputs;
 
     // location=0 for coordinates (must be always present)
     uint32_t location = 1;
 
+    const VertexFormat& vertexFormat = material->getVertexFormat();
     if (vertexFormat.containsNormals()) {
         outputs.push_back(fmt::format("layout(location = {}) out vec3 outNormal;", location));
         location++;
@@ -201,13 +178,14 @@ vector<string> TexturedPBREffect::buildVertexShaderOutputs(const VertexFormat& v
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<string> TexturedPBREffect::buildFragmentShaderInputs(const VertexFormat& vertexFormat)
+vector<string> TexturedPBRShader::getFragmentShaderInputsFor(const MaterialPtr& material)
 {
     vector<string> inputs;
 
     // location=0 for coordinates (must be always present)
     uint32_t location = 1;
 
+    const VertexFormat& vertexFormat = material->getVertexFormat();
     if (vertexFormat.containsNormals()) {
         inputs.push_back(fmt::format("layout(location = {}) in vec3 inNormal;", location));
         location++;

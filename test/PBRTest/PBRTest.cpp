@@ -57,12 +57,6 @@ void PBRTest::loadScene()
     RFX_CHECK_STATE(pointLight != nullptr, "");
     pointLight->setPosition({ 5.0f, 5.0f, 0.0f });
     pointLight->setColor({ 1.0f, 1.0f, 1.0f });
-
-//    RFX_CHECK_STATE(materialShaderMap.size() == 1, "");
-//    RFX_CHECK_STATE(materialShaderMap.begin()->first->getId() == PBRShader::ID, "");
-//    vector<MaterialPtr> materials = materialShaderMap.begin()->second;
-//    RFX_CHECK_STATE(materials.size() == 1, "");
-//    materials.at(0)->setBaseColorFactor({ 1.0f, 1.0f, 1.0f, 1.0f });
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

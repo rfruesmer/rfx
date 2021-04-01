@@ -21,17 +21,14 @@ layout(set = 0, binding = 0)
 uniform SceneData {
     mat4 viewMatrix;
     mat4 projMatrix;
-
-    vec3 camPos;
-    float padding;
-
-    Light lights[MAX_LIGHTS];
+    vec3 cameraPosition;
+    float pad;
 } scene;
 
 layout(set = 1, binding = 0)
-uniform MeshData {
-    mat4 modelMatrix;
-} mesh;
+uniform ShaderData {
+    Light lights[MAX_LIGHTS];
+} shader;
 
 layout(set = 2, binding = 0)
 uniform MaterialData {
@@ -46,6 +43,11 @@ uniform MaterialData {
     float occlusionStrength;
     int emissiveTexCoordSet;
 } material;
+
+layout(set = 3, binding = 0)
+uniform MeshData {
+    mat4 modelMatrix;
+} mesh;
 
 layout(set = 2, binding = 1)
 uniform sampler2D baseColorTexture;
@@ -120,14 +122,14 @@ vec3 BRDF(
 #ifdef HAS_NORMAL_MAP
     vec3 L = inTangentLightPos[lightIndex] - inTangentPosition;
 #else
-    vec3 L = scene.lights[lightIndex].position - inPosition;
+    vec3 L = shader.lights[lightIndex].position - inPosition;
 #endif
 
     float distance = length(L);
     L = normalize(L);
 
     float attenuation = 1.0 / (distance * distance);
-    vec3 radiance = scene.lights[lightIndex].color * attenuation;
+    vec3 radiance = shader.lights[lightIndex].color * attenuation;
 
     vec3 H = normalize(V + L);
     float nDotH = clamp(dot(N, H), 0.0, 1.0);
@@ -189,7 +191,7 @@ void main()
     vec3 Lo = vec3(0);
 
     for(int i = 0; i < MAX_LIGHTS; ++i) {
-        if (!scene.lights[i].enabled) {
+        if (!shader.lights[i].enabled) {
             continue;
         }
 
