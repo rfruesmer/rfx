@@ -22,7 +22,6 @@ private:
 
     ModelPtr scene;
     PointLightPtr pointLight;
-    SpotLightPtr spotLight;
     std::shared_ptr<TexturedPBRShader> shader;
 };
 

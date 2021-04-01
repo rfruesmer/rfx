@@ -43,7 +43,6 @@ void TexturedPBRTest::initGraphics()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-
 void TexturedPBRTest::loadScene()
 {
     const path scenePath = getAssetsDirectory() / "models/sci-fi-corridors/scene.gltf";

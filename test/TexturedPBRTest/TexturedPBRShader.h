@@ -1,9 +1,7 @@
 #pragma once
 
 #include "TestMaterialShader.h"
-#include "rfx/scene/Model.h"
 #include "rfx/scene/PointLight.h"
-#include "rfx/scene/SpotLight.h"
 
 
 namespace rfx {
@@ -37,11 +35,8 @@ public:
     void setLight(int index, const PointLightPtr& light);
 
     std::vector<std::string> getShaderDefinesFor(const MaterialPtr& material) override;
-
     std::vector<std::string> getVertexShaderInputsFor(const MaterialPtr& material) override;
-
     std::vector<std::string> getVertexShaderOutputsFor(const MaterialPtr& material) override;
-
     std::vector<std::string> getFragmentShaderInputsFor(const MaterialPtr& material) override;
 
 private:

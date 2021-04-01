@@ -1,7 +1,7 @@
 #pragma once
 
 #include "TestApplication.h"
-#include "SkyBoxEffect.h"
+#include "SkyBoxShader.h"
 
 
 namespace rfx {
@@ -10,30 +10,18 @@ class CubeMapTest : public TestApplication
 {
 protected:
     void initGraphics() override;
-
-    void createUniformBuffers() override;
-    void createDescriptorPools() override;
-    void createDescriptorSetLayouts() override;
-    void createDescriptorSets() override;
-    void createPipelineLayouts() override;
-    void createPipelines() override;
-
-    void updateProjection() override;
-    void updateSceneData(float deltaTime) override;
-
+    void initShaderFactory(MaterialShaderFactory& shaderFactory) override;
+    void createMeshResources() override;
+    void updateShaderData() override;
+    void updateDevTools() override;
     void cleanup() override;
-    void cleanupSwapChain() override;
 
 private:
     void loadScene();
-    void createEffects() override;
-    void createCommandBuffers() override;
-    void drawGeometryNode(
-        uint32_t index,
-        const std::shared_ptr<CommandBuffer>& commandBuffer);
+    void buildRenderGraph();
 
-    std::shared_ptr<Model> skyBoxModel;
-    std::unique_ptr<SkyBoxEffect> skyBoxEffect;
+    ModelPtr skyBoxModel;
+    std::shared_ptr<SkyBoxShader> skyBoxShader;
 };
 
 } // namespace rfx

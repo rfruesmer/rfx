@@ -1,47 +1,43 @@
 #include "rfx/pch.h"
-#include "ReflectionEffect.h"
+#include "SkyBoxShader.h"
 
 
 using namespace rfx;
 using namespace glm;
 using namespace std;
 
-const string ReflectionEffect::VERTEX_SHADER_ID = "cubemap_reflection";
-const string ReflectionEffect::FRAGMENT_SHADER_ID = "cubemap_reflection";
+// ---------------------------------------------------------------------------------------------------------------------
+
+const string SkyBoxShader::ID = "skybox";
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-ReflectionEffect::ReflectionEffect(
-    const shared_ptr<GraphicsDevice>& graphicsDevice,
-    const shared_ptr<Model>& scene)
-        : TestMaterialShader(graphicsDevice, scene) {}
+SkyBoxShader::SkyBoxShader(GraphicsDevicePtr& graphicsDevice)
+    : TestMaterialShader(
+        graphicsDevice,
+        ID,
+        ID,
+        ID) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ReflectionEffect::setProjectionMatrix(const glm::mat4& projection)
+vector<std::byte> SkyBoxShader::createDataFor(const MaterialPtr& material) const
 {
-    sceneData_.projMatrix = projection;
+    return std::vector<std::byte>();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ReflectionEffect::setViewMatrix(const mat4& viewMatrix)
+const void* SkyBoxShader::getData() const
 {
-    sceneData_.viewMatrix = viewMatrix;
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-size_t ReflectionEffect::getSceneDataSize() const
+uint32_t SkyBoxShader::getDataSize() const
 {
-    return sizeof(SceneData);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void ReflectionEffect::updateSceneDataBuffer()
-{
-    sceneDataBuffer_->load(sizeof(SceneData), &sceneData_);
+    return 0;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
