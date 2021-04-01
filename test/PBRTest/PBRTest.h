@@ -1,7 +1,7 @@
 #pragma once
 
 #include "TestApplication.h"
-#include "PBREffect.h"
+#include "PBRShader.h"
 
 
 namespace rfx {
@@ -10,34 +10,19 @@ class PBRTest : public TestApplication
 {
 protected:
     void initGraphics() override;
-
-    void createUniformBuffers() override;
-    void createDescriptorPools() override;
-    void createDescriptorSetLayouts() override;
-    void createDescriptorSets() override;
-    void createPipelineLayouts() override;
-    void createPipelines() override;
-
-    void updateProjection() override;
-    void updateSceneData(float deltaTime) override;
+    void initShaderFactory(MaterialShaderFactory& shaderFactory) override;
+    void createMeshResources() override;
+    void updateShaderData() override;
     void updateDevTools() override;
-
     void cleanup() override;
-    void cleanupSwapChain() override;
 
 private:
     void loadScene();
-    void createEffects() override;
-    void createCommandBuffers() override;
-    void drawGeometryNode(
-        uint32_t index,
-        const std::shared_ptr<CommandBuffer>& commandBuffer);
+    void buildRenderGraph();
 
-
-    std::shared_ptr<Model> scene_;
-    std::shared_ptr<PointLight> pointLight_;
-    std::unique_ptr<PBREffect> effect_;
-    PBREffect::MaterialData materialData_ {};
+    ModelPtr scene;
+    PointLightPtr pointLight;
+    std::shared_ptr<PBRShader> shader;
 };
 
 } // namespace rfx

@@ -17,14 +17,12 @@ layout(set = 0, binding = 0)
 uniform SceneData {
     mat4 viewMatrix;
     mat4 projMatrix;
-
-    Light lights[4];
 } scene;
 
 layout(set = 1, binding = 0)
-uniform MeshData {
-    mat4 modelMatrix;
-} mesh;
+uniform ShaderData {
+    Light lights[4];
+} shader;
 
 layout(set = 2, binding = 0)
 uniform MaterialData {
@@ -36,6 +34,11 @@ uniform MaterialData {
     float ao;
     float pad1;
 } material;
+
+layout(set = 3, binding = 0)
+uniform MeshData {
+    mat4 modelMatrix;
+} mesh;
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;

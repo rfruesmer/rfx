@@ -32,10 +32,13 @@ void PBRTest::initGraphics()
     Application::initGraphics();
 
     loadScene();
-    createEffects();
+    createDescriptorPool();
+    createShadersFor(scene, PBRShader::ID);
     updateProjection();
 
     initGraphicsResources();
+    buildRenderGraph();
+    createCommandBuffers();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -45,226 +48,69 @@ void PBRTest::loadScene()
     const path scenePath = getAssetsDirectory() / "models/teapot/teapot.gltf";
 
     ModelLoader modelLoader(graphicsDevice);
-    scene_ = modelLoader.load(
-        scenePath,
-        PBREffect::VERTEX_SHADER_ID,
-        PBREffect::FRAGMENT_SHADER_ID);
-    RFX_CHECK_STATE(scene_->getLightCount() > 0, "");
+    scene = modelLoader.load(scenePath);
 
-    camera.setPosition({ 0.0f, 2.0f, 10.0f });
+    camera->setPosition({ 0.0f, 2.0f, 10.0f });
 
-    pointLight_ = dynamic_pointer_cast<PointLight>(scene_->getLight(0));
-    RFX_CHECK_STATE(pointLight_ != nullptr, "");
-    pointLight_->setPosition({5.0f, 5.0f, 0.0f });
-    pointLight_->setColor({1.0f, 1.0f, 1.0f});
+    RFX_CHECK_STATE(scene->getLightCount() > 0, "");
+    pointLight = dynamic_pointer_cast<PointLight>(scene->getLight(0));
+    RFX_CHECK_STATE(pointLight != nullptr, "");
+    pointLight->setPosition({ 5.0f, 5.0f, 0.0f });
+    pointLight->setColor({ 1.0f, 1.0f, 1.0f });
+
+//    RFX_CHECK_STATE(materialShaderMap.size() == 1, "");
+//    RFX_CHECK_STATE(materialShaderMap.begin()->first->getId() == PBRShader::ID, "");
+//    vector<MaterialPtr> materials = materialShaderMap.begin()->second;
+//    RFX_CHECK_STATE(materials.size() == 1, "");
+//    materials.at(0)->setBaseColorFactor({ 1.0f, 1.0f, 1.0f, 1.0f });
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PBRTest::createEffects()
+void PBRTest::initShaderFactory(MaterialShaderFactory& shaderFactory)
 {
-    const path shadersDirectory = getAssetsDirectory() / "shaders";
-
-    // TODO: support for multiple/different materials/effects/shaders per scene_
-    const shared_ptr<Material>& material = scene_->getMaterial(0);
-
-
-    effect_ = make_unique<PBREffect>(graphicsDevice, scene_);
-    effect_->loadShaders(material, shadersDirectory);
-    effect_->setLight(0, pointLight_);
-    materialData_.baseColor = { 1.0f, 1.0f, 1.0f };
+    shaderFactory.addAllocator(PBRShader::ID,
+        [this] { return make_shared<PBRShader>(graphicsDevice); });
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PBRTest::createUniformBuffers()
+void PBRTest::updateShaderData()
 {
-    effect_->createUniformBuffers();
+    RFX_CHECK_STATE(materialShaderMap.size() == 1, "");
+    RFX_CHECK_STATE(materialShaderMap.begin()->first->getId() == PBRShader::ID, "");
 
-    const VkDeviceSize bufferSize = sizeof(PBREffect::MaterialData);
-
-    for (const auto& material : scene_->getMaterials())
-    {
-        material->setUniformBuffer(
-            createAndBindUniformBuffer(bufferSize, &materialData_));
-    }
+    shader = static_pointer_cast<PBRShader>(materialShaderMap.begin()->first);
+    shader->setLight(0, pointLight, camera->getViewMatrix());
+    shader->updateDataBuffer();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PBRTest::createDescriptorPools()
+void PBRTest::createMeshResources()
 {
-    effect_->createDescriptorPools();
+    TestApplication::createMeshResources();
+
+    createMeshDataBuffers(scene);
+    createMeshDescriptorSets(scene);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PBRTest::createDescriptorSetLayouts()
+void PBRTest::buildRenderGraph()
 {
-    effect_->createDescriptorSetLayouts();
-
-    for (const auto& material : scene_->getMaterials()) {
-        material->createDescriptorSetLayout();
-    }
+    renderGraph = make_shared<RenderGraph>(graphicsDevice);
+    renderGraph->add(scene, materialShaderMap);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void PBRTest::createDescriptorSets()
+void PBRTest::cleanup()
 {
-    effect_->createDescriptorSets();
+    shader.reset();
+    scene.reset();
 
-    for (const auto& material : scene_->getMaterials()) {
-        material->createDescriptorSet(effect_->getDescriptorPool());
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void PBRTest::createPipelineLayouts()
-{
-    vector<VkDescriptorSetLayout> descriptorSetLayouts = effect_->getDescriptorSetLayouts();
-    descriptorSetLayouts.push_back(scene_->getMaterial(0)->getDescriptorSetLayout());
-
-    TestApplication::createDefaultPipelineLayout(descriptorSetLayouts);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void PBRTest::createPipelines()
-{
-    TestApplication::createDefaultPipeline(*effect_);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void PBRTest::createCommandBuffers()
-{
-    const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
-    const SwapChainDesc& swapChainDesc = swapChain->getDesc();
-    const vector<VkFramebuffer>& swapChainFramebuffers = swapChain->getFramebuffers();
-    const unique_ptr<DepthBuffer>& depthBuffer = graphicsDevice->getDepthBuffer();
-
-
-    vector<VkClearValue> clearValues(1);
-    clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-    if (graphicsDevice->getMultiSampleCount() > VK_SAMPLE_COUNT_1_BIT) {
-        clearValues.resize(clearValues.size() + 1);
-        clearValues[clearValues.size() - 1].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-    }
-    if (depthBuffer) {
-        clearValues.resize(clearValues.size() + 1);
-        clearValues[clearValues.size() - 1].depthStencil = { 1.0f, 0 };
-    }
-
-    VkRenderPassBeginInfo renderPassBeginInfo = {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .renderPass = renderPass,
-        .renderArea = {
-            .offset = { 0, 0 },
-            .extent = swapChainDesc.extent
-        },
-        .clearValueCount = static_cast<uint32_t>(clearValues.size()),
-        .pClearValues = clearValues.data()
-    };
-
-    VkViewport viewport = {
-        .x = 0.0f,
-        .y = 0.0f,
-        .width = static_cast<float>(swapChainDesc.extent.width),
-        .height = static_cast<float>(swapChainDesc.extent.height),
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f
-    };
-
-    VkRect2D scissor = {
-        .offset = {0, 0},
-        .extent = swapChainDesc.extent
-    };
-
-    VkCommandPool graphicsCommandPool = graphicsDevice->getGraphicsCommandPool();
-    commandBuffers = graphicsDevice->createCommandBuffers(graphicsCommandPool, swapChainFramebuffers.size());
-
-    for (size_t i = 0; i < commandBuffers.size(); ++i) {
-
-        renderPassBeginInfo.framebuffer = swapChainFramebuffers[i];
-
-        const auto& commandBuffer = commandBuffers[i];
-        commandBuffer->begin();
-        commandBuffer->beginRenderPass(renderPassBeginInfo);
-        commandBuffer->setViewport(viewport);
-        commandBuffer->setScissor(scissor);
-        commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, wireframe ? wireframePipeline : defaultPipeline);
-        commandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, effect_->getSceneDescriptorSet());
-        commandBuffer->bindVertexBuffer(scene_->getVertexBuffer());
-        commandBuffer->bindIndexBuffer(scene_->getIndexBuffer());
-
-        for (uint32_t j = 0; j < scene_->getGeometryNodeCount(); ++j) {
-            drawGeometryNode(j, commandBuffer);
-        }
-
-        commandBuffer->endRenderPass();
-        commandBuffer->end();
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void PBRTest::drawGeometryNode(
-    uint32_t index,
-    const shared_ptr<CommandBuffer>& commandBuffer)
-{
-    const shared_ptr<ModelNode>& geometryNode = scene_->getGeometryNode(index);
-    const vector<VkDescriptorSet>& meshDescSets = effect_->getMeshDescriptorSets();
-
-
-    commandBuffer->bindDescriptorSet(
-        VK_PIPELINE_BIND_POINT_GRAPHICS,
-        pipelineLayout,
-        1,
-        meshDescSets[index]);
-
-    for (const auto& mesh : geometryNode->getMeshes()) {
-        for (const auto& subMesh : mesh->getSubMeshes()) {
-
-            if (subMesh.indexCount == 0) {
-                continue;
-            }
-
-            commandBuffer->bindDescriptorSet(
-                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                pipelineLayout,
-                2,
-                subMesh.material->getDescriptorSet());
-
-            commandBuffer->drawIndexed(subMesh.indexCount, subMesh.firstIndex);
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void PBRTest::updateProjection()
-{
-    effect_->setProjectionMatrix(calcDefaultProjection());
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void PBRTest::updateSceneData(float deltaTime)
-{
-    effect_->setViewMatrix(camera.getViewMatrix());
-    effect_->updateSceneDataBuffer();
-
-    for (const auto& material : scene_->getMaterials())
-    {
-        material->setBaseColorFactor(vec4(materialData_.baseColor, 1.0f));
-        material->setMetallicFactor(materialData_.metallic);
-        material->setRoughnessFactor(materialData_.roughness);
-        material->setOcclusionStrength(materialData_.ao);
-
-        effect_->update(material);
-    }
+    TestApplication::cleanup();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -273,67 +119,72 @@ void PBRTest::updateDevTools()
 {
     TestApplication::updateDevTools();
 
-    float value = materialData_.metallic;
-    if (devTools->sliderFloat("metallic", &value, 0.0f, 1.0f)) {
-        materialData_.metallic = value;
-    }
 
-    value = materialData_.roughness;
-    if (devTools->sliderFloat("roughness", &value, 0.0f, 1.0f)) {
-        materialData_.roughness = value;
-    }
+    RFX_CHECK_STATE(materialShaderMap.size() == 1, "");
+    RFX_CHECK_STATE(materialShaderMap.begin()->first->getId() == PBRShader::ID, "");
+    vector<MaterialPtr> materials = materialShaderMap.begin()->second;
+    RFX_CHECK_STATE(materials.size() == 1, "");
 
-    vec3 color = materialData_.baseColor;
-    if (devTools->colorEdit3("albedo", &color.x)) {
-        materialData_.baseColor = color;
-    }
+    for (const auto& material : materials)
+    {
+        bool materialNeedsUpdate = false;
 
-    value = materialData_.ao;
-    if (devTools->sliderFloat("ambient", &value, 0.0f, 1.0f)) {
-        materialData_.ao = value;
-    }
+        float value = material->getMetallicFactor();
+        if (devTools->sliderFloat("metallic", &value, 0.0f, 1.0f)) {
+            material->setMetallicFactor(value);
+            materialNeedsUpdate = true;
+        }
 
-    const auto& light = static_pointer_cast<PointLight>(scene_->getLight(0));
-    color = light->getColor();
-    if (devTools->colorEdit3("light#0 color", &color.x)) {
-        light->setColor(color);
-        effect_->setLight(0, light);
-    }
+        value = material->getRoughnessFactor();
+        if (devTools->sliderFloat("roughness", &value, 0.0f, 1.0f)) {
+            material->setRoughnessFactor(value);
+            materialNeedsUpdate = true;
+        }
 
-    vec3 lightPos = light->getPosition();
-    if (devTools->sliderFloat3("light#0 position", &lightPos.x, -100.0f, 100.0f)) {
-        light->setPosition(lightPos);
-        effect_->setLight(0, static_pointer_cast<PointLight>(light));
-    }
-}
+        vec3 color = material->getBaseColorFactor();
+        if (devTools->colorEdit3("albedo", &color.x)) {
+            material->setBaseColorFactor(vec4(color, 1.0f));
+            materialNeedsUpdate = true;
+        }
 
-// ---------------------------------------------------------------------------------------------------------------------
+        value = material->getOcclusionStrength();
+        if (devTools->sliderFloat("ambient", &value, 0.0f, 1.0f)) {
+            material->setOcclusionStrength(value);
+            materialNeedsUpdate = true;
+        }
 
-void PBRTest::cleanup()
-{
-    effect_->cleanupSwapChain();
-    effect_.reset();
+        if (materialNeedsUpdate)
+        {
+            PBRShader::MaterialData materialData {
+                .baseColor = material->getBaseColorFactor(),
+                .metallic = material->getMetallicFactor(),
+                .roughness = material->getRoughnessFactor(),
+                .ao = material->getOcclusionStrength()
+            };
 
-    scene_.reset();
+            material->getUniformBuffer()->load(sizeof(PBRShader::MaterialData), &materialData);
+        }
 
-    TestApplication::cleanup();
-}
+        bool lightNeedsUpdate = false;
+        const auto& light = static_pointer_cast<PointLight>(scene->getLight(0));
+        color = light->getColor();
+        if (devTools->colorEdit3("light#0 color", &color.x)) {
+            light->setColor(color);
+            lightNeedsUpdate = true;
+        }
 
-// ---------------------------------------------------------------------------------------------------------------------
+        vec3 lightPos = light->getPosition();
+        if (devTools->sliderFloat3("light#0 position", &lightPos.x, -100.0f, 100.0f)) {
+            light->setPosition(lightPos);
+            lightNeedsUpdate = true;
+        }
 
-void PBRTest::cleanupSwapChain()
-{
-    if (effect_) {
-        effect_->cleanupSwapChain();
-    }
-
-    if (scene_) {
-        for (const auto& material : scene_->getMaterials()) {
-            material->destroyDescriptorSetLayout();
+        if (lightNeedsUpdate)
+        {
+            shader->setLight(0, light, camera->getViewMatrix());
+            updateShaderData();
         }
     }
-
-    TestApplication::cleanupSwapChain();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

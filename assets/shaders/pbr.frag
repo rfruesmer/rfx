@@ -19,14 +19,12 @@ layout(set = 0, binding = 0)
 uniform SceneData {
     mat4 viewMatrix;
     mat4 projMatrix;
-
-    Light lights[4];
 } scene;
 
 layout(set = 1, binding = 0)
-uniform MeshData {
-    mat4 modelMatrix;
-} mesh;
+uniform ShaderData {
+    Light lights[4];
+} shader;
 
 layout(set = 2, binding = 0)
 uniform MaterialData {
@@ -38,6 +36,11 @@ uniform MaterialData {
     float ao;
     float pad1;
 } material;
+
+layout(set = 3, binding = 0)
+uniform MeshData {
+    mat4 modelMatrix;
+} mesh;
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
@@ -86,12 +89,12 @@ vec3 BRDF(int lightIndex, vec3 V, vec3 N)
         return vec3(0.0);
     }
 
-    vec3 L = scene.lights[lightIndex].position - V;
+    vec3 L = shader.lights[lightIndex].position - V;
     float distance = length(L);
     L = normalize(L);
 
     float attenuation = 1.0 / (distance * distance);
-    vec3 radiance = scene.lights[lightIndex].color * attenuation;
+    vec3 radiance = shader.lights[lightIndex].color * attenuation;
 
     vec3 H = normalize(V + L);
     float nDotH = clamp(dot(N, H), 0.0, 1.0);
@@ -120,7 +123,7 @@ void main() {
 
     vec3 Lo = vec3(0);
     for(int i = 0; i < 4; ++i) {
-        if (!scene.lights[i].enabled) {
+        if (!shader.lights[i].enabled) {
             continue;
         }
 
@@ -133,4 +136,4 @@ void main() {
     outColor = color;
 }
 
-
+// ---------------------------------------------------------------------------------------------------------------------
