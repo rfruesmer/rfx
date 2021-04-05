@@ -232,25 +232,14 @@ ShaderProgramPtr MaterialShaderFactory::createShaderProgramFor(
     const vector<string> vertexShaderOutputs = shader->getVertexShaderOutputsFor(material);
     const vector<string> fragmentShaderInputs = shader->getFragmentShaderInputsFor(material);
 
-
-    const ShaderLoader shaderLoader(graphicsDevice);
-    RFX_LOG_INFO << "Loading vertex shader ...";
-    const VertexShaderPtr vertexShader = shaderLoader.loadVertexShader(
+    return ShaderLoader(graphicsDevice).loadProgram(
         shadersDirectory / vertexShaderFilename,
-        "main",
+        shadersDirectory / fragmentShaderFilename,
         vertexFormat,
         defines,
         vertexShaderInputs,
-        vertexShaderOutputs);
-
-    RFX_LOG_INFO << "Loading fragment shader ...";
-    const FragmentShaderPtr fragmentShader = shaderLoader.loadFragmentShader(
-        shadersDirectory / fragmentShaderFilename,
-        "main",
-        defines,
+        vertexShaderOutputs,
         fragmentShaderInputs);
-
-    return make_shared<ShaderProgram>(vertexShader, fragmentShader);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

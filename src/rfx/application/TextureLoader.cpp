@@ -13,12 +13,34 @@ static const string KTX_FILE_EXTENSION = ".ktx";
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-TextureLoader::TextureLoader(shared_ptr<GraphicsDevice> graphicsDevice)
+TextureLoader::TextureLoader(GraphicsDevicePtr graphicsDevice)
     : graphicsDevice(move(graphicsDevice)) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-shared_ptr<Texture2D> TextureLoader::load(const filesystem::path& filePath) const
+Texture2DPtr TextureLoader::loadTexture2D(const path& filePath) const
+{
+    ImageDesc imageDesc {};
+    vector<std::byte> imageData;
+    bool createMipmaps = false;
+
+
+    loadImage(filePath, imageDesc, imageData, createMipmaps);
+
+    return graphicsDevice->createTexture2D(
+        filePath.filename().string(),
+        imageDesc,
+        imageData,
+        createMipmaps);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TextureLoader::loadImage(
+    const path& filePath,
+    ImageDesc& outImageDesc,
+    vector<std::byte>& outImageData,
+    bool& outCreateMipmaps) const
 {
     const path absoluteImagePath =
         filePath.is_absolute() ? filePath : current_path() / filePath;
@@ -26,19 +48,14 @@ shared_ptr<Texture2D> TextureLoader::load(const filesystem::path& filePath) cons
 
     RFX_CHECK_STATE(exists(absoluteImagePath), "File not found: " + absoluteImagePath.string());
 
-    ImageDesc imageDesc {};
-    vector<std::byte> imageData;
-    bool createMipmaps = false;
-
     if (extension == KTX_FILE_EXTENSION) {
-        loadFromKTXFile(absoluteImagePath, imageDesc, imageData);
+        loadFromKTXFile(absoluteImagePath, outImageDesc, outImageData);
+        outCreateMipmaps = false;
     }
     else {
-        loadFromImageFile(absoluteImagePath, imageDesc, imageData);
-        createMipmaps = true;
+        loadFromImageFile(absoluteImagePath, outImageDesc, outImageData);
+        outCreateMipmaps = true;
     }
-
-    return graphicsDevice->createTexture2D(filePath.filename().string(), imageDesc, imageData, createMipmaps);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -49,11 +66,13 @@ void TextureLoader::loadFromKTXFile(
     vector<std::byte>& outImageData) const
 {
     KTXHeader header = readKTXHeader(path);
+
+    uint32_t bytesPerPixel;
     if (header.gl_format == GL_RGBA) {
-        outImageDesc.bytesPerPixel = 4;
+        bytesPerPixel = 4;
     }
     else if (header.gl_format == GL_RGB) {
-        outImageDesc.bytesPerPixel = 3;
+        bytesPerPixel = 3;
     }
     else {
         RFX_THROW("Unsupported texture format");
@@ -67,25 +86,33 @@ void TextureLoader::loadFromKTXFile(
     RFX_CHECK_STATE(result == KTX_SUCCESS,
         "Failed to load KTX file: " + path.string());
 
-    const ktx_uint8_t* imageData = ktxTexture_GetData(texture);
-    const ktx_size_t imageDataSize = ktxTexture_GetDataSize(texture);
-    outImageDesc.bytesPerPixel = imageDataSize / (texture->baseWidth * texture->baseHeight);
 
     outImageDesc = {
         .format = VK_FORMAT_R8G8B8A8_UNORM,
         .width = texture->baseWidth,
         .height = texture->baseHeight,
+        .bytesPerPixel = bytesPerPixel,
         .mipLevels = texture->numLevels,
-        .mipOffsets = {}
+        .mipOffsets = {},
+        .isCubemap = texture->isCubemap
     };
 
-    for (uint32_t i = 0; i < texture->numLevels; ++i) {
-        ktx_size_t offset;
-        result = ktxTexture_GetImageOffset(texture, i, 0, 0, &offset);
-        RFX_CHECK_STATE(result == KTX_SUCCESS, "");
-        outImageDesc.mipOffsets.push_back(offset);
+
+    for (uint32_t faceIndex = 0, faceCount = texture->isCubemap ? 6 : 1;
+         faceIndex < faceCount;
+         ++faceIndex)
+    {
+        for (uint32_t mipLevel = 0; mipLevel < texture->numLevels; ++mipLevel)
+        {
+            ktx_size_t offset;
+            result = ktxTexture_GetImageOffset(texture, mipLevel, 0, faceIndex, &offset);
+            RFX_CHECK_STATE(result == KTX_SUCCESS, "");
+            outImageDesc.mipOffsets.push_back(offset);
+        }
     }
 
+    const ktx_uint8_t* imageData = ktxTexture_GetData(texture);
+    const ktx_size_t imageDataSize = ktxTexture_GetDataSize(texture);
     outImageData.resize(imageDataSize);
     memcpy(&outImageData[0], imageData, imageDataSize);
 
@@ -119,6 +146,24 @@ void TextureLoader::loadFromImageFile(
 {
     ImageLoader imageLoader;
     imageLoader.load(path, &outImageDesc, &outImageData);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+CubeMapPtr TextureLoader::loadCubeMap(const path& filePath) const
+{
+    ImageDesc imageDesc {};
+    vector<std::byte> imageData;
+    bool createMipmaps = false;
+
+
+    loadImage(filePath, imageDesc, imageData, createMipmaps);
+
+    return graphicsDevice->createCubeMap(
+        filePath.filename().string(),
+        imageDesc,
+        imageData,
+        createMipmaps);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

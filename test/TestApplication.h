@@ -25,7 +25,7 @@ protected:
 
     void createDescriptorPool();
 
-    void createSceneResources();
+    virtual void createSceneResources();
     void createSceneDescriptorSetLayout();
     void createSceneDescriptorSet();
     void createSceneDataBuffer();
@@ -47,8 +47,20 @@ protected:
 
     void initGraphicsResources();
     BufferPtr createAndBindUniformBuffer(VkDeviceSize bufferSize);
-    [[nodiscard]] VkPipelineLayout createDefaultPipelineLayout(const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts);
-    [[nodiscard]] VkPipeline createDefaultPipelineFor(const MaterialShaderPtr& shader, VkPipelineLayout pipelineLayout);
+    [[nodiscard]] VkPipelineLayout createPipelineLayout(const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts);
+    [[nodiscard]] VkPipeline createPipelineFor(
+        const ShaderProgramPtr& shaderProgram,
+        VkPipelineLayout pipelineLayout);
+    [[nodiscard]] VkPipeline createPipeline(
+        VkPipelineLayout pipelineLayout,
+        VkPipelineInputAssemblyStateCreateInfo inputAssemblyState,
+        VkPipelineRasterizationStateCreateInfo rasterizationState,
+        VkPipelineColorBlendStateCreateInfo colorBlendState,
+        VkPipelineDepthStencilStateCreateInfo depthStencilState,
+        VkPipelineViewportStateCreateInfo viewportState,
+        VkPipelineMultisampleStateCreateInfo multisampleState,
+        VkPipelineDynamicStateCreateInfo dynamicState,
+        const ShaderProgramPtr shaderProgram);
     void createRenderPass();
 
     void beginMainLoop() override;

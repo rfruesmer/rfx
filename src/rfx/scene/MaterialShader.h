@@ -19,12 +19,9 @@ public:
     void destroy();
 
     [[nodiscard]] const std::string& getId() const;
-
     [[nodiscard]] const std::string& getVertexShaderId() const;
-    [[nodiscard]] const std::shared_ptr<VertexShader>& getVertexShader() const;
-
     [[nodiscard]] const std::string& getFragmentShaderId() const;
-    [[nodiscard]] const std::shared_ptr<FragmentShader>& getFragmentShader() const;
+    [[nodiscard]] const ShaderProgramPtr& getShaderProgram() const;
 
     [[nodiscard]] virtual std::vector<std::string> getShaderDefinesFor(const MaterialPtr& material);
     [[nodiscard]] virtual std::vector<std::string> getVertexShaderInputsFor(const MaterialPtr& material);

@@ -15,6 +15,48 @@ ShaderLoader::ShaderLoader(shared_ptr<GraphicsDevice> graphicsDevice)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+ShaderProgramPtr ShaderLoader::loadProgram(
+    const path& vertexShaderPath,
+    const path& fragmentShaderPath,
+    const VertexFormat& vertexFormat) const
+{
+    return loadProgram(
+        vertexShaderPath,
+        fragmentShaderPath,
+        vertexFormat,
+        {}, {}, {}, {});
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+ShaderProgramPtr ShaderLoader::loadProgram(
+    const path& vertexShaderPath,
+    const path& fragmentShaderPath,
+    const VertexFormat& vertexFormat,
+    const vector<string>& defines,
+    const vector<string>& vertexShaderInputs,
+    const vector<string>& vertexShaderOutputs,
+    const vector<string>& fragmentShaderInputs) const
+{
+    const VertexShaderPtr vertexShader = loadVertexShader(
+        vertexShaderPath,
+        "main",
+        vertexFormat,
+        defines,
+        vertexShaderInputs,
+        vertexShaderOutputs);
+
+    const FragmentShaderPtr fragmentShader = loadFragmentShader(
+        fragmentShaderPath,
+        "main",
+        defines,
+        fragmentShaderInputs);
+
+    return make_shared<ShaderProgram>(vertexShader, fragmentShader);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 shared_ptr<VertexShader> ShaderLoader::loadVertexShader(
     const filesystem::path& path,
     const char* entryPoint,
@@ -23,6 +65,8 @@ shared_ptr<VertexShader> ShaderLoader::loadVertexShader(
     const vector<string>& inputs,
     const vector<string>& outputs) const
 {
+    RFX_LOG_INFO << "Loading vertex shader " << path.filename() << " ...";
+
     const VkPipelineShaderStageCreateInfo shaderStageCreateInfo =
         loadInternal(path, VK_SHADER_STAGE_VERTEX_BIT, entryPoint, defines, inputs, outputs);
 
@@ -159,6 +203,8 @@ shared_ptr<FragmentShader> ShaderLoader::loadFragmentShader(
     const vector<string>& defines,
     const vector<string>& inputs) const
 {
+    RFX_LOG_INFO << "Loading fragment shader " << path.filename() << " ...";
+
     const VkPipelineShaderStageCreateInfo shaderStageCreateInfo =
         loadInternal(path, VK_SHADER_STAGE_FRAGMENT_BIT, entryPoint, defines, inputs, vector<string>());
 

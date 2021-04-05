@@ -1,51 +1,67 @@
 #include "rfx/pch.h"
-#include "rfx/scene/Mesh.h"
+#include "rfx/graphics/Texture.h"
+
 
 using namespace rfx;
-using namespace glm;
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<SubMesh>& Mesh::getSubMeshes()
+Texture::Texture(
+    VkDevice device,
+    ImagePtr image,
+    VkImageView imageView,
+    VkImageLayout imageLayout,
+    VkSampler sampler)
+        : device(device),
+          image(move(image)),
+          imageView(imageView),
+          imageLayout(imageLayout),
+          sampler(sampler)
 {
-    return subMeshes;
+    RFX_CHECK_ARGUMENT(imageLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    descriptorImageInfo = {
+        .sampler = sampler,
+        .imageView = imageView,
+        .imageLayout = imageLayout
+    };
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Mesh::addSubMesh(const SubMesh& subMesh)
+Texture::~Texture()
 {
-    subMeshes.push_back(subMesh);
+    vkDestroySampler(device, sampler, nullptr);
+    vkDestroyImageView(device, imageView, nullptr);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Mesh::setDescriptorSet(VkDescriptorSet descriptorSet)
+const ImagePtr& Texture::getImage() const
 {
-    this->descriptorSet = descriptorSet;
+    return image;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VkDescriptorSet Mesh::getDescriptorSet() const
+VkImageView Texture::getImageView() const
 {
-    return descriptorSet;
+    return imageView;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Mesh::setDataBuffer(const BufferPtr& dataBuffer)
+VkSampler Texture::getSampler() const
 {
-    this->dataBuffer = dataBuffer;
+    return sampler;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const BufferPtr& Mesh::getDataBuffer() const
+const VkDescriptorImageInfo& Texture::getDescriptorImageInfo() const
 {
-    return dataBuffer;
+    return descriptorImageInfo;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-

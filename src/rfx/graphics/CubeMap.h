@@ -2,12 +2,13 @@
 
 #include "rfx/graphics/Texture.h"
 
+
 namespace rfx {
 
-class Texture2D : public Texture
+class CubeMap : public Texture
 {
 public:
-    Texture2D(
+    CubeMap(
         VkDevice device,
         ImagePtr image,
         VkImageView imageView,
@@ -15,6 +16,6 @@ public:
         VkSampler sampler);
 };
 
-using Texture2DPtr = std::shared_ptr<Texture2D>;
+using CubeMapPtr = std::shared_ptr<CubeMap>;
 
 } // namespace rfx

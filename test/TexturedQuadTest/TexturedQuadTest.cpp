@@ -675,7 +675,7 @@ void TexturedQuadTest::createTexture()
         getAssetsDirectory() / "textures/ttex_v01/metal08.jpg";
 
     TextureLoader textureLoader(graphicsDevice);
-    texture = textureLoader.load(texturePath);
+    texture = textureLoader.loadTexture2D(texturePath);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

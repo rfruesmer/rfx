@@ -12,7 +12,7 @@ MeshNode::MeshNode(const MeshPtr& mesh, const MaterialPtr& material)
 {
     for (const auto& subMesh : mesh->getSubMeshes())
     {
-        if (subMesh.material == material) {
+        if (subMesh.getMaterial() == material) {
             subMeshes.push_back(subMesh);
         }
     }
@@ -27,7 +27,7 @@ void MeshNode::record(
     bindObject(commandBuffer, shader);
 
     for (const auto& subMesh : subMeshes) {
-        commandBuffer->drawIndexed(subMesh.indexCount, subMesh.firstIndex);
+        commandBuffer->drawIndexed(subMesh.getIndexCount(), subMesh.getFirstIndex());
     }
 }
 

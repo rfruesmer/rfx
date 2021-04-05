@@ -23,7 +23,7 @@ SkyBoxShader::SkyBoxShader(GraphicsDevicePtr& graphicsDevice)
 
 vector<std::byte> SkyBoxShader::createDataFor(const MaterialPtr& material) const
 {
-    return std::vector<std::byte>();
+    return {};
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

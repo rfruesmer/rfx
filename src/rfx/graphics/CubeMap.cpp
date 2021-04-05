@@ -1,12 +1,13 @@
 #include "rfx/pch.h"
-#include "rfx/graphics/Texture2D.h"
+#include "rfx/graphics/CubeMap.h"
+
 
 using namespace rfx;
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-Texture2D::Texture2D(
+CubeMap::CubeMap(
     VkDevice device,
     ImagePtr image,
     VkImageView imageView,
@@ -20,4 +21,3 @@ Texture2D::Texture2D(
             sampler) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
-

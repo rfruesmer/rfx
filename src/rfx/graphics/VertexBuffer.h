@@ -15,6 +15,9 @@ public:
         VkBuffer buffer,
         VkDeviceMemory deviceMemory);
 
+    [[nodiscard]] uint32_t getVertexCount() const;
+    [[nodiscard]] const VertexFormat& getVertexFormat() const;
+
 private:
     uint32_t vertexCount;
     VertexFormat vertexFormat;

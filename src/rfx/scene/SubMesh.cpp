@@ -1,51 +1,46 @@
 #include "rfx/pch.h"
-#include "rfx/scene/Mesh.h"
+#include "rfx/scene/SubMesh.h"
+
 
 using namespace rfx;
-using namespace glm;
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<SubMesh>& Mesh::getSubMeshes()
+SubMesh::SubMesh(
+    uint32_t firstIndex,
+    uint32_t indexCount,
+    MaterialPtr material)
+    : firstIndex(firstIndex),
+      indexCount(indexCount),
+      material(move(material)) {}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+uint32_t SubMesh::getFirstIndex() const
 {
-    return subMeshes;
+    return firstIndex;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Mesh::addSubMesh(const SubMesh& subMesh)
+uint32_t SubMesh::getIndexCount() const
 {
-    subMeshes.push_back(subMesh);
+    return indexCount;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Mesh::setDescriptorSet(VkDescriptorSet descriptorSet)
+void SubMesh::setMaterial(const MaterialPtr& material)
 {
-    this->descriptorSet = descriptorSet;
+    SubMesh::material = material;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VkDescriptorSet Mesh::getDescriptorSet() const
+const MaterialPtr& SubMesh::getMaterial() const
 {
-    return descriptorSet;
+    return material;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-
-void Mesh::setDataBuffer(const BufferPtr& dataBuffer)
-{
-    this->dataBuffer = dataBuffer;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-const BufferPtr& Mesh::getDataBuffer() const
-{
-    return dataBuffer;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-

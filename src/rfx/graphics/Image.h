@@ -28,4 +28,6 @@ private:
     VkDeviceMemory deviceMemory;
 };
 
+using ImagePtr = std::shared_ptr<Image>;
+
 } // namespace rfx

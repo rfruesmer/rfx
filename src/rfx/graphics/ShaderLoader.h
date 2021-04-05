@@ -1,8 +1,8 @@
 #pragma once
 
 #include "rfx/graphics/GraphicsDevice.h"
-#include "rfx/graphics/VertexShader.h"
-#include "rfx/graphics/FragmentShader.h"
+#include "rfx/graphics/ShaderProgram.h"
+
 
 namespace rfx {
 
@@ -11,7 +11,24 @@ class ShaderLoader
 public:
     explicit ShaderLoader(std::shared_ptr<GraphicsDevice> graphicsDevice);
 
-    std::shared_ptr<VertexShader> loadVertexShader(
+    [[nodiscard]]
+    ShaderProgramPtr loadProgram(
+        const std::filesystem::path& vertexShaderPath,
+        const std::filesystem::path& fragmentShaderPath,
+        const VertexFormat& vertexFormat) const;
+
+    [[nodiscard]]
+    ShaderProgramPtr loadProgram(
+        const std::filesystem::path& vertexShaderPath,
+        const std::filesystem::path& fragmentShaderPath,
+        const VertexFormat& vertexFormat,
+        const std::vector<std::string>& defines,
+        const std::vector<std::string>& vertexShaderInputs,
+        const std::vector<std::string>& vertexShaderOutputs,
+        const std::vector<std::string>& fragmentShaderInputs) const;
+
+    [[nodiscard]]
+    VertexShaderPtr loadVertexShader(
         const std::filesystem::path& path,
         const char* entryPoint,
         const VertexFormat& vertexFormat,
@@ -19,7 +36,8 @@ public:
         const std::vector<std::string>& inputs,
         const std::vector<std::string>& outputs) const;
 
-    std::shared_ptr<FragmentShader> loadFragmentShader(
+    [[nodiscard]]
+    FragmentShaderPtr loadFragmentShader(
         const std::filesystem::path& path,
         const char* entryPoint,
         const std::vector<std::string>& defines,

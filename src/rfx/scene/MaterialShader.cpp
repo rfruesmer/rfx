@@ -20,6 +20,22 @@ MaterialShader::MaterialShader(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void MaterialShader::create(
+    ShaderProgramPtr shaderProgram,
+    VkDescriptorSetLayout shaderDescriptorSetLayout,
+    VkDescriptorSet shaderDescriptorSet,
+    BufferPtr shaderDataBuffer,
+    VkDescriptorSetLayout materialDescriptorSetLayout)
+{
+    this->shaderProgram = move(shaderProgram);
+    this->shaderDescriptorSetLayout = shaderDescriptorSetLayout;
+    this->shaderDescriptorSet = shaderDescriptorSet;
+    this->shaderDataBuffer = move(shaderDataBuffer);
+    this->materialDescriptorSetLayout = materialDescriptorSetLayout;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 MaterialShader::~MaterialShader()
 {
     destroy();
@@ -61,32 +77,9 @@ const string& MaterialShader::getId() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void MaterialShader::create(
-    ShaderProgramPtr shaderProgram,
-    VkDescriptorSetLayout shaderDescriptorSetLayout,
-    VkDescriptorSet shaderDescriptorSet,
-    BufferPtr shaderDataBuffer,
-    VkDescriptorSetLayout materialDescriptorSetLayout)
-{
-    this->shaderProgram = move(shaderProgram);
-    this->shaderDescriptorSetLayout = shaderDescriptorSetLayout;
-    this->shaderDescriptorSet = shaderDescriptorSet;
-    this->shaderDataBuffer = move(shaderDataBuffer);
-    this->materialDescriptorSetLayout = materialDescriptorSetLayout;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 const string& MaterialShader::getVertexShaderId() const
 {
     return vertexShaderId;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-const shared_ptr<VertexShader>& MaterialShader::getVertexShader() const
-{
-    return shaderProgram->getVertexShader();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -98,9 +91,9 @@ const string& MaterialShader::getFragmentShaderId() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const shared_ptr<FragmentShader>& MaterialShader::getFragmentShader() const
+const ShaderProgramPtr& MaterialShader::getShaderProgram() const
 {
-    return shaderProgram->getFragmentShader();
+    return shaderProgram;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

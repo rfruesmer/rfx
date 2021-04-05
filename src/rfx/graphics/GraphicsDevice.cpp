@@ -404,15 +404,19 @@ shared_ptr<Image> GraphicsDevice::createDepthBufferImage(VkFormat format)
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
     const uint32_t bytesPerPixel = format == VK_FORMAT_D16_UNORM ? 2 : 4;
 
+    const ImageDesc imageDesc {
+        .format = format,
+        .width = swapChainDesc.extent.width,
+        .height = swapChainDesc.extent.height,
+        .bytesPerPixel = bytesPerPixel,
+        .mipLevels = 1,
+        .mipOffsets = { 0 },
+        .sampleCount = multiSampleCount
+    };
+
     return createImage(
         "depth_buffer",
-        format,
-        swapChainDesc.extent.width,
-        swapChainDesc.extent.height,
-        bytesPerPixel,
-        1,
-        { 0 },
-        multiSampleCount,
+        imageDesc,
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
         VK_IMAGE_TILING_OPTIMAL,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -438,17 +442,20 @@ void GraphicsDevice::createMultiSamplingBuffer(VkSampleCountFlagBits sampleCount
 
     const SwapChainDesc& swapChainDesc = swapChain->getDesc();
     RFX_CHECK_STATE(swapChainDesc.format == VK_FORMAT_B8G8R8A8_SRGB, "");
-    const uint32_t bytesPerPixel = 4;
+
+    const ImageDesc imageDesc {
+        .format = swapChainDesc.format,
+        .width = swapChainDesc.extent.width,
+        .height = swapChainDesc.extent.height,
+        .bytesPerPixel = 4,
+        .mipLevels = 1,
+        .mipOffsets = { 0 },
+        .sampleCount = sampleCount
+    };
 
     multiSampleImage = createImage(
         "multisampling_buffer",
-        swapChainDesc.format,
-        swapChainDesc.extent.width,
-        swapChainDesc.extent.height,
-        bytesPerPixel,
-        1,
-        {0},
-        sampleCount,
+        imageDesc,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         VK_IMAGE_TILING_OPTIMAL,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -698,13 +705,13 @@ void GraphicsDevice::destroyCommandBuffer(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-shared_ptr<Texture2D> GraphicsDevice::createTexture2D(
+Texture2DPtr GraphicsDevice::createTexture2D(
     const string& id,
     const ImageDesc& imageDesc,
     const vector<std::byte>& imageData,
     bool isGenerateMipmaps) const
 {
-    const shared_ptr<Image> textureImage = createImage(id, imageDesc, imageData, isGenerateMipmaps);
+    const ImagePtr textureImage = createImage(id, imageDesc, imageData, isGenerateMipmaps);
     const ImageDesc finalImageDesc = textureImage->getDesc();
 
     VkImageView textureImageView = createImageView(
@@ -725,12 +732,12 @@ shared_ptr<Texture2D> GraphicsDevice::createTexture2D(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-shared_ptr<Texture2D> GraphicsDevice::createTexture2D(
+Texture2DPtr GraphicsDevice::createTexture2D(
     const shared_ptr<Image>& image,
     VkImageView const& imageView,
     const SamplerDesc& samplerDesc) const
 {
-    VkSampler textureSampler = createTextureSampler(samplerDesc);
+    VkSampler textureSampler = createSampler(samplerDesc);
 
     return make_shared<Texture2D>(
         device,
@@ -755,7 +762,7 @@ shared_ptr<Image> GraphicsDevice::createImage(
             static_cast<uint32_t>(floor(log2(max(imageDesc.width, imageDesc.height)))) + 1;
     }
 
-    shared_ptr<Image> image = createImage(
+    ImagePtr image = createImage(
         id,
         finalImageDesc,
         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
@@ -793,45 +800,16 @@ shared_ptr<Image> GraphicsDevice::createImage(
     VkImageTiling tiling,
     VkMemoryPropertyFlags properties) const
 {
-    return createImage(
-        id,
-        imageDesc.format,
-        imageDesc.width,
-        imageDesc.height,
-        imageDesc.bytesPerPixel,
-        imageDesc.mipLevels,
-        imageDesc.mipOffsets,
-        imageDesc.sampleCount,
-        usage,
-        tiling,
-        properties);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-shared_ptr<Image> GraphicsDevice::createImage(
-    const string& id,
-    VkFormat format,
-    uint32_t width,
-    uint32_t height,
-    uint32_t bytesPerPixel,
-    uint32_t mipLevels,
-    const vector<VkDeviceSize>& mipOffsets,
-    VkSampleCountFlagBits sampleCount,
-    VkImageUsageFlags usage,
-    VkImageTiling tiling,
-    VkMemoryPropertyFlags properties) const
-{
     VkImageCreateInfo imageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
         .pNext = nullptr,
-        .flags = 0,
+        .flags = static_cast<VkImageCreateFlags>(imageDesc.isCubemap ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0),
         .imageType = VK_IMAGE_TYPE_2D,
-        .format = format,
-        .extent = { width, height, 1 },
-        .mipLevels = mipLevels,
-        .arrayLayers = 1,
-        .samples = sampleCount,
+        .format = imageDesc.format,
+        .extent = { imageDesc.width, imageDesc.height, 1 },
+        .mipLevels = imageDesc.mipLevels,
+        .arrayLayers = static_cast<uint32_t>(imageDesc.isCubemap ? 6 : 1),
+        .samples = imageDesc.sampleCount,
         .tiling = tiling,
         .usage = usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
@@ -870,15 +848,6 @@ shared_ptr<Image> GraphicsDevice::createImage(
         imageMemory,
         0));
 
-    ImageDesc imageDesc {
-        .format = format,
-        .width = width,
-        .height = height,
-        .bytesPerPixel = bytesPerPixel,
-        .mipLevels = mipLevels,
-        .mipOffsets = mipOffsets
-    };
-
     return make_shared<Image>(
         id,
         imageDesc,
@@ -909,26 +878,38 @@ void GraphicsDevice::updateImage(
 
     const ImageDesc& imageDesc = image->getDesc();
 
-    vector<VkBufferImageCopy> copyRegions;
-    for (uint32_t i = 0; i < imageDesc.mipOffsets.size(); ++i) {
-        VkBufferImageCopy bufferImageCopy {
-            .bufferOffset = imageDesc.mipOffsets[i],
-            .imageSubresource {
-                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                .mipLevel = i,
-                .baseArrayLayer = 0,
-                .layerCount = 1
-            },
-            .imageExtent {
-                .width = imageDesc.width >> i,
-                .height = imageDesc.height >> i,
-                .depth = 1
-            },
-        };
-        copyRegions.push_back(bufferImageCopy);
+    vector<VkBufferImageCopy> imageCopies;
+    uint32_t offsetIndex = 0;
+
+    for (uint32_t faceIndex = 0, faceCount = imageDesc.isCubemap ? 6 : 1;
+         faceIndex < faceCount;
+         ++faceIndex)
+    {
+        // TODO: fix ambiguity between miplevels vs. mipOffsets
+        const uint32_t mipLevelCount = min(static_cast<size_t>(imageDesc.mipLevels), imageDesc.mipOffsets.size());
+
+        for (uint32_t mipLevel = 0; mipLevel < mipLevelCount; ++mipLevel)
+        {
+            VkBufferImageCopy imageCopy {
+                .bufferOffset = imageDesc.mipOffsets[offsetIndex],
+                .imageSubresource {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .mipLevel = mipLevel,
+                    .baseArrayLayer = faceIndex,
+                    .layerCount = 1
+                },
+                .imageExtent {
+                    .width = imageDesc.width >> mipLevel,
+                    .height = imageDesc.height >> mipLevel,
+                    .depth = 1
+                },
+            };
+            imageCopies.push_back(imageCopy);
+            ++offsetIndex;
+        }
     }
 
-    const shared_ptr<CommandBuffer> commandBuffer = createCommandBuffer(graphicsCommandPool);
+    const CommandBufferPtr commandBuffer = createCommandBuffer(graphicsCommandPool);
     commandBuffer->begin();
 
     if (!isGenerateMipmaps) {
@@ -946,7 +927,7 @@ void GraphicsDevice::updateImage(
 //            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     }
 
-    commandBuffer->copyBufferToImage(stagingBuffer, image, copyRegions);
+    commandBuffer->copyBufferToImage(stagingBuffer, image, imageCopies);
 
     if (!isGenerateMipmaps) {
         commandBuffer->setImageMemoryBarrier(
@@ -1103,15 +1084,17 @@ void GraphicsDevice::generateMipmaps(
 // ---------------------------------------------------------------------------------------------------------------------
 
 VkImageView GraphicsDevice::createImageView(
-    const shared_ptr<Image>& image,
+    const ImagePtr& image,
     VkFormat format,
     VkImageAspectFlags imageAspect,
     uint32_t mipLevels) const
 {
+    const ImageDesc& imageDesc = image->getDesc();
+    
     VkImageViewCreateInfo viewInfo {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .image = image->getHandle(),
-        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .viewType = imageDesc.isCubemap ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D,
         .format = format,
         .components = {
             VK_COMPONENT_SWIZZLE_R,
@@ -1124,7 +1107,7 @@ VkImageView GraphicsDevice::createImageView(
             .baseMipLevel = 0,
             .levelCount = mipLevels,
             .baseArrayLayer = 0,
-            .layerCount = 1
+            .layerCount = static_cast<uint32_t>(imageDesc.isCubemap ? 6 : 1)
         }
     };
 
@@ -1140,7 +1123,7 @@ VkImageView GraphicsDevice::createImageView(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VkSampler GraphicsDevice::createTextureSampler(const SamplerDesc& desc) const
+VkSampler GraphicsDevice::createSampler(const SamplerDesc& desc) const
 {
     VkSamplerCreateInfo samplerCreateInfo {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -1300,3 +1283,36 @@ const GraphicsDeviceDesc& GraphicsDevice::getDesc() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+CubeMapPtr GraphicsDevice::createCubeMap(
+    const string& id,
+    const ImageDesc& imageDesc,
+    const vector<std::byte>& imageData,
+    bool isGenerateMipmaps) const
+{
+    const ImagePtr image = createImage(id, imageDesc, imageData, isGenerateMipmaps);
+    const ImageDesc finalImageDesc = image->getDesc();
+
+    VkImageView imageView = createImageView(
+        image,
+        finalImageDesc.format,
+        VK_IMAGE_ASPECT_COLOR_BIT,
+        finalImageDesc.mipLevels);
+
+    SamplerDesc samplerDesc {
+        .minFilter = VK_FILTER_LINEAR,
+        .magFilter = VK_FILTER_LINEAR,
+        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+        .maxLod = static_cast<float>(finalImageDesc.mipLevels)
+    };
+
+    VkSampler textureSampler = createSampler(samplerDesc);
+
+    return make_shared<CubeMap>(
+        device,
+        image,
+        imageView,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        textureSampler);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------

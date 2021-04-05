@@ -9,7 +9,7 @@ class Mesh
 {
 public:
     void addSubMesh(const SubMesh& subMesh);
-    [[nodiscard]] const std::vector<SubMesh>& getSubMeshes() const;
+    [[nodiscard]] std::vector<SubMesh>& getSubMeshes();
 
     void setDescriptorSet(VkDescriptorSet descriptorSet);
     [[nodiscard]] VkDescriptorSet getDescriptorSet() const;

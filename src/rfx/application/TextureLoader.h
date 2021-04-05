@@ -2,6 +2,7 @@
 
 #include "rfx/graphics/GraphicsDevice.h"
 #include "rfx/graphics/Texture2D.h"
+#include "rfx/graphics/CubeMap.h"
 #include "rfx/graphics/ImageDesc.h"
 
 
@@ -10,10 +11,13 @@ namespace rfx {
 class TextureLoader
 {
 public:
-    explicit TextureLoader(std::shared_ptr<GraphicsDevice> graphicsDevice);
+    explicit TextureLoader(GraphicsDevicePtr graphicsDevice);
 
     [[nodiscard]]
-    std::shared_ptr<Texture2D> load(const std::filesystem::path& filePath) const;
+    Texture2DPtr loadTexture2D(const std::filesystem::path& filePath) const;
+
+    [[nodiscard]]
+    CubeMapPtr loadCubeMap(const std::filesystem::path& filePath) const;
 
 private:
 #pragma pack(push, 4)
@@ -34,6 +38,12 @@ private:
     };
 #pragma pack(pop)
 
+    void loadImage(
+        const std::filesystem::path& filePath,
+        ImageDesc& outImageDesc,
+        std::vector<std::byte>& outImageData,
+        bool& outCreateMipmaps) const;
+
     void loadFromKTXFile(
         const std::filesystem::path& path,
         ImageDesc& outImageDesc,
@@ -47,6 +57,7 @@ private:
         std::vector<std::byte>& outImageData) const;
 
     std::shared_ptr<GraphicsDevice> graphicsDevice;
+
 };
 
 } // namespace rfx;

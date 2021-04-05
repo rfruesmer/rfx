@@ -9,6 +9,7 @@
 #include "rfx/graphics/VertexFormat.h"
 #include "rfx/graphics/IndexBuffer.h"
 #include "rfx/graphics/Texture2D.h"
+#include "rfx/graphics/CubeMap.h"
 #include "rfx/graphics/SamplerDesc.h"
 #include "rfx/graphics/Image.h"
 #include "rfx/graphics/ImageDesc.h"
@@ -63,40 +64,40 @@ public:
     VkSampleCountFlagBits getMultiSampleCount() const;
 
     [[nodiscard]]
-    std::shared_ptr<Buffer> createBuffer(
+    BufferPtr createBuffer(
         VkDeviceSize size,
         VkBufferUsageFlags usage,
         VkMemoryPropertyFlags memoryProperties) const;
 
     [[nodiscard]]
-    std::shared_ptr<VertexBuffer> createVertexBuffer(uint32_t vertexCount, const VertexFormat& vertexFormat) const;
+    VertexBufferPtr createVertexBuffer(uint32_t vertexCount, const VertexFormat& vertexFormat) const;
 
     [[nodiscard]]
-    std::shared_ptr<IndexBuffer> createIndexBuffer(uint32_t indexCount, VkIndexType indexType);
+    IndexBufferPtr createIndexBuffer(uint32_t indexCount, VkIndexType indexType);
 
     [[nodiscard]]
-    std::shared_ptr<CommandBuffer> createCommandBuffer(VkCommandPool commandPool) const;
-    void flush(const std::shared_ptr<CommandBuffer>& commandBuffer) const;
-    void destroyCommandBuffer(const std::shared_ptr<CommandBuffer>& commandBuffer, VkCommandPool commandPool) const;
+    CommandBufferPtr createCommandBuffer(VkCommandPool commandPool) const;
+    void flush(const CommandBufferPtr& commandBuffer) const;
+    void destroyCommandBuffer(const CommandBufferPtr& commandBuffer, VkCommandPool commandPool) const;
 
     [[nodiscard]]
-    std::vector<std::shared_ptr<CommandBuffer>> createCommandBuffers(VkCommandPool commandPool, uint32_t count) const;
+    std::vector<CommandBufferPtr> createCommandBuffers(VkCommandPool commandPool, uint32_t count) const;
 
     [[nodiscard]]
-    std::shared_ptr<Texture2D> createTexture2D(
+    Texture2DPtr createTexture2D(
         const std::string& id,
         const ImageDesc& imageDesc,
         const std::vector<std::byte>& imageData,
         bool isGenerateMipmaps) const;
 
     [[nodiscard]]
-    std::shared_ptr<Texture2D> createTexture2D(
+    Texture2DPtr createTexture2D(
         const std::shared_ptr<Image>& image,
         const VkImageView& imageView,
         const SamplerDesc& samplerDesc) const;
 
     [[nodiscard]]
-    std::shared_ptr<Image> createImage(
+    CubeMapPtr createCubeMap(
         const std::string& id,
         const ImageDesc& imageDesc,
         const std::vector<std::byte>& imageData,
@@ -105,20 +106,13 @@ public:
     [[nodiscard]]
     std::shared_ptr<Image> createImage(
         const std::string& id,
-        VkFormat format,
-        uint32_t width,
-        uint32_t height,
-        uint32_t bytesPerPixel,
-        uint32_t mipLevels,
-        const std::vector<VkDeviceSize>& mipOffsets,
-        VkSampleCountFlagBits sampleCount,
-        VkImageUsageFlags usage,
-        VkImageTiling tiling,
-        VkMemoryPropertyFlags properties) const;
+        const ImageDesc& imageDesc,
+        const std::vector<std::byte>& imageData,
+        bool isGenerateMipmaps) const;
 
     [[nodiscard]]
     VkImageView createImageView(
-        const std::shared_ptr<Image>& image,
+        const ImagePtr& image,
         VkFormat format,
         VkImageAspectFlags imageAspect,
         uint32_t mipLevels) const;
@@ -129,9 +123,9 @@ public:
     [[nodiscard]] VkResult waitForFence(VkFence fence, uint64_t timeout) const;
     [[nodiscard]] VkResult waitForFences(uint32_t count, const VkFence* fences, bool waitAll, uint64_t timeout) const;
 
-    void bind(const std::shared_ptr<Buffer>& buffer) const;
-    void map(const std::shared_ptr<Buffer>& buffer, void** data) const;
-    void unmap(const std::shared_ptr<Buffer>& buffer) const;
+    void bind(const BufferPtr& buffer) const;
+    void map(const BufferPtr& buffer, void** data) const;
+    void unmap(const BufferPtr& buffer) const;
 
     void waitIdle() const;
 
@@ -166,8 +160,6 @@ private:
 
     void checkFormat(VkFormat format, VkImageTiling tiling, VkFormatFeatureFlags features);
     std::shared_ptr<Image> createDepthBufferImage(VkFormat format);
-
-    void destroyMultiSamplingBuffer();
 
     void createCommandPool();
 
@@ -205,7 +197,12 @@ private:
         uint32_t mipLevels) const;
 
     [[nodiscard]]
-    VkSampler createTextureSampler(const SamplerDesc& desc) const;
+    VkSampler createSampler(const SamplerDesc& desc) const;
+
+    void destroyMultiSamplingBuffer();
+    void destroyDepthBuffer();
+    void destroySwapChain();
+
 
     GraphicsDeviceDesc desc_ {};
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
@@ -220,10 +217,6 @@ private:
     VkSampleCountFlagBits multiSampleCount = VK_SAMPLE_COUNT_1_BIT;
     std::shared_ptr<Image> multiSampleImage;
     VkImageView multiSampleImageView = VK_NULL_HANDLE;
-
-    void destroyDepthBuffer();
-
-    void destroySwapChain();
 };
 
 using GraphicsDevicePtr = std::shared_ptr<GraphicsDevice>;

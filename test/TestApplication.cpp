@@ -1,5 +1,6 @@
 #include "rfx/pch.h"
 #include "TestApplication.h"
+#include "rfx/graphics/PipelineUtil.h"
 
 using namespace rfx;
 using namespace glm;
@@ -328,7 +329,27 @@ void TestApplication::createRenderPass()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VkPipelineLayout TestApplication::createDefaultPipelineLayout(const vector<VkDescriptorSetLayout>& descriptorSetLayouts)
+void TestApplication::createPipelines()
+{
+    for (const auto& [shader, materials] : materialShaderMap)
+    {
+        vector<VkDescriptorSetLayout> descriptorSetLayouts {
+            sceneDescriptorSetLayout_,
+            shader->getShaderDescriptorSetLayout(),
+            shader->getMaterialDescriptorSetLayout(),
+            meshDescriptorSetLayout_
+        };
+
+        VkPipelineLayout pipelineLayout = createPipelineLayout(descriptorSetLayouts);
+        VkPipeline pipeline = createPipelineFor(shader->getShaderProgram(), pipelineLayout);
+        shader->setPipeline(pipelineLayout, pipeline);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkPipelineLayout TestApplication::createPipelineLayout(
+    const vector<VkDescriptorSetLayout>& descriptorSetLayouts)
 {
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
@@ -350,100 +371,60 @@ VkPipelineLayout TestApplication::createDefaultPipelineLayout(const vector<VkDes
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VkPipeline TestApplication::createDefaultPipelineFor(
-    const MaterialShaderPtr& shader,
+VkPipeline TestApplication::createPipelineFor(
+    const ShaderProgramPtr& shaderProgram,
     VkPipelineLayout pipelineLayout)
 {
-    VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-        .primitiveRestartEnable = VK_FALSE
-    };
-
-    VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-        .depthClampEnable = VK_FALSE,
-        .rasterizerDiscardEnable = VK_FALSE,
-        .polygonMode = VK_POLYGON_MODE_FILL,
-        .cullMode = VK_CULL_MODE_BACK_BIT,
-        .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
-        .depthBiasEnable = VK_FALSE,
-        .lineWidth = 1.0f
-    };
-
-    VkPipelineColorBlendAttachmentState colorBlendAttachmentState = {
-        .blendEnable = VK_FALSE,
-        .colorWriteMask = VK_COLOR_COMPONENT_R_BIT
-                          | VK_COLOR_COMPONENT_G_BIT
-                          | VK_COLOR_COMPONENT_B_BIT
-                          | VK_COLOR_COMPONENT_A_BIT
-    };
-
-    VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-        .logicOpEnable = VK_FALSE,
-        .logicOp = VK_LOGIC_OP_COPY,
-        .attachmentCount = 1,
-        .pAttachments = &colorBlendAttachmentState,
-        .blendConstants = { 0.0f, 0.0f, 0.0f, 0.0f }
-    };
-
-    VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-        .depthTestEnable = VK_TRUE,
-        .depthWriteEnable = VK_TRUE,
-        .depthCompareOp = VK_COMPARE_OP_LESS,
-        .depthBoundsTestEnable = VK_FALSE,
-        .stencilTestEnable = VK_FALSE,
-        .front = {}, // Optional
-        .back = {}, // Optional
-        .minDepthBounds = 0.0f, // Optional
-        .maxDepthBounds = 1.0f, // Optional
-    };
-
-    const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
-    const SwapChainDesc& swapChainDesc = swapChain->getDesc();
-
-    VkPipelineViewportStateCreateInfo viewportStateCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-        .viewportCount = 1,
-        .scissorCount = 1,
-    };
-
-    VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-        .rasterizationSamples = graphicsDevice->getMultiSampleCount(),
-        .sampleShadingEnable = VK_FALSE
-    };
+    const VkPipelineColorBlendAttachmentState colorBlendAttachmentState =
+        PipelineUtil::getDefaultColorBlendAttachmentState();
 
     const vector<VkDynamicState> dynamicStates {
         VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_SCISSOR
     };
 
-    VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
-        .dynamicStateCount = static_cast<uint32_t>(dynamicStates.size()),
-        .pDynamicStates = dynamicStates.data()
-    };
+    return createPipeline(
+        pipelineLayout,
+        PipelineUtil::getDefaultInputAssemblyState(),
+        PipelineUtil::getDefaultRasterizationState(),
+        PipelineUtil::getDefaultColorBlendState(&colorBlendAttachmentState),
+        PipelineUtil::getDefaultDepthStencilState(),
+        PipelineUtil::getDefaultViewportState(),
+        PipelineUtil::getDefaultMultisampleState(graphicsDevice->getMultiSampleCount()),
+        PipelineUtil::getDynamicState(dynamicStates),
+        shaderProgram);
+}
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkPipeline TestApplication::createPipeline(
+    VkPipelineLayout pipelineLayout,
+    VkPipelineInputAssemblyStateCreateInfo inputAssemblyState,
+    VkPipelineRasterizationStateCreateInfo rasterizationState,
+    VkPipelineColorBlendStateCreateInfo colorBlendState,
+    VkPipelineDepthStencilStateCreateInfo depthStencilState,
+    VkPipelineViewportStateCreateInfo viewportState,
+    VkPipelineMultisampleStateCreateInfo multisampleState,
+    VkPipelineDynamicStateCreateInfo dynamicState,
+    const ShaderProgramPtr shaderProgram)
+{
     const array<VkPipelineShaderStageCreateInfo, 2> shaderStages {
-        shader->getVertexShader()->getStageCreateInfo(),
-        shader->getFragmentShader()->getStageCreateInfo()
+        shaderProgram->getVertexShader()->getStageCreateInfo(),
+        shaderProgram->getFragmentShader()->getStageCreateInfo()
     };
 
     VkGraphicsPipelineCreateInfo pipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .stageCount = shaderStages.size(),
         .pStages = shaderStages.data(),
-        .pVertexInputState = &shader->getVertexShader()->getVertexInputStateCreateInfo(),
-        .pInputAssemblyState = &inputAssemblyStateCreateInfo,
-        .pViewportState = &viewportStateCreateInfo,
-        .pRasterizationState = &rasterizationStateCreateInfo,
-        .pMultisampleState = &multisampleStateCreateInfo,
-        .pDepthStencilState = &depthStencilStateCreateInfo,
-        .pColorBlendState = &colorBlendStateCreateInfo,
-        .pDynamicState = &dynamicStateCreateInfo,
+        .pVertexInputState = &shaderProgram->getVertexShader()->getVertexInputStateCreateInfo(),
+        .pInputAssemblyState = &inputAssemblyState,
+        .pViewportState = &viewportState,
+        .pRasterizationState = &rasterizationState,
+        .pMultisampleState = &multisampleState,
+        .pDepthStencilState = &depthStencilState,
+        .pColorBlendState = &colorBlendState,
+        .pDynamicState = &dynamicState,
         .layout = pipelineLayout,
         .renderPass = renderPass,
         .subpass = 0,
@@ -454,21 +435,21 @@ VkPipeline TestApplication::createDefaultPipelineFor(
     VkPipeline pipeline = VK_NULL_HANDLE;
     ThrowIfFailed(vkCreateGraphicsPipelines(
         graphicsDevice->getLogicalDevice(),
-        VK_NULL_HANDLE,
+        VK_NULL_HANDLE, // TODO: pipeline cache
         1,
         &pipelineCreateInfo,
         nullptr,
         &pipeline));
 
 
-    rasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_LINE;
+    rasterizationState.polygonMode = VK_POLYGON_MODE_LINE;
     ThrowIfFailed(vkCreateGraphicsPipelines(
         graphicsDevice->getLogicalDevice(),
         VK_NULL_HANDLE,
         1,
         &pipelineCreateInfo,
         nullptr,
-        &wireframePipeline));
+        &wireframePipeline)); // TODO: move wireframe pipeline creation to somewhere else
 
     return pipeline;
 }
@@ -898,25 +879,6 @@ void TestApplication::createCommandBuffers()
             sceneDescriptorSet_,
             renderPass,
             swapChainFrameBuffers[i]);
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TestApplication::createPipelines()
-{
-    for (const auto& [shader, materials] : materialShaderMap)
-    {
-        vector<VkDescriptorSetLayout> descriptorSetLayouts {
-            sceneDescriptorSetLayout_,
-            shader->getShaderDescriptorSetLayout(),
-            shader->getMaterialDescriptorSetLayout(),
-            meshDescriptorSetLayout_
-        };
-
-        VkPipelineLayout pipelineLayout = createDefaultPipelineLayout(descriptorSetLayouts);
-        VkPipeline pipeline = createDefaultPipelineFor(shader, pipelineLayout);
-        shader->setPipeline(pipelineLayout, pipeline);
     }
 }
 

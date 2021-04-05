@@ -187,6 +187,8 @@ void CommandBuffer::setImageMemoryBarrier(
     VkPipelineStageFlags srcStageMask,
     VkPipelineStageFlags dstStageMask) const
 {
+    const ImageDesc& imageDesc = image->getDesc();
+
     VkImageMemoryBarrier barrier {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
         .pNext = nullptr,
@@ -200,8 +202,8 @@ void CommandBuffer::setImageMemoryBarrier(
         .subresourceRange = {
             .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
             .baseMipLevel = 0,
-            .levelCount = image->getDesc().mipLevels,
-            .layerCount = 1
+            .levelCount = imageDesc.mipLevels,
+            .layerCount = static_cast<uint32_t>(imageDesc.isCubemap ? 6 : 1)
         }
     };
 
