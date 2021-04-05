@@ -1,21 +1,21 @@
 #pragma once
 
+#include "rfx/rendering/RenderGraphNode.h"
 #include "rfx/scene/Mesh.h"
 #include "rfx/scene/MaterialShader.h"
 
 
 namespace rfx {
 
-class MeshNode
+class MeshNode : public RenderGraphNode
 {
 public:
     MeshNode(
         const MeshPtr& mesh,
-        const MaterialPtr& material);
+        const MaterialPtr& material,
+        MaterialShaderPtr shader);
 
-    void record(
-        const CommandBufferPtr& commandBuffer,
-        const MaterialShaderPtr& shader) const;
+    void record(const CommandBufferPtr& commandBuffer) const override;
 
     [[nodiscard]] bool isEmpty() const;
 
@@ -26,6 +26,7 @@ private:
 
     MeshPtr mesh;
     std::vector<SubMesh> subMeshes;
+    MaterialShaderPtr shader;
 };
 
 } // namespace rfx

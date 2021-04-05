@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rfx/rendering/RenderGraphNode.h"
 #include "rfx/rendering/MeshNode.h"
 #include "rfx/scene/Material.h"
 #include "rfx/scene/MaterialShader.h"
@@ -8,16 +9,15 @@
 
 namespace rfx {
 
-class MaterialNode
+class MaterialNode : public RenderGraphNode
 {
 public:
     MaterialNode(
         const MaterialPtr& material,
+        const MaterialShaderPtr& shader,
         const ModelPtr& model);
 
-    void record(
-        const CommandBufferPtr& commandBuffer,
-        const MaterialShaderPtr& shader) const;
+    void record(const CommandBufferPtr& commandBuffer) const override;
 
 private:
     void add(
@@ -29,6 +29,7 @@ private:
         const MaterialShaderPtr& shader) const;
 
     MaterialPtr material;
+    MaterialShaderPtr shader;
     std::vector<MeshNode> childNodes;
 };
 

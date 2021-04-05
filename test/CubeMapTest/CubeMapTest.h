@@ -12,7 +12,7 @@ protected:
     void initGraphics() override;
     void initShaderFactory(MaterialShaderFactory& shaderFactory) override {}
     void createSceneResources() override;
-    void createCommandBuffers() override;
+    void buildRenderGraph() override;
 
     void updateShaderData() override;
 
@@ -21,9 +21,7 @@ protected:
 
 private:
     void loadScene();
-    void buildRenderGraph();
 
-private:
     SkyBoxPtr skyBox;
 };
 

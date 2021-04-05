@@ -7,8 +7,12 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-MeshNode::MeshNode(const MeshPtr& mesh, const MaterialPtr& material)
-    : mesh(mesh)
+MeshNode::MeshNode(
+    const MeshPtr& mesh,
+    const MaterialPtr& material,
+    MaterialShaderPtr shader)
+        : mesh(mesh),
+          shader(move(shader))
 {
     for (const auto& subMesh : mesh->getSubMeshes())
     {
@@ -20,9 +24,7 @@ MeshNode::MeshNode(const MeshPtr& mesh, const MaterialPtr& material)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void MeshNode::record(
-    const CommandBufferPtr& commandBuffer,
-    const MaterialShaderPtr& shader) const
+void MeshNode::record(const CommandBufferPtr& commandBuffer) const
 {
     bindObject(commandBuffer, shader);
 

@@ -100,7 +100,7 @@ void TexturedPBRTest::createMeshResources()
 
 void TexturedPBRTest::buildRenderGraph()
 {
-    renderGraph = make_shared<RenderGraph>(graphicsDevice);
+    renderGraph = make_shared<RenderGraph>(graphicsDevice, sceneDescriptorSet_);
     renderGraph->add(scene, materialShaderMap);
 }
 

@@ -11,8 +11,10 @@ using namespace std;
 
 MaterialNode::MaterialNode(
     const MaterialPtr& material,
+    const MaterialShaderPtr& shader,
     const ModelPtr& model)
-        : material(material)
+        : material(material),
+          shader(shader)
 {
     add(material, model);
 }
@@ -25,7 +27,7 @@ void MaterialNode::add(
 {
     for (const auto& mesh : model->getMeshes())
     {
-        MeshNode childNode(mesh, material);
+        MeshNode childNode(mesh, material, shader);
         if (!childNode.isEmpty()) {
             childNodes.push_back(childNode);
         }
@@ -34,14 +36,12 @@ void MaterialNode::add(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void MaterialNode::record(
-    const CommandBufferPtr& commandBuffer,
-    const MaterialShaderPtr& shader) const
+void MaterialNode::record(const CommandBufferPtr& commandBuffer) const
 {
     bindMaterial(commandBuffer, shader);
 
     for (const auto& meshNode : childNodes) {
-        meshNode.record(commandBuffer, shader);
+        meshNode.record(commandBuffer);
     }
 }
 

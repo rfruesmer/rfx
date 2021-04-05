@@ -6,8 +6,11 @@ using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-RenderGraph::RenderGraph(GraphicsDevicePtr graphicsDevice)
-    : graphicsDevice(move(graphicsDevice)) {}
+RenderGraph::RenderGraph(
+    GraphicsDevicePtr graphicsDevice,
+    VkDescriptorSet sceneDescriptorSet)
+        : graphicsDevice(move(graphicsDevice)),
+          sceneDescriptorSet(sceneDescriptorSet) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -27,15 +30,21 @@ void RenderGraph::add(
     const vector<MaterialPtr>& materials,
     const ModelPtr& model)
 {
-    ShaderNode childNode(shader, materials, model);
+    ShaderNode childNode(shader, materials, model, sceneDescriptorSet);
     childNodeMap[model].push_back(childNode);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void RenderGraph::add(RenderGraphNodePtr userDefinedNode)
+{
+    userDefinedNodes.push_back(move(userDefinedNode));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void RenderGraph::record(
     const CommandBufferPtr& commandBuffer,
-    VkDescriptorSet sceneDescriptorSet,
     VkRenderPass renderPass,
     VkFramebuffer renderTarget)
 {
@@ -43,10 +52,14 @@ void RenderGraph::record(
 
     setViewportAndScissor(commandBuffer);
 
+    for (const auto& userDefinedNode : userDefinedNodes) {
+        userDefinedNode->record(commandBuffer);
+    }
+
     for (const auto& [model, shaderNodes] : childNodeMap)
     {
         bindGeometryBuffers(commandBuffer, model);
-        recordShaderNodes(shaderNodes, sceneDescriptorSet, commandBuffer);
+        recordShaderNodes(shaderNodes, commandBuffer);
     }
 
     end(commandBuffer);
@@ -129,11 +142,10 @@ void RenderGraph::bindGeometryBuffers(
 
 void RenderGraph::recordShaderNodes(
     const vector<ShaderNode>& shaderNodes,
-    VkDescriptorSet sceneDescriptorSet,
     const CommandBufferPtr& commandBuffer)
 {
     for (const auto& shaderNode : shaderNodes) {
-        shaderNode.record(commandBuffer, sceneDescriptorSet);
+        shaderNode.record(commandBuffer);
     }
 }
 

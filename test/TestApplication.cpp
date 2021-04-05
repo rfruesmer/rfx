@@ -530,6 +530,7 @@ void TestApplication::recreateSwapChain()
     createMeshResources();
 
     createFrameBuffers();
+    buildRenderGraph();
     createCommandBuffers();
 
     updateProjection();
@@ -804,7 +805,6 @@ void TestApplication::createCommandBuffers()
 
         renderGraph->record(
             commandBuffer,
-            sceneDescriptorSet_,
             renderPass,
             swapChainFrameBuffers[i]);
     }

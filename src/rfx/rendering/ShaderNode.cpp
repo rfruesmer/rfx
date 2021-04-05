@@ -10,40 +10,40 @@ using namespace std;
 ShaderNode::ShaderNode(
     MaterialShaderPtr shader,
     const vector<MaterialPtr>& materials,
-    const ModelPtr& model)
-        : shader(move(shader))
+    const ModelPtr& model,
+    VkDescriptorSet sceneDescriptorSet)
+        : shader(move(shader)),
+          sceneDescriptorSet(sceneDescriptorSet)
 {
     add(materials, model);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ShaderNode::add(const vector<MaterialPtr>& materials, const ModelPtr& model)
+void ShaderNode::add(
+    const vector<MaterialPtr>& materials,
+    const ModelPtr& model)
 {
     for (const auto& material : materials) {
-        MaterialNode childNode(material, model);
+        MaterialNode childNode(material, shader, model);
         childNodes.push_back(childNode);
     }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ShaderNode::record(
-    const CommandBufferPtr& commandBuffer,
-    VkDescriptorSet sceneDescriptorSet) const
+void ShaderNode::record(const CommandBufferPtr& commandBuffer) const
 {
-    bindShader(commandBuffer, sceneDescriptorSet);
+    bindShader(commandBuffer);
 
     for (const auto& materialNode : childNodes) {
-        materialNode.record(commandBuffer, shader);
+        materialNode.record(commandBuffer);
     }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ShaderNode::bindShader(
-    const CommandBufferPtr& commandBuffer,
-    VkDescriptorSet sceneDescriptorSet) const
+void ShaderNode::bindShader(const CommandBufferPtr& commandBuffer) const
 {
     commandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, shader->getPipeline());
 

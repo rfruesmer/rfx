@@ -45,6 +45,7 @@ protected:
     void createMeshDataBuffers(const ModelPtr& model);
 
     virtual void createPipelines();
+    virtual void buildRenderGraph() {}
     virtual void createCommandBuffers();
 
     void initGraphicsResources();
