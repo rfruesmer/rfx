@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
-#include "rfx/application/TextureLoader.h"
-#include "ImageLoader.h"
+#include "rfx/graphics/TextureLoader.h"
+#include "rfx/graphics/ImageLoader.h"
 
 
 using namespace rfx;

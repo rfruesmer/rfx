@@ -1,7 +1,7 @@
 #include "rfx/pch.h"
-#include "SkyBox.h"
-#include "rfx/application/ModelLoader.h"
-#include "rfx/application/TextureLoader.h"
+#include "rfx/scene/SkyBox.h"
+#include "rfx/scene/ModelLoader.h"
+#include "rfx/graphics/TextureLoader.h"
 #include "rfx/graphics/ShaderLoader.h"
 #include "rfx/graphics/PipelineUtil.h"
 

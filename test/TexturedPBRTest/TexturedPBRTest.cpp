@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
 #include "TexturedPBRTest.h"
-#include "rfx/application/ModelLoader.h"
+#include "rfx/scene/ModelLoader.h"
 #include "rfx/common/Logger.h"
 
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "TestApplication.h"
-#include "SkyBox.h"
+#include "rfx/scene/SkyBox.h"
 
 
 namespace rfx {

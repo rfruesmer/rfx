@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "rfx/application/ImageLoader.h"
+#include "rfx/graphics/ImageLoader.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"

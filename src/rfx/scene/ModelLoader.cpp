@@ -1,5 +1,5 @@
 #include "rfx/pch.h"
-#include "rfx/application/ModelLoader.h"
+#include "rfx/scene/ModelLoader.h"
 #include "rfx/scene/PointLight.h"
 #include "rfx/scene/SpotLight.h"
 
