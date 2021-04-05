@@ -36,12 +36,10 @@ SpotLightTest::SpotLightTest()
 
 void SpotLightTest::initGraphics()
 {
-    Application::initGraphics();
+    TestApplication::initGraphics();
 
     loadScene();
-    createDescriptorPool();
     createShadersFor(scene, SpotLightShader::ID);
-    updateProjection();
 
     initGraphicsResources();
     buildRenderGraph();

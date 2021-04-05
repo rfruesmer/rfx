@@ -36,12 +36,10 @@ TexturedMultiLightTest::TexturedMultiLightTest()
 
 void TexturedMultiLightTest::initGraphics()
 {
-    Application::initGraphics();
+    TestApplication::initGraphics();
 
     loadScene();
-    createDescriptorPool();
     createShadersFor(scene, TexturedMultiLightShader::ID);
-    updateProjection();
 
     initGraphicsResources();
     buildRenderGraph();

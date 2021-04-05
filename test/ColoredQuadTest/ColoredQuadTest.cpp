@@ -30,7 +30,6 @@ void ColoredQuadTest::initGraphics()
 {
     Application::initGraphics();
 
-    // TODO: extract to virtual initScene (or similar)
     createRenderPass();
     createDescriptorSetLayout();
     buildScene();

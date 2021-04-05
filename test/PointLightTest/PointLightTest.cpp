@@ -36,12 +36,10 @@ PointLightTest::PointLightTest()
 
 void PointLightTest::initGraphics()
 {
-    Application::initGraphics();
+    TestApplication::initGraphics();
 
     loadScene();
-    createDescriptorPool();
     createShadersFor(scene, PointLightShader::ID);
-    updateProjection();
 
     initGraphicsResources();
     buildRenderGraph();

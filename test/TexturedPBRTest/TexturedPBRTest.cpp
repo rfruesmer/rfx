@@ -29,12 +29,10 @@ int main()
 
 void TexturedPBRTest::initGraphics()
 {
-    Application::initGraphics();
+    TestApplication::initGraphics();
 
     loadScene();
-    createDescriptorPool();
     createShadersFor(scene, TexturedPBRShader::ID);
-    updateProjection();
 
     initGraphicsResources();
     buildRenderGraph();

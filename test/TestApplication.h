@@ -23,6 +23,8 @@ protected:
         [[maybe_unused]] glm::mat4 modelMatrix;
     };
 
+    void initGraphics() override;
+
     void createDescriptorPool();
 
     virtual void createSceneResources();
@@ -47,32 +49,20 @@ protected:
 
     void initGraphicsResources();
     BufferPtr createAndBindUniformBuffer(VkDeviceSize bufferSize);
-    [[nodiscard]] VkPipelineLayout createPipelineLayout(const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts);
     [[nodiscard]] VkPipeline createPipelineFor(
         const ShaderProgramPtr& shaderProgram,
         VkPipelineLayout pipelineLayout);
-    [[nodiscard]] VkPipeline createPipeline(
-        VkPipelineLayout pipelineLayout,
-        VkPipelineInputAssemblyStateCreateInfo inputAssemblyState,
-        VkPipelineRasterizationStateCreateInfo rasterizationState,
-        VkPipelineColorBlendStateCreateInfo colorBlendState,
-        VkPipelineDepthStencilStateCreateInfo depthStencilState,
-        VkPipelineViewportStateCreateInfo viewportState,
-        VkPipelineMultisampleStateCreateInfo multisampleState,
-        VkPipelineDynamicStateCreateInfo dynamicState,
-        const ShaderProgramPtr shaderProgram);
     void createRenderPass();
 
     void beginMainLoop() override;
     void lockMouseCursor(bool lock = true);
     void onKeyEvent(const Window& window, int key, int scancode, int action, int mods) override;
 
-    void setProjectionMatrix(const glm::mat4& projection);
     virtual void updateSceneData();
 
     void update(float deltaTime) override;
     void updateCamera(float deltaTime);
-    virtual void updateProjection();
+    void updateProjection();
     glm::mat4 calcDefaultProjection();
     virtual void updateShaderData() {};
     void updateDevTools() override;

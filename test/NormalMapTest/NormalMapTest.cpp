@@ -36,12 +36,10 @@ NormalMapTest::NormalMapTest()
 
 void NormalMapTest::initGraphics()
 {
-    Application::initGraphics();
+    TestApplication::initGraphics();
 
     loadScene();
-    createDescriptorPool();
     createShadersFor(scene, NormalMapShader::ID);
-    updateProjection();
 
     initGraphicsResources();
     buildRenderGraph();

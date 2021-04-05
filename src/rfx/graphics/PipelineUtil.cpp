@@ -4,6 +4,29 @@
 using namespace rfx;
 using namespace std;
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkPipelineLayout PipelineUtil::createPipelineLayout(
+    const GraphicsDevicePtr& graphicsDevice,
+    const vector<VkDescriptorSetLayout>& descriptorSetLayouts)
+{
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size()),
+        .pSetLayouts = descriptorSetLayouts.data(),
+        .pushConstantRangeCount = 0,
+        .pPushConstantRanges = nullptr
+    };
+
+    VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+    ThrowIfFailed(vkCreatePipelineLayout(
+        graphicsDevice->getLogicalDevice(),
+        &pipelineLayoutInfo,
+        nullptr,
+        &pipelineLayout));
+
+    return pipelineLayout;
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -110,6 +133,68 @@ VkPipelineDynamicStateCreateInfo PipelineUtil::getDynamicState(const vector<VkDy
         .dynamicStateCount = static_cast<uint32_t>(dynamicStates.size()),
         .pDynamicStates = dynamicStates.data()
     };
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkPipeline PipelineUtil::createPipeline(
+    const GraphicsDevicePtr& graphicsDevice,
+    VkPipelineLayout pipelineLayout,
+    VkPipelineInputAssemblyStateCreateInfo inputAssemblyState,
+    VkPipelineRasterizationStateCreateInfo rasterizationState,
+    VkPipelineColorBlendStateCreateInfo colorBlendState,
+    VkPipelineDepthStencilStateCreateInfo depthStencilState,
+    VkPipelineViewportStateCreateInfo viewportState,
+    VkPipelineMultisampleStateCreateInfo multisampleState,
+    VkPipelineDynamicStateCreateInfo dynamicState,
+    const ShaderProgramPtr& shaderProgram,
+    VkRenderPass renderPass)
+{
+    const array<VkPipelineShaderStageCreateInfo, 2> shaderStages {
+        shaderProgram->getVertexShader()->getStageCreateInfo(),
+        shaderProgram->getFragmentShader()->getStageCreateInfo()
+    };
+
+    VkGraphicsPipelineCreateInfo pipelineCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .stageCount = shaderStages.size(),
+        .pStages = shaderStages.data(),
+        .pVertexInputState = &shaderProgram->getVertexShader()->getVertexInputStateCreateInfo(),
+        .pInputAssemblyState = &inputAssemblyState,
+        .pViewportState = &viewportState,
+        .pRasterizationState = &rasterizationState,
+        .pMultisampleState = &multisampleState,
+        .pDepthStencilState = &depthStencilState,
+        .pColorBlendState = &colorBlendState,
+        .pDynamicState = &dynamicState,
+        .layout = pipelineLayout,
+        .renderPass = renderPass,
+        .subpass = 0,
+        .basePipelineHandle = VK_NULL_HANDLE, // Optional
+        .basePipelineIndex = -1 // Optional
+    };
+
+    VkPipeline pipeline = VK_NULL_HANDLE;
+    ThrowIfFailed(vkCreateGraphicsPipelines(
+        graphicsDevice->getLogicalDevice(),
+        VK_NULL_HANDLE, // TODO: pipeline cache
+        1,
+        &pipelineCreateInfo,
+        nullptr,
+        &pipeline));
+
+
+    // TODO: move wireframe pipeline creation to somewhere else
+//    rasterizationState.polygonMode = VK_POLYGON_MODE_LINE;
+//    ThrowIfFailed(vkCreateGraphicsPipelines(
+//        graphicsDevice->getLogicalDevice(),
+//        VK_NULL_HANDLE,
+//        1,
+//        &pipelineCreateInfo,
+//        nullptr,
+//        &wireframePipeline));
+
+    return pipeline;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

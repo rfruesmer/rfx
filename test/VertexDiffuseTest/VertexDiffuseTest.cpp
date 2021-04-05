@@ -36,12 +36,10 @@ VertexDiffuseTest::VertexDiffuseTest()
 
 void VertexDiffuseTest::initGraphics()
 {
-    Application::initGraphics();
+    TestApplication::initGraphics();
 
     loadScene();
-    createDescriptorPool();
     createShadersFor(scene, VertexDiffuseShader::ID);
-    updateProjection();
 
     initGraphicsResources();
     buildRenderGraph();

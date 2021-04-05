@@ -3,7 +3,7 @@
 layout(set = 0, binding = 0)
 uniform UBO {
     mat4 projMatrix;
-    mat4 modelMatrix;
+    mat4 viewMatrix;
 } ubo;
 
 
@@ -18,5 +18,5 @@ void main()
 {
     outUVW = inPosition;
 
-    gl_Position = ubo.projMatrix * ubo.modelMatrix * vec4(inPosition.xyz, 1.0);
+    gl_Position = ubo.projMatrix * ubo.viewMatrix * vec4(inPosition.xyz, 1.0);
 }

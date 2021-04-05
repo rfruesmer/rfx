@@ -29,12 +29,10 @@ int main()
 
 void PBRTest::initGraphics()
 {
-    Application::initGraphics();
+    TestApplication::initGraphics();
 
     loadScene();
-    createDescriptorPool();
     createShadersFor(scene, PBRShader::ID);
-    updateProjection();
 
     initGraphicsResources();
     buildRenderGraph();

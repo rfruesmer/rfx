@@ -7,15 +7,25 @@ using namespace glm;
 using namespace std;
 using namespace std::filesystem;
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::initGraphics()
+{
+    Application::initGraphics();
+
+    createDescriptorPool();
+    updateProjection();
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void TestApplication::initGraphicsResources()
 {
+    createRenderPass();
+
     createSceneResources();
     createMeshResources();
 
-    createRenderPass();
     createPipelines();
     createFrameBuffers();
 }
@@ -340,33 +350,13 @@ void TestApplication::createPipelines()
             meshDescriptorSetLayout_
         };
 
-        VkPipelineLayout pipelineLayout = createPipelineLayout(descriptorSetLayouts);
+        VkPipelineLayout pipelineLayout =
+            PipelineUtil::createPipelineLayout(
+                graphicsDevice,
+                descriptorSetLayouts);
         VkPipeline pipeline = createPipelineFor(shader->getShaderProgram(), pipelineLayout);
         shader->setPipeline(pipelineLayout, pipeline);
     }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-VkPipelineLayout TestApplication::createPipelineLayout(
-    const vector<VkDescriptorSetLayout>& descriptorSetLayouts)
-{
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size()),
-        .pSetLayouts = descriptorSetLayouts.data(),
-        .pushConstantRangeCount = 0,
-        .pPushConstantRanges = nullptr
-    };
-
-    VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
-    ThrowIfFailed(vkCreatePipelineLayout(
-        graphicsDevice->getLogicalDevice(),
-        &pipelineLayoutInfo,
-        nullptr,
-        &pipelineLayout));
-
-    return pipelineLayout;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -383,7 +373,8 @@ VkPipeline TestApplication::createPipelineFor(
         VK_DYNAMIC_STATE_SCISSOR
     };
 
-    return createPipeline(
+    return PipelineUtil::createPipeline(
+        graphicsDevice,
         pipelineLayout,
         PipelineUtil::getDefaultInputAssemblyState(),
         PipelineUtil::getDefaultRasterizationState(),
@@ -392,66 +383,8 @@ VkPipeline TestApplication::createPipelineFor(
         PipelineUtil::getDefaultViewportState(),
         PipelineUtil::getDefaultMultisampleState(graphicsDevice->getMultiSampleCount()),
         PipelineUtil::getDynamicState(dynamicStates),
-        shaderProgram);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-VkPipeline TestApplication::createPipeline(
-    VkPipelineLayout pipelineLayout,
-    VkPipelineInputAssemblyStateCreateInfo inputAssemblyState,
-    VkPipelineRasterizationStateCreateInfo rasterizationState,
-    VkPipelineColorBlendStateCreateInfo colorBlendState,
-    VkPipelineDepthStencilStateCreateInfo depthStencilState,
-    VkPipelineViewportStateCreateInfo viewportState,
-    VkPipelineMultisampleStateCreateInfo multisampleState,
-    VkPipelineDynamicStateCreateInfo dynamicState,
-    const ShaderProgramPtr shaderProgram)
-{
-    const array<VkPipelineShaderStageCreateInfo, 2> shaderStages {
-        shaderProgram->getVertexShader()->getStageCreateInfo(),
-        shaderProgram->getFragmentShader()->getStageCreateInfo()
-    };
-
-    VkGraphicsPipelineCreateInfo pipelineCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-        .stageCount = shaderStages.size(),
-        .pStages = shaderStages.data(),
-        .pVertexInputState = &shaderProgram->getVertexShader()->getVertexInputStateCreateInfo(),
-        .pInputAssemblyState = &inputAssemblyState,
-        .pViewportState = &viewportState,
-        .pRasterizationState = &rasterizationState,
-        .pMultisampleState = &multisampleState,
-        .pDepthStencilState = &depthStencilState,
-        .pColorBlendState = &colorBlendState,
-        .pDynamicState = &dynamicState,
-        .layout = pipelineLayout,
-        .renderPass = renderPass,
-        .subpass = 0,
-        .basePipelineHandle = VK_NULL_HANDLE, // Optional
-        .basePipelineIndex = -1 // Optional
-    };
-
-    VkPipeline pipeline = VK_NULL_HANDLE;
-    ThrowIfFailed(vkCreateGraphicsPipelines(
-        graphicsDevice->getLogicalDevice(),
-        VK_NULL_HANDLE, // TODO: pipeline cache
-        1,
-        &pipelineCreateInfo,
-        nullptr,
-        &pipeline));
-
-
-    rasterizationState.polygonMode = VK_POLYGON_MODE_LINE;
-    ThrowIfFailed(vkCreateGraphicsPipelines(
-        graphicsDevice->getLogicalDevice(),
-        VK_NULL_HANDLE,
-        1,
-        &pipelineCreateInfo,
-        nullptr,
-        &wireframePipeline)); // TODO: move wireframe pipeline creation to somewhere else
-
-    return pipeline;
+        shaderProgram,
+        renderPass);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -591,10 +524,11 @@ void TestApplication::recreateSwapChain()
 {
     Application::recreateSwapChain();
 
+    createRenderPass();
+
     createSceneResources();
     createMeshResources();
 
-    createRenderPass();
     createFrameBuffers();
     createCommandBuffers();
 
@@ -628,7 +562,7 @@ void TestApplication::onKeyEvent(
 
 void TestApplication::updateProjection()
 {
-    setProjectionMatrix(calcDefaultProjection());
+    camera->setProjectionMatrix(calcDefaultProjection());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -645,13 +579,6 @@ mat4 TestApplication::calcDefaultProjection()
     proj[1][1] *= -1;
 
     return proj;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void TestApplication::setProjectionMatrix(const glm::mat4& projection)
-{
-    sceneData_.projMatrix = projection;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -699,10 +626,11 @@ void TestApplication::createShadersFor(
 
 void TestApplication::updateSceneData()
 {
+    sceneData_.projMatrix = camera->getProjectionMatrix();
     sceneData_.viewMatrix = camera->getViewMatrix();
     sceneData_.cameraPosition = camera->getPosition();
 
-    updateShaderData();
+    updateShaderData(); // TODO: move out from here
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -36,12 +36,10 @@ MultiLightTest::MultiLightTest()
 
 void MultiLightTest::initGraphics()
 {
-    Application::initGraphics();
+    TestApplication::initGraphics();
 
     loadScene();
-    createDescriptorPool();
     createShadersFor(scene, MultiLightShader::ID);
-    updateProjection();
 
     initGraphicsResources();
     buildRenderGraph();

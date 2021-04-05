@@ -51,7 +51,7 @@ protected:
     virtual ~MaterialShader();
 
 
-    std::shared_ptr<GraphicsDevice> graphicsDevice;
+    GraphicsDevicePtr graphicsDevice;
 
     std::string id;
     std::string vertexShaderId;
@@ -65,7 +65,7 @@ protected:
 
     VkDescriptorSetLayout shaderDescriptorSetLayout = VK_NULL_HANDLE;
     VkDescriptorSet shaderDescriptorSet = VK_NULL_HANDLE;
-    std::shared_ptr<Buffer> shaderDataBuffer;
+    BufferPtr shaderDataBuffer;
 };
 
 using MaterialShaderPtr = std::shared_ptr<MaterialShader>;
