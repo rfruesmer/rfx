@@ -791,9 +791,10 @@ VkWriteDescriptorSet TestApplication::buildWriteDescriptorSet(
 
 void TestApplication::createCommandBuffers()
 {
+    RFX_CHECK_STATE(renderGraph != nullptr, "");
+
     const unique_ptr<SwapChain>& swapChain = graphicsDevice->getSwapChain();
     const vector<VkFramebuffer>& swapChainFrameBuffers = swapChain->getFramebuffers();
-
 
     commandBuffers = graphicsDevice->createCommandBuffers(
         graphicsDevice->getGraphicsCommandPool(),

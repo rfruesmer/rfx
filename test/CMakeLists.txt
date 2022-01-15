@@ -33,6 +33,7 @@ set(TESTS
     PBRTest
     TexturedPBRTest
     CubeMapTest
+    SampleViewerTest
 )
 
 buildTests()

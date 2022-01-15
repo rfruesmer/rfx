@@ -17,6 +17,7 @@
 #include <ranges>
 #include <numbers>
 #include <numeric>
+#include <functional>
 
 //#ifdef _WINDOWS
 //#define WIN32_LEAN_AND_MEAN
@@ -43,7 +44,7 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 
-#include <SPIRV/GlslangToSpv.h>
+#include <glslang/SPIRV/GlslangToSpv.h>
 #include <ktx.h>
 #include <imgui.h>
 #include <fmt/core.h>

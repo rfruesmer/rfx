@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.21)
 project(rfx)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(USE_PRECOMPILED_HEADERS ON)
 
@@ -33,10 +33,11 @@ find_package(glfw3 CONFIG REQUIRED)
 link_libraries(glfw)
 
 find_package(glm CONFIG REQUIRED)
-link_libraries(glm)
+link_libraries(glm::glm)
 
 find_package(glslang CONFIG REQUIRED)
-link_libraries(glslang::HLSL glslang::SPIRV glslang::glslang glslang::OGLCompiler)
+#link_libraries(glslang::HLSL glslang::SPIRV glslang::glslang glslang::OGLCompiler)
+link_libraries(HLSL SPIRV glslang OGLCompiler)
 
 find_path(STB_INCLUDE_DIRS  "stb.h")
 include_directories(${STB_INCLUDE_DIRS})
