@@ -36,7 +36,10 @@ public:
     [[nodiscard]] virtual std::vector<std::byte> createDataFor(const MaterialPtr& material) const = 0;
     virtual void update(const MaterialPtr& material) const;
 
+    // TODO: rename to getShaderData
     [[nodiscard]] virtual const void* getData() const = 0;
+
+    // TODO: rename to getShaderDataSize
     [[nodiscard]] virtual uint32_t getDataSize() const = 0;
     [[nodiscard]] VkDescriptorSetLayout getShaderDescriptorSetLayout() const;
     [[nodiscard]] VkDescriptorSet getShaderDescriptorSet() const;

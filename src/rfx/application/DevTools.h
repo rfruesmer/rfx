@@ -24,6 +24,7 @@ public:
     bool sliderFloat3(const char* label, float* value, float min, float max);
     bool checkBox(const char* label, bool* value);
     bool colorEdit3(const char* label, float* color);
+    bool combo(const char* label, int itemCount, const char** items, int* selectedIndex);
 
     [[nodiscard]] VkCommandBuffer getCommandBuffer(uint32_t frameIndex) const;
 

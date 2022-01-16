@@ -34,6 +34,7 @@ protected:
 
     void createFrameBuffers();
     void createSyncObjects();
+    void destroyRenderPass();
 
     std::shared_ptr<Window> window_;
     std::unique_ptr<GraphicsContext> graphicsContext;

@@ -310,3 +310,10 @@ bool DevTools::colorEdit3(const char* label, float* color)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+
+bool DevTools::combo(const char* label, int itemCount, const char** items, int* selectedIndex)
+{
+    return ImGui::Combo(label, selectedIndex, items, itemCount);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------

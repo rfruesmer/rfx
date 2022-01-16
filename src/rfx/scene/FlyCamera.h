@@ -8,6 +8,8 @@ namespace rfx {
 class FlyCamera : public Camera
 {
 public:
+    void clear();
+
     void setPosition(const glm::vec3& position);
     void setVelocity(const glm::vec3& velocity);
 

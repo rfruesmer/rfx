@@ -168,7 +168,7 @@ void ShaderLoader::configure(
 void ShaderLoader::insertIncludedFiles(const path& currentShaderDirectoryPath, string& inoutShaderString) const
 {
     smatch match;
-    const regex regex("#include \\s*\"(.*)\"");
+    const regex regex("^\\s*\\#include\\s+[\"<]([^\">]+)*[\">]");
 
     while (regex_search(inoutShaderString, match, regex)) {
         const path relativeIncludedFilePath = match[1].str();

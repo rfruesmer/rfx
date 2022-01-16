@@ -427,7 +427,7 @@ void Application::destroySyncObjects()
 
 void Application::cleanupSwapChain()
 {
-    VkDevice vkDevice = graphicsDevice->getLogicalDevice();
+    const VkDevice vkDevice = graphicsDevice->getLogicalDevice();
 
 //    vkDestroyDescriptorPool(vkDevice, descriptorPool, nullptr);
 
@@ -442,7 +442,20 @@ void Application::cleanupSwapChain()
         static_cast<uint32_t>(commandBufferHandles.size()),
         commandBufferHandles.data());
 
+    destroyRenderPass();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Application::destroyRenderPass()
+{
+    if (renderPass == nullptr) {
+        return;
+    }
+
+    const VkDevice vkDevice = graphicsDevice->getLogicalDevice();
     vkDestroyRenderPass(vkDevice, renderPass, nullptr);
+    renderPass = nullptr;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

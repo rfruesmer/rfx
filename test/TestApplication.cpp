@@ -489,12 +489,8 @@ void TestApplication::cleanup()
 {
     VkDevice device = graphicsDevice->getLogicalDevice();
 
-    for (const auto& [shader, materials] : materialShaderMap) {
-        shader->destroy();
-    }
-    materialShaderMap.clear();
-
-    renderGraph.reset();
+    destroyShaderMap();
+    destroyRenderGraph();
 
     if (wireframePipeline) {
         vkDestroyPipeline(device, wireframePipeline, nullptr);
@@ -506,16 +502,56 @@ void TestApplication::cleanup()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void TestApplication::destroyShaderMap()
+{
+    for (const auto& [shader, materials] : materialShaderMap) {
+        shader->destroy();
+    }
+    materialShaderMap.clear();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::destroyRenderGraph()
+{
+    renderGraph.reset();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void TestApplication::cleanupSwapChain()
 {
-    VkDevice device = graphicsDevice->getLogicalDevice();
+    const VkDevice device = graphicsDevice->getLogicalDevice();
 
-    vkDestroyDescriptorSetLayout(device, sceneDescriptorSetLayout_, nullptr);
-    sceneDataBuffer_.reset();
-
-    vkDestroyDescriptorSetLayout(device, meshDescriptorSetLayout_, nullptr);
+    destroySceneResources();
+    destroyMeshResources();
 
     Application::cleanupSwapChain();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::destroySceneResources()
+{
+    if (sceneDescriptorSetLayout_ != nullptr) {
+        const VkDevice device = graphicsDevice->getLogicalDevice();
+        vkDestroyDescriptorSetLayout(device, sceneDescriptorSetLayout_, nullptr);
+        sceneDescriptorSetLayout_ = nullptr;
+    }
+    sceneDataBuffer_.reset();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::destroyMeshResources()
+{
+    if (meshDescriptorSetLayout_ == nullptr) {
+        return;
+    }
+
+    const VkDevice device = graphicsDevice->getLogicalDevice();
+    vkDestroyDescriptorSetLayout(device, meshDescriptorSetLayout_, nullptr);
+    meshDescriptorSetLayout_ = nullptr;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -629,6 +665,7 @@ void TestApplication::updateSceneData()
 {
     sceneData_.projMatrix = camera->getProjectionMatrix();
     sceneData_.viewMatrix = camera->getViewMatrix();
+    sceneData_.viewProjMatrix = sceneData_.projMatrix * sceneData_.viewMatrix;
     sceneData_.cameraPosition = camera->getPosition();
 
     updateShaderData(); // TODO: move out from here

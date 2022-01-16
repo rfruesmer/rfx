@@ -15,6 +15,7 @@ protected:
     struct SceneData {
         glm::mat4 viewMatrix;
         glm::mat4 projMatrix;
+        glm::mat4 viewProjMatrix;
         glm::vec3 cameraPosition;
         float padding;
     };
@@ -28,6 +29,7 @@ protected:
     void createDescriptorPool();
 
     virtual void createSceneResources();
+    void destroySceneResources();
     void createSceneDescriptorSetLayout();
     void createSceneDescriptorSet();
     void createSceneDataBuffer();
@@ -40,12 +42,14 @@ protected:
     virtual void initShaderFactory(MaterialShaderFactory& shaderFactory) = 0;
 
     virtual void createMeshResources();
+    void destroyMeshResources();
     void createMeshDescriptorSetLayout();
     void createMeshDescriptorSets(const ModelPtr& model);
     void createMeshDataBuffers(const ModelPtr& model);
 
     virtual void createPipelines();
     virtual void buildRenderGraph() {}
+    void destroyRenderGraph();
     virtual void createCommandBuffers();
 
     void initGraphicsResources();
@@ -69,6 +73,7 @@ protected:
     void updateDevTools() override;
 
     void cleanup() override;
+    void destroyShaderMap();
     void cleanupSwapChain() override;
     void recreateSwapChain() override;
 
