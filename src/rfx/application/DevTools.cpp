@@ -317,3 +317,11 @@ bool DevTools::combo(const char* label, int itemCount, const char** items, int* 
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+
+bool DevTools::collapsingHeader(const char* label, bool expanded)
+{
+    ImGui::SetNextItemOpen(expanded);
+    return ImGui::CollapsingHeader(label, nullptr);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------

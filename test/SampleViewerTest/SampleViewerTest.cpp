@@ -33,10 +33,6 @@ int main()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-SampleViewerTest::SampleViewerTest() {}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
 void SampleViewerTest::initGraphics()
 {
     TestApplication::initGraphics();
@@ -65,8 +61,24 @@ void SampleViewerTest::loadScene()
 
     ModelLoader modelLoader(graphicsDevice);
     scene = modelLoader.load(scenePath);
+    if (scene->getLightCount() > 0) {
+        RFX_THROW_NOT_IMPLEMENTED();
+    }
+
+    createLights();
 
     camera->setPosition({ 0.0f, 2.0f, 10.0f });
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SampleViewerTest::createLights()
+{
+    directionalLight = make_shared<DirectionalLight>("directional-light#0");
+    directionalLight->setColor({1.0F, 1.0F, 1.0F});
+    directionalLight->setDirection({ -1.0F, -1.0F, -1.0F });
+
+    scene->addLight(directionalLight);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -103,6 +115,7 @@ void SampleViewerTest::updateShaderData()
     RFX_CHECK_STATE(materialShaderMap.begin()->first->getId() == SampleViewerShader::ID, "");
 
     shader = static_pointer_cast<SampleViewerShader>(materialShaderMap.begin()->first);
+    shader->setLight(0, directionalLight);
     shader->updateDataBuffer();
 }
 
@@ -110,8 +123,40 @@ void SampleViewerTest::updateShaderData()
 
 void SampleViewerTest::updateDevTools()
 {
+    // Models
     if (devTools->combo("Models", IM_ARRAYSIZE(models), models, &selectedModelIndex)) {
         selectedModelChanged = true;
+    }
+
+    // Lighting
+    static bool lightingExpanded = true;
+    lightingExpanded = devTools->collapsingHeader("Lighting", lightingExpanded);
+    if (lightingExpanded) {
+        devTools->checkBox("Image Based", &imageBasedLighting);
+
+        bool lightNeedsUpdate = false;
+
+        bool enabled = directionalLight->isEnabled();
+        if (devTools->checkBox("directional light enabled", &enabled)) {
+            directionalLight->setEnabled(enabled);
+            lightNeedsUpdate = true;
+        }
+
+        vec3 color = directionalLight->getColor();
+        if (devTools->colorEdit3("directional light color", &color.x)) {
+            directionalLight->setColor(color);
+            lightNeedsUpdate = true;
+        }
+
+        vec3 lightDir = directionalLight->getDirection();
+        if (devTools->sliderFloat3("directional light direction", &lightDir.x, -1.0f, 1.0f)) {
+            directionalLight->setDirection(lightDir);
+            lightNeedsUpdate = true;
+        }
+
+        if (lightNeedsUpdate) {
+            updateShaderData();
+        }
     }
 }
 
@@ -142,7 +187,6 @@ void SampleViewerTest::onModelSelected()
     loadScene();
     createShadersFor(scene, SampleViewerShader::ID);
 
-//    initGraphicsResources();
     createRenderPass();
     createSceneResources();
     createMeshResources();

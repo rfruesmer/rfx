@@ -1,6 +1,8 @@
 #version 450
 #rfx
 
+#include <punctual.glsl>
+
 layout(set = 0, binding = 0)
 uniform SceneData {
     mat4 viewMatrix;
@@ -12,12 +14,16 @@ uniform SceneData {
 
 layout(set = 1, binding = 0)
 uniform ShaderData {
-    mat4 pad0;
+    Light lights[MAX_LIGHTS];
 } shader;
 
 layout(set = 2, binding = 0)
 uniform MaterialData {
     vec4 baseColor;
+    float metallicFactor;
+    float roughnessFactor;
+    float pad0;
+    float pad1;
 } material;
 
 layout(set = 3, binding = 0)
@@ -49,9 +55,41 @@ vec4 getPosition()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+#ifdef HAS_NORMAL_VEC3
+vec3 getNormal()
+{
+    vec3 normal = inNormal;
+
+#ifdef USE_MORPHING
+    normal += getTargetNormal(gl_VertexID);
+#endif
+
+#ifdef USE_SKINNING
+    normal = mat3(getSkinningNormalMatrix()) * normal;
+#endif
+
+    return normalize(normal);
+}
+#endif
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void main() {
     vec4 pos = mesh.modelMatrix * getPosition();
     outPosition = vec3(pos.xyz) / pos.w;
+
+#ifdef HAS_NORMAL_VEC3
+#ifdef HAS_TANGENT_VEC4
+    vec3 tangent = getTangent();
+    vec3 normalW = normalize(vec3(u_NormalMatrix * vec4(getNormal(), 0.0)));
+    vec3 tangentW = normalize(vec3(u_ModelMatrix * vec4(tangent, 0.0)));
+    vec3 bitangentW = cross(normalW, tangentW) * a_tangent.w;
+    v_TBN = mat3(tangentW, bitangentW, normalW);
+#else
+    mat3 normalMatrix = mat3(mesh.modelMatrix);
+    outNormal = normalize(normalMatrix * inNormal);
+#endif
+#endif
 
     gl_Position = scene.viewProjMatrix * pos;
 }

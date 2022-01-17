@@ -25,6 +25,7 @@ public:
     bool checkBox(const char* label, bool* value);
     bool colorEdit3(const char* label, float* color);
     bool combo(const char* label, int itemCount, const char** items, int* selectedIndex);
+    bool collapsingHeader(const char* label, bool expanded);
 
     [[nodiscard]] VkCommandBuffer getCommandBuffer(uint32_t frameIndex) const;
 

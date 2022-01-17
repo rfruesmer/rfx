@@ -57,6 +57,22 @@ vector<string> SampleViewerShader::getShaderDefinesFor(const MaterialPtr& materi
     vector<string> defines;
 
     defines.emplace_back("MATERIAL_METALLICROUGHNESS");
+    defines.emplace_back("USE_PUNCTUAL");
+    defines.emplace_back("LINEAR_OUTPUT");
+
+    const VertexFormat& vertexFormat = material->getVertexFormat();
+    if (vertexFormat.containsNormals()) {
+        defines.emplace_back("HAS_NORMAL_VEC3");
+    }
+
+    const uint32_t texCoordSetCount = vertexFormat.getTexCoordSetCount();
+    if (texCoordSetCount > 0) {
+        defines.push_back(fmt::format("TEXCOORDSET_COUNT {}", texCoordSetCount));
+    }
+
+    if (vertexFormat.containsTangents()) {
+        defines.emplace_back("HAS_TANGENTS 1");
+    }
 
     return defines;
 }
@@ -76,14 +92,39 @@ vector<string> SampleViewerShader::getVertexShaderInputsFor(const MaterialPtr& m
         location++;
     }
 
-    uint32_t texCoordSetCount = vertexFormat.getTexCoordSetCount();
-    if (texCoordSetCount > 0) {
-        inputs.push_back(fmt::format("layout(location = {}) in vec2 inTexCoord[{}];", location, texCoordSetCount));
-        location += texCoordSetCount;
+    return inputs;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+vector<string> SampleViewerShader::getVertexShaderOutputsFor(const MaterialPtr& material)
+{
+    vector<string> outputs;
+
+    // location=0 for coordinates (must be always present)
+    uint32_t location = 1;
+
+    const VertexFormat& vertexFormat = material->getVertexFormat();
+    if (vertexFormat.containsNormals()) {
+        outputs.push_back(fmt::format("layout(location = {}) out vec3 outNormal;", location));
+        location++;
     }
 
-    if (vertexFormat.containsTangents()) {
-        inputs.push_back(fmt::format("layout(location = {}) in vec4 inTangent;", location));
+    return outputs;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+vector<string> SampleViewerShader::getFragmentShaderInputsFor(const MaterialPtr& material)
+{
+    vector<string> inputs;
+
+    // location=0 for coordinates (must be always present)
+    uint32_t location = 1;
+
+    const VertexFormat& vertexFormat = material->getVertexFormat();
+    if (vertexFormat.containsNormals()) {
+        inputs.push_back(fmt::format("layout(location = {}) in vec3 inNormal;", location));
         location++;
     }
 
@@ -92,16 +133,43 @@ vector<string> SampleViewerShader::getVertexShaderInputsFor(const MaterialPtr& m
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<string> SampleViewerShader::getVertexShaderOutputsFor(const MaterialPtr& material)
+void SampleViewerShader::setLight(size_t index, const LightPtr& light)
 {
-    return MaterialShader::getVertexShaderOutputsFor(material);
+    RFX_CHECK_ARGUMENT(index < MAX_LIGHTS);
+
+    if (light == nullptr || !light->isEnabled()) {
+        data.lights[index].enabled = false;
+        return;
+    }
+
+    auto& lightData = data.lights[index];
+    lightData.type = light->getType();
+    lightData.enabled = true;
+    lightData.color = light->getColor();
+
+    switch (light->getType())
+    {
+    case Light::DIRECTIONAL:
+        setDirectionalLight(static_pointer_cast<DirectionalLight>(light), &lightData);
+        break;
+
+    case Light::POINT:
+        RFX_THROW_NOT_IMPLEMENTED();
+        break;
+
+    case Light::SPOT:
+        RFX_THROW_NOT_IMPLEMENTED();
+        break;
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<string> SampleViewerShader::getFragmentShaderInputsFor(const MaterialPtr& material)
+void SampleViewerShader::setDirectionalLight(
+    const DirectionalLightPtr& light,
+    LightData* outLightData)
 {
-    return MaterialShader::getFragmentShaderInputsFor(material);
+    outLightData->direction = light->getDirection();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

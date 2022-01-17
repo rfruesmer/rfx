@@ -15,6 +15,8 @@ EShLanguage findLanguage(VkShaderStageFlagBits shaderType);
 
 void initResources(TBuiltInResource& Resources);
 
+string addLineNumbersTo(const string& shaderString);
+
 // ---------------------------------------------------------------------------------------------------------------------
 
 void GLSLtoSPV(
@@ -38,7 +40,8 @@ void GLSLtoSPV(
     auto messages = static_cast<EShMessages>(EShMsgSpvRules | EShMsgVulkanRules);
 #endif
     if (!shader.parse(&resources, 450, false, messages)) {
-        RFX_THROW(StringUtil::trimRight(string(shader.getInfoLog()))
+        RFX_THROW("\nShader: \n\n" + addLineNumbersTo(string(shaderString))
+            + StringUtil::trimRight(string(shader.getInfoLog()))
             + "\nInfo Log: " + string(shader.getInfoDebugLog()));
     }
 
@@ -50,8 +53,46 @@ void GLSLtoSPV(
             + "\nInfo Log: " + string(shader.getInfoDebugLog()));
     }
 
+    SpvOptions options;
+#ifdef _DEBUG
+    options.generateDebugInfo = true;
+    options.stripDebugInfo = false;
+    options.disableOptimizer = true;
+    options.optimizeSize = false;
+    options.disassemble = true;
+    options.validate = true;
+#else
+    options.generateDebugInfo = false;
+    options.stripDebugInfo = true;
+    options.disableOptimizer = false;
+    options.optimizeSize = true;
+    options.disassemble = false;
+    options.validate = false;
+#endif
+
     TIntermediate* pIntermediate = program.getIntermediate(language);
-    GlslangToSpv(*pIntermediate, spirv);
+    GlslangToSpv(*pIntermediate, spirv, &options);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+string addLineNumbersTo(const string& shaderString)
+{
+    istringstream iss;
+    iss.str(shaderString);
+    string currentLine;
+    size_t currentLineNumber = 1;
+    ostringstream oss;
+    oss.fill('0');
+
+    while(getline(iss, currentLine)) {
+        currentLine = StringUtil::remove(currentLine, '\r');
+        currentLine = StringUtil::remove(currentLine, '\n');
+        oss << setw(4) << currentLineNumber << ": " << currentLine << endl;
+        currentLineNumber++;
+    }
+
+    return oss.str();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

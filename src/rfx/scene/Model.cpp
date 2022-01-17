@@ -167,21 +167,21 @@ const vector<shared_ptr<Texture2D>>& Model::getTextures() const
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Model::addLight(const shared_ptr<Light>& light)
+void Model::addLight(const LightPtr& light)
 {
     lights_.push_back(light);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const shared_ptr<Light>& Model::getLight(size_t index) const
+const LightPtr& Model::getLight(size_t index) const
 {
     return lights_[index];
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const vector<shared_ptr<Light>>& Model::getLights() const
+const vector<LightPtr>& Model::getLights() const
 {
     return lights_;
 }

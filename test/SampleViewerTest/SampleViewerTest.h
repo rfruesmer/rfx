@@ -2,6 +2,7 @@
 
 #include "TestApplication.h"
 #include "SampleViewerShader.h"
+#include "rfx/scene/DirectionalLight.h"
 
 
 namespace rfx::test {
@@ -9,7 +10,7 @@ namespace rfx::test {
 class SampleViewerTest : public TestApplication
 {
 public:
-    SampleViewerTest();
+    SampleViewerTest() = default;
 
 protected:
     void initGraphics() override;
@@ -22,14 +23,18 @@ protected:
 
 private:
     void loadScene();
+    void createLights();
     void buildRenderGraph() override;
     void onModelSelected();
     void destroyScene();
 
     ModelPtr scene;
     std::shared_ptr<SampleViewerShader> shader;
+
     int selectedModelIndex = 0;
     bool selectedModelChanged = false;
+    bool imageBasedLighting = false;
+    DirectionalLightPtr directionalLight;
 };
 
 } // namespace rfx

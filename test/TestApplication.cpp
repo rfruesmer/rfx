@@ -140,13 +140,17 @@ void TestApplication::createMeshDataBuffers(const ModelPtr& model)
 
         RFX_CHECK_STATE(node->getMeshCount() == 1, "");
 
+        MeshData meshData = {
+            .modelMatrix = node->getWorldTransform()
+        };
+
         BufferPtr meshDataBuffer = graphicsDevice->createBuffer(
             sizeof(MeshData),
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
         graphicsDevice->bind(meshDataBuffer);
-        meshDataBuffer->load(sizeof(mat4), &node->getWorldTransform());
+        meshDataBuffer->load(sizeof(MeshData), &meshData);
 
         node->getMeshes().at(0)->setDataBuffer(meshDataBuffer);
     }
