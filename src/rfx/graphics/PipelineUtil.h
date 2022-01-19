@@ -2,6 +2,7 @@
 
 #include "rfx/graphics/GraphicsDevice.h"
 #include "rfx/graphics/ShaderProgram.h"
+#include "rfx/graphics/ComputeShader.h"
 
 
 namespace rfx {
@@ -26,7 +27,7 @@ public:
         VkSampleCountFlagBits rasterizationSamples);
     static VkPipelineDynamicStateCreateInfo getDynamicState(const std::vector<VkDynamicState>& dynamicStates);
 
-    static VkPipeline createPipeline(
+    static VkPipeline createGraphicsPipeline(
         const GraphicsDevicePtr& graphicsDevice,
         VkPipelineLayout pipelineLayout,
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyState,
@@ -38,6 +39,11 @@ public:
         VkPipelineDynamicStateCreateInfo dynamicState,
         const ShaderProgramPtr& shaderProgram,
         VkRenderPass renderPass);
+
+    static VkPipeline createComputePipeline(
+        const GraphicsDevicePtr& graphicsDevice,
+        VkPipelineLayout pipelineLayout,
+        const ComputeShaderPtr& computeShader);
 };
 
 } // namespace rfx

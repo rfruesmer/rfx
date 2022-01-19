@@ -46,4 +46,6 @@ private:
     std::vector<std::shared_ptr<WindowListener>> listeners; // TODO: use weak_ptr
 };
 
+using WindowPtr = std::shared_ptr<Window>;
+
 } // namespace rfx

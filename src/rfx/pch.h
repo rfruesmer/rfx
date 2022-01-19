@@ -48,6 +48,8 @@
 #include <ktx.h>
 #include <imgui.h>
 #include <fmt/core.h>
+#include <gli/gli.hpp>
+#include <gli/texture2d.hpp>
 
 #include "rfx.h"
 

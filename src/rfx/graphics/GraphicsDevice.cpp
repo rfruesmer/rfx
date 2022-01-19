@@ -13,22 +13,27 @@ GraphicsDevice::GraphicsDevice(
     GraphicsDeviceDesc desc,
     VkPhysicalDevice physicalDevice,
     VkDevice logicalDevice,
+    vector<uint32_t> usedQueueFamilyIndices,
     shared_ptr<Queue> graphicsQueue,
     shared_ptr<Queue> presentQueue,
-    VkSurfaceKHR presentSurface)
+    VkSurfaceKHR presentSurface,
+    shared_ptr<Queue> computeQueue)
         : desc_(move(desc)),
           physicalDevice(physicalDevice),
           device(logicalDevice),
+          usedQueueFamilyIndices(move(usedQueueFamilyIndices)),
           graphicsQueue(move(graphicsQueue)),
           presentationQueue(move(presentQueue)),
-          presentSurface(presentSurface)
+          presentSurface(presentSurface),
+          computeQueue(move(computeQueue))
 {
-    createCommandPool();
+    createGraphicsCommandPool();
+    createComputeCommandPool();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void GraphicsDevice::createCommandPool()
+void GraphicsDevice::createGraphicsCommandPool()
 {
     VkCommandPoolCreateInfo poolInfo = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
@@ -45,6 +50,23 @@ void GraphicsDevice::createCommandPool()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void GraphicsDevice::createComputeCommandPool()
+{
+    VkCommandPoolCreateInfo poolInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        .queueFamilyIndex = computeQueue->getFamilyIndex()
+    };
+
+    ThrowIfFailed(vkCreateCommandPool(
+        device,
+        &poolInfo,
+        nullptr,
+        &computeCommandPool));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 GraphicsDevice::~GraphicsDevice()
 {
     destroyMultiSamplingBuffer();
@@ -52,6 +74,7 @@ GraphicsDevice::~GraphicsDevice()
     destroySwapChain();
 
     vkDestroyCommandPool(device, graphicsCommandPool, nullptr);
+    vkDestroyCommandPool(device, computeCommandPool, nullptr);
     vkDestroyDevice(device, nullptr);
 }
 
@@ -497,6 +520,7 @@ shared_ptr<Buffer> GraphicsDevice::createBuffer(
         size,
         usage,
         memoryProperties,
+        false,
         vkBuffer,
         vkDeviceMemory);
 
@@ -513,14 +537,31 @@ void GraphicsDevice::createBufferInternal(
     VkDeviceSize size,
     VkBufferUsageFlags usage,
     VkMemoryPropertyFlags memoryProperties,
+    bool shared,
     VkBuffer& outBuffer,
     VkDeviceMemory& outDeviceMemory) const
 {
+    VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    uint32_t queueFamilyIndexCount = 0;
+    uint32_t* queueFamilyIndices = nullptr;
+
+    if (shared) {
+        queueFamilyIndexCount = static_cast<uint32_t>(usedQueueFamilyIndices.size());
+        sharingMode = queueFamilyIndexCount > 1
+            ? VK_SHARING_MODE_CONCURRENT
+            : VK_SHARING_MODE_EXCLUSIVE;
+        queueFamilyIndices = queueFamilyIndexCount > 1
+            ? const_cast<uint32_t*>(usedQueueFamilyIndices.data())
+            : nullptr;
+    }
+
     VkBufferCreateInfo createInfo = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .size = size,
         .usage = usage,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE
+        .sharingMode = sharingMode,
+        .queueFamilyIndexCount = queueFamilyIndexCount,
+        .pQueueFamilyIndices = queueFamilyIndices
     };
 
     ThrowIfFailed(vkCreateBuffer(
@@ -543,6 +584,31 @@ void GraphicsDevice::createBufferInternal(
         &allocInfo,
         nullptr,
         &outDeviceMemory));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+BufferPtr GraphicsDevice::createSharedBuffer(
+    VkDeviceSize size,
+    VkBufferUsageFlags usage,
+    VkMemoryPropertyFlags memoryProperties) const
+{
+    VkBuffer vkBuffer = VK_NULL_HANDLE;
+    VkDeviceMemory vkDeviceMemory = VK_NULL_HANDLE;
+
+    createBufferInternal(
+        size,
+        usage,
+        memoryProperties,
+        true,
+        vkBuffer,
+        vkDeviceMemory);
+
+    return make_shared<Buffer>(
+        size,
+        device,
+        vkBuffer,
+        vkDeviceMemory);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -573,6 +639,7 @@ shared_ptr<VertexBuffer> GraphicsDevice::createVertexBuffer(uint32_t vertexCount
         bufferSize,
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        false,
         vkBuffer,
         vkDeviceMemory);
 
@@ -611,6 +678,7 @@ shared_ptr<IndexBuffer> GraphicsDevice::createIndexBuffer(uint32_t indexCount, V
         bufferSize,
         VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        false,
         vkBuffer,
         vkDeviceMemory);
 
@@ -1313,6 +1381,20 @@ CubeMapPtr GraphicsDevice::createCubeMap(
         imageView,
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
         textureSampler);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkCommandPool GraphicsDevice::getComputeCommandPool() const
+{
+    return computeCommandPool;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const QueuePtr& GraphicsDevice::getComputeQueue() const
+{
+    return computeQueue;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

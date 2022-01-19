@@ -2,6 +2,7 @@
 
 #include "rfx/graphics/GraphicsDevice.h"
 #include "rfx/graphics/ShaderProgram.h"
+#include "rfx/graphics/ComputeShader.h"
 
 
 namespace rfx {
@@ -42,6 +43,11 @@ public:
         const char* entryPoint,
         const std::vector<std::string>& defines,
         const std::vector<std::string>& inputs) const;
+
+    [[nodiscard]]
+    ComputeShaderPtr loadComputeShader(
+        const std::filesystem::path& path,
+        const char* entryPoint) const;
 
 private:
     VkPipelineShaderStageCreateInfo loadInternal(

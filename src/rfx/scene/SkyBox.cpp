@@ -190,7 +190,7 @@ void SkyBox::createPipeline(VkRenderPass renderPass)
         VK_DYNAMIC_STATE_SCISSOR
     };
 
-    pipeline = PipelineUtil::createPipeline(
+    pipeline = PipelineUtil::createGraphicsPipeline(
         graphicsDevice,
         pipelineLayout,
         PipelineUtil::getDefaultInputAssemblyState(),

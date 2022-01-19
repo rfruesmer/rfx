@@ -13,6 +13,7 @@ public:
     void dispose();
 
     const VkPipelineShaderStageCreateInfo& getStageCreateInfo() const;
+    VkShaderModule getModule() const;
 
 private:
     VkDevice vkDevice = nullptr;

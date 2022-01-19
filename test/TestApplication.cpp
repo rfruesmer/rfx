@@ -377,7 +377,7 @@ VkPipeline TestApplication::createPipelineFor(
         VK_DYNAMIC_STATE_SCISSOR
     };
 
-    return PipelineUtil::createPipeline(
+    return PipelineUtil::createGraphicsPipeline(
         graphicsDevice,
         pipelineLayout,
         PipelineUtil::getDefaultInputAssemblyState(),

@@ -54,7 +54,15 @@ void CommandBuffer::bindDescriptorSet(
     uint32_t firstSet,
     VkDescriptorSet descriptorSet) const
 {
-    vkCmdBindDescriptorSets(commandBuffer, bindPoint, layout, firstSet, 1, &descriptorSet, 0, nullptr);
+    vkCmdBindDescriptorSets(
+        commandBuffer,
+        bindPoint,
+        layout,
+        firstSet,
+        1,
+        &descriptorSet,
+        0,
+        nullptr);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -62,9 +70,17 @@ void CommandBuffer::bindDescriptorSet(
 void CommandBuffer::bindDescriptorSets(
     VkPipelineBindPoint bindPoint,
     VkPipelineLayout layout,
-    vector<VkDescriptorSet> descriptorSets) const
+    const vector<VkDescriptorSet>& descriptorSets) const
 {
-    vkCmdBindDescriptorSets(commandBuffer, bindPoint, layout, 0, descriptorSets.size(), descriptorSets.data(), 0, nullptr);
+    vkCmdBindDescriptorSets(
+        commandBuffer,
+        bindPoint,
+        layout,
+        0,
+        descriptorSets.size(),
+        descriptorSets.data(),
+        0,
+        nullptr);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -352,6 +368,40 @@ void CommandBuffer::setViewport(const VkViewport& viewport)
 void CommandBuffer::setScissor(const VkRect2D& scissor)
 {
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CommandBuffer::dispatch(
+    uint32_t groupCountX,
+    uint32_t groupCountY,
+    uint32_t groupCountZ)
+{
+    vkCmdDispatch(
+        commandBuffer,
+        groupCountX,
+        groupCountY,
+        groupCountZ);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void CommandBuffer::pipelineBarrier(
+    VkPipelineStageFlags srcStageMask,
+    VkPipelineStageFlags dstStageMask,
+    VkMemoryBarrier& outMemoryBarrier)
+{
+    vkCmdPipelineBarrier(
+        commandBuffer,
+        srcStageMask,
+        dstStageMask,
+        0,
+        1,
+        &outMemoryBarrier,
+        0,
+        nullptr,
+        0,
+        nullptr);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

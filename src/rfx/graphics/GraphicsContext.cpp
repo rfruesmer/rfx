@@ -444,7 +444,11 @@ VkPhysicalDevice GraphicsContext::findFirstMatchingPhysicalDevice(
             RFX_CHECK_STATE(it != deviceDescs.end(), "Internal error");
             const GraphicsDeviceDesc& deviceDesc = it->second;
 
-            if (!isMatching(deviceDesc, features, extensions, queueCapabilities)) {
+            // Presentation only required for 1st device in group
+            // TODO: might need change to at least one device in group (independent from index)
+            const bool presentationRequired = i == 0;
+
+            if (!isMatching(deviceDesc, features, extensions, queueCapabilities, presentationRequired)) {
                 matchingDevice = nullptr;
                 break;
             }
@@ -471,14 +475,15 @@ bool GraphicsContext::isMatching(
     const GraphicsDeviceDesc& desc,
     const VkPhysicalDeviceFeatures& features,
     const vector<string>& extensions,
-    const vector<VkQueueFlagBits>& queueCapabilities) const
+    const vector<VkQueueFlagBits>& queueCapabilities,
+    bool presentationRequired) const
 {
     return isDiscreteGPU(desc)
            && hasRequiredAPIVersion(desc)
            && hasRequiredFeatures(desc, features)
            && hasRequiredExtensions(desc, extensions)
            && hasRequiredQueueCapabilities(desc, queueCapabilities)
-           && supportsSwapChain(desc);
+           && (!presentationRequired || supportsSwapChain(desc));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -640,14 +645,18 @@ shared_ptr<GraphicsDevice> GraphicsContext::createLogicalDevice(
     const vector<VkQueueFlagBits>& queueCapabilities) const
 {
     vector<QueueFamilyDesc> selectedQueueFamilies;
+    vector<uint32_t> selectedQueueFamilyIndices;
     uint32_t graphicsQueueFamilyIndex = UINT32_MAX;
     uint32_t presentQueueFamilyIndex = UINT32_MAX;
+    uint32_t computeQueueFamilyIndex = UINT32_MAX;
     selectQueueFamilies(
         physicalDevice,
         queueCapabilities,
         selectedQueueFamilies,
+        selectedQueueFamilyIndices,
         graphicsQueueFamilyIndex,
-        presentQueueFamilyIndex);
+        presentQueueFamilyIndex,
+        computeQueueFamilyIndex);
 
     vector<VkDeviceQueueCreateInfo> queueCreateInfos;
     queueCreateInfos.reserve(selectedQueueFamilies.size());
@@ -707,16 +716,23 @@ shared_ptr<GraphicsDevice> GraphicsContext::createLogicalDevice(
     RFX_CHECK_STATE(vkQueue != VK_NULL_HANDLE, "Failed to get presentation queue");
     const auto presentQueue = make_shared<Queue>(vkQueue, presentQueueFamilyIndex, logicalDevice);
 
+    vkQueue = VK_NULL_HANDLE;
+    vkGetDeviceQueue(logicalDevice, computeQueueFamilyIndex, 0, &vkQueue);
+    RFX_CHECK_STATE(vkQueue != VK_NULL_HANDLE, "Failed to get compute queue");
+    const auto computeQueue = make_shared<Queue>(vkQueue, computeQueueFamilyIndex, logicalDevice);
+
     const auto& it = deviceDescs.find(physicalDevice);
     RFX_CHECK_STATE(it != deviceDescs.end(), "Internal error");
     const GraphicsDeviceDesc& deviceDesc = it->second;
-    shared_ptr<GraphicsDevice> graphicsDevice = make_shared<GraphicsDevice>(
+    GraphicsDevicePtr graphicsDevice = make_shared<GraphicsDevice>(
         deviceDesc,
         physicalDevice,
         logicalDevice,
+        selectedQueueFamilyIndices,
         graphicsQueue,
         presentQueue,
-        presentSurface);
+        presentSurface,
+        computeQueue);
 
     return graphicsDevice;
 }
@@ -743,19 +759,28 @@ void GraphicsContext::selectQueueFamilies(
     VkPhysicalDevice physicalDevice,
     const vector<VkQueueFlagBits>& queueCapabilities,
     vector<QueueFamilyDesc>& outSelectedQueueFamilies,
+    vector<uint32_t>& outSelectedQueueFamilyIndices,
     uint32_t& outGraphicsQueueFamilyIndex,
-    uint32_t& outPresentQueueFamilyIndex) const
+    uint32_t& outPresentQueueFamilyIndex,
+    uint32_t& outComputeQueueFamilyIndex) const
 {
     outSelectedQueueFamilies.clear();
+    outSelectedQueueFamilyIndices.clear();
     outGraphicsQueueFamilyIndex = UINT32_MAX;
     outPresentQueueFamilyIndex = UINT32_MAX;
+    outComputeQueueFamilyIndex = UINT32_MAX;
 
-    // #1: try to find family with graphics and presentation capability
+    // #1: try to find family with graphics, presentation and compute capability
     const auto& it = deviceDescs.find(physicalDevice);
     RFX_CHECK_STATE(it != deviceDescs.end(), "Internal error");
     const GraphicsDeviceDesc& deviceDesc = it->second;
     const vector<QueueFamilyDesc>& queueFamilies = deviceDesc.queueFamilies;
     for (size_t i = 0, count = queueFamilies.size(); i < count; ++i) {
+
+        if (queueFamilies[i].properties.queueFlags & VK_QUEUE_COMPUTE_BIT) {
+            outComputeQueueFamilyIndex = i;
+        }
+
         if (queueFamilies[i].properties.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
             if (outGraphicsQueueFamilyIndex == UINT32_MAX) {
                 outGraphicsQueueFamilyIndex = static_cast<uint32_t>(i);
@@ -780,10 +805,32 @@ void GraphicsContext::selectQueueFamilies(
     }
     RFX_CHECK_STATE(outPresentQueueFamilyIndex != UINT32_MAX, "No presentation queue available");
 
-    outSelectedQueueFamilies.push_back(queueFamilies[outGraphicsQueueFamilyIndex]);
-    if (outGraphicsQueueFamilyIndex != outPresentQueueFamilyIndex) {
-        outSelectedQueueFamilies.push_back(queueFamilies[outPresentQueueFamilyIndex]);
+    if (outComputeQueueFamilyIndex == UINT32_MAX) {
+        // #3: try to find separate family for compute
+        for (uint32_t i = 0, count = queueFamilies.size(); i < count; ++i) {
+            if (queueFamilies[i].properties.queueFlags & VK_QUEUE_COMPUTE_BIT) {
+                outComputeQueueFamilyIndex = i;
+                break;
+            }
+        }
     }
+    RFX_CHECK_STATE(outComputeQueueFamilyIndex != UINT32_MAX, "No compute queue available");
+
+
+    unordered_set<uint32_t> selectedQueueFamilyIndexSet;
+    if (outGraphicsQueueFamilyIndex != UINT32_MAX) {
+        selectedQueueFamilyIndexSet.insert(outGraphicsQueueFamilyIndex);
+    }
+    if (outPresentQueueFamilyIndex != UINT32_MAX) {
+        selectedQueueFamilyIndexSet.insert(outPresentQueueFamilyIndex);
+    }
+    if (outComputeQueueFamilyIndex != UINT32_MAX) {
+        selectedQueueFamilyIndexSet.insert(outComputeQueueFamilyIndex);
+    }
+    ranges::copy(selectedQueueFamilyIndexSet, back_inserter(outSelectedQueueFamilyIndices));
+    ranges::transform(selectedQueueFamilyIndexSet, back_inserter(outSelectedQueueFamilies),
+        [queueFamilies](uint32_t queueFamilyIndex) { return queueFamilies[queueFamilyIndex]; });
+
 
     // Check for additional requested capabilities
     for (VkQueueFlagBits currentCapability : queueCapabilities) {

@@ -54,4 +54,7 @@ link_libraries(nlohmann_json nlohmann_json::nlohmann_json)
 find_package(fmt CONFIG REQUIRED)
 link_libraries(fmt::fmt)
 
+find_package(gli CONFIG REQUIRED)
+link_libraries(gli)
+
 add_subdirectory(test)

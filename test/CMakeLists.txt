@@ -34,6 +34,7 @@ set(TESTS
     TexturedPBRTest
     CubeMapTest
     SampleViewerTest
+    BrdfLutGenTest
 )
 
 buildTests()

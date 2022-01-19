@@ -37,3 +37,10 @@ const VkPipelineShaderStageCreateInfo& Shader::getStageCreateInfo() const
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+
+VkShaderModule Shader::getModule() const
+{
+    return stageCreateInfo.module;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------

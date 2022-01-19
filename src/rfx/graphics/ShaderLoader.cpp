@@ -215,3 +215,19 @@ shared_ptr<FragmentShader> ShaderLoader::loadFragmentShader(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+ComputeShaderPtr ShaderLoader::loadComputeShader(
+    const path& path,
+    const char* entryPoint) const
+{
+    RFX_LOG_INFO << "Loading compute shader " << path.filename() << " ...";
+
+    const VkPipelineShaderStageCreateInfo shaderStageCreateInfo =
+        loadInternal(path, VK_SHADER_STAGE_COMPUTE_BIT, entryPoint, {}, {}, {});
+
+    return make_shared<ComputeShader>(
+        graphicsDevice->getLogicalDevice(),
+        shaderStageCreateInfo);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+

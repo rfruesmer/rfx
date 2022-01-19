@@ -137,7 +137,7 @@ VkPipelineDynamicStateCreateInfo PipelineUtil::getDynamicState(const vector<VkDy
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VkPipeline PipelineUtil::createPipeline(
+VkPipeline PipelineUtil::createGraphicsPipeline(
     const GraphicsDevicePtr& graphicsDevice,
     VkPipelineLayout pipelineLayout,
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyState,
@@ -193,6 +193,36 @@ VkPipeline PipelineUtil::createPipeline(
 //        &pipelineCreateInfo,
 //        nullptr,
 //        &wireframePipeline));
+
+    return pipeline;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+VkPipeline PipelineUtil::createComputePipeline(
+    const GraphicsDevicePtr& graphicsDevice,
+    VkPipelineLayout pipelineLayout,
+    const ComputeShaderPtr& computeShader)
+{
+    VkComputePipelineCreateInfo pipelineCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
+        .stage = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+            .stage = VK_SHADER_STAGE_COMPUTE_BIT,
+            .module = computeShader->getModule(),
+            .pName = "main",
+        },
+        .layout = pipelineLayout
+    };
+
+    VkPipeline pipeline = VK_NULL_HANDLE;
+    ThrowIfFailed(vkCreateComputePipelines(
+        graphicsDevice->getLogicalDevice(),
+        nullptr,
+        1,
+        &pipelineCreateInfo,
+        nullptr,
+        &pipeline));
 
     return pipeline;
 }

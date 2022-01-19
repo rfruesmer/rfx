@@ -28,9 +28,11 @@ public:
         GraphicsDeviceDesc desc,
         VkPhysicalDevice physicalDevice,
         VkDevice logicalDevice,
+        std::vector<uint32_t> usedQueueFamilyIndices,
         std::shared_ptr<Queue> graphicsQueue,
         std::shared_ptr<Queue> presentQueue,
-        VkSurfaceKHR presentSurface);
+        VkSurfaceKHR presentSurface,
+        std::shared_ptr<Queue> computeQueue);
 
     ~GraphicsDevice();
 
@@ -65,6 +67,12 @@ public:
 
     [[nodiscard]]
     BufferPtr createBuffer(
+        VkDeviceSize size,
+        VkBufferUsageFlags usage,
+        VkMemoryPropertyFlags memoryProperties) const;
+
+    [[nodiscard]]
+    BufferPtr createSharedBuffer(
         VkDeviceSize size,
         VkBufferUsageFlags usage,
         VkMemoryPropertyFlags memoryProperties) const;
@@ -131,14 +139,16 @@ public:
 
     [[nodiscard]] VkPhysicalDevice getPhysicalDevice() const;
     [[nodiscard]] VkDevice getLogicalDevice() const;
-    [[nodiscard]] const std::shared_ptr<Queue>& getGraphicsQueue() const;
+    [[nodiscard]] const QueuePtr& getGraphicsQueue() const;
     [[nodiscard]] VkCommandPool getGraphicsCommandPool() const;
-    [[nodiscard]] const std::shared_ptr<Queue>& getPresentationQueue() const;
+    [[nodiscard]] const QueuePtr& getPresentationQueue() const;
+    [[nodiscard]] VkCommandPool getComputeCommandPool() const;
+    [[nodiscard]] const QueuePtr& getComputeQueue() const;
 
+private:
     [[nodiscard]]
     uint32_t getMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 
-private:
     SwapChainDesc buildSwapChainDesc(
         uint32_t width,
         uint32_t height,
@@ -161,12 +171,14 @@ private:
     void checkFormat(VkFormat format, VkImageTiling tiling, VkFormatFeatureFlags features);
     std::shared_ptr<Image> createDepthBufferImage(VkFormat format);
 
-    void createCommandPool();
+    void createGraphicsCommandPool();
+    void createComputeCommandPool();
 
     void createBufferInternal(
         VkDeviceSize size,
         VkBufferUsageFlags usage,
         VkMemoryPropertyFlags memoryProperties,
+        bool shared,
         VkBuffer& outBuffer,
         VkDeviceMemory& outDeviceMemory) const;
 
@@ -207,12 +219,16 @@ private:
     GraphicsDeviceDesc desc_ {};
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     VkDevice device = VK_NULL_HANDLE;
+    std::vector<uint32_t> usedQueueFamilyIndices;
     std::shared_ptr<Queue> graphicsQueue;
+    VkCommandPool graphicsCommandPool = VK_NULL_HANDLE;
     std::shared_ptr<Queue> presentationQueue;
     VkSurfaceKHR presentSurface;
     std::unique_ptr<SwapChain> swapChain;
     std::unique_ptr<DepthBuffer> depthBuffer;
-    VkCommandPool graphicsCommandPool = VK_NULL_HANDLE;
+
+    std::shared_ptr<Queue> computeQueue;
+    VkCommandPool computeCommandPool = VK_NULL_HANDLE;
 
     VkSampleCountFlagBits multiSampleCount = VK_SAMPLE_COUNT_1_BIT;
     std::shared_ptr<Image> multiSampleImage;

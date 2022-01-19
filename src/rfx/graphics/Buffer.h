@@ -13,7 +13,8 @@ public:
 
     virtual ~Buffer();
 
-    void load(size_t size, const void* data) const;
+    void load(size_t size, const void* inData) const;
+    void save(size_t size, void* outData) const;
 
     [[nodiscard]] VkBuffer getHandle() const;
     [[nodiscard]] VkDeviceMemory getDeviceMemory() const;

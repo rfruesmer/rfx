@@ -50,7 +50,8 @@ private:
         const GraphicsDeviceDesc& desc,
         const VkPhysicalDeviceFeatures& features,
         const std::vector<std::string>& extensions,
-        const std::vector<VkQueueFlagBits>& queueCapabilities) const;
+        const std::vector<VkQueueFlagBits>& queueCapabilities,
+        bool presentationRequired = true) const;
 
     [[nodiscard]]
     bool isDiscreteGPU(const GraphicsDeviceDesc& desc) const;
@@ -92,8 +93,10 @@ private:
         VkPhysicalDevice physicalDevice,
         const std::vector<VkQueueFlagBits>& queueCapabilities,
         std::vector<QueueFamilyDesc>& outSelectedQueueFamilies,
+        std::vector<uint32_t>& outSelectedQueueFamilyIndices,
         uint32_t& outGraphicsQueueFamilyIndex,
-        uint32_t& outPresentQueueFamilyIndex) const;
+        uint32_t& outPresentQueueFamilyIndex,
+        uint32_t& outComputeQueueFamilyIndex) const;
 
     [[nodiscard]]
     int getDeviceGroupIndex(VkPhysicalDevice physicalDevice) const;

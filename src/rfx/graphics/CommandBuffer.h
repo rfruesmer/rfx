@@ -20,7 +20,10 @@ public:
         VkPipelineLayout layout,
         uint32_t firstSet,
         VkDescriptorSet descriptorSet) const;
-    void bindDescriptorSets(VkPipelineBindPoint bindPoint, VkPipelineLayout layout, std::vector<VkDescriptorSet> descriptorSets) const;
+    void bindDescriptorSets(
+        VkPipelineBindPoint bindPoint,
+        VkPipelineLayout layout,
+        const std::vector<VkDescriptorSet>& descriptorSets) const;
     void bindVertexBuffer(const std::shared_ptr<VertexBuffer>& vertexBuffer) const;
     void bindVertexBuffers(const std::vector<std::shared_ptr<VertexBuffer>>& vertexBuffers) const;
     void bindIndexBuffer(const std::shared_ptr<IndexBuffer>& indexBuffer) const;
@@ -63,6 +66,13 @@ public:
         uint32_t offset,
         uint32_t size,
         const void* values);
+
+    void dispatch(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ);
+
+    void pipelineBarrier(
+        VkPipelineStageFlags srcStageMask,
+        VkPipelineStageFlags dstStageMask,
+        VkMemoryBarrier& outMemoryBarrier);
 
     [[nodiscard]] const VkCommandBuffer& getHandle() const;
 

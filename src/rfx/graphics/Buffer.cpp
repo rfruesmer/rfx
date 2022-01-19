@@ -35,7 +35,7 @@ Buffer::~Buffer()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void Buffer::load(size_t size, const void* data) const
+void Buffer::load(size_t size, const void* inData) const
 {
     RFX_CHECK_ARGUMENT(size <= size_);
 
@@ -48,7 +48,7 @@ void Buffer::load(size_t size, const void* data) const
         0,
         reinterpret_cast<void**>(&mappedMemory)));
 
-    memcpy(mappedMemory, data, size);
+    memcpy(mappedMemory, inData, size);
 
     vkUnmapMemory(device_, deviceMemory_);
 }
@@ -79,6 +79,26 @@ VkDeviceSize Buffer::getSize() const
 const VkDescriptorBufferInfo& Buffer::getDescriptorBufferInfo() const
 {
     return descriptorBufferInfo_;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Buffer::save(size_t size, void* outData) const
+{
+    RFX_CHECK_ARGUMENT(size <= size_);
+
+    void* mappedMemory = nullptr;
+    ThrowIfFailed(vkMapMemory(
+        device_,
+        deviceMemory_,
+        0,
+        size,
+        0,
+        &mappedMemory));
+
+    memcpy(outData, mappedMemory, size);
+
+    vkUnmapMemory(device_, deviceMemory_);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

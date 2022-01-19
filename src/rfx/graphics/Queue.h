@@ -27,4 +27,6 @@ private:
     uint32_t familyIndex = 0;
 };
 
+using QueuePtr = std::shared_ptr<Queue>;
+
 } // namespace rfx
