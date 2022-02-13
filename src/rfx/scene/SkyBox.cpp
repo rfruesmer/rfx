@@ -63,6 +63,8 @@ void SkyBox::loadCubeMap(const path& cubeMapPath)
 {
     TextureLoader textureLoader(graphicsDevice);
     cubeMap = textureLoader.loadCubeMap(cubeMapPath);
+
+    shaderData.mipCount = cubeMap->getImage()->getDesc().mipLevels;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -208,11 +210,10 @@ void SkyBox::createPipeline(VkRenderPass renderPass)
 
 void SkyBox::updateUniformBuffer(const CameraPtr& camera)
 {
-    ShaderData shaderData {
-        .projMatrix = camera->getProjectionMatrix(),
-        .viewMatrix = camera->getViewMatrix()
-    };
-    shaderData.viewMatrix[3] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    glm::mat4 viewMatrix = camera->getViewMatrix();
+    viewMatrix[3] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+    shaderData.viewProjMatrix = camera->getProjectionMatrix() * viewMatrix;
 
     uniformBuffer->load(sizeof(ShaderData), &shaderData);
 }
@@ -253,6 +254,13 @@ VkPipeline SkyBox::getPipeline() const
 VkPipelineLayout SkyBox::getPipelineLayout() const
 {
     return pipelineLayout;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SkyBox::setBlur(float factor)
+{
+    shaderData.blurFactor = factor;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

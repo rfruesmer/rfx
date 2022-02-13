@@ -4,6 +4,7 @@
 #include "rfx/graphics/Texture2D.h"
 #include "rfx/graphics/CubeMap.h"
 #include "rfx/graphics/ImageDesc.h"
+#include "rfx/graphics/ImageChannelType.h"
 
 
 namespace rfx {
@@ -40,6 +41,7 @@ private:
 
     void loadImage(
         const std::filesystem::path& filePath,
+        ImageChannelType channelType,
         ImageDesc& outImageDesc,
         std::vector<std::byte>& outImageData,
         bool& outCreateMipmaps) const;
@@ -53,11 +55,23 @@ private:
 
     void loadFromImageFile(
         const std::filesystem::path& path,
+        ImageChannelType channelType,
         ImageDesc& outImageDesc,
         std::vector<std::byte>& outImageData) const;
 
-    std::shared_ptr<GraphicsDevice> graphicsDevice;
+    void convertEquiRectangularMapToVerticalCross(
+        const ImageDesc& inImageDesc,
+        const std::vector<std::byte>& inImageData,
+        ImageDesc* outImageDesc,
+        std::vector<std::byte>* outImageData) const;
 
+    void convertVerticalCrossToCubeMapFaces(
+        const ImageDesc& inImageDesc,
+        const std::vector<std::byte>& inImageData,
+        ImageDesc* outImageDesc,
+        std::vector<std::byte>* outImageData) const;
+
+    std::shared_ptr<GraphicsDevice> graphicsDevice;
 };
 
 } // namespace rfx;

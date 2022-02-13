@@ -45,7 +45,7 @@ public:
         const std::vector<VkBufferImageCopy>& regions) const;
 
     void setImageMemoryBarrier(
-        const std::shared_ptr<Image>& image,
+        const ImagePtr& image,
         VkAccessFlags srcAccess,
         VkAccessFlags dstAccess,
         VkImageLayout oldLayout,
@@ -54,7 +54,7 @@ public:
         VkPipelineStageFlags dstStageMask) const;
 
     void setImageMemoryBarrier(
-        const std::shared_ptr<Image>& image,
+        const ImagePtr& image,
         VkImageLayout oldLayout,
         VkImageLayout newLayout,
         VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,

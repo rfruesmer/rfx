@@ -53,7 +53,9 @@ void RenderGraph::record(
     setViewportAndScissor(commandBuffer);
 
     for (const auto& userDefinedNode : userDefinedNodes) {
-        userDefinedNode->record(commandBuffer);
+        if (userDefinedNode->isEnabled()) {
+            userDefinedNode->record(commandBuffer);
+        }
     }
 
     for (const auto& [model, shaderNodes] : childNodeMap)

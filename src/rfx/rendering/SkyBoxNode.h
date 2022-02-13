@@ -18,4 +18,6 @@ private:
     SkyBoxPtr skyBox;
 };
 
+using SkyBoxNodePtr = std::shared_ptr<SkyBoxNode>;
+
 } // namespace rfx

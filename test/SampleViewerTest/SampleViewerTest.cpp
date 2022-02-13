@@ -85,7 +85,10 @@ void SampleViewerTest::createLights()
 
 void SampleViewerTest::buildRenderGraph()
 {
+    skyBoxNode = make_shared<SkyBoxNode>(skyBox);
+
     renderGraph = make_shared<RenderGraph>(graphicsDevice, sceneDescriptorSet_);
+    renderGraph->add(skyBoxNode);
     renderGraph->add(scene, materialShaderMap);
 }
 
@@ -95,6 +98,37 @@ void SampleViewerTest::initShaderFactory(MaterialShaderFactory& shaderFactory)
 {
     shaderFactory.addAllocator(SampleViewerShader::ID,
         [this] { return make_shared<SampleViewerShader>(graphicsDevice); });
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SampleViewerTest::createSceneResources()
+{
+    TestApplication::createSceneResources();
+
+    createSkyBox(); // needs to be executed after creation of render pass
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SampleViewerTest::createSkyBox()
+{
+    const path skyBoxModelPath = getAssetsDirectory() / "models/vulkan_asset_pack_gltf/models/cube.gltf";
+//    const path skyBoxCubeMapPath = getAssetsDirectory() / "models/vulkan_asset_pack_gltf/textures/cubemap_yokohama_rgba.ktx";
+    const path skyBoxCubeMapPath = getAssetsDirectory() / "textures/environments/Etnies_Park_Center_3k.hdr";
+    const path skyBoxVertexShaderPath = getAssetsDirectory() / "shaders/skybox.vert";
+    const path skyBoxFragmentShaderPath = getAssetsDirectory() / "shaders/skybox.frag";
+
+    skyBox = make_shared<SkyBox>(
+        graphicsDevice,
+        descriptorPool);
+
+    skyBox->create(
+        skyBoxModelPath,
+        skyBoxCubeMapPath,
+        skyBoxVertexShaderPath,
+        skyBoxFragmentShaderPath,
+        renderPass);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -117,6 +151,10 @@ void SampleViewerTest::updateShaderData()
     shader = static_pointer_cast<SampleViewerShader>(materialShaderMap.begin()->first);
     shader->setLight(0, directionalLight);
     shader->updateDataBuffer();
+
+    if (skyBox != nullptr) {
+        skyBox->updateUniformBuffer(camera);
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -125,7 +163,7 @@ void SampleViewerTest::updateDevTools()
 {
     // Models
     if (devTools->combo("Models", IM_ARRAYSIZE(models), models, &selectedModelIndex)) {
-        selectedModelChanged = true;
+        needsReload = true;
     }
 
     // Lighting
@@ -158,6 +196,22 @@ void SampleViewerTest::updateDevTools()
             updateShaderData();
         }
     }
+
+    // Background
+    static bool backgroundExpanded = true;
+    backgroundExpanded = devTools->collapsingHeader("Background", backgroundExpanded);
+    if (backgroundExpanded)
+    {
+        if (devTools->checkBox("Environment Map", &useEnvironmentMap)) {
+            skyBoxNode->setEnabled(useEnvironmentMap);
+            freeCommandBuffers();
+            createCommandBuffers();
+        }
+
+        if (devTools->sliderFloat("Blur", &environmentBlurFactor, 0.0f, 1.0f)) {
+            skyBox->setBlur(environmentBlurFactor);
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -166,16 +220,16 @@ void SampleViewerTest::update(float deltaTime)
 {
     TestApplication::update(deltaTime);
 
-    if (selectedModelChanged) {
-        onModelSelected();
+    if (needsReload) {
+        reload();
     }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SampleViewerTest::onModelSelected()
+void SampleViewerTest::reload()
 {
-    selectedModelChanged = false;
+    needsReload = false;
 
     destroyScene();
     destroyShaderMap();
@@ -202,6 +256,7 @@ void SampleViewerTest::destroyScene()
 {
     shader.reset();
     scene.reset();
+    skyBox.reset();
 
     camera->clear();
 }
@@ -213,6 +268,19 @@ void SampleViewerTest::cleanup()
     destroyScene();
 
     TestApplication::cleanup();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void SampleViewerTest::cleanupSwapChain()
+{
+    if (skyBox != nullptr) {
+        skyBox->cleanupSwapChain();
+    }
+
+    skyBoxNode.reset();
+
+    TestApplication::cleanupSwapChain();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

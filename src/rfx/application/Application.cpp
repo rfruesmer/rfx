@@ -427,9 +427,19 @@ void Application::destroySyncObjects()
 
 void Application::cleanupSwapChain()
 {
-    const VkDevice vkDevice = graphicsDevice->getLogicalDevice();
-
+//    const VkDevice vkDevice = graphicsDevice->getLogicalDevice();
 //    vkDestroyDescriptorPool(vkDevice, descriptorPool, nullptr);
+
+    freeCommandBuffers();
+
+    destroyRenderPass();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Application::freeCommandBuffers()
+{
+    const VkDevice vkDevice = graphicsDevice->getLogicalDevice();
 
     auto commandBufferHandles = commandBuffers
             | views::transform([](const shared_ptr<CommandBuffer>& commandBuffer)
@@ -441,8 +451,6 @@ void Application::cleanupSwapChain()
         graphicsDevice->getGraphicsCommandPool(),
         static_cast<uint32_t>(commandBufferHandles.size()),
         commandBufferHandles.data());
-
-    destroyRenderPass();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

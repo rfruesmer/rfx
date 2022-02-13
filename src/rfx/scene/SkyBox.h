@@ -22,6 +22,8 @@ public:
         const std::filesystem::path& fragmentShaderPath,
         VkRenderPass renderPass);
 
+    void setBlur(float factor);
+
     [[nodiscard]] const ModelPtr& getModel() const;
     [[nodiscard]] VkDescriptorSet getDescriptorSet() const;
     [[nodiscard]] VkPipeline getPipeline() const;
@@ -34,8 +36,9 @@ public:
 private:
     struct ShaderData
     {
-        glm::mat4 projMatrix;
-        glm::mat4 viewMatrix;
+        glm::mat4 viewProjMatrix;
+        float blurFactor = 0.0f;
+        uint32_t mipCount = 1;
     };
 
     void loadModel(const std::filesystem::path& modelPath);
@@ -53,6 +56,7 @@ private:
     ModelPtr model; // TODO: merge into scene vertex- & index-buffer
     CubeMapPtr cubeMap;
     ShaderProgramPtr shaderProgram;
+    ShaderData shaderData;
     BufferPtr uniformBuffer;
     VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
     VkDescriptorSet descriptorSet = VK_NULL_HANDLE;

@@ -195,7 +195,7 @@ void CommandBuffer::copyBufferToImage(
 // ---------------------------------------------------------------------------------------------------------------------
 
 void CommandBuffer::setImageMemoryBarrier(
-    const shared_ptr<Image>& image,
+    const ImagePtr& image,
     VkAccessFlags srcAccess,
     VkAccessFlags dstAccess,
     VkImageLayout oldLayout,
@@ -219,7 +219,7 @@ void CommandBuffer::setImageMemoryBarrier(
             .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
             .baseMipLevel = 0,
             .levelCount = imageDesc.mipLevels,
-            .layerCount = static_cast<uint32_t>(imageDesc.isCubemap ? 6 : 1)
+            .layerCount = imageDesc.layers
         }
     };
 
@@ -240,7 +240,7 @@ void CommandBuffer::setImageMemoryBarrier(
 // ---------------------------------------------------------------------------------------------------------------------
 
 void CommandBuffer::setImageMemoryBarrier(
-    const shared_ptr<Image>& image,
+    const ImagePtr& image,
     VkImageLayout oldLayout,
     VkImageLayout newLayout,
     VkPipelineStageFlags srcStageMask,
@@ -312,6 +312,8 @@ void CommandBuffer::setImageMemoryBarrier(
         RFX_THROW_NOT_IMPLEMENTED();
     }
 
+    const ImageDesc& imageDesc = image->getDesc();
+
     VkImageMemoryBarrier barrier {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
         .pNext = nullptr,
@@ -325,8 +327,8 @@ void CommandBuffer::setImageMemoryBarrier(
         .subresourceRange = {
             .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
             .baseMipLevel = 0,
-            .levelCount = image->getDesc().mipLevels,
-            .layerCount = 1
+            .levelCount = imageDesc.mipLevels,
+            .layerCount = imageDesc.layers
         }
     };
 

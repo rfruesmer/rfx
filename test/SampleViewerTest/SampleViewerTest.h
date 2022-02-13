@@ -3,6 +3,8 @@
 #include "TestApplication.h"
 #include "SampleViewerShader.h"
 #include "rfx/scene/DirectionalLight.h"
+#include "rfx/scene/SkyBox.h"
+#include "rfx/rendering/SkyBoxNode.h"
 
 
 namespace rfx::test {
@@ -15,26 +17,35 @@ public:
 protected:
     void initGraphics() override;
     void initShaderFactory(MaterialShaderFactory& shaderFactory) override;
+    void createSceneResources() override;
     void createMeshResources() override;
     void updateShaderData() override;
     void updateDevTools() override;
     void update(float deltaTime) override;
     void cleanup() override;
+    void cleanupSwapChain() override;
 
 private:
     void loadScene();
     void createLights();
+    void createSkyBox();
     void buildRenderGraph() override;
-    void onModelSelected();
+    void reload();
     void destroyScene();
 
     ModelPtr scene;
     std::shared_ptr<SampleViewerShader> shader;
 
+    SkyBoxPtr skyBox;
+    SkyBoxNodePtr skyBoxNode;
+
     int selectedModelIndex = 0;
-    bool selectedModelChanged = false;
+    bool needsReload = false;
     bool imageBasedLighting = false;
     DirectionalLightPtr directionalLight;
+
+    bool useEnvironmentMap = true;
+    float environmentBlurFactor = 0.0f;
 };
 
 } // namespace rfx

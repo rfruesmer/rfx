@@ -31,6 +31,7 @@ protected:
     virtual void cleanup();
     virtual void cleanupSwapChain();
     virtual void recreateSwapChain();
+    void freeCommandBuffers();
 
     void createFrameBuffers();
     void createSyncObjects();

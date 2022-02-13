@@ -823,38 +823,38 @@ shared_ptr<Image> GraphicsDevice::createImage(
     const vector<std::byte>& imageData,
     bool isGenerateMipmaps) const
 {
-    ImageDesc finalImageDesc = imageDesc;
+    ImageDesc targetImageDesc = imageDesc;
     if (isGenerateMipmaps) {
-        finalImageDesc.mipOffsets = { 0 };
-        finalImageDesc.mipLevels =
+        targetImageDesc.mipOffsets = { 0 };
+        targetImageDesc.mipLevels =
             static_cast<uint32_t>(floor(log2(max(imageDesc.width, imageDesc.height)))) + 1;
     }
 
     ImagePtr image = createImage(
         id,
-        finalImageDesc,
+        targetImageDesc,
         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
         VK_IMAGE_TILING_OPTIMAL,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
     if (isGenerateMipmaps) {
         transitionImageLayout(
-            image->getHandle(),
+            image,
+            targetImageDesc,
             VK_IMAGE_LAYOUT_UNDEFINED,
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            finalImageDesc.mipLevels);
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     }
 
     updateImage(image, imageData, isGenerateMipmaps);
 
     if (isGenerateMipmaps) {
         generateMipmaps(
-            image->getHandle(),
-            VK_FORMAT_R8G8B8A8_SRGB,
-            finalImageDesc.width,
-            finalImageDesc.height,
-            finalImageDesc.mipLevels);
+            image,
+            targetImageDesc,
+            VK_FORMAT_R8G8B8A8_SRGB);
     }
+
+    image->setDesc(targetImageDesc);
 
     return image;
 }
@@ -876,7 +876,7 @@ shared_ptr<Image> GraphicsDevice::createImage(
         .format = imageDesc.format,
         .extent = { imageDesc.width, imageDesc.height, 1 },
         .mipLevels = imageDesc.mipLevels,
-        .arrayLayers = static_cast<uint32_t>(imageDesc.isCubemap ? 6 : 1),
+        .arrayLayers = imageDesc.layers,
         .samples = imageDesc.sampleCount,
         .tiling = tiling,
         .usage = usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
@@ -927,7 +927,7 @@ shared_ptr<Image> GraphicsDevice::createImage(
 // ---------------------------------------------------------------------------------------------------------------------
 
 void GraphicsDevice::updateImage(
-    const shared_ptr<Image>& image,
+    const ImagePtr& image,
     const vector<std::byte>& imageData,
     bool isGenerateMipmaps) const
 {
@@ -949,32 +949,27 @@ void GraphicsDevice::updateImage(
     vector<VkBufferImageCopy> imageCopies;
     uint32_t offsetIndex = 0;
 
-    for (uint32_t faceIndex = 0, faceCount = imageDesc.isCubemap ? 6 : 1;
-         faceIndex < faceCount;
-         ++faceIndex)
-    {
-        // TODO: fix ambiguity between miplevels vs. mipOffsets
-        const uint32_t mipLevelCount = min(static_cast<size_t>(imageDesc.mipLevels), imageDesc.mipOffsets.size());
+    // TODO: fix ambiguity between miplevels vs. mipOffsets
+    const uint32_t mipLevelCount = min(static_cast<size_t>(imageDesc.mipLevels), imageDesc.mipOffsets.size());
 
-        for (uint32_t mipLevel = 0; mipLevel < mipLevelCount; ++mipLevel)
-        {
-            VkBufferImageCopy imageCopy {
-                .bufferOffset = imageDesc.mipOffsets[offsetIndex],
-                .imageSubresource {
-                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                    .mipLevel = mipLevel,
-                    .baseArrayLayer = faceIndex,
-                    .layerCount = 1
-                },
-                .imageExtent {
-                    .width = imageDesc.width >> mipLevel,
-                    .height = imageDesc.height >> mipLevel,
-                    .depth = 1
-                },
-            };
-            imageCopies.push_back(imageCopy);
-            ++offsetIndex;
-        }
+    for (uint32_t mipLevel = 0; mipLevel < mipLevelCount; ++mipLevel)
+    {
+        VkBufferImageCopy imageCopy {
+            .bufferOffset = imageDesc.mipOffsets[offsetIndex],
+            .imageSubresource {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .mipLevel = mipLevel,
+                .baseArrayLayer = 0,
+                .layerCount = imageDesc.layers
+            },
+            .imageExtent {
+                .width = imageDesc.width >> mipLevel,
+                .height = imageDesc.height >> mipLevel,
+                .depth = 1
+            },
+        };
+        imageCopies.push_back(imageCopy);
+        ++offsetIndex;
     }
 
     const CommandBufferPtr commandBuffer = createCommandBuffer(graphicsCommandPool);
@@ -1024,11 +1019,9 @@ void GraphicsDevice::updateImage(
 // ---------------------------------------------------------------------------------------------------------------------
 
 void GraphicsDevice::generateMipmaps(
-    VkImage image,
-    VkFormat imageFormat,
-    int32_t texWidth,
-    int32_t texHeight,
-    uint32_t mipLevels) const
+    const ImagePtr& image,
+    const ImageDesc& targetImageDesc,
+    VkFormat imageFormat) const
 {
     // Check if image format supports linear blitting
     VkFormatProperties formatProperties;
@@ -1043,19 +1036,19 @@ void GraphicsDevice::generateMipmaps(
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image = image,
+        .image = image->getHandle(),
         .subresourceRange = {
             .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
             .levelCount = 1,
             .baseArrayLayer = 0,
-            .layerCount = 1
+            .layerCount = targetImageDesc.layers
         }
     };
 
-    int32_t mipWidth = texWidth;
-    int32_t mipHeight = texHeight;
+    auto mipWidth = static_cast<int32_t>(targetImageDesc.width);
+    auto mipHeight = static_cast<int32_t>(targetImageDesc.height);
 
-    for (uint32_t i = 1; i < mipLevels; i++) {
+    for (uint32_t i = 1; i < targetImageDesc.mipLevels; i++) {
         barrier.subresourceRange.baseMipLevel = i - 1;
         barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
         barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
@@ -1078,7 +1071,7 @@ void GraphicsDevice::generateMipmaps(
                 .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
                 .mipLevel = i - 1,
                 .baseArrayLayer = 0,
-                .layerCount = 1,
+                .layerCount = targetImageDesc.layers,
             },
             .srcOffsets = {
                 { 0, 0, 0 },
@@ -1088,7 +1081,7 @@ void GraphicsDevice::generateMipmaps(
                 .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
                 .mipLevel = i,
                 .baseArrayLayer = 0,
-                .layerCount = 1
+                .layerCount = targetImageDesc.layers
             },
             .dstOffsets = {
                 { 0, 0, 0 },
@@ -1097,9 +1090,9 @@ void GraphicsDevice::generateMipmaps(
         };
 
         vkCmdBlitImage(commandBuffer->getHandle(),
-            image,
+            image->getHandle(),
             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            image,
+            image->getHandle(),
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             1,
             &blit,
@@ -1126,7 +1119,7 @@ void GraphicsDevice::generateMipmaps(
         if (mipHeight > 1) mipHeight /= 2;
     }
 
-    barrier.subresourceRange.baseMipLevel = mipLevels - 1;
+    barrier.subresourceRange.baseMipLevel = targetImageDesc.mipLevels - 1;
     barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -1175,7 +1168,7 @@ VkImageView GraphicsDevice::createImageView(
             .baseMipLevel = 0,
             .levelCount = mipLevels,
             .baseArrayLayer = 0,
-            .layerCount = static_cast<uint32_t>(imageDesc.isCubemap ? 6 : 1)
+            .layerCount = imageDesc.layers
         }
     };
 
@@ -1277,10 +1270,10 @@ VkResult GraphicsDevice::waitForFences(uint32_t count, const VkFence* fences, bo
 // ---------------------------------------------------------------------------------------------------------------------
 
 void GraphicsDevice::transitionImageLayout(
-    VkImage image,
+    const ImagePtr& image,
+    const ImageDesc& targetImageDesc,
     VkImageLayout oldLayout,
-    VkImageLayout newLayout,
-    uint32_t mipLevels) const
+    VkImageLayout newLayout) const
 {
     const shared_ptr<CommandBuffer>& commandBuffer = createCommandBuffer(graphicsCommandPool);
     commandBuffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
@@ -1291,13 +1284,13 @@ void GraphicsDevice::transitionImageLayout(
         .newLayout = newLayout,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image = image,
+        .image = image->getHandle(),
         .subresourceRange = {
             .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
             .baseMipLevel = 0,
-            .levelCount = mipLevels,
+            .levelCount = targetImageDesc.mipLevels,
             .baseArrayLayer = 0,
-            .layerCount = 1
+            .layerCount = targetImageDesc.layers
         }
     };
 

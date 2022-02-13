@@ -35,6 +35,7 @@ set(TESTS
     CubeMapTest
     SampleViewerTest
     BrdfLutGenTest
+    IrradianceMapGenTest
 )
 
 buildTests()

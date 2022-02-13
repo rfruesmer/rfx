@@ -191,22 +191,20 @@ private:
         VkMemoryPropertyFlags properties) const;
 
     void transitionImageLayout(
-        VkImage image,
+        const ImagePtr& image,
+        const ImageDesc& targetImageDesc,
         VkImageLayout oldLayout,
-        VkImageLayout newLayout,
-        uint32_t mipLevels) const;
+        VkImageLayout newLayout) const;
 
     void updateImage(
-        const std::shared_ptr<Image>& image,
+        const ImagePtr& image,
         const std::vector<std::byte>& imageData,
         bool isGenerateMipmaps) const;
 
     void generateMipmaps(
-        VkImage image,
-        VkFormat imageFormat,
-        int32_t texWidth,
-        int32_t texHeight,
-        uint32_t mipLevels) const;
+        const ImagePtr& image,
+        const ImageDesc& targetImageDesc,
+        VkFormat imageFormat) const;
 
     [[nodiscard]]
     VkSampler createSampler(const SamplerDesc& desc) const;

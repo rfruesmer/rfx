@@ -18,6 +18,8 @@ public:
 
     [[nodiscard]] const std::string& getId() const;
     [[nodiscard]] VkImage getHandle() const;
+
+    void setDesc(const ImageDesc& desc);
     [[nodiscard]] const ImageDesc& getDesc() const;
 
 private:
