@@ -74,7 +74,8 @@ vec3 getNormal()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void main() {
+void main()
+{
     vec4 pos = mesh.modelMatrix * getPosition();
     outPosition = vec3(pos.xyz) / pos.w;
 
@@ -89,6 +90,10 @@ void main() {
     mat3 normalMatrix = mat3(mesh.modelMatrix);
     outNormal = normalize(normalMatrix * inNormal);
 #endif
+#endif
+
+#ifdef HAS_TEXCOORD_VEC2
+    outTexCoord[0] = inTexCoord[0];
 #endif
 
     gl_Position = scene.viewProjMatrix * pos;

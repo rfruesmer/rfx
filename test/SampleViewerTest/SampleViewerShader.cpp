@@ -27,7 +27,7 @@ SampleViewerShader::SampleViewerShader(const GraphicsDevicePtr& graphicsDevice)
 vector<std::byte> SampleViewerShader::createDataFor(const MaterialPtr& material) const
 {
     const MaterialData materialData {
-        .baseColor = material->getBaseColorFactor()
+        .baseColorFactor = material->getBaseColorFactor()
     };
 
     vector<std::byte> data(sizeof(MaterialData));
@@ -60,14 +60,25 @@ vector<string> SampleViewerShader::getShaderDefinesFor(const MaterialPtr& materi
     defines.emplace_back("USE_PUNCTUAL");
     defines.emplace_back("LINEAR_OUTPUT");
 
+    if (material->getBaseColorTexture() != nullptr) {
+        defines.emplace_back("HAS_BASE_COLOR_MAP 1");
+    }
+
     const VertexFormat& vertexFormat = material->getVertexFormat();
+
+    if (vertexFormat.containsColors3()) {
+        defines.emplace_back("HAS_COLOR_VEC3");
+    }
+    else if (vertexFormat.containsColors4()) {
+        defines.emplace_back("HAS_COLOR_VEC4");
+    }
+
     if (vertexFormat.containsNormals()) {
         defines.emplace_back("HAS_NORMAL_VEC3");
     }
 
-    const uint32_t texCoordSetCount = vertexFormat.getTexCoordSetCount();
-    if (texCoordSetCount > 0) {
-        defines.push_back(fmt::format("TEXCOORDSET_COUNT {}", texCoordSetCount));
+    if (vertexFormat.containsTexCoords()) {
+        defines.emplace_back("HAS_TEXCOORD_VEC2");
     }
 
     if (vertexFormat.containsTangents()) {
@@ -92,6 +103,12 @@ vector<string> SampleViewerShader::getVertexShaderInputsFor(const MaterialPtr& m
         location++;
     }
 
+    uint32_t texCoordSetCount = vertexFormat.getTexCoordSetCount();
+    if (texCoordSetCount > 0) {
+        inputs.push_back(fmt::format("layout(location = {}) in vec2 inTexCoord[{}];", location, texCoordSetCount));
+        location += texCoordSetCount;
+    }
+
     return inputs;
 }
 
@@ -110,6 +127,12 @@ vector<string> SampleViewerShader::getVertexShaderOutputsFor(const MaterialPtr& 
         location++;
     }
 
+    uint32_t texCoordSetCount = vertexFormat.getTexCoordSetCount();
+    if (texCoordSetCount > 0) {
+        outputs.push_back(fmt::format("layout(location = {}) out vec2 outTexCoord[{}];", location, texCoordSetCount));
+        location += texCoordSetCount;
+    }
+
     return outputs;
 }
 
@@ -123,9 +146,25 @@ vector<string> SampleViewerShader::getFragmentShaderInputsFor(const MaterialPtr&
     uint32_t location = 1;
 
     const VertexFormat& vertexFormat = material->getVertexFormat();
+
+    if (vertexFormat.containsColors3()) {
+        inputs.push_back(fmt::format("layout(location = {}) in vec3 inColor;", location));
+        location++;
+    }
+    else if (vertexFormat.containsColors4()) {
+        inputs.push_back(fmt::format("layout(location = {}) in vec4 inColor;", location));
+        location++;
+    }
+
     if (vertexFormat.containsNormals()) {
         inputs.push_back(fmt::format("layout(location = {}) in vec3 inNormal;", location));
         location++;
+    }
+
+    uint32_t texCoordSetCount = vertexFormat.getTexCoordSetCount();
+    if (texCoordSetCount > 0) {
+        inputs.push_back(fmt::format("layout(location = {}) in vec2 inTexCoord[{}];", location, texCoordSetCount));
+        location += texCoordSetCount;
     }
 
     return inputs;

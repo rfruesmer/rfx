@@ -367,6 +367,7 @@ lib/
 *.ldb
 
 # 3rd party artwork
+assets/environments/
 assets/models/
 assets/samples/
 assets/textures/

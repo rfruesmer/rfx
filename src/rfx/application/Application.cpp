@@ -72,7 +72,7 @@ void Application::initGlfw()
 void Application::createWindow()
 {
     window_ = make_unique<Window>();
-    window_->create("rfx", 1200, 675);
+    window_->create("rfx", 1920, 1080);
     window_->addListener(shared_from_this());
 
     glfwSetInputMode(window_->getGlfwWindow(), GLFW_STICKY_KEYS, GLFW_TRUE);

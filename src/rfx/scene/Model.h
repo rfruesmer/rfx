@@ -14,7 +14,7 @@ namespace rfx {
 class Model
 {
 public:
-    Model();
+    explicit Model(std::string id);
 
     void compile();
 
@@ -51,6 +51,8 @@ public:
 
 private:
     void compile(const std::shared_ptr<ModelNode>& sceneNode);
+
+    std::string id;
 
     std::shared_ptr<ModelNode> rootNode_;
     std::vector<std::shared_ptr<ModelNode>> geometryNodes;

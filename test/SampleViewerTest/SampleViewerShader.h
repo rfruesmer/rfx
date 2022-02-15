@@ -9,9 +9,9 @@ class SampleViewerShader : public TestMaterialShader
 {
 public:
     struct MaterialData {
-        glm::vec4 baseColor { 0.0f };
-        float metallicFactor = 0.5f;
-        float roughnessFactor = 0.5f;
+        glm::vec4 baseColorFactor { 1.0f };
+        float metallicFactor = 1.0f;
+        float roughnessFactor = 1.0f;
         float pad0;
         float pad1;
     };

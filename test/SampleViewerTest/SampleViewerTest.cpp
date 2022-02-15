@@ -12,7 +12,8 @@ using namespace std::filesystem;
 // ---------------------------------------------------------------------------------------------------------------------
 
 static const char* models[] = {
-    "Box"
+    "Box",
+    "BoxTextured"
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -67,7 +68,7 @@ void SampleViewerTest::loadScene()
 
     createLights();
 
-    camera->setPosition({ 0.0f, 2.0f, 10.0f });
+    camera->setPosition({ 0.0f, 0.0f, 2.0f });
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -114,8 +115,7 @@ void SampleViewerTest::createSceneResources()
 void SampleViewerTest::createSkyBox()
 {
     const path skyBoxModelPath = getAssetsDirectory() / "models/vulkan_asset_pack_gltf/models/cube.gltf";
-//    const path skyBoxCubeMapPath = getAssetsDirectory() / "models/vulkan_asset_pack_gltf/textures/cubemap_yokohama_rgba.ktx";
-    const path skyBoxCubeMapPath = getAssetsDirectory() / "textures/environments/Etnies_Park_Center_3k.hdr";
+    const path skyBoxCubeMapPath = getAssetsDirectory() / "environments/footprint_court.hdr";
     const path skyBoxVertexShaderPath = getAssetsDirectory() / "shaders/skybox.vert";
     const path skyBoxFragmentShaderPath = getAssetsDirectory() / "shaders/skybox.frag";
 

@@ -41,9 +41,10 @@ public:
             : graphicsDevice_(move(graphicsDevice)) {}
 
     const shared_ptr<Model>& load(const path& scenePath);
-    void clear();
+    void clear(const string& newModelId);
     VertexFormat getVertexFormatFrom(const tinygltf::Primitive& firstPrimitive);
     void checkVertexFormatConsistency();
+    void setId(const string& id);
     void loadImages();
     static vector<std::byte> convertToRGBA(const tinygltf::Image& gltfImage);
     void loadSamplers();
@@ -87,21 +88,21 @@ public:
     shared_ptr<GraphicsDevice> graphicsDevice_;
     tinygltf::Model gltfModel_;
     VertexFormat vertexFormat_;
-    shared_ptr<Model> scene_;
+    ModelPtr scene_;
     uint32_t vertexCount_ = 0;
     vector<float> vertexData_;
     vector<uint32_t> indices_;
     vector<SamplerDesc> samplers_;
-    vector<shared_ptr<Image>> images_;
+    vector<ImagePtr> images_;
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const shared_ptr<Model>& ModelLoader::ModelLoaderImpl::load(const path& scenePath)
+const ModelPtr& ModelLoader::ModelLoaderImpl::load(const path& scenePath)
 {
     RFX_CHECK_STATE(exists(scenePath), "File not found: " + scenePath.string());
 
-    clear();
+    clear(scenePath.string());
 
 
     tinygltf::TinyGLTF gltfContext;
@@ -137,12 +138,12 @@ const shared_ptr<Model>& ModelLoader::ModelLoaderImpl::load(const path& scenePat
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ModelLoader::ModelLoaderImpl::clear()
+void ModelLoader::ModelLoaderImpl::clear(const string& newModelId)
 {
     gltfModel_ = {};
 
     scene_.reset();
-    scene_ = make_shared<Model>();
+    scene_ = make_shared<Model>(newModelId);
     vertexCount_ = 0;
     vertexData_.clear();
     indices_.clear();

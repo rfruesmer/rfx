@@ -19,10 +19,7 @@
 
 precision highp float;
 
-#include <functions.glsl>
 #include <punctual.glsl>
-#include <brdf.glsl>
-#include <tonemapping.glsl>
 
 layout(set = 0, binding = 0)
 uniform SceneData {
@@ -40,7 +37,7 @@ uniform ShaderData {
 
 layout(set = 2, binding = 0)
 uniform MaterialData {
-    vec4 baseColor;
+    vec4 baseColorFactor;
     float metallicFactor;
     float roughnessFactor;
     float pad0;
@@ -56,6 +53,13 @@ uniform MeshData {
 layout(location = 0) in vec3 inPosition;
 
 layout(location = 0) out vec4 outColor;
+
+#include <tonemapping.glsl>
+#include <textures.glsl>
+#include <functions.glsl>
+#include <brdf.glsl>
+#include <ibl.glsl>
+#include <material_info.glsl>
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -101,43 +105,6 @@ struct NormalInfo {
     vec3 n;    // Shading normal
     vec3 ntex; // Normal from texture, scaling is accounted for.
 };
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-vec4 getVertexColor()
-{
-    vec4 color = vec4(1.0);
-
-#ifdef HAS_COLOR_0_VEC3
-    color.rgb = v_Color.rgb;
-#endif
-#ifdef HAS_COLOR_0_VEC4
-    color = v_Color;
-#endif
-
-    return color;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-vec4 getBaseColor()
-{
-    vec4 baseColor = vec4(1);
-
-#if defined(MATERIAL_SPECULARGLOSSINESS)
-    baseColor = u_DiffuseFactor;
-#elif defined(MATERIAL_METALLICROUGHNESS)
-    baseColor = material.baseColor;
-#endif
-
-#if defined(MATERIAL_SPECULARGLOSSINESS) && defined(HAS_DIFFUSE_MAP)
-    baseColor *= texture(u_DiffuseSampler, getDiffuseUV());
-#elif defined(MATERIAL_METALLICROUGHNESS) && defined(HAS_BASE_COLOR_MAP)
-    baseColor *= texture(u_BaseColorSampler, getBaseColorUV());
-#endif
-
-    return baseColor * getVertexColor();
-}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
