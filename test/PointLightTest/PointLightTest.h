@@ -2,6 +2,7 @@
 
 #include "TestApplication.h"
 #include "PointLightShader.h"
+#include "rfx/scene/Scene.h"
 
 
 namespace rfx {
@@ -20,9 +21,9 @@ protected:
 
 private:
     void loadScene();
-    void buildRenderGraph();
+    void buildRenderGraph() override;
 
-    ModelPtr scene;
+    ScenePtr scene;
     PointLight light { "pointLight" };
 };
 

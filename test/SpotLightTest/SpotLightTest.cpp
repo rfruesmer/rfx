@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
 #include "SpotLightTest.h"
-#include "rfx/scene/ModelLoader.h"
+#include "rfx/scene/SceneLoader.h"
 #include "rfx/common/Logger.h"
 
 
@@ -52,8 +52,8 @@ void SpotLightTest::loadScene()
 {
     const path scenePath = getAssetsDirectory() / "models/plane/plane_with_spotlight.gltf";
 
-    ModelLoader modelLoader(graphicsDevice);
-    scene = modelLoader.load(scenePath);
+    SceneLoader sceneLoader(graphicsDevice);
+    scene = sceneLoader.load(scenePath);
 
     camera->setPosition({0.0f, 1.0f, 2.0f});
 }

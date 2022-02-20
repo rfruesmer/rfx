@@ -2,6 +2,7 @@
 
 #include "TestApplication.h"
 #include "VertexDiffuseShader.h"
+#include "rfx/scene/Scene.h"
 
 
 namespace rfx {
@@ -22,7 +23,7 @@ private:
     void loadScene();
     void buildRenderGraph();
 
-    ModelPtr scene;
+    ScenePtr scene;
     PointLight light { "pointLight" };
 };
 

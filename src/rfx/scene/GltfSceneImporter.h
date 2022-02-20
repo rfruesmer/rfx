@@ -1,7 +1,7 @@
-#include "rfx/pch.h"
-#include "rfx/scene/ModelLoader.h"
+#include "rfx/scene/SceneImporter.h"
 #include "rfx/scene/PointLight.h"
 #include "rfx/scene/SpotLight.h"
+#include "rfx/scene/LightNode.h"
 
 #include <nlohmann/json.hpp>
 #define TINYGLTF_IMPLEMENTATION
@@ -33,18 +33,19 @@ struct GLTFLightProperties {
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-class ModelLoader::ModelLoaderImpl
+class GltfSceneImporter : public SceneImporter
 {
 public:
-    explicit ModelLoaderImpl(
-        shared_ptr<GraphicsDevice>&& graphicsDevice)
+    explicit GltfSceneImporter(
+        GraphicsDevicePtr graphicsDevice)
             : graphicsDevice_(move(graphicsDevice)) {}
 
-    const shared_ptr<Model>& load(const path& scenePath);
-    void clear(const string& newModelId);
-    VertexFormat getVertexFormatFrom(const tinygltf::Primitive& firstPrimitive);
+    ScenePtr import(const path& scenePath) override;
+
+private:
+    void clear(const string& sceneId);
+    static VertexFormat getVertexFormatFrom(const tinygltf::Primitive& primitive);
     void checkVertexFormatConsistency();
-    void setId(const string& id);
     void loadImages();
     static vector<std::byte> convertToRGBA(const tinygltf::Image& gltfImage);
     void loadSamplers();
@@ -71,13 +72,19 @@ public:
         uint32_t destIndex);
     uint32_t appendTangents(const float* tangentsBuffer, uint32_t vertexIndex, uint32_t destIndex);
     uint32_t loadIndices(const tinygltf::Primitive& glTFPrimitive, uint32_t vertexStart);
+
     void loadLights();
     void loadLight(const tinygltf::Value::Object& gltfLight);
     shared_ptr<Light> loadPointLight(const tinygltf::Value::Object& gltfLight);
     GLTFLightProperties getLightProperties(const tinygltf::Value::Object& gltfLight);
     shared_ptr<Light> loadSpotLight(const tinygltf::Value::Object& gltfLight);
-    void loadNodes();
-    void loadNode(
+    void loadLightNodes();
+    void loadLightNode(
+        const tinygltf::Node& gltfNode,
+        const LightNodePtr& parentNode);
+
+    void loadModelNodes();
+    void loadModelNode(
         const tinygltf::Node& node,
         const shared_ptr<ModelNode>& parentNode);
     static mat4 getLocalTransformOf(const tinygltf::Node& gltfNode) ;
@@ -88,7 +95,9 @@ public:
     shared_ptr<GraphicsDevice> graphicsDevice_;
     tinygltf::Model gltfModel_;
     VertexFormat vertexFormat_;
-    ModelPtr scene_;
+
+    ScenePtr scene_;
+    ModelPtr model_;
     uint32_t vertexCount_ = 0;
     vector<float> vertexData_;
     vector<uint32_t> indices_;
@@ -98,11 +107,12 @@ public:
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const ModelPtr& ModelLoader::ModelLoaderImpl::load(const path& scenePath)
+ScenePtr GltfSceneImporter::import(const path& scenePath)
 {
     RFX_CHECK_STATE(exists(scenePath), "File not found: " + scenePath.string());
 
-    clear(scenePath.string());
+    const string sceneId = scenePath.filename().string();
+    clear(sceneId);
 
 
     tinygltf::TinyGLTF gltfContext;
@@ -127,9 +137,12 @@ const ModelPtr& ModelLoader::ModelLoaderImpl::load(const path& scenePath)
     loadMaterials();
     loadMeshes();
     loadLights();
-    loadNodes();
+    loadLightNodes();
+    loadModelNodes();
     buildVertexBuffer();
     buildIndexBuffer();
+
+    scene_->add(model_);
 
     scene_->compile();
 
@@ -138,12 +151,12 @@ const ModelPtr& ModelLoader::ModelLoaderImpl::load(const path& scenePath)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ModelLoader::ModelLoaderImpl::clear(const string& newModelId)
+void GltfSceneImporter::clear(const string& sceneId)
 {
     gltfModel_ = {};
 
-    scene_.reset();
-    scene_ = make_shared<Model>(newModelId);
+    scene_ = make_shared<Scene>(sceneId);
+    model_ = make_shared<Model>(sceneId);
     vertexCount_ = 0;
     vertexData_.clear();
     indices_.clear();
@@ -153,34 +166,34 @@ void ModelLoader::ModelLoaderImpl::clear(const string& newModelId)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-VertexFormat ModelLoader::ModelLoaderImpl::getVertexFormatFrom(const tinygltf::Primitive& firstPrimitive)
+VertexFormat GltfSceneImporter::getVertexFormatFrom(const tinygltf::Primitive& primitive)
 {
     unsigned int formatMask = 0;
     unsigned int texCoordSetCount = 0;
 
-    if (firstPrimitive.attributes.contains("POSITION")) {
+    if (primitive.attributes.contains("POSITION")) {
         formatMask |= VertexFormat::COORDINATES;
     }
-    if (firstPrimitive.attributes.contains("NORMAL")) {
+    if (primitive.attributes.contains("NORMAL")) {
         formatMask |= VertexFormat::NORMALS;
     }
-    if (firstPrimitive.attributes.contains("TEXCOORD_0")) {
+    if (primitive.attributes.contains("TEXCOORD_0")) {
         formatMask |= VertexFormat::TEXCOORDS;
         texCoordSetCount = 1;
     }
-    if (firstPrimitive.attributes.contains("TEXCOORD_1")) {
+    if (primitive.attributes.contains("TEXCOORD_1")) {
         texCoordSetCount++;
     }
-    if (firstPrimitive.attributes.contains("TEXCOORD_2")) {
+    if (primitive.attributes.contains("TEXCOORD_2")) {
         texCoordSetCount++;
     }
-    if (firstPrimitive.attributes.contains("TEXCOORD_3")) {
+    if (primitive.attributes.contains("TEXCOORD_3")) {
         texCoordSetCount++;
     }
-    if (firstPrimitive.attributes.contains("TEXCOORD_4")) {
+    if (primitive.attributes.contains("TEXCOORD_4")) {
         texCoordSetCount++;
     }
-    if (firstPrimitive.attributes.contains("TANGENT")) {
+    if (primitive.attributes.contains("TANGENT")) {
         formatMask |= VertexFormat::TANGENTS;
     }
 
@@ -189,7 +202,7 @@ VertexFormat ModelLoader::ModelLoaderImpl::getVertexFormatFrom(const tinygltf::P
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ModelLoader::ModelLoaderImpl::checkVertexFormatConsistency()
+void GltfSceneImporter::checkVertexFormatConsistency()
 {
     for (const auto& mesh : gltfModel_.meshes) {
         for (const auto& primitive : mesh.primitives) {
@@ -201,7 +214,7 @@ void ModelLoader::ModelLoaderImpl::checkVertexFormatConsistency()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ModelLoader::ModelLoaderImpl::loadImages()
+void GltfSceneImporter::loadImages()
 {
     for (const auto& gltfImage : gltfModel_.images) {
         vector<std::byte> imageData;
@@ -231,7 +244,7 @@ void ModelLoader::ModelLoaderImpl::loadImages()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-vector<std::byte> ModelLoader::ModelLoaderImpl::convertToRGBA(const tinygltf::Image& gltfImage)
+vector<std::byte> GltfSceneImporter::convertToRGBA(const tinygltf::Image& gltfImage)
 {
     const unsigned char* rgbData = gltfImage.image.data();
 
@@ -293,14 +306,14 @@ SamplerDesc toSamplerDesc(const tinygltf::Sampler& gltfSampler)
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ModelLoader::ModelLoaderImpl::loadSamplers()
+void GltfSceneImporter::loadSamplers()
 {
     ranges::transform(gltfModel_.samplers, back_inserter(samplers_), toSamplerDesc);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ModelLoader::ModelLoaderImpl::loadTextures()
+void GltfSceneImporter::loadTextures()
 {
     for (const auto& texture : gltfModel_.textures) {
         loadTexture(texture);
@@ -309,7 +322,7 @@ void ModelLoader::ModelLoaderImpl::loadTextures()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ModelLoader::ModelLoaderImpl::loadTexture(const tinygltf::Texture& gltfTexture)
+void GltfSceneImporter::loadTexture(const tinygltf::Texture& gltfTexture)
 {
     const shared_ptr<Image>& image = images_[gltfTexture.source];
     const ImageDesc imageDesc = image->getDesc();
@@ -320,12 +333,12 @@ void ModelLoader::ModelLoaderImpl::loadTexture(const tinygltf::Texture& gltfText
         imageDesc.mipLevels);
     const SamplerDesc& samplerDesc = samplers_[gltfTexture.sampler];
 
-    scene_->addTexture(graphicsDevice_->createTexture2D(image, imageView, samplerDesc));
+    model_->addTexture(graphicsDevice_->createTexture2D(image, imageView, samplerDesc));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ModelLoader::ModelLoaderImpl::loadMaterials()
+void GltfSceneImporter::loadMaterials()
 {
     for (const auto& gltfMaterial : gltfModel_.materials) {
         loadMaterial(gltfMaterial);
@@ -334,7 +347,7 @@ void ModelLoader::ModelLoaderImpl::loadMaterials()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ModelLoader::ModelLoaderImpl::loadMaterial(const tinygltf::Material& glTFMaterial) const
+void GltfSceneImporter::loadMaterial(const tinygltf::Material& glTFMaterial) const
 {
     tinygltf::Value::Object extras = glTFMaterial.extras.Get<tinygltf::Value::Object>();
     const string shaderId = extras.contains("shader")
@@ -352,26 +365,26 @@ void ModelLoader::ModelLoaderImpl::loadMaterial(const tinygltf::Material& glTFMa
     material->setBaseColorFactor(make_vec4(gltfMetallicRoughness.baseColorFactor.data()));
     if (gltfMetallicRoughness.baseColorTexture.index > -1) {
         material->setBaseColorTexture(
-            scene_->getTexture(gltfMetallicRoughness.baseColorTexture.index),
+            model_->getTexture(gltfMetallicRoughness.baseColorTexture.index),
             gltfMetallicRoughness.baseColorTexture.texCoord);
     }
 
     if (gltfMetallicRoughness.metallicRoughnessTexture.index > -1) {
         material->setMetallicRoughnessTexture(
-            scene_->getTexture(gltfMetallicRoughness.metallicRoughnessTexture.index),
+            model_->getTexture(gltfMetallicRoughness.metallicRoughnessTexture.index),
             gltfMetallicRoughness.metallicRoughnessTexture.texCoord);
     }
     material->setMetallicFactor(static_cast<float>(gltfMetallicRoughness.metallicFactor));
     material->setRoughnessFactor(static_cast<float>(gltfMetallicRoughness.roughnessFactor));
 
     if (glTFMaterial.normalTexture.index > -1) {
-        material->setNormalTexture(scene_->getTexture(glTFMaterial.normalTexture.index),
+        material->setNormalTexture(model_->getTexture(glTFMaterial.normalTexture.index),
         glTFMaterial.normalTexture.texCoord);
     }
 
     if (glTFMaterial.occlusionTexture.index > -1) {
         material->setOcclusionTexture(
-            scene_->getTexture(glTFMaterial.occlusionTexture.index),
+            model_->getTexture(glTFMaterial.occlusionTexture.index),
             glTFMaterial.occlusionTexture.texCoord,
             static_cast<float>(glTFMaterial.occlusionTexture.strength));
     }
@@ -379,16 +392,16 @@ void ModelLoader::ModelLoaderImpl::loadMaterial(const tinygltf::Material& glTFMa
     if (glTFMaterial.emissiveTexture.index > -1) {
         material->setEmissiveFactor(make_vec3(glTFMaterial.emissiveFactor.data()));
         material->setEmissiveTexture(
-            scene_->getTexture(glTFMaterial.emissiveTexture.index),
+            model_->getTexture(glTFMaterial.emissiveTexture.index),
             glTFMaterial.emissiveTexture.texCoord);
     }
 
-    scene_->addMaterial(material);
+    model_->addMaterial(material);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ModelLoader::ModelLoaderImpl::loadMeshes()
+void GltfSceneImporter::loadMeshes()
 {
     prepareGeometryBuffers();
 
@@ -399,7 +412,7 @@ void ModelLoader::ModelLoaderImpl::loadMeshes()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ModelLoader::ModelLoaderImpl::prepareGeometryBuffers()
+void GltfSceneImporter::prepareGeometryBuffers()
 {
     uint32_t vertexCount = 0;
     uint32_t indexCount = 0;
@@ -427,7 +440,7 @@ void ModelLoader::ModelLoaderImpl::prepareGeometryBuffers()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ModelLoader::ModelLoaderImpl::loadMesh(const tinygltf::Mesh& gltfMesh)
+void GltfSceneImporter::loadMesh(const tinygltf::Mesh& gltfMesh)
 {
     auto mesh = make_unique<Mesh>();
 
@@ -442,16 +455,16 @@ void ModelLoader::ModelLoaderImpl::loadMesh(const tinygltf::Mesh& gltfMesh)
         mesh->addSubMesh({
             firstIndex,
             indexCount,
-            scene_->getMaterial(glTFPrimitive.material)
+            model_->getMaterial(glTFPrimitive.material)
         });
     }
 
-    scene_->addMesh(move(mesh));
+    model_->addMesh(move(mesh));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ModelLoader::ModelLoaderImpl::loadVertices(const tinygltf::Primitive& glTFPrimitive)
+void GltfSceneImporter::loadVertices(const tinygltf::Primitive& glTFPrimitive)
 {
     const tinygltf::Accessor& accessor = gltfModel_.accessors[glTFPrimitive.attributes.find("POSITION")->second];
     const uint32_t vertexCount = accessor.count;
@@ -507,7 +520,7 @@ void ModelLoader::ModelLoaderImpl::loadVertices(const tinygltf::Primitive& glTFP
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-const float* ModelLoader::ModelLoaderImpl::getBufferData(
+const float* GltfSceneImporter::getBufferData(
     const tinygltf::Primitive& glTFPrimitive,
     const string& attribute)
 {
@@ -523,7 +536,7 @@ const float* ModelLoader::ModelLoaderImpl::getBufferData(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ModelLoader::ModelLoaderImpl::appendVertexData(
+void GltfSceneImporter::appendVertexData(
     uint32_t vertexCount,
     const float* positionBuffer,
     const float* normalsBuffer,
@@ -544,7 +557,7 @@ void ModelLoader::ModelLoaderImpl::appendVertexData(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-uint32_t ModelLoader::ModelLoaderImpl::appendCoordinates(
+uint32_t GltfSceneImporter::appendCoordinates(
     const float* positionBuffer,
     uint32_t vertexIndex,
     uint32_t destIndex)
@@ -556,7 +569,7 @@ uint32_t ModelLoader::ModelLoaderImpl::appendCoordinates(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-uint32_t ModelLoader::ModelLoaderImpl::appendNormals(
+uint32_t GltfSceneImporter::appendNormals(
     const float* normalsBuffer,
     uint32_t vertexIndex,
     uint32_t destIndex)
@@ -573,7 +586,7 @@ uint32_t ModelLoader::ModelLoaderImpl::appendNormals(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-uint32_t ModelLoader::ModelLoaderImpl::appendTexCoords(
+uint32_t GltfSceneImporter::appendTexCoords(
     const float** texCoordsBuffers,
     const uint32_t vertexIndex,
     const uint32_t destIndex)
@@ -594,7 +607,7 @@ uint32_t ModelLoader::ModelLoaderImpl::appendTexCoords(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-uint32_t ModelLoader::ModelLoaderImpl::appendTangents(
+uint32_t GltfSceneImporter::appendTangents(
     const float* tangentsBuffer,
     uint32_t vertexIndex,
     uint32_t destIndex)
@@ -609,7 +622,7 @@ uint32_t ModelLoader::ModelLoaderImpl::appendTangents(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-uint32_t ModelLoader::ModelLoaderImpl::loadIndices(
+uint32_t GltfSceneImporter::loadIndices(
     const tinygltf::Primitive& glTFPrimitive,
     uint32_t vertexStart)
 {
@@ -654,7 +667,7 @@ uint32_t ModelLoader::ModelLoaderImpl::loadIndices(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ModelLoader::ModelLoaderImpl::loadLights()
+void GltfSceneImporter::loadLights()
 {
     if (!gltfModel_.extensions.contains("KHR_lights_punctual")) {
         return;
@@ -669,7 +682,7 @@ void ModelLoader::ModelLoaderImpl::loadLights()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ModelLoader::ModelLoaderImpl::loadLight(const tinygltf::Value::Object& gltfLight)
+void GltfSceneImporter::loadLight(const tinygltf::Value::Object& gltfLight)
 {
     shared_ptr<Light> light;
 
@@ -689,7 +702,7 @@ void ModelLoader::ModelLoaderImpl::loadLight(const tinygltf::Value::Object& gltf
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-shared_ptr<Light> ModelLoader::ModelLoaderImpl::loadPointLight(const tinygltf::Value::Object& gltfLight)
+shared_ptr<Light> GltfSceneImporter::loadPointLight(const tinygltf::Value::Object& gltfLight)
 {
     const GLTFLightProperties lightProperties = getLightProperties(gltfLight);
 
@@ -703,7 +716,7 @@ shared_ptr<Light> ModelLoader::ModelLoaderImpl::loadPointLight(const tinygltf::V
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-GLTFLightProperties ModelLoader::ModelLoaderImpl::getLightProperties(const tinygltf::Value::Object& gltfLight)
+GLTFLightProperties GltfSceneImporter::getLightProperties(const tinygltf::Value::Object& gltfLight)
 {
     GLTFLightProperties lightProperties;
 
@@ -739,7 +752,7 @@ GLTFLightProperties ModelLoader::ModelLoaderImpl::getLightProperties(const tinyg
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-shared_ptr<Light> ModelLoader::ModelLoaderImpl::loadSpotLight(const tinygltf::Value::Object& gltfLight)
+shared_ptr<Light> GltfSceneImporter::loadSpotLight(const tinygltf::Value::Object& gltfLight)
 {
     const GLTFLightProperties lightProperties = getLightProperties(gltfLight);
 
@@ -754,43 +767,73 @@ shared_ptr<Light> ModelLoader::ModelLoaderImpl::loadSpotLight(const tinygltf::Va
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ModelLoader::ModelLoaderImpl::loadNodes()
+void GltfSceneImporter::loadLightNodes()
+{
+    const tinygltf::Scene& gltfScene = gltfModel_.scenes[0];
+    for (const auto nodeIndex : gltfScene.nodes) {
+        const tinygltf::Node& node = gltfModel_.nodes[nodeIndex];
+        loadLightNode(node, scene_->getLightsRootNode());
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void GltfSceneImporter::loadLightNode(
+    const tinygltf::Node& gltfNode,
+    const LightNodePtr& parentNode)
+{
+    auto node = make_shared<LightNode>(parentNode);
+    node->setLocalTransform(getLocalTransformOf(gltfNode));
+
+    if (gltfNode.extensions.contains("KHR_lights_punctual")) {
+        const auto& lightExtension = gltfNode.extensions.find("KHR_lights_punctual")->second.Get<tinygltf::Value::Object>();
+        int lightIndex = lightExtension.find("light")->second.GetNumberAsInt();
+        node->addLight(scene_->getLight(lightIndex));
+    }
+
+    parentNode->addChild(node);
+
+    for (int childIndex : gltfNode.children) {
+        loadLightNode(gltfModel_.nodes[childIndex], node);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void GltfSceneImporter::loadModelNodes()
 {
     RFX_CHECK_STATE(gltfModel_.scenes.size() == 1, "Multiple scenes not supported yet");
 
     const tinygltf::Scene& gltfScene = gltfModel_.scenes[0];
     for (const auto nodeIndex : gltfScene.nodes) {
         const tinygltf::Node& node = gltfModel_.nodes[nodeIndex];
-        loadNode(node, scene_->getRootNode());
+        loadModelNode(node, model_->getRootNode());
     }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ModelLoader::ModelLoaderImpl::loadNode(
+void GltfSceneImporter::loadModelNode(
     const tinygltf::Node& gltfNode,
     const shared_ptr<ModelNode>& parentNode)
 {
     auto node = make_shared<ModelNode>(parentNode);
     node->setLocalTransform(getLocalTransformOf(gltfNode));
+
     if (gltfNode.mesh > -1) {
-        node->addMesh(scene_->getMesh(gltfNode.mesh));
+        node->addMesh(model_->getMesh(gltfNode.mesh));
     }
-    if (gltfNode.extensions.contains("KHR_lights_punctual")) {
-        const auto& lightExtension = gltfNode.extensions.find("KHR_lights_punctual")->second.Get<tinygltf::Value::Object>();
-        int lightIndex = lightExtension.find("light")->second.GetNumberAsInt();
-        node->addLight(scene_->getLight(lightIndex));
-    }
+
     parentNode->addChild(node);
 
     for (int childIndex : gltfNode.children) {
-        loadNode(gltfModel_.nodes[childIndex], node);
+        loadModelNode(gltfModel_.nodes[childIndex], node);
     }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-mat4 ModelLoader::ModelLoaderImpl::getLocalTransformOf(const tinygltf::Node& gltfNode)
+mat4 GltfSceneImporter::getLocalTransformOf(const tinygltf::Node& gltfNode)
 {
     mat4 translation { 1.0f };
     mat4 scale { 1.0f };
@@ -819,12 +862,12 @@ mat4 ModelLoader::ModelLoaderImpl::getLocalTransformOf(const tinygltf::Node& glt
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ModelLoader::ModelLoaderImpl::buildVertexBuffer()
+void GltfSceneImporter::buildVertexBuffer()
 {
     const size_t vertexDataSize = vertexData_.size() * sizeof(float);
 
     shared_ptr<VertexBuffer> vertexBuffer = graphicsDevice_->createVertexBuffer(vertexCount_, vertexFormat_);
-    scene_->setVertexBuffer(vertexBuffer);
+    model_->setVertexBuffer(vertexBuffer);
     graphicsDevice_->bind(vertexBuffer);
 
     shared_ptr<Buffer> stagingBuffer = graphicsDevice_->createBuffer(
@@ -851,7 +894,7 @@ void ModelLoader::ModelLoaderImpl::buildVertexBuffer()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ModelLoader::ModelLoaderImpl::buildIndexBuffer()
+void GltfSceneImporter::buildIndexBuffer()
 {
     const VkDeviceSize bufferSize = indices_.size() * sizeof(uint32_t);
     shared_ptr<Buffer> stagingBuffer = graphicsDevice_->createBuffer(
@@ -866,7 +909,7 @@ void ModelLoader::ModelLoaderImpl::buildIndexBuffer()
     graphicsDevice_->unmap(stagingBuffer);
 
     shared_ptr<IndexBuffer> indexBuffer = graphicsDevice_->createIndexBuffer(indices_.size(), VK_INDEX_TYPE_UINT32);
-    scene_->setIndexBuffer(indexBuffer);
+    model_->setIndexBuffer(indexBuffer);
 
     graphicsDevice_->bind(indexBuffer);
 
@@ -879,21 +922,6 @@ void ModelLoader::ModelLoaderImpl::buildIndexBuffer()
     graphicsDevice_->getGraphicsQueue()->flush(commandBuffer);
 
     graphicsDevice_->destroyCommandBuffer(commandBuffer, graphicsCommandPool);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-// #####################################################################################################################
-// ---------------------------------------------------------------------------------------------------------------------
-
-ModelLoader::ModelLoader(shared_ptr<GraphicsDevice> graphicsDevice)
-    : pimpl_(new ModelLoaderImpl(move(graphicsDevice)),
-        [](ModelLoaderImpl* pimpl) { delete pimpl; }) {}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-const shared_ptr<Model>& ModelLoader::load(const path& scenePath)
-{
-    return pimpl_->load(scenePath);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

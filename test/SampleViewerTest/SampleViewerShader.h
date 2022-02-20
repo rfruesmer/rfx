@@ -61,4 +61,6 @@ private:
     ShaderData data {};
 };
 
+using SampleViewerShaderPtr = std::shared_ptr<SampleViewerShader>;
+
 } // namespace rfx

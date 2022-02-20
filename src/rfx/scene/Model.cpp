@@ -29,7 +29,7 @@ void Model::compile(const shared_ptr<ModelNode>& sceneNode)
     }
 
     for (const auto& childNode : sceneNode->getChildren()) {
-        compile(childNode);
+        compile(static_pointer_cast<ModelNode>(childNode));
     }
 }
 
@@ -164,34 +164,6 @@ const shared_ptr<Texture2D>& Model::getTexture(size_t index) const
 const vector<shared_ptr<Texture2D>>& Model::getTextures() const
 {
     return textures_;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-void Model::addLight(const LightPtr& light)
-{
-    lights_.push_back(light);
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-const LightPtr& Model::getLight(size_t index) const
-{
-    return lights_[index];
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-const vector<LightPtr>& Model::getLights() const
-{
-    return lights_;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-uint32_t Model::getLightCount() const
-{
-    return lights_.size();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -44,11 +44,6 @@ public:
     [[nodiscard]] const std::shared_ptr<Texture2D>& getTexture(size_t index) const;
     [[nodiscard]] const std::vector<std::shared_ptr<Texture2D>>& getTextures() const;
 
-    void addLight(const LightPtr& light);
-    [[nodiscard]] const LightPtr& getLight(size_t index) const;
-    [[nodiscard]] const std::vector<LightPtr>& getLights() const;
-    [[nodiscard]] uint32_t getLightCount() const;
-
 private:
     void compile(const std::shared_ptr<ModelNode>& sceneNode);
 
@@ -63,7 +58,6 @@ private:
     std::vector<std::shared_ptr<Mesh>> meshes_;
     std::vector<std::shared_ptr<Material>> materials_;
     std::vector<std::shared_ptr<Texture2D>> textures_;
-    std::vector<LightPtr> lights_;
 };
 
 using ModelPtr = std::shared_ptr<Model>;

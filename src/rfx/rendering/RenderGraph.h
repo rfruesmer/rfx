@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rfx/scene/Scene.h"
 #include "rfx/scene/Model.h"
 #include "rfx/scene/MaterialShader.h"
 #include "rfx/rendering/ShaderNode.h"
@@ -16,6 +17,10 @@ public:
     RenderGraph(
         GraphicsDevicePtr graphicsDevice,
         VkDescriptorSet sceneDescriptorSet);
+
+    void add(
+        const ScenePtr& scene,
+        const std::unordered_map<MaterialShaderPtr, std::vector<MaterialPtr>>& materialShaderMap);
 
     void add(
         const ModelPtr& model,

@@ -15,6 +15,18 @@ RenderGraph::RenderGraph(
 // ---------------------------------------------------------------------------------------------------------------------
 
 void RenderGraph::add(
+    const ScenePtr& scene,
+    const unordered_map<MaterialShaderPtr, std::vector<MaterialPtr>>& materialShaderMap)
+{
+    ranges::for_each(scene->getModels(),
+        [this, materialShaderMap](const ModelPtr& model) {
+            add(model, materialShaderMap);
+        });
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void RenderGraph::add(
     const ModelPtr& model,
     const unordered_map<MaterialShaderPtr, vector<MaterialPtr>>& materialShaderMap)
 {

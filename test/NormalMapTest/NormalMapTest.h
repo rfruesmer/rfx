@@ -2,6 +2,7 @@
 
 #include "TestApplication.h"
 #include "NormalMapShader.h"
+#include "rfx/scene/Scene.h"
 
 
 namespace rfx {
@@ -21,9 +22,9 @@ protected:
 
 private:
     void loadScene();
-    void buildRenderGraph();
+    void buildRenderGraph() override;
 
-    ModelPtr scene;
+    ScenePtr scene;
     PointLightPtr light;
     std::shared_ptr<NormalMapShader> shader;
     bool useNormalMap = true;

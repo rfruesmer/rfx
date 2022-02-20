@@ -131,6 +131,16 @@ void TestApplication::createSceneDescriptorSet()
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+void TestApplication::createMeshDataBuffers(const ScenePtr& scene)
+{
+    ranges::for_each(scene->getModels(),
+        [this](const ModelPtr& model) {
+            createMeshDataBuffers(model);
+        });
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 void TestApplication::createMeshDataBuffers(const ModelPtr& model)
 {
     for (const auto& node : model->getGeometryNodes()) {
@@ -185,6 +195,16 @@ void TestApplication::createMeshDescriptorSetLayout()
         &meshDescSetLayoutCreateInfo,
         nullptr,
         &meshDescriptorSetLayout_));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::createMeshDescriptorSets(const ScenePtr& scene)
+{
+    ranges::for_each(scene->getModels(),
+        [this](const ModelPtr& model) {
+            createMeshDescriptorSets(model);
+        });
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -640,7 +660,7 @@ void TestApplication::updateSceneDataBuffer()
 // ---------------------------------------------------------------------------------------------------------------------
 
 void TestApplication::createShadersFor(
-    const ModelPtr& model,
+    const ScenePtr& scene,
     const string& defaultShaderId)
 {
     MaterialShaderFactory shaderFactory(
@@ -651,6 +671,20 @@ void TestApplication::createShadersFor(
 
     initShaderFactory(shaderFactory);
 
+    ranges::for_each(scene->getModels(),
+        [this, &shaderFactory](const ModelPtr& model) {
+            createShadersFor(model, shaderFactory);
+        });
+
+    updateShaderData();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void TestApplication::createShadersFor(
+    const ModelPtr& model,
+    MaterialShaderFactory& shaderFactory)
+{
     for (const auto& material : model->getMaterials())
     {
         const MaterialShaderPtr shader = shaderFactory.createShaderFor(material);
@@ -659,8 +693,6 @@ void TestApplication::createShadersFor(
 
         materialShaderMap[shader].push_back(material);
     }
-
-    updateShaderData();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

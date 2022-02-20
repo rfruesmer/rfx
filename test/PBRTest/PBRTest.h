@@ -2,6 +2,7 @@
 
 #include "TestApplication.h"
 #include "PBRShader.h"
+#include "rfx/scene/Scene.h"
 
 
 namespace rfx {
@@ -18,9 +19,9 @@ protected:
 
 private:
     void loadScene();
-    void buildRenderGraph();
+    void buildRenderGraph() override;
 
-    ModelPtr scene;
+    ScenePtr scene;
     PointLightPtr pointLight;
     std::shared_ptr<PBRShader> shader;
 };

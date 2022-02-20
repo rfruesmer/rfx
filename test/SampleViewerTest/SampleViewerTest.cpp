@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
 #include "SampleViewerTest.h"
-#include "rfx/scene/ModelLoader.h"
+#include "rfx/scene/SceneLoader.h"
 #include "rfx/common/Logger.h"
 
 using namespace rfx;
@@ -60,8 +60,9 @@ void SampleViewerTest::loadScene()
 
     scenePath.replace_extension("gltf");
 
-    ModelLoader modelLoader(graphicsDevice);
-    scene = modelLoader.load(scenePath);
+    SceneLoader sceneLoader(graphicsDevice);
+    scene = sceneLoader.load(scenePath);
+
     if (scene->getLightCount() > 0) {
         RFX_THROW_NOT_IMPLEMENTED();
     }

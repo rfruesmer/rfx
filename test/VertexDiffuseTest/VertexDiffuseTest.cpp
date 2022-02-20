@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
 #include "VertexDiffuseTest.h"
-#include "rfx/scene/ModelLoader.h"
+#include "rfx/scene/SceneLoader.h"
 #include "rfx/common/Logger.h"
 
 
@@ -52,8 +52,8 @@ void VertexDiffuseTest::loadScene()
 {
     const path scenePath = getAssetsDirectory() / "models/cubes/cubes.gltf";
 
-    ModelLoader modelLoader(graphicsDevice);
-    scene = modelLoader.load(scenePath);
+    SceneLoader sceneLoader(graphicsDevice);
+    scene = sceneLoader.load(scenePath);
 
     camera->setPosition({0.0f, 0.0f, 20.0f});
 

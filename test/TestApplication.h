@@ -37,14 +37,19 @@ protected:
     void updateSceneDataBuffer();
 
     void createShadersFor(
-        const ModelPtr& model,
+        const ScenePtr& scene,
         const std::string& defaultShaderId);
+    void createShadersFor(
+        const ModelPtr& model,
+        MaterialShaderFactory& shaderFactory);
     virtual void initShaderFactory(MaterialShaderFactory& shaderFactory) = 0;
 
     virtual void createMeshResources();
     void destroyMeshResources();
     void createMeshDescriptorSetLayout();
+    void createMeshDescriptorSets(const ScenePtr& scene);
     void createMeshDescriptorSets(const ModelPtr& model);
+    void createMeshDataBuffers(const ScenePtr& scene);
     void createMeshDataBuffers(const ModelPtr& model);
 
     virtual void createPipelines();

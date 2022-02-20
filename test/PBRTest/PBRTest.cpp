@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
 #include "PBRTest.h"
-#include "rfx/scene/ModelLoader.h"
+#include "rfx/scene/SceneLoader.h"
 #include "rfx/common/Logger.h"
 
 
@@ -45,8 +45,8 @@ void PBRTest::loadScene()
 {
     const path scenePath = getAssetsDirectory() / "models/teapot/teapot.gltf";
 
-    ModelLoader modelLoader(graphicsDevice);
-    scene = modelLoader.load(scenePath);
+    SceneLoader sceneLoader(graphicsDevice);
+    scene = sceneLoader.load(scenePath);
 
     camera->setPosition({ 0.0f, 2.0f, 10.0f });
 

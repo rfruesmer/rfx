@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
 #include "rfx/scene/SkyBox.h"
-#include "rfx/scene/ModelLoader.h"
+#include "rfx/scene/SceneLoader.h"
 #include "rfx/graphics/TextureLoader.h"
 #include "rfx/graphics/ShaderLoader.h"
 #include "rfx/graphics/PipelineUtil.h"
@@ -53,8 +53,10 @@ void SkyBox::create(
 
 void SkyBox::loadModel(const path& modelPath)
 {
-    ModelLoader modelLoader(graphicsDevice);
-    model = modelLoader.load(modelPath); // TODO: merge into scene vertex- & index-buffer
+    SceneLoader sceneLoader(graphicsDevice);
+    ScenePtr scene = sceneLoader.load(modelPath); // TODO: merge into scene vertex- & index-buffer
+
+    model = scene->getModel(0);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

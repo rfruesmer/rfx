@@ -2,6 +2,7 @@
 
 #include "TestApplication.h"
 #include "MultiLightShader.h"
+#include "rfx/scene/Scene.h"
 
 
 namespace rfx {
@@ -22,9 +23,9 @@ protected:
 
 private:
     void loadScene();
-    void buildRenderGraph();
+    void buildRenderGraph() override;
 
-    ModelPtr scene;
+    ScenePtr scene;
     PointLightPtr pointLight;
     SpotLightPtr spotLight;
     std::shared_ptr<MultiLightShader> shader;

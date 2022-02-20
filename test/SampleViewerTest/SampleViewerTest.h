@@ -2,6 +2,7 @@
 
 #include "TestApplication.h"
 #include "SampleViewerShader.h"
+#include "rfx/scene/Scene.h"
 #include "rfx/scene/DirectionalLight.h"
 #include "rfx/scene/SkyBox.h"
 #include "rfx/rendering/SkyBoxNode.h"
@@ -33,8 +34,8 @@ private:
     void reload();
     void destroyScene();
 
-    ModelPtr scene;
-    std::shared_ptr<SampleViewerShader> shader;
+    ScenePtr scene;
+    SampleViewerShaderPtr shader;
 
     SkyBoxPtr skyBox;
     SkyBoxNodePtr skyBoxNode;

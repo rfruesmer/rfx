@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
 #include "TexturedPBRTest.h"
-#include "rfx/scene/ModelLoader.h"
+#include "rfx/scene/SceneLoader.h"
 #include "rfx/common/Logger.h"
 
 
@@ -49,8 +49,8 @@ void TexturedPBRTest::loadScene()
 //    const path scenePath = getAssetsDirectory() / "models/plane/plane_pbr.gltf";
 //    const path scenePath = getAssetsDirectory() / "models/cubes/ice_low.gltf";
 
-    ModelLoader modelLoader(graphicsDevice);
-    scene = modelLoader.load(scenePath);
+    SceneLoader sceneLoader(graphicsDevice);
+    scene = sceneLoader.load(scenePath);
 
     camera->setPosition({ 0.0f, 2.0f, 10.0f });
 

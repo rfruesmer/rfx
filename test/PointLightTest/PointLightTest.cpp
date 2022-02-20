@@ -1,6 +1,6 @@
 #include "rfx/pch.h"
 #include "PointLightTest.h"
-#include "rfx/scene/ModelLoader.h"
+#include "rfx/scene/SceneLoader.h"
 #include "rfx/common/Logger.h"
 
 
@@ -52,10 +52,11 @@ void PointLightTest::loadScene()
 {
     const path scenePath = getAssetsDirectory() / "models/spheres/spheres.gltf";
 
-    ModelLoader modelLoader(graphicsDevice);
-    scene = modelLoader.load(scenePath);
+    SceneLoader sceneLoader(graphicsDevice);
+    scene = sceneLoader.load(scenePath);
 
-    for (const auto& material : scene->getMaterials()) {
+    const ModelPtr& model = scene->getModel(0);
+    for (const auto& material : model->getMaterials()) {
         material->setSpecularFactor({1.0f, 1.0f, 1.0f});
         material->setShininess(100.0f);
     }
