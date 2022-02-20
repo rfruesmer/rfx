@@ -6,7 +6,7 @@ class VertexFormat
 {
 public:
     static const unsigned int COORDINATES = 1;
-    static const unsigned int COLORS_3 = 2; // TODO: consolidate COLORS_3 & COLORS_4
+    static const unsigned int COLORS_3 = 2;
     static const unsigned int COLORS_4 = 4;
     static const unsigned int NORMALS = 8;
     static const unsigned int TEXCOORDS = 16;
@@ -15,9 +15,10 @@ public:
     static const unsigned int MAX_TEXCOORDSET_COUNT = 8;
 
     VertexFormat();
-    explicit VertexFormat(uint32_t formatMask, uint32_t texCoordSetCount = 0);
-    VertexFormat(const VertexFormat& theOther);
+    VertexFormat(uint32_t formatMask, uint32_t texCoordSetCount = 0);
+    explicit VertexFormat(const VertexFormat& theOther);
 
+    [[nodiscard]]
     uint32_t getFormatMask() const;
 
     [[nodiscard]]
@@ -60,3 +61,19 @@ private:
 };
 
 } // namespace rfx
+
+namespace std {
+    template<>
+    struct hash<rfx::VertexFormat>
+    {
+        size_t operator()(const rfx::VertexFormat& item) const
+        {
+            size_t hashValue = 17;
+            hashValue = 31 * hashValue +
+                        std::hash<uint32_t>{}(item.getFormatMask());
+            hashValue = 31 * hashValue +
+                        std::hash<uint32_t>{}(item.getTexCoordSetCount());
+            return hashValue;
+        }
+    };
+}

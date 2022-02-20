@@ -13,7 +13,8 @@ using namespace std::filesystem;
 
 static const char* models[] = {
     "Box",
-    "BoxTextured"
+    "BoxTextured",
+    "VertexColorTest"
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -146,12 +147,13 @@ void SampleViewerTest::createMeshResources()
 
 void SampleViewerTest::updateShaderData()
 {
-    RFX_CHECK_STATE(materialShaderMap.size() == 1, "");
-    RFX_CHECK_STATE(materialShaderMap.begin()->first->getId() == SampleViewerShader::ID, "");
-
-    shader = static_pointer_cast<SampleViewerShader>(materialShaderMap.begin()->first);
-    shader->setLight(0, directionalLight);
-    shader->updateDataBuffer();
+    for (const auto& [shader, material] : materialShaderMap)
+    {
+        RFX_CHECK_STATE(shader->getId() == SampleViewerShader::ID, "");
+        const auto sampleViewerShader = static_pointer_cast<SampleViewerShader>(shader);
+        sampleViewerShader->setLight(0, directionalLight);
+        sampleViewerShader->updateDataBuffer();
+    }
 
     if (skyBox != nullptr) {
         skyBox->updateUniformBuffer(camera);
@@ -255,7 +257,6 @@ void SampleViewerTest::reload()
 
 void SampleViewerTest::destroyScene()
 {
-    shader.reset();
     scene.reset();
     skyBox.reset();
 

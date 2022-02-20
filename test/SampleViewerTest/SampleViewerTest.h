@@ -35,12 +35,11 @@ private:
     void destroyScene();
 
     ScenePtr scene;
-    SampleViewerShaderPtr shader;
 
     SkyBoxPtr skyBox;
     SkyBoxNodePtr skyBoxNode;
 
-    int selectedModelIndex = 0;
+    int selectedModelIndex = 2;
     bool needsReload = false;
     bool imageBasedLighting = false;
     DirectionalLightPtr directionalLight;

@@ -2,6 +2,7 @@
 #include "rfx/scene/PointLight.h"
 #include "rfx/scene/SpotLight.h"
 #include "rfx/scene/LightNode.h"
+#include "rfx/common/Algorithm.h"
 
 #include <nlohmann/json.hpp>
 #define TINYGLTF_IMPLEMENTATION
@@ -18,6 +19,19 @@ using namespace filesystem;
 static const string GLTF_DIRECTIONAL_LIGHT_TYPE = "directional";
 static const string GLTF_POINT_LIGHT_TYPE = "point";
 static const string GLTF_SPOT_LIGHT_TYPE = "spot";
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+struct ModelData
+{
+    VertexFormat vertexFormat;
+    uint32_t vertexCount = 0;
+    vector<float> vertexData;
+    vector<uint32_t> indices;
+
+    vector<uint32_t> gltfMeshIndices;
+    unordered_map<uint32_t, uint32_t> gltfToModelMeshMap;
+};
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -44,15 +58,22 @@ public:
 
 private:
     void clear(const string& sceneId);
-    static VertexFormat getVertexFormatFrom(const tinygltf::Primitive& primitive);
-    void checkVertexFormatConsistency();
+    VertexFormat getVertexFormatFrom(const tinygltf::Primitive& primitive);
+    void checkCompatibility();
+
     void loadImages();
     static vector<std::byte> convertToRGBA(const tinygltf::Image& gltfImage);
     void loadSamplers();
     void loadTextures();
     void loadTexture(const tinygltf::Texture& gltfTexture);
+
+    void loadModels();
+    void buildModelLookupTable();
+    void loadModel();
+
     void loadMaterials();
     void loadMaterial(const tinygltf::Material& glTFMaterial) const;
+
     void loadMeshes();
     void prepareGeometryBuffers();
     void loadMesh(const tinygltf::Mesh& gltfMesh);
@@ -61,10 +82,12 @@ private:
     void appendVertexData(
         uint32_t vertexCount,
         const float* positionBuffer,
+        const float* colorsBuffer,
         const float* normalsBuffer,
         const float** texCoordsBuffers,
         const float* tangentsBuffer);
     uint32_t appendCoordinates(const float* positionBuffer, uint32_t vertexIndex, uint32_t destIndex);
+    uint32_t appendColors(const float* colorsBuffer, uint32_t vertexIndex, uint32_t destIndex);
     uint32_t appendNormals(const float* normalsBuffer, uint32_t vertexIndex, uint32_t destIndex);
     uint32_t appendTexCoords(
         const float** texCoordsBuffers,
@@ -94,15 +117,15 @@ private:
 
     shared_ptr<GraphicsDevice> graphicsDevice_;
     tinygltf::Model gltfModel_;
-    VertexFormat vertexFormat_;
 
-    ScenePtr scene_;
-    ModelPtr model_;
-    uint32_t vertexCount_ = 0;
-    vector<float> vertexData_;
-    vector<uint32_t> indices_;
     vector<SamplerDesc> samplers_;
     vector<ImagePtr> images_;
+    vector<Texture2DPtr> textures_;
+    
+    ScenePtr scene_;
+    ModelPtr currentModel;
+    ModelData currentModelData;
+    vector<ModelData> modelData;
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -111,7 +134,7 @@ ScenePtr GltfSceneImporter::import(const path& scenePath)
 {
     RFX_CHECK_STATE(exists(scenePath), "File not found: " + scenePath.string());
 
-    const string sceneId = scenePath.filename().string();
+    const string sceneId = scenePath.stem().string();
     clear(sceneId);
 
 
@@ -128,21 +151,14 @@ ScenePtr GltfSceneImporter::import(const path& scenePath)
     RFX_CHECK_STATE(!gltfModel_.meshes.empty(), "No meshes");
     RFX_CHECK_STATE(!gltfModel_.meshes[0].primitives.empty(), "Empty mesh");
 
-    vertexFormat_ = getVertexFormatFrom(gltfModel_.meshes[0].primitives[0]);
-    checkVertexFormatConsistency();
+    checkCompatibility();
 
     loadImages();
     loadSamplers();
     loadTextures();
-    loadMaterials();
-    loadMeshes();
     loadLights();
     loadLightNodes();
-    loadModelNodes();
-    buildVertexBuffer();
-    buildIndexBuffer();
-
-    scene_->add(model_);
+    loadModels();
 
     scene_->compile();
 
@@ -155,13 +171,14 @@ void GltfSceneImporter::clear(const string& sceneId)
 {
     gltfModel_ = {};
 
-    scene_ = make_shared<Scene>(sceneId);
-    model_ = make_shared<Model>(sceneId);
-    vertexCount_ = 0;
-    vertexData_.clear();
-    indices_.clear();
     samplers_.clear();
     images_.clear();
+
+    scene_ = make_shared<Scene>(sceneId);
+
+    currentModel.reset();
+    currentModelData = {};
+    modelData.clear();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -174,40 +191,65 @@ VertexFormat GltfSceneImporter::getVertexFormatFrom(const tinygltf::Primitive& p
     if (primitive.attributes.contains("POSITION")) {
         formatMask |= VertexFormat::COORDINATES;
     }
+
+    if (primitive.attributes.contains("COLOR_0")) {
+        const tinygltf::Accessor& accessor =
+            gltfModel_.accessors[primitive.attributes.find("COLOR_0")->second];
+        formatMask |= accessor.type == TINYGLTF_TYPE_VEC3
+            ? VertexFormat::COLORS_3
+            : VertexFormat::COLORS_4;
+    }
+
     if (primitive.attributes.contains("NORMAL")) {
         formatMask |= VertexFormat::NORMALS;
     }
+
     if (primitive.attributes.contains("TEXCOORD_0")) {
         formatMask |= VertexFormat::TEXCOORDS;
         texCoordSetCount = 1;
     }
+
     if (primitive.attributes.contains("TEXCOORD_1")) {
         texCoordSetCount++;
     }
+
     if (primitive.attributes.contains("TEXCOORD_2")) {
         texCoordSetCount++;
     }
+
     if (primitive.attributes.contains("TEXCOORD_3")) {
         texCoordSetCount++;
     }
+
     if (primitive.attributes.contains("TEXCOORD_4")) {
         texCoordSetCount++;
     }
+
     if (primitive.attributes.contains("TANGENT")) {
         formatMask |= VertexFormat::TANGENTS;
     }
 
-    return VertexFormat(formatMask, texCoordSetCount);
+    return { formatMask, texCoordSetCount };
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void GltfSceneImporter::checkVertexFormatConsistency()
+void GltfSceneImporter::checkCompatibility()
 {
-    for (const auto& mesh : gltfModel_.meshes) {
+    RFX_CHECK_STATE(gltfModel_.scenes.size() == 1, "Multiple scenes not supported yet");
+
+    for (const auto& mesh : gltfModel_.meshes)
+    {
+        if (mesh.primitives.empty()) {
+            continue;
+        }
+
+        // check that each primitive of a single mesh is using the same vertex format:
+        const VertexFormat referenceVertexFormat = getVertexFormatFrom(mesh.primitives[0]);
+
         for (const auto& primitive : mesh.primitives) {
-            RFX_CHECK_STATE(getVertexFormatFrom(primitive) == vertexFormat_,
-                "different vertex formats aren't supported yet");
+            RFX_CHECK_STATE(getVertexFormatFrom(primitive) == referenceVertexFormat,
+                "different vertex formats per mesh aren't supported");
         }
     }
 }
@@ -333,7 +375,75 @@ void GltfSceneImporter::loadTexture(const tinygltf::Texture& gltfTexture)
         imageDesc.mipLevels);
     const SamplerDesc& samplerDesc = samplers_[gltfTexture.sampler];
 
-    model_->addTexture(graphicsDevice_->createTexture2D(image, imageView, samplerDesc));
+    const Texture2DPtr& texture = graphicsDevice_->createTexture2D(image, imageView, samplerDesc);
+    textures_.push_back(texture);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void GltfSceneImporter::loadModels()
+{
+    buildModelLookupTable();
+
+    for (const auto& modelData : modelData)
+    {
+        currentModelData = modelData;
+
+        loadModel();
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void GltfSceneImporter::buildModelLookupTable()
+{
+    unordered_map<VertexFormat, vector<uint32_t>> vertexFormatToMeshMap;
+
+    for (size_t i = 0; i < gltfModel_.meshes.size(); ++i)
+    {
+        const auto& mesh = gltfModel_.meshes[i];
+        if (mesh.primitives.empty()) {
+            continue;
+        }
+
+        VertexFormat vertexFormat = getVertexFormatFrom(mesh.primitives[0]);
+        vertexFormatToMeshMap[vertexFormat].push_back(i);
+    }
+
+
+    for (const auto& [vertexFormat, gltfMeshIndices] : vertexFormatToMeshMap)
+    {
+        unordered_map<uint32_t, uint32_t> gltfToModelMeshMap;
+
+        uint32_t meshIndex = 0;
+        for (uint32 gltfMeshIndex : gltfMeshIndices) {
+            gltfToModelMeshMap[gltfMeshIndex] = meshIndex;
+            meshIndex++;
+        }
+
+        modelData.push_back({
+            .vertexFormat = VertexFormat(vertexFormat),
+            .gltfMeshIndices = gltfMeshIndices,
+            .gltfToModelMeshMap = gltfToModelMeshMap
+        });
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+void GltfSceneImporter::loadModel()
+{
+    const string modelId = scene_->getId() + "-#" + to_string(scene_->getModelCount());
+
+    currentModel = make_shared<Model>(modelId);
+
+    loadMaterials();
+    loadMeshes();
+    loadModelNodes();
+    buildVertexBuffer();
+    buildIndexBuffer();
+
+    scene_->add(currentModel);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -356,7 +466,7 @@ void GltfSceneImporter::loadMaterial(const tinygltf::Material& glTFMaterial) con
 
     const auto material = make_shared<Material>(
         glTFMaterial.name,
-        vertexFormat_,
+        currentModelData.vertexFormat,
         shaderId);
 
     // TODO: specular-glossiness material model
@@ -365,26 +475,28 @@ void GltfSceneImporter::loadMaterial(const tinygltf::Material& glTFMaterial) con
     material->setBaseColorFactor(make_vec4(gltfMetallicRoughness.baseColorFactor.data()));
     if (gltfMetallicRoughness.baseColorTexture.index > -1) {
         material->setBaseColorTexture(
-            model_->getTexture(gltfMetallicRoughness.baseColorTexture.index),
+            textures_.at(gltfMetallicRoughness.baseColorTexture.index),
             gltfMetallicRoughness.baseColorTexture.texCoord);
     }
 
     if (gltfMetallicRoughness.metallicRoughnessTexture.index > -1) {
         material->setMetallicRoughnessTexture(
-            model_->getTexture(gltfMetallicRoughness.metallicRoughnessTexture.index),
+            textures_.at(gltfMetallicRoughness.metallicRoughnessTexture.index),
             gltfMetallicRoughness.metallicRoughnessTexture.texCoord);
     }
+
     material->setMetallicFactor(static_cast<float>(gltfMetallicRoughness.metallicFactor));
     material->setRoughnessFactor(static_cast<float>(gltfMetallicRoughness.roughnessFactor));
 
     if (glTFMaterial.normalTexture.index > -1) {
-        material->setNormalTexture(model_->getTexture(glTFMaterial.normalTexture.index),
-        glTFMaterial.normalTexture.texCoord);
+        material->setNormalTexture(
+            textures_.at(glTFMaterial.normalTexture.index),
+            glTFMaterial.normalTexture.texCoord);
     }
 
     if (glTFMaterial.occlusionTexture.index > -1) {
         material->setOcclusionTexture(
-            model_->getTexture(glTFMaterial.occlusionTexture.index),
+            textures_.at(glTFMaterial.occlusionTexture.index),
             glTFMaterial.occlusionTexture.texCoord,
             static_cast<float>(glTFMaterial.occlusionTexture.strength));
     }
@@ -392,11 +504,11 @@ void GltfSceneImporter::loadMaterial(const tinygltf::Material& glTFMaterial) con
     if (glTFMaterial.emissiveTexture.index > -1) {
         material->setEmissiveFactor(make_vec3(glTFMaterial.emissiveFactor.data()));
         material->setEmissiveTexture(
-            model_->getTexture(glTFMaterial.emissiveTexture.index),
+            textures_.at(glTFMaterial.emissiveTexture.index),
             glTFMaterial.emissiveTexture.texCoord);
     }
 
-    model_->addMaterial(material);
+    currentModel->addMaterial(material);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -405,8 +517,8 @@ void GltfSceneImporter::loadMeshes()
 {
     prepareGeometryBuffers();
 
-    for (const auto& gltfMesh : gltfModel_.meshes) {
-        loadMesh(gltfMesh);
+    for (uint32_t index : currentModelData.gltfMeshIndices) {
+        loadMesh(gltfModel_.meshes[index]);
     }
 }
 
@@ -417,8 +529,12 @@ void GltfSceneImporter::prepareGeometryBuffers()
     uint32_t vertexCount = 0;
     uint32_t indexCount = 0;
 
-    for (const auto& gltfMesh : gltfModel_.meshes) {
-        for (const auto& gltfPrimitive : gltfMesh.primitives) {
+    for (uint32_t index : currentModelData.gltfMeshIndices)
+    {
+        const auto& gltfMesh = gltfModel_.meshes[index];
+
+        for (const auto& gltfPrimitive : gltfMesh.primitives)
+        {
             RFX_CHECK_STATE(gltfPrimitive.mode == TINYGLTF_MODE_TRIANGLES, "");
 
             const auto& accessor = gltfModel_.accessors[gltfPrimitive.attributes.find("POSITION")->second];
@@ -434,8 +550,8 @@ void GltfSceneImporter::prepareGeometryBuffers()
         }
     }
 
-    vertexData_.resize(vertexCount * (vertexFormat_.getVertexSize() / sizeof(float)));
-    indices_.reserve(indexCount);
+    currentModelData.vertexData.resize(vertexCount * (currentModelData.vertexFormat.getVertexSize() / sizeof(float)));
+    currentModelData.indices.reserve(indexCount);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -446,8 +562,8 @@ void GltfSceneImporter::loadMesh(const tinygltf::Mesh& gltfMesh)
 
     for (const tinygltf::Primitive& glTFPrimitive : gltfMesh.primitives) {
 
-        auto firstIndex = static_cast<uint32_t>(indices_.size());
-        auto vertexStart = vertexCount_;
+        auto firstIndex = static_cast<uint32_t>(currentModelData.indices.size());
+        auto vertexStart = currentModelData.vertexCount;
 
         loadVertices(glTFPrimitive);
         uint32_t indexCount = loadIndices(glTFPrimitive, vertexStart);
@@ -455,11 +571,11 @@ void GltfSceneImporter::loadMesh(const tinygltf::Mesh& gltfMesh)
         mesh->addSubMesh({
             firstIndex,
             indexCount,
-            model_->getMaterial(glTFPrimitive.material)
+            currentModel->getMaterial(glTFPrimitive.material)
         });
     }
 
-    model_->addMesh(move(mesh));
+    currentModel->addMesh(move(mesh));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -473,19 +589,21 @@ void GltfSceneImporter::loadVertices(const tinygltf::Primitive& glTFPrimitive)
     const float* positionBuffer = getBufferData(glTFPrimitive, "POSITION");
 
     // COLOR_0
-    const float* colorsBuffer = getBufferData(glTFPrimitive, "COLOR_0");
-    RFX_CHECK_STATE(colorsBuffer == nullptr, "Colors not implemented yet!");
+    const float* colorsBuffer = nullptr;
+    if (currentModelData.vertexFormat.containsColors3() || currentModelData.vertexFormat.containsColors4()) {
+        colorsBuffer = getBufferData(glTFPrimitive, "COLOR_0");
+    }
 
     // NORMAL
     const float* normalsBuffer = nullptr;
-    if (vertexFormat_.containsNormals()) {
+    if (currentModelData.vertexFormat.containsNormals()) {
         normalsBuffer = getBufferData(glTFPrimitive, "NORMAL");
         RFX_CHECK_STATE(normalsBuffer != nullptr, "Tangents generation not implemented yet!");
     }
 
     // TEXCOORD
     uint32_t inputTexCoordSetCount = 0;
-    uint32_t outputTexCoordSetCount = vertexFormat_.getTexCoordSetCount();
+    uint32_t outputTexCoordSetCount = currentModelData.vertexFormat.getTexCoordSetCount();
     for (uint32_t i = 0; i < outputTexCoordSetCount; ++i) {
         const string attributeName = "TEXCOORD_" + to_string(i);
         if (!glTFPrimitive.attributes.contains(attributeName)) {
@@ -505,7 +623,7 @@ void GltfSceneImporter::loadVertices(const tinygltf::Primitive& glTFPrimitive)
 
     // TANGENT
     const float* tangentsBuffer = nullptr;
-    if (vertexFormat_.containsTangents()) {
+    if (currentModelData.vertexFormat.containsTangents()) {
         tangentsBuffer = getBufferData(glTFPrimitive, "TANGENT");
         RFX_CHECK_STATE(tangentsBuffer != nullptr, "Tangents generation not implemented yet!");
     }
@@ -513,6 +631,7 @@ void GltfSceneImporter::loadVertices(const tinygltf::Primitive& glTFPrimitive)
     appendVertexData(
         vertexCount,
         positionBuffer,
+        colorsBuffer,
         normalsBuffer,
         texCoordsBuffers,
         tangentsBuffer);
@@ -539,20 +658,22 @@ const float* GltfSceneImporter::getBufferData(
 void GltfSceneImporter::appendVertexData(
     uint32_t vertexCount,
     const float* positionBuffer,
+    const float* colorsBuffer,
     const float* normalsBuffer,
     const float** texCoordsBuffers,
     const float* tangentsBuffer)
 {
-    uint32_t destIndex = vertexCount_ * (vertexFormat_.getVertexSize() / sizeof(float));
+    uint32_t destIndex = currentModelData.vertexCount * (currentModelData.vertexFormat.getVertexSize() / sizeof(float));
 
     for (uint32_t vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
         destIndex += appendCoordinates(positionBuffer, vertexIndex, destIndex);
+        destIndex += appendColors(colorsBuffer, vertexIndex, destIndex);
         destIndex += appendNormals(normalsBuffer, vertexIndex, destIndex);
         destIndex += appendTexCoords(texCoordsBuffers, vertexIndex, destIndex);
         destIndex += appendTangents(tangentsBuffer, vertexIndex, destIndex);
     }
 
-    vertexCount_ += vertexCount;
+    currentModelData.vertexCount += vertexCount;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -562,9 +683,34 @@ uint32_t GltfSceneImporter::appendCoordinates(
     uint32_t vertexIndex,
     uint32_t destIndex)
 {
-    memcpy(&this->vertexData_[destIndex], &positionBuffer[vertexIndex * 3], sizeof(vec3));
+    memcpy(&currentModelData.vertexData[destIndex], &positionBuffer[vertexIndex * 3], sizeof(vec3));
 
     return 3;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+uint32_t GltfSceneImporter::appendColors(
+    const float* colorsBuffer,
+    uint32_t vertexIndex,
+    uint32_t destIndex)
+{
+    if (!colorsBuffer) {
+        return 0;
+    }
+
+    if (currentModelData.vertexFormat.containsColors3()) {
+        memcpy(&currentModelData.vertexData[destIndex], &colorsBuffer[vertexIndex * 3], sizeof(vec3));
+        return 3;
+    }
+    else if (currentModelData.vertexFormat.containsColors4()){
+        memcpy(&currentModelData.vertexData[destIndex], &colorsBuffer[vertexIndex * 4], sizeof(vec4));
+        return 4;
+    }
+
+    RFX_CHECK_STATE(false, "invalid vertex format");
+
+    return 0;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -576,7 +722,7 @@ uint32_t GltfSceneImporter::appendNormals(
 {
     if (normalsBuffer) {
         vec3 normal = normalize(make_vec3(&normalsBuffer[vertexIndex * 3]));
-        memcpy(&vertexData_[destIndex], &normal, sizeof(vec3));
+        memcpy(&currentModelData.vertexData[destIndex], &normal, sizeof(vec3));
 
         return 3;
     }
@@ -598,7 +744,7 @@ uint32_t GltfSceneImporter::appendTexCoords(
             break;
         }
 
-        memcpy(&vertexData_[destIndex + offset], &texCoordsBuffers[i][vertexIndex * 2], sizeof(vec2));
+        memcpy(&currentModelData.vertexData[destIndex + offset], &texCoordsBuffers[i][vertexIndex * 2], sizeof(vec2));
         offset += 2;
     }
 
@@ -613,7 +759,7 @@ uint32_t GltfSceneImporter::appendTangents(
     uint32_t destIndex)
 {
     if (tangentsBuffer) {
-        memcpy(&vertexData_[destIndex], &tangentsBuffer[vertexIndex * 4], sizeof(vec4));
+        memcpy(&currentModelData.vertexData[destIndex], &tangentsBuffer[vertexIndex * 4], sizeof(vec4));
         return 4;
     }
 
@@ -638,7 +784,7 @@ uint32_t GltfSceneImporter::loadIndices(
             vector<uint32_t> buf(accessor.count);
             memcpy(&buf[0], &buffer.data[accessor.byteOffset + bufferView.byteOffset], accessor.count * sizeof(uint32_t));
             for (size_t index = 0; index < accessor.count; index++) {
-                indices_.push_back(buf[index] + vertexStart);
+                currentModelData.indices.push_back(buf[index] + vertexStart);
             }
             break;
         }
@@ -646,7 +792,7 @@ uint32_t GltfSceneImporter::loadIndices(
             vector<uint16_t> buf(accessor.count);
             memcpy(&buf[0], &buffer.data[accessor.byteOffset + bufferView.byteOffset], accessor.count * sizeof(uint16_t));
             for (size_t index = 0; index < accessor.count; index++) {
-                indices_.push_back(buf[index] + vertexStart);
+                currentModelData.indices.push_back(buf[index] + vertexStart);
             }
             break;
         }
@@ -654,7 +800,7 @@ uint32_t GltfSceneImporter::loadIndices(
             vector<uint8_t> buf(accessor.count);
             memcpy(&buf[0], &buffer.data[accessor.byteOffset + bufferView.byteOffset], accessor.count * sizeof(uint8_t));
             for (size_t index = 0; index < accessor.count; index++) {
-                indices_.push_back(buf[index] + vertexStart);
+                currentModelData.indices.push_back(buf[index] + vertexStart);
             }
             break;
         }
@@ -802,12 +948,11 @@ void GltfSceneImporter::loadLightNode(
 
 void GltfSceneImporter::loadModelNodes()
 {
-    RFX_CHECK_STATE(gltfModel_.scenes.size() == 1, "Multiple scenes not supported yet");
-
     const tinygltf::Scene& gltfScene = gltfModel_.scenes[0];
+
     for (const auto nodeIndex : gltfScene.nodes) {
         const tinygltf::Node& node = gltfModel_.nodes[nodeIndex];
-        loadModelNode(node, model_->getRootNode());
+        loadModelNode(node, currentModel->getRootNode());
     }
 }
 
@@ -820,8 +965,13 @@ void GltfSceneImporter::loadModelNode(
     auto node = make_shared<ModelNode>(parentNode);
     node->setLocalTransform(getLocalTransformOf(gltfNode));
 
-    if (gltfNode.mesh > -1) {
-        node->addMesh(model_->getMesh(gltfNode.mesh));
+    if (contains(currentModelData.gltfMeshIndices, gltfNode.mesh))
+    {
+        const auto it = currentModelData.gltfToModelMeshMap.find(gltfNode.mesh);
+        RFX_CHECK_STATE(it != currentModelData.gltfToModelMeshMap.end(), "Invalid mesh mapping");
+
+        const uint32_t meshIndex = it->second;
+        node->addMesh(currentModel->getMesh(meshIndex));
     }
 
     parentNode->addChild(node);
@@ -864,10 +1014,12 @@ mat4 GltfSceneImporter::getLocalTransformOf(const tinygltf::Node& gltfNode)
 
 void GltfSceneImporter::buildVertexBuffer()
 {
-    const size_t vertexDataSize = vertexData_.size() * sizeof(float);
+    const size_t vertexDataSize = currentModelData.vertexData.size() * sizeof(float);
 
-    shared_ptr<VertexBuffer> vertexBuffer = graphicsDevice_->createVertexBuffer(vertexCount_, vertexFormat_);
-    model_->setVertexBuffer(vertexBuffer);
+    shared_ptr<VertexBuffer> vertexBuffer = graphicsDevice_->createVertexBuffer(
+        currentModelData.vertexCount,
+        currentModelData.vertexFormat);
+    currentModel->setVertexBuffer(vertexBuffer);
     graphicsDevice_->bind(vertexBuffer);
 
     shared_ptr<Buffer> stagingBuffer = graphicsDevice_->createBuffer(
@@ -878,7 +1030,7 @@ void GltfSceneImporter::buildVertexBuffer()
     void* mappedMemory = nullptr;
     graphicsDevice_->bind(stagingBuffer);
     graphicsDevice_->map(stagingBuffer, &mappedMemory);
-    memcpy(mappedMemory, vertexData_.data(), vertexDataSize);
+    memcpy(mappedMemory, currentModelData.vertexData.data(), vertexDataSize);
     graphicsDevice_->unmap(stagingBuffer);
 
     VkCommandPool graphicsCommandPool = graphicsDevice_->getGraphicsCommandPool();
@@ -896,7 +1048,7 @@ void GltfSceneImporter::buildVertexBuffer()
 
 void GltfSceneImporter::buildIndexBuffer()
 {
-    const VkDeviceSize bufferSize = indices_.size() * sizeof(uint32_t);
+    const VkDeviceSize bufferSize = currentModelData.indices.size() * sizeof(uint32_t);
     shared_ptr<Buffer> stagingBuffer = graphicsDevice_->createBuffer(
         bufferSize,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -905,11 +1057,11 @@ void GltfSceneImporter::buildIndexBuffer()
     void* mappedMemory = nullptr;
     graphicsDevice_->bind(stagingBuffer);
     graphicsDevice_->map(stagingBuffer, &mappedMemory);
-    memcpy(mappedMemory, indices_.data(), stagingBuffer->getSize());
+    memcpy(mappedMemory, currentModelData.indices.data(), stagingBuffer->getSize());
     graphicsDevice_->unmap(stagingBuffer);
 
-    shared_ptr<IndexBuffer> indexBuffer = graphicsDevice_->createIndexBuffer(indices_.size(), VK_INDEX_TYPE_UINT32);
-    model_->setIndexBuffer(indexBuffer);
+    shared_ptr<IndexBuffer> indexBuffer = graphicsDevice_->createIndexBuffer(currentModelData.indices.size(), VK_INDEX_TYPE_UINT32);
+    currentModel->setIndexBuffer(indexBuffer);
 
     graphicsDevice_->bind(indexBuffer);
 

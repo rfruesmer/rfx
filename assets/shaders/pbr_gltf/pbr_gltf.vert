@@ -96,6 +96,20 @@ void main()
     outTexCoord[0] = inTexCoord[0];
 #endif
 
+#if defined(HAS_COLOR_VEC3)
+    outColor = inColor;
+#if defined(USE_MORPHING)
+    outColor = clamp(inColor + getTargetColor0(gl_VertexID).xyz, 0.0f, 1.0f);
+#endif
+#endif
+
+#if defined(HAS_COLOR_VEC4)
+    outColor = inColor;
+#if defined(USE_MORPHING)
+    outColor = clamp(inColor + getTargetColor0(gl_VertexID), 0.0f, 1.0f);
+#endif
+#endif
+
     gl_Position = scene.viewProjMatrix * pos;
 }
 

@@ -98,6 +98,16 @@ vector<string> SampleViewerShader::getVertexShaderInputsFor(const MaterialPtr& m
     uint32_t location = 1;
 
     const VertexFormat& vertexFormat = material->getVertexFormat();
+
+    if (vertexFormat.containsColors3()) {
+        inputs.push_back(fmt::format("layout(location = {}) in vec3 inColor;", location));
+        location++;
+    }
+    else if (vertexFormat.containsColors4()) {
+        inputs.push_back(fmt::format("layout(location = {}) in vec4 inColor;", location));
+        location++;
+    }
+
     if (vertexFormat.containsNormals()) {
         inputs.push_back(fmt::format("layout(location = {}) in vec3 inNormal;", location));
         location++;
@@ -122,6 +132,16 @@ vector<string> SampleViewerShader::getVertexShaderOutputsFor(const MaterialPtr& 
     uint32_t location = 1;
 
     const VertexFormat& vertexFormat = material->getVertexFormat();
+
+    if (vertexFormat.containsColors3()) {
+        outputs.push_back(fmt::format("layout(location = {}) out vec3 outColor;", location));
+        location++;
+    }
+    else if (vertexFormat.containsColors4()) {
+        outputs.push_back(fmt::format("layout(location = {}) out vec4 outColor;", location));
+        location++;
+    }
+
     if (vertexFormat.containsNormals()) {
         outputs.push_back(fmt::format("layout(location = {}) out vec3 outNormal;", location));
         location++;
